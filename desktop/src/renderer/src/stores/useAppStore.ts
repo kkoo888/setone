@@ -7,8 +7,8 @@ export type PanelId = 'chat' | 'skills' | 'settings' | 'modules' | 'live2d'
   | 'clipboard-history' | 'notifications' | 'multi-session'
   | 'calendar' | 'quick-preview' | 'system-dashboard'
   | 'theme-store' | 'code-snippets'
-  | 'workflow' | 'knowledge-base' | 'translator' | 'memory' | 'task'
-  | 'vision' | 'screen' | 'proactive' | null
+  | 'memory' | 'task' | 'vision' | 'screen' | 'proactive'
+  | null
 
 interface AppState {
   initialized: boolean
