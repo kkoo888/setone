@@ -126,6 +126,11 @@ export class Live2DManager implements ILive2DManager {
       }
       console.log('[Live2D] ✅ Cubism SDK 已就绪')
 
+      // 额外等待 Cubism Framework 内部初始化完成
+      // SDK 对象存在 ≠ Framework 完全就绪，需要给内部初始化一点时间
+      console.log('[Live2D] ⏳ 等待 Framework 内部初始化...')
+      await new Promise((resolve) => setTimeout(resolve, 500))
+
       // 步骤2: 导入 pixi.js 并暴露到全局（pixi-live2d-display 需要）
       console.log('[Live2D] 📦 导入 pixi.js...')
       const PIXI = await import('pixi.js')
@@ -194,12 +199,21 @@ export class Live2DManager implements ILive2DManager {
         console.warn('[Live2D] ⚠️ 容器或 canvas 不存在，跳过挂载', { container: !!container, canvas: !!canvasEl })
       }
 
-      // 步骤5: 加载 Live2D 模型
+      // 步骤5: 加载 Live2D 模型（带自动重试，Framework 首次初始化可能失败）
       console.log('[Live2D] 📦 加载模型文件:', config.modelPath)
-      this.model = await live2dModule.Live2DModel.from(config.modelPath, {
-        autoHitTest: false,
-        autoFocus: false,
-      })
+      try {
+        this.model = await live2dModule.Live2DModel.from(config.modelPath, {
+          autoHitTest: false,
+          autoFocus: false,
+        })
+      } catch (modelErr) {
+        console.warn('[Live2D] ⚠️ 首次加载失败，等待 1 秒后重试...')
+        await new Promise((resolve) => setTimeout(resolve, 1000))
+        this.model = await live2dModule.Live2DModel.from(config.modelPath, {
+          autoHitTest: false,
+          autoFocus: false,
+        })
+      }
       console.log('[Live2D] ✅ 模型加载成功')
 
       // 设置模型属性
