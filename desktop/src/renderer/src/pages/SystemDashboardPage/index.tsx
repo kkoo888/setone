@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
+import { ModuleHeader } from '../../components/common/module/ModuleHeader'
 
 interface SystemInfo { cpu: number; memory: { used: number; total: number; percent: number }; disk: { used: number; total: number; percent: number }; uptime: number; platform: string; hostname: string }
 interface ModuleStatus { id: string; name: string; status: string; enabled: boolean }
@@ -34,17 +35,20 @@ export function SystemDashboardPage() {
   const barColor = (pct: number) => pct > 90 ? '#ef4444' : pct > 70 ? '#f59e0b' : '#22c55e'
 
   return (
-    <div className="dash-page">
-      <div className="dash-header">
-        <h1>📊 系统仪表盘</h1>
-        <div className="dash-controls">
-          <label><input type="checkbox" checked={autoRefresh} onChange={e => setAutoRefresh(e.target.checked)} /> 自动刷新</label>
-          <select value={refreshInterval} onChange={e => setRefreshInterval(Number(e.target.value))} className="dash-select">
-            <option value={2000}>2秒</option><option value={5000}>5秒</option><option value={10000}>10秒</option><option value={30000}>30秒</option>
-          </select>
-          <button onClick={loadSysInfo} className="btn btn-sm">🔄 刷新</button>
-        </div>
-      </div>
+    <div className="dash-page mod-page">
+      <ModuleHeader
+        icon="📊"
+        title="系统仪表盘"
+        actions={
+          <div className="dash-controls">
+            <label><input type="checkbox" checked={autoRefresh} onChange={e => setAutoRefresh(e.target.checked)} /> 自动刷新</label>
+            <select value={refreshInterval} onChange={e => setRefreshInterval(Number(e.target.value))} className="dash-select">
+              <option value={2000}>2秒</option><option value={5000}>5秒</option><option value={10000}>10秒</option><option value={30000}>30秒</option>
+            </select>
+            <button onClick={loadSysInfo} className="btn btn-sm">🔄 刷新</button>
+          </div>
+        }
+      />
       {sysInfo && (
         <div className="dash-grid">
           <div className="dash-card">

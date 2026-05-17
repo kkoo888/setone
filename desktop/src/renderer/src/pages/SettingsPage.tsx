@@ -6,6 +6,7 @@
 import React, { useCallback } from 'react'
 import { useSettingsStore } from '../stores/useSettingsStore'
 import { useAppStore } from '../stores/useAppStore'
+import { ModuleHeader } from '../components/common/module/ModuleHeader'
 import { SettingsSection } from '../components/settings/SettingsSection'
 import { OllamaConfig } from '../components/settings/OllamaConfig'
 import { ThemeSwitcher } from '../components/settings/ThemeSwitcher'
@@ -80,10 +81,8 @@ export function SettingsPage() {
   }, [saveToMainProcess])
 
   return (
-    <div className="settings-page">
-      <div className="settings-page-header">
-        <h2>设置</h2>
-      </div>
+    <div className="settings-page mod-page">
+      <ModuleHeader icon="⚙️" title="设置" />
 
       {/* Ollama 配置 */}
       <SettingsSection

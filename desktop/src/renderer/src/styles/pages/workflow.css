@@ -1,308 +1,489 @@
 /* ══════════════════════════════════════════
    工作流页面样式
+   风格：卡片化 + 微交互 + 模板网格
    ══════════════════════════════════════════ */
 
-.workflow-page {
+/* ── 创建按钮 ── */
+.wf-create-btn {
   display: flex;
-  flex-direction: column;
-  height: 100%;
-  overflow: hidden;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: none;
+  border-radius: var(--radius-md);
+  background: var(--color-accent);
+  color: #fff;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
 }
 
-.workflow-header {
+.wf-create-btn:hover {
+  background: var(--color-accent-hover, #4338ca);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+.wf-create-btn:active {
+  transform: scale(0.97);
+}
+
+/* ── 卡片副标题 ── */
+.wf-card-subtitle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.wf-card-dot {
+  color: var(--color-text-tertiary);
+  opacity: 0.5;
+}
+
+/* ── 触发方式标签 ── */
+.wf-trigger-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  font-size: 11px;
+  font-weight: 600;
+  background: rgba(99, 102, 241, 0.08);
+  color: var(--color-accent);
+  white-space: nowrap;
+}
+
+/* ── 弹窗（自定义，更精致） ── */
+.wf-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+  animation: wfOverlayIn 0.2s ease;
+  backdrop-filter: blur(4px);
+}
+
+@keyframes wfOverlayIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.wf-modal {
+  width: 520px;
+  max-width: 90vw;
+  background: var(--color-bg-primary);
+  border-radius: var(--radius-lg, 16px);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: wfModalIn 0.25s ease;
+}
+
+@keyframes wfModalIn {
+  from { opacity: 0; transform: translateY(16px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.wf-modal-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px 24px 12px;
-  flex-shrink: 0;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--color-border);
 }
 
-.workflow-header h1 {
-  font-size: var(--font-size-xl);
+.wf-modal-header h3 {
+  font-size: var(--font-size-md);
   font-weight: 700;
   color: var(--color-text-primary);
   margin: 0;
 }
 
-.workflow-tabs {
-  display: flex;
-  gap: 4px;
-  padding: 0 24px 16px;
-  flex-shrink: 0;
-  border-bottom: 1px solid var(--color-border);
-}
-
-.workflow-tab {
-  padding: 10px 20px;
+.wf-modal-close {
+  width: 32px;
+  height: 32px;
   border: none;
-  border-bottom: 2px solid transparent;
   background: transparent;
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
-  font-weight: 500;
+  border-radius: var(--radius-sm, 6px);
+  color: var(--color-text-tertiary);
+  font-size: 18px;
   cursor: pointer;
-  transition: all var(--transition-fast);
-  margin-bottom: -1px;
-}
-
-.workflow-tab:hover {
-  color: var(--color-text-primary);
-}
-
-.workflow-tab.active {
-  color: var(--color-accent);
-  border-bottom-color: var(--color-accent);
-  font-weight: 600;
-}
-
-.workflow-content {
-  flex: 1;
-  overflow-y: auto;
-  padding: 20px 24px;
-}
-
-/* 工作流列表 */
-.workflow-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.workflow-card {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 18px 22px;
-  background: var(--color-bg-primary);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  transition: all var(--transition-fast);
-}
-
-.workflow-card:hover {
-  border-color: rgba(99, 102, 241, 0.3);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
-}
-
-.workflow-card-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: var(--radius-md);
-  background: rgba(99, 102, 241, 0.1);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
-  flex-shrink: 0;
+  transition: all var(--transition-fast);
 }
 
-.workflow-card-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.workflow-card-name {
-  font-size: var(--font-size-md);
-  font-weight: 600;
+.wf-modal-close:hover {
+  background: var(--color-bg-tertiary);
   color: var(--color-text-primary);
 }
 
-.workflow-card-desc {
-  font-size: var(--font-size-xs);
-  color: var(--color-text-tertiary);
-  margin-top: 3px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.wf-modal-body {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
-.workflow-card-meta {
+.wf-modal-footer {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-top: 6px;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 24px;
+  border-top: 1px solid var(--color-border);
 }
 
-.workflow-meta-tag {
-  padding: 2px 10px;
-  border-radius: var(--radius-full);
-  font-size: 11px;
-  font-weight: 500;
-}
-
-.workflow-meta-trigger {
-  background: rgba(99, 102, 241, 0.1);
-  color: var(--color-accent);
-}
-
-.workflow-meta-runs {
-  font-size: 11px;
-  color: var(--color-text-tertiary);
-}
-
-.workflow-card-actions {
-  display: flex;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
-.workflow-status-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 12px;
-  border-radius: var(--radius-full);
-  font-size: 11px;
-  font-weight: 600;
-  flex-shrink: 0;
-}
-
-.workflow-status-enabled {
-  background: rgba(34, 197, 94, 0.1);
-  color: var(--color-success);
-}
-
-.workflow-status-disabled {
-  background: var(--color-bg-secondary);
-  color: var(--color-text-tertiary);
-}
-
-/* 运行日志 */
-.workflow-log-list {
+/* ── 表单 ── */
+.wf-form-group {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.workflow-log-item {
+.wf-form-group label {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  letter-spacing: 0.02em;
+}
+
+.wf-input {
+  padding: 10px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md, 8px);
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-sm);
+  outline: none;
+  transition: all var(--transition-fast);
+}
+
+.wf-input:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.wf-input::placeholder {
+  color: var(--color-text-tertiary);
+}
+
+.wf-form-hint {
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+  margin-top: -4px;
+}
+
+/* ── 触发方式选择网格 ── */
+.wf-trigger-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.wf-trigger-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md, 8px);
+  background: var(--color-bg-primary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.wf-trigger-option:hover {
+  border-color: rgba(99, 102, 241, 0.3);
+  background: var(--color-bg-secondary);
+}
+
+.wf-trigger-option.active {
+  border-color: var(--color-accent);
+  background: rgba(99, 102, 241, 0.05);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
+}
+
+.wf-trigger-icon {
+  font-size: 22px;
+}
+
+.wf-trigger-label {
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
+
+.wf-trigger-option.active .wf-trigger-label {
+  color: var(--color-accent);
+  font-weight: 600;
+}
+
+/* ── 执行日志 ── */
+.wf-logs-container {
+  padding: 20px 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.wf-log-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.wf-log-item {
   display: flex;
   align-items: center;
   gap: 14px;
   padding: 14px 18px;
   background: var(--color-bg-primary);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-md, 8px);
+  transition: all var(--transition-fast);
 }
 
-.workflow-log-status {
-  width: 8px;
-  height: 8px;
+.wf-log-item:hover {
+  border-color: rgba(99, 102, 241, 0.15);
+  background: var(--color-bg-secondary);
+}
+
+.wf-log-status {
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   flex-shrink: 0;
 }
 
-.workflow-log-status-success {
+.wf-log-status-success {
   background: var(--color-success);
-  box-shadow: 0 0 6px rgba(34, 197, 94, 0.4);
+  box-shadow: 0 0 8px rgba(34, 197, 94, 0.4);
 }
 
-.workflow-log-status-error {
+.wf-log-status-failed,
+.wf-log-status-error {
   background: var(--color-error);
-  box-shadow: 0 0 6px rgba(239, 68, 68, 0.4);
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
 }
 
-.workflow-log-status-running {
+.wf-log-status-running {
   background: var(--color-warning);
   animation: wfPulse 1.2s ease-in-out infinite;
 }
 
 @keyframes wfPulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.85); }
 }
 
-.workflow-log-info {
+.wf-log-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.wf-log-name {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  font-family: var(--font-mono);
+}
+
+.wf-log-time {
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+}
+
+.wf-log-error {
+  font-size: 12px;
+  color: var(--color-error);
+  margin-top: 2px;
+}
+
+.wf-log-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  font-size: 11px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.wf-log-badge-success {
+  background: rgba(34, 197, 94, 0.1);
+  color: var(--color-success);
+}
+
+.wf-log-badge-failed {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--color-error);
+}
+
+.wf-log-badge-running {
+  background: rgba(245, 158, 11, 0.1);
+  color: var(--color-warning);
+}
+
+/* ── 模板网格 ── */
+.wf-templates-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+  padding: 20px 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.wf-template-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 18px 20px;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg, 12px);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  position: relative;
+}
+
+.wf-template-card:hover {
+  border-color: rgba(99, 102, 241, 0.3);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  transform: translateY(-2px);
+}
+
+.wf-template-card:active {
+  transform: scale(0.98);
+}
+
+.wf-template-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md, 8px);
+  background: rgba(99, 102, 241, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.wf-template-info {
   flex: 1;
   min-width: 0;
 }
 
-.workflow-log-name {
+.wf-template-name {
   font-size: var(--font-size-sm);
-  font-weight: 500;
+  font-weight: 700;
   color: var(--color-text-primary);
+  margin: 0 0 4px;
 }
 
-.workflow-log-time {
+.wf-template-desc {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  margin: 0 0 8px;
+  line-height: 1.5;
+}
+
+.wf-template-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   font-size: 11px;
   color: var(--color-text-tertiary);
-  margin-top: 2px;
 }
 
-.workflow-log-error {
-  font-size: 12px;
-  color: var(--color-error);
-  margin-top: 4px;
-}
-
-/* 创建表单 */
-.workflow-create-form {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  padding: 20px 24px;
-  margin: 0 0 20px;
-  background: var(--color-bg-secondary);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--color-border);
-  animation: wfSlideDown 0.2s ease;
-}
-
-@keyframes wfSlideDown {
-  from { opacity: 0; transform: translateY(-8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.workflow-form-row {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.workflow-form-row label {
-  font-size: var(--font-size-xs);
+.wf-template-action {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  font-size: 11px;
   font-weight: 600;
-  color: var(--color-text-secondary);
+  color: var(--color-accent);
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: all var(--transition-fast);
 }
 
-.workflow-form-row input,
-.workflow-form-row select {
-  padding: 10px 14px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background: var(--color-bg-primary);
-  color: var(--color-text-primary);
-  font-size: var(--font-size-sm);
-  outline: none;
-  transition: border-color var(--transition-fast);
+.wf-template-card:hover .wf-template-action {
+  opacity: 1;
+  transform: translateX(0);
 }
 
-.workflow-form-row input:focus,
-.workflow-form-row select:focus {
-  border-color: var(--color-accent);
-}
-
-.workflow-form-actions {
-  display: flex;
-  gap: 8px;
-  justify-content: flex-end;
-}
-
-.workflow-empty {
+/* ── 空状态 ── */
+.wf-empty {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 12px;
-  padding: 60px;
+  padding: 80px 40px;
   color: var(--color-text-tertiary);
   font-size: var(--font-size-sm);
 }
 
-.workflow-empty::before {
-  content: '⚡';
-  font-size: 48px;
-  opacity: 0.4;
+.wf-empty-icon {
+  font-size: 52px;
+  opacity: 0.35;
 }
 
-[data-theme='dark'] .workflow-card:hover {
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+/* ── 暗色主题适配 ── */
+[data-theme='dark'] .wf-modal-overlay {
+  background: rgba(0, 0, 0, 0.6);
+}
+
+[data-theme='dark'] .wf-modal {
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme='dark'] .wf-template-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme='dark'] .wf-trigger-option.active {
+  background: rgba(99, 102, 241, 0.1);
+}
+
+[data-theme='dark'] .wf-log-item:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* ── 响应式 ── */
+@media (max-width: 900px) {
+  .wf-templates-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .wf-trigger-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .wf-templates-grid {
+    grid-template-columns: 1fr;
+  }
+  .wf-trigger-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .wf-modal {
+    width: 100%;
+    max-width: 100%;
+    border-radius: 16px 16px 0 0;
+    max-height: 90vh;
+  }
 }

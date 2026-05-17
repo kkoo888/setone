@@ -5,6 +5,7 @@
  */
 import React, { useEffect, useMemo, useCallback, useState } from 'react'
 import { useModulesStore, type ModuleStatus } from '../stores/useModulesStore'
+import { ModuleHeader } from '../components/common/module/ModuleHeader'
 import { ModuleCard } from './ModulesPage/components/ModuleCard'
 import { ModuleDetail } from './ModulesPage/components/ModuleDetail'
 import '../styles/modules.css'
@@ -101,16 +102,12 @@ export function ModulesPage() {
   const enabledCount = modules.filter((m) => m.enabled).length
 
   return (
-    <div className='modules-page'>
+    <div className='modules-page mod-page'>
       {/* 顶部标题区 */}
-      <div className='modules-header'>
-        <div className='modules-title-group'>
-          <h1 className='modules-title'>模块管理</h1>
-          <p className='modules-subtitle'>
-            已启用 {enabledCount} / {modules.length} 个模块 · 热插拔，按需加载
-          </p>
-        </div>
-        <div className='modules-actions'>
+      <ModuleHeader
+        icon="🧩"
+        title="模块管理"
+        actions={
           <div className='module-search'>
             <span className='module-search-icon'>🔍</span>
             <input
@@ -121,8 +118,8 @@ export function ModulesPage() {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-        </div>
-      </div>
+        }
+      />
 
       {/* 状态筛选标签 */}
       <div className='modules-filter-tags'>

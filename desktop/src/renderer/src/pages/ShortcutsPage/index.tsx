@@ -3,6 +3,7 @@
  * 每个词条下方内联展开编辑表单
  */
 import React, { useState, useEffect, useCallback } from 'react'
+import { ModuleHeader } from '../../components/common/module/ModuleHeader'
 
 interface Shortcut {
   id: string
@@ -186,11 +187,12 @@ export function ShortcutsPage() {
   )
 
   return (
-    <div className="shortcuts-page">
-      <div className="shortcuts-header">
-        <h1>⌨️ 快捷指令</h1>
-        <button onClick={handleStartAdd} className="btn btn-primary">＋ 添加快捷键</button>
-      </div>
+    <div className="shortcuts-page mod-page">
+      <ModuleHeader
+        icon="⌨️"
+        title="快捷指令"
+        actions={<button onClick={handleStartAdd} className="btn btn-primary">＋ 添加快捷键</button>}
+      />
 
       {message && (
         <div className={`sc-message ${message.type === 'success' ? 'sc-message-success' : 'sc-message-error'}`}>

@@ -390,6 +390,26 @@ export function registerIpcHandlers(
   })
 
   // 模块已加载完成，立即注册所有模块能力的 IPC 处理器
+  // ⚠️ 将手动注册的 IPC 通道加入 registeredModuleIpc，防止 registerModuleCapabilities 重复注册
+  for (const ch of [
+    'config:get', 'config:set', 'soul:readName', 'ollama:listModels', 'performance:snapshot',
+    'ai:chat', 'ai:chatStream', 'module:list', 'module:enable', 'module:disable', 'module:reload',
+    'file:read', 'file:write', 'file:list',
+    'palette:search', 'palette:execute', 'palette:open', 'palette:close',
+    'skill:list', 'skill:discover', 'skill:toggle', 'skill:create', 'skill:refine', 'skill:delete',
+    'skill:scan', 'skill:config', 'skill:trash:list', 'skill:trash:restore', 'skill:trash:empty',
+    'skill:trash:delete', 'skill:stats', 'skill:export', 'skill:import', 'skill:export:batch',
+    'skill:import:batch', 'skill:market:search', 'skill:market:install', 'skill:install:url',
+    'skill:update:check', 'skill:update:run',
+    'git:status', 'git:diff', 'files:list', 'files:read', 'files:readAny', 'files:openPicker',
+    'dialog:openFile',
+    'live2d:create-window', 'live2d:close-window', 'live2d:toggle-visibility',
+    'live2d:set-ignore-mouse', 'live2d:start-drag', 'live2d:get-bounds', 'live2d:set-size', 'live2d:set-position',
+    'hotkey_register', 'hotkey_unregister', 'hotkey_list', 'window:toggle',
+    'soul:initialize', 'soul:get', 'soul:create', 'soul:update', 'soul:reset',
+  ]) {
+    registeredModuleIpc.add(ch)
+  }
   if (moduleManager) {
     registerModuleCapabilities()
   }

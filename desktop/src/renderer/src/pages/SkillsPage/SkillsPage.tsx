@@ -5,6 +5,7 @@
 import React, { useEffect, useMemo, useCallback, useState } from 'react'
 import { useSkillStore } from '../../stores/useSkillStore'
 import { useSkillFilter } from './hooks/useSkillFilter'
+import { ModuleHeader } from '../../components/common/module/ModuleHeader'
 import { SkillSearch } from './components/SkillSearch'
 import { SkillTags } from './components/SkillTags'
 import { SkillCard } from './components/SkillCard'
@@ -137,49 +138,47 @@ export function SkillsPage() {
   const activeCount = skills.filter((s) => s.active).length
 
   return (
-    <div className='skills-page'>
+    <div className='skills-page mod-page'>
       {/* 顶部标题区 */}
-      <div className='skills-header'>
-        <div className='skills-title-group'>
-          <h1 className='skills-title'>技能</h1>
-          <p className='skills-subtitle'>
-            已激活 {activeCount} / {skills.length} 个技能 · 赋予助手更强大的能力
-          </p>
-        </div>
-        <div className='skills-actions'>
-          <NetworkToggle />
-          <SkillSearch value={searchQuery} onChange={setSearchQuery} />
-          <button className='btn-skill-action' onClick={handleScanSkills} title='扫描本地技能' aria-label='扫描本地技能'>
-            <span>🔍</span> 扫描
-          </button>
-          <button className='btn-skill-action' onClick={handleOpenTrash} title='回收站' aria-label='打开回收站'>
-            <span>🗑️</span> 回收站
-          </button>
-          <button className='btn-skill-action' onClick={() => setUpdateDialogOpen(true)} title='检查更新' aria-label='检查技能更新'>
-            <span>🔄</span> 更新
-          </button>
-          <button className='btn-skill-primary' onClick={() => setInstallDialogOpen(true)}>
-            <span>+</span> 添加技能
-          </button>
-          <button className='btn-skill-primary' onClick={() => setCreateDialogOpen(true)}>
-            <span>✨</span> 生成技能
-          </button>
-          <button
-            className='btn-skill-action'
-            onClick={() => {
-              if (selectedSkillId) {
-                handleOpenRefine(selectedSkillId)
-              } else if (skills.length > 0) {
-                handleOpenRefine(skills[0].id)
-              }
-            }}
-            title='炼化优化'
-            aria-label='炼化优化技能'
-          >
-            <span>🔥</span> 炼化
-          </button>
-        </div>
-      </div>
+      <ModuleHeader
+        icon="✨"
+        title="技能"
+        actions={
+          <>
+            <NetworkToggle />
+            <SkillSearch value={searchQuery} onChange={setSearchQuery} />
+            <button className='btn-skill-action' onClick={handleScanSkills} title='扫描本地技能' aria-label='扫描本地技能'>
+              <span>🔍</span> 扫描
+            </button>
+            <button className='btn-skill-action' onClick={handleOpenTrash} title='回收站' aria-label='打开回收站'>
+              <span>🗑️</span> 回收站
+            </button>
+            <button className='btn-skill-action' onClick={() => setUpdateDialogOpen(true)} title='检查更新' aria-label='检查技能更新'>
+              <span>🔄</span> 更新
+            </button>
+            <button className='btn-skill-primary' onClick={() => setInstallDialogOpen(true)}>
+              <span>+</span> 添加技能
+            </button>
+            <button className='btn-skill-primary' onClick={() => setCreateDialogOpen(true)}>
+              <span>✨</span> 生成技能
+            </button>
+            <button
+              className='btn-skill-action'
+              onClick={() => {
+                if (selectedSkillId) {
+                  handleOpenRefine(selectedSkillId)
+                } else if (skills.length > 0) {
+                  handleOpenRefine(skills[0].id)
+                }
+              }}
+              title='炼化优化'
+              aria-label='炼化优化技能'
+            >
+              <span>🔥</span> 炼化
+            </button>
+          </>
+        }
+      />
 
       {/* 二级导航 */}
       <div className='skills-nav' role='tablist' aria-label='技能导航'>
