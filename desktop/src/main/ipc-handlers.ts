@@ -1038,6 +1038,18 @@ export function registerIpcHandlers(
     }
   })
 
+  /** 通用文件/目录选择对话框 */
+  ipcMain.handle('dialog:openFile', async (_event, options?: { filters?: Electron.FileFilter[]; properties?: string[] }) => {
+    const win = BrowserWindow.getFocusedWindow()
+    const result = await dialog.showOpenDialog(win ?? BrowserWindow.getAllWindows()[0], {
+      title: options?.properties?.includes('openDirectory') ? '选择目录' : '选择文件',
+      properties: (options?.properties as Electron.OpenDialogOptions['properties']) ?? ['openFile'],
+      filters: options?.filters
+    })
+    if (result.canceled || result.filePaths.length === 0) return { canceled: true }
+    return { canceled: false, filePaths: result.filePaths }
+  })
+
   // ========== Live2D 桌面宠物窗口 ==========
 
   /** Live2D 宠物窗口引用 */

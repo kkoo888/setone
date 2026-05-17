@@ -11,6 +11,8 @@ export function KnowledgeBasePage() {
   const [activeTab, setActiveTab] = useState<'docs' | 'search' | 'ask'>('docs')
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
+  const [showImportDialog, setShowImportDialog] = useState(false)
+  const [importMode, setImportMode] = useState<'file' | 'folder'>('file')
 
   const loadDocuments = useCallback(async () => {
     try {
@@ -64,6 +66,22 @@ export function KnowledgeBasePage() {
     } catch { /* ignore */ }
   }
 
+  const handleBrowse = async (mode: 'file' | 'folder') => {
+    try {
+      const properties = mode === 'folder' ? ['openDirectory'] : ['openFile']
+      const filters = mode === 'file' ? [
+        { name: '文档', extensions: ['txt', 'md', 'pdf', 'doc', 'docx', 'json', 'csv'] },
+        { name: '代码', extensions: ['js', 'ts', 'tsx', 'jsx', 'py', 'java', 'c', 'cpp', 'h', 'css', 'html'] },
+        { name: '所有文件', extensions: ['*'] }
+      ] : undefined
+      const result = await window.electronAPI.invoke('dialog:openFile', { properties, filters }) as { canceled?: boolean; filePaths?: string[] }
+      if (!result?.canceled && result?.filePaths?.[0]) {
+        setImportPath(result.filePaths[0])
+        setShowImportDialog(false)
+      }
+    } catch { /* ignore */ }
+  }
+
   return (
     <div className="kb-page">
       <div className="kb-header">
@@ -84,8 +102,11 @@ export function KnowledgeBasePage() {
         <div className="kb-section">
           <div className="kb-import-bar">
             <input value={importPath} onChange={e => setImportPath(e.target.value)}
-              placeholder="输入文件或目录路径..." className="kb-input" />
-            <button onClick={handleImport} disabled={loading} className="btn btn-primary">
+              placeholder="输入文件或目录路径，或点击浏览选择..." className="kb-input" />
+            <button onClick={() => setShowImportDialog(true)} className="btn btn-secondary">
+              📂 浏览
+            </button>
+            <button onClick={handleImport} disabled={loading || !importPath.trim()} className="btn btn-primary">
               {loading ? '导入中...' : '📥 导入'}
             </button>
           </div>
@@ -154,6 +175,56 @@ export function KnowledgeBasePage() {
               )}
             </div>
           )}
+        </div>
+      )}
+
+      {showImportDialog && (
+        <div className="dialog-overlay" onClick={() => setShowImportDialog(false)}>
+          <div className="dialog-panel" onClick={e => e.stopPropagation()}>
+            <div className="dialog-header">
+              <h2>导入到知识库</h2>
+              <button className="dialog-close" onClick={() => setShowImportDialog(false)}>✕</button>
+            </div>
+            <div className="dialog-body">
+              <div className="import-mode-tabs">
+                <button
+                  className={`tab-btn ${importMode === 'file' ? 'active' : ''}`}
+                  onClick={() => setImportMode('file')}
+                >
+                  📄 选择文件
+                </button>
+                <button
+                  className={`tab-btn ${importMode === 'folder' ? 'active' : ''}`}
+                  onClick={() => setImportMode('folder')}
+                >
+                  📁 选择文件夹
+                </button>
+              </div>
+              <div className="import-browse-area">
+                <p className="import-hint">
+                  {importMode === 'file'
+                    ? '选择要导入的文件（支持 txt、md、pdf、doc、代码文件等）'
+                    : '选择要导入的文件夹，文件夹内的所有文档将被导入'}
+                </p>
+                <button className="btn btn-primary" onClick={() => handleBrowse(importMode)}>
+                  {importMode === 'file' ? '📂 选择文件' : '📂 选择文件夹'}
+                </button>
+                {importPath && (
+                  <p className="import-selected">已选择：{importPath}</p>
+                )}
+              </div>
+            </div>
+            <div className="dialog-footer">
+              <button className="btn btn-secondary" onClick={() => setShowImportDialog(false)}>取消</button>
+              <button
+                className="btn btn-primary"
+                onClick={handleImport}
+                disabled={loading || !importPath.trim()}
+              >
+                {loading ? '导入中...' : '确认导入'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
