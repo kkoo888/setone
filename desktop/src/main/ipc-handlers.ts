@@ -1083,7 +1083,7 @@ export function registerIpcHandlers(
       },
     })
 
-    // 初始关闭鼠标穿透，等模型加载完成后开启
+    // 初始关闭鼠标穿透，等模型加载完成后由渲染进程动态控制
     live2dWindow.setIgnoreMouseEvents(false)
 
     // 开发模式加载 dev server，生产模式加载文件
@@ -1095,8 +1095,8 @@ export function registerIpcHandlers(
       })
     }
 
-    // 允许鼠标穿透（点击透明区域时忽略）
-    live2dWindow.setIgnoreMouseEvents(true, { forward: true })
+    // 注意：不在这里开启鼠标穿透，由渲染进程根据鼠标是否在模型上来动态控制
+    // 解决鼠标穿透导致无法点击宠物的问题
 
     // 页面加载失败时记录日志
     live2dWindow.webContents.on('did-fail-load', (_event, errorCode, errorDescription) => {

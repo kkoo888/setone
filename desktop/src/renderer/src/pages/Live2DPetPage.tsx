@@ -38,6 +38,72 @@ const Live2DPetPage: React.FC = () => {
     }
   }, [])
 
+  // ========== 鼠标穿透动态控制 ==========
+  // 鼠标在 Live2D 模型（非透明像素）上时禁用穿透，离开模型时恢复穿透
+  const isOverModelRef = useRef(false)
+  const lastCheckTimeRef = useRef(0)
+
+  useEffect(() => {
+    const container = containerRef.current
+    if (!container) return
+
+    // WebGL canvas 像素缓存，避免每次 mousemove 都 drawImage
+    let tmpCanvas: HTMLCanvasElement | null = null
+    let tmpCtx: CanvasRenderingContext2D | null = null
+
+    const checkPixelHit = (e: MouseEvent): boolean => {
+      const canvas = container.querySelector('canvas')
+      if (!canvas) return false
+      const rect = canvas.getBoundingClientRect()
+      const x = Math.floor(e.clientX - rect.left)
+      const y = Math.floor(e.clientY - rect.top)
+      if (x < 0 || y < 0 || x >= canvas.width || y >= canvas.height) return false
+      try {
+        // 创建或复用临时 canvas 读取 WebGL 像素
+        if (!tmpCanvas || tmpCanvas.width !== canvas.width || tmpCanvas.height !== canvas.height) {
+          tmpCanvas = document.createElement('canvas')
+          tmpCanvas.width = canvas.width
+          tmpCanvas.height = canvas.height
+          tmpCtx = tmpCanvas.getContext('2d')
+        }
+        if (!tmpCtx) return false
+        tmpCtx.drawImage(canvas, 0, 0)
+        const pixel = tmpCtx.getImageData(x, y, 1, 1).data
+        return pixel[3] > 10 // alpha > 10 视为非透明
+      } catch {
+        return false
+      }
+    }
+
+    const handleMouseMove = (e: MouseEvent) => {
+      // 节流：每 50ms 检测一次像素
+      const now = Date.now()
+      if (now - lastCheckTimeRef.current < 50) return
+      lastCheckTimeRef.current = now
+
+      const overModel = checkPixelHit(e)
+      if (overModel === isOverModelRef.current) return
+      isOverModelRef.current = overModel
+      // 通知主进程切换鼠标穿透状态
+      window.electronAPI.invoke('live2d:set-ignore-mouse', !overModel).catch(() => {})
+    }
+
+    const handleMouseLeave = () => {
+      if (!isOverModelRef.current) return
+      isOverModelRef.current = false
+      window.electronAPI.invoke('live2d:set-ignore-mouse', true).catch(() => {})
+    }
+
+    container.addEventListener('mousemove', handleMouseMove)
+    container.addEventListener('mouseleave', handleMouseLeave)
+    return () => {
+      container.removeEventListener('mousemove', handleMouseMove)
+      container.removeEventListener('mouseleave', handleMouseLeave)
+      tmpCanvas = null
+      tmpCtx = null
+    }
+  }, [])
+
   // 加载超时
   useEffect(() => {
     const timer = setTimeout(() => {
