@@ -20,6 +20,7 @@ export function TranslatorPage() {
   const [favorites, setFavorites] = useState<TranslationRecord[]>([])
   const [activeTab, setActiveTab] = useState<'translate' | 'history' | 'favorites'>('translate')
   const [loading, setLoading] = useState(false)
+  const [modalRecord, setModalRecord] = useState<TranslationRecord | null>(null)
 
   const loadHistory = useCallback(async () => {
     try {
@@ -69,14 +70,14 @@ export function TranslatorPage() {
   }
 
   const renderRecord = (r: TranslationRecord) => (
-    <div key={r.id} className="trans-record">
+    <div key={r.id} className="trans-record" onClick={() => setModalRecord(r)} style={{ cursor: 'pointer' }}>
       <div className="trans-record-header">
         <span className="trans-lang-badge">{LANGS[r.sourceLang] ?? r.sourceLang} → {LANGS[r.targetLang] ?? r.targetLang}</span>
         <div className="trans-record-actions">
-          <button onClick={() => handleToggleFavorite(r.id)} className="btn-icon" title="收藏">
+          <button onClick={(e) => { e.stopPropagation(); handleToggleFavorite(r.id) }} className="btn-icon" title="收藏">
             {r.isFavorite ? '⭐' : '☆'}
           </button>
-          <button onClick={() => handleDelete(r.id)} className="btn-icon" title="删除">🗑</button>
+          <button onClick={(e) => { e.stopPropagation(); handleDelete(r.id) }} className="btn-icon" title="删除">🗑</button>
         </div>
       </div>
       <div className="trans-record-pair">
@@ -150,6 +151,49 @@ export function TranslatorPage() {
           {favorites.length === 0 ? <div className="trans-empty">暂无收藏</div> : (
             <div className="trans-history-list">{favorites.map(renderRecord)}</div>
           )}
+        </div>
+      )}
+
+      {/* 详情弹窗 */}
+      {modalRecord && (
+        <div className="trans-modal-overlay" onClick={() => setModalRecord(null)}>
+          <div className="trans-modal" onClick={e => e.stopPropagation()}>
+            <div className="trans-modal-header">
+              <h3 className="trans-modal-title">翻译详情</h3>
+              <button className="trans-modal-close" onClick={() => setModalRecord(null)}>✕</button>
+            </div>
+            <div className="trans-modal-body">
+              <div className="trans-modal-panel">
+                <label>原文</label>
+                <div className="trans-modal-text">{modalRecord.sourceText}</div>
+              </div>
+              <div className="trans-modal-panel">
+                <label>译文</label>
+                <div className="trans-modal-text">{modalRecord.translatedText}</div>
+              </div>
+            </div>
+            <div className="trans-modal-footer">
+              <span className="trans-modal-lang">
+                {LANGS[modalRecord.sourceLang] ?? modalRecord.sourceLang} → {LANGS[modalRecord.targetLang] ?? modalRecord.targetLang}
+              </span>
+              <div className="trans-modal-actions">
+                <button className="trans-modal-btn" onClick={() => {
+                  navigator.clipboard.writeText(modalRecord.sourceText)
+                }}>📋 复制原文</button>
+                <button className="trans-modal-btn" onClick={() => {
+                  navigator.clipboard.writeText(modalRecord.translatedText)
+                }}>📋 复制译文</button>
+                <button className="trans-modal-btn" onClick={() => {
+                  handleToggleFavorite(modalRecord.id)
+                  setModalRecord({ ...modalRecord, isFavorite: !modalRecord.isFavorite })
+                }}>{modalRecord.isFavorite ? '⭐ 取消收藏' : '☆ 收藏'}</button>
+                <button className="trans-modal-btn trans-modal-btn-danger" onClick={() => {
+                  handleDelete(modalRecord.id)
+                  setModalRecord(null)
+                }}>🗑 删除</button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
