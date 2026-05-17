@@ -1,4 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
+import { ModuleHeader } from '../../components/common/module/ModuleHeader'
+import { ModuleToolbar, FilterButtons } from '../../components/common/module/ModuleToolbar'
+import { ModuleList, ModuleListItem, ModuleModal } from '../../components/common/module/ModuleList'
 
 interface Snippet { id: string; title: string; language: string; code: string; description: string; tags: string[]; createdAt: number; usageCount: number }
 
@@ -55,53 +58,75 @@ export function CodeSnippetsPage() {
     return true
   })
 
+  const langOptions = allLangs.map(l => ({ key: l, label: l === 'all' ? '全部语言' : l }))
+
   return (
-    <div className="snip-page">
-      <div className="snip-header">
-        <h1>✂️ 代码片段</h1>
-        <button onClick={() => { setShowCreate(true); setEditId(null); setForm({ title: '', language: 'javascript', code: '', description: '', tags: '' }) }} className="btn btn-primary">＋ 新建片段</button>
-      </div>
-      <div className="snip-toolbar">
-        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="搜索..." className="snip-search" />
-        <select value={langFilter} onChange={e => setLangFilter(e.target.value)} className="snip-select">
-          {allLangs.map(l => <option key={l} value={l}>{l === 'all' ? '全部语言' : l}</option>)}
-        </select>
-      </div>
+    <div className="mod-page">
+      <ModuleHeader
+        icon="✂️"
+        title="代码片段"
+        actions={
+          <button onClick={() => { setShowCreate(true); setEditId(null); setForm({ title: '', language: 'javascript', code: '', description: '', tags: '' }) }} className="btn btn-primary">
+            ＋ 新建片段
+          </button>
+        }
+      />
+
+      <ModuleToolbar search={search} onSearchChange={setSearch} searchPlaceholder="搜索代码片段...">
+        <FilterButtons options={langOptions} active={langFilter} onChange={setLangFilter} />
+      </ModuleToolbar>
+
+      {/* 新建/编辑表单 */}
       {showCreate && (
-        <div className="snip-create-form">
-          <input value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} placeholder="标题" className="snip-input" />
-          <select value={form.language} onChange={e => setForm(p => ({ ...p, language: e.target.value }))} className="snip-select">
-            {['javascript', 'typescript', 'python', 'java', 'go', 'rust', 'c', 'cpp', 'html', 'css', 'sql', 'shell', 'json', 'yaml', 'markdown'].map(l => <option key={l} value={l}>{l}</option>)}
-          </select>
-          <textarea value={form.code} onChange={e => setForm(p => ({ ...p, code: e.target.value }))} placeholder="代码内容..." className="snip-code-input" rows={8} />
-          <input value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))} placeholder="描述" className="snip-input" />
-          <input value={form.tags} onChange={e => setForm(p => ({ ...p, tags: e.target.value }))} placeholder="标签（逗号分隔）" className="snip-input" />
-          <div className="snip-form-actions">
-            <button onClick={handleSave} className="btn btn-primary">{editId ? '更新' : '保存'}</button>
-            <button onClick={() => { setShowCreate(false); setEditId(null) }} className="btn">取消</button>
+        <ModuleModal title={editId ? '编辑片段' : '新建片段'} onClose={() => { setShowCreate(false); setEditId(null) }} footer={
+          <>
+            <button className="btn" onClick={() => { setShowCreate(false); setEditId(null) }}>取消</button>
+            <button className="btn btn-primary" onClick={handleSave}>{editId ? '更新' : '保存'}</button>
+          </>
+        }>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <input value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} placeholder="标题" className="mod-search" style={{ maxWidth: 'none' }} />
+            <select value={form.language} onChange={e => setForm(p => ({ ...p, language: e.target.value }))} style={{ padding: '8px 12px', border: '1px solid var(--color-border)', borderRadius: 8, background: '#fff', fontSize: 13 }}>
+              {['javascript', 'typescript', 'python', 'java', 'go', 'rust', 'c', 'cpp', 'html', 'css', 'sql', 'shell', 'json', 'yaml', 'markdown'].map(l => <option key={l} value={l}>{l}</option>)}
+            </select>
+            <textarea value={form.code} onChange={e => setForm(p => ({ ...p, code: e.target.value }))} placeholder="代码内容..." rows={10} style={{ padding: '12px 14px', border: '1px solid var(--color-border)', borderRadius: 8, background: '#fff', fontSize: 13, fontFamily: 'var(--font-mono)', lineHeight: 1.6, resize: 'vertical' }} />
+            <input value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))} placeholder="描述" className="mod-search" style={{ maxWidth: 'none' }} />
+            <input value={form.tags} onChange={e => setForm(p => ({ ...p, tags: e.target.value }))} placeholder="标签（逗号分隔）" className="mod-search" style={{ maxWidth: 'none' }} />
           </div>
-        </div>
+        </ModuleModal>
       )}
-      <div className="snip-list">
-        {filtered.length === 0 ? <div className="snip-empty">暂无代码片段</div> : filtered.map(s => (
-          <div key={s.id} className="snip-card">
-            <div className="snip-card-header">
-              <span className="snip-title">{s.title}</span>
-              <span className="snip-lang">{s.language}</span>
-              <span className="snip-usage">使用 {s.usageCount} 次</span>
-            </div>
-            {s.description && <div className="snip-desc">{s.description}</div>}
-            <pre className="snip-code"><code>{s.code.slice(0, 300)}{s.code.length > 300 ? '...' : ''}</code></pre>
-            {s.tags.length > 0 && <div className="snip-tags">{s.tags.map(t => <span key={t} className="snip-tag">{t}</span>)}</div>}
-            <div className="snip-actions">
-              <button onClick={() => handleCopy(s.code)} className="btn btn-sm">📋 复制</button>
-              <button onClick={() => handleUse(s.id)} className="btn btn-primary btn-sm">▶ 使用</button>
-              <button onClick={() => handleEdit(s)} className="btn btn-sm">✏️ 编辑</button>
-              <button onClick={() => handleDelete(s.id)} className="btn btn-danger btn-sm">🗑</button>
-            </div>
-          </div>
+
+      <ModuleList emptyText="暂无代码片段" emptyIcon="✂️">
+        {filtered.map(s => (
+          <ModuleListItem
+            key={s.id}
+            id={s.id}
+            title={s.title}
+            badge={<span style={{ fontSize: 11, color: 'var(--color-accent)', background: 'rgba(99,102,241,0.1)', padding: '1px 6px', borderRadius: 4 }}>{s.language}</span>}
+            subtitle={s.description || s.code.slice(0, 150)}
+            extra={
+              <>
+                <pre style={{ margin: '4px 0', padding: 10, background: 'var(--color-bg-secondary)', borderRadius: 6, fontSize: 12, lineHeight: 1.5, fontFamily: 'var(--font-mono)', overflow: 'hidden', maxHeight: 120, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                  <code>{s.code.slice(0, 300)}{s.code.length > 300 ? '...' : ''}</code>
+                </pre>
+                {s.tags.length > 0 && (
+                  <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 4 }}>
+                    {s.tags.map(t => <span key={t} style={{ fontSize: 11, padding: '1px 6px', borderRadius: 4, background: 'var(--color-bg-tertiary)', color: 'var(--color-text-secondary)' }}>{t}</span>)}
+                  </div>
+                )}
+              </>
+            }
+            actions={
+              <>
+                <button onClick={(e) => { e.stopPropagation(); handleCopy(s.code) }} className="btn-icon-lg" title="复制">📋</button>
+                <button onClick={(e) => { e.stopPropagation(); handleUse(s.id) }} className="btn-icon-lg" title="使用">▶</button>
+                <button onClick={(e) => { e.stopPropagation(); handleEdit(s) }} className="btn-icon-lg" title="编辑">✏️</button>
+                <button onClick={(e) => { e.stopPropagation(); handleDelete(s.id) }} className="btn-icon-lg" title="删除">🗑</button>
+              </>
+            }
+          />
         ))}
-      </div>
+      </ModuleList>
     </div>
   )
 }

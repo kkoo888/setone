@@ -1,4 +1,6 @@
 import React, { useState, useCallback } from 'react'
+import { ModuleHeader } from '../../components/common/module/ModuleHeader'
+import { ModuleList, ModuleListItem } from '../../components/common/module/ModuleList'
 
 interface PreviewResult { path: string; content: string; type: string; size: number; modified: number }
 
@@ -38,47 +40,53 @@ export function QuickPreviewPage() {
   const isText = ['txt', 'log', 'csv', 'xml', 'ini', 'cfg', 'conf', 'env'].includes(ext)
 
   return (
-    <div className="preview-page">
-      <div className="preview-header">
-        <h1>👁 快速预览</h1>
-      </div>
-      <div className="preview-toolbar">
-        <input value={filePath} onChange={e => setFilePath(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && handlePreview()}
-          placeholder="输入文件路径..." className="preview-input" />
+    <div className="mod-page">
+      <ModuleHeader icon="👁" title="快速预览" />
+
+      <div style={{ padding: '12px 24px', display: 'flex', gap: 8, borderTop: '1px solid var(--color-border)' }}>
+        <input value={filePath} onChange={e => setFilePath(e.target.value)} onKeyDown={e => e.key === 'Enter' && handlePreview()} placeholder="输入文件路径..." className="mod-search" style={{ maxWidth: 'none', flex: 1 }} />
         <button onClick={() => handlePreview()} disabled={loading} className="btn btn-primary">
           {loading ? '加载中...' : '👁 预览'}
         </button>
         <button onClick={handleOpenFile} className="btn">📂 浏览</button>
       </div>
-      {error && <div className="preview-error">{error}</div>}
+
+      {error && (
+        <div style={{ padding: '0 24px', color: 'var(--color-error)', fontSize: 13 }}>{error}</div>
+      )}
+
       {preview && (
-        <div className="preview-content">
-          <div className="preview-meta">
+        <div style={{ padding: '0 24px 24px', flex: 1, overflow: 'auto' }}>
+          <div style={{ display: 'flex', gap: 16, fontSize: 12, color: 'var(--color-text-tertiary)', marginBottom: 12, paddingBottom: 12, borderBottom: '1px solid var(--color-border)' }}>
             <span>📄 {preview.path.split('/').pop()}</span>
             <span>{(preview.size / 1024).toFixed(1)} KB</span>
             <span>{new Date(preview.modified).toLocaleString()}</span>
           </div>
-          <div className="preview-body">
+          <div style={{ background: 'var(--color-bg-primary)', border: '1px solid var(--color-border)', borderRadius: 8, padding: 16, overflow: 'auto' }}>
             {isImage ? (
-              <img src={`file://${preview.path}`} alt={preview.path} className="preview-image" />
+              <img src={`file://${preview.path}`} alt={preview.path} style={{ maxWidth: '100%', borderRadius: 4 }} />
             ) : isCode || isText ? (
-              <pre className="preview-code"><code>{preview.content}</code></pre>
+              <pre style={{ margin: 0, fontSize: 13, lineHeight: 1.6, fontFamily: 'var(--font-mono)', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}><code>{preview.content}</code></pre>
             ) : (
-              <pre className="preview-text">{preview.content}</pre>
+              <pre style={{ margin: 0, fontSize: 13, lineHeight: 1.6, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{preview.content}</pre>
             )}
           </div>
         </div>
       )}
+
       {recentFiles.length > 0 && (
-        <div className="preview-recent">
-          <h3>最近预览</h3>
+        <ModuleList emptyText="" emptyIcon="">
           {recentFiles.map(f => (
-            <div key={f} className="preview-recent-item" onClick={() => { setFilePath(f); handlePreview(f) }}>
-              📄 {f}
-            </div>
+            <ModuleListItem
+              key={f}
+              id={f}
+              icon="📄"
+              title={f.split('/').pop() ?? f}
+              subtitle={f}
+              onClick={() => { setFilePath(f); handlePreview(f) }}
+            />
           ))}
-        </div>
+        </ModuleList>
       )}
     </div>
   )
