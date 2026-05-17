@@ -113,6 +113,25 @@ export class Live2DManager implements ILive2DManager {
     console.log('[Live2D] 🚀 开始加载模型:', config.name)
     this.updateStatus('loading' as Live2DStatus)
 
+    // 整体超时保护：30秒后如果还没加载完成，强制报错
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new Error('模型加载超时（30秒），请检查网络或模型文件')), 30000)
+    })
+
+    const loadPromise = this._loadModelInternal(config, container)
+
+    try {
+      await Promise.race([loadPromise, timeoutPromise])
+    } catch (err) {
+      const message = err instanceof Error ? err.message : '加载 Live2D 模型失败'
+      console.error('[Live2D] ❌ 加载失败:', message)
+      this.updateStatus('error' as Live2DStatus)
+      throw new Error(message)
+    }
+  }
+
+  private async _loadModelInternal(config: Live2DModelConfig, container?: HTMLElement): Promise<void> {
+
     try {
       // 步骤1: 等待 Cubism SDK 加载（最多等 10 秒）
       console.log('[Live2D] ⏳ 等待 Cubism 4 Core SDK...')

@@ -65,9 +65,9 @@
 
 /* ─── 左侧预览区 ─── */
 .live2d-preview-section {
-  flex: 1 1 400px;
-  min-width: 300px;
-  max-width: 500px;
+  flex: 0 0 280px;
+  min-width: 240px;
+  max-width: 320px;
 }
 
 .live2d-preview-card {

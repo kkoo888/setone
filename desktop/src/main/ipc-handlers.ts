@@ -1075,7 +1075,9 @@ export function registerIpcHandlers(
     if (process.env.VITE_DEV_SERVER_URL) {
       live2dWindow.loadURL(`${process.env.VITE_DEV_SERVER_URL}#/live2d-pet`)
     } else {
-      live2dWindow.loadFile(join(__dirname, '../renderer/index.html'))
+      live2dWindow.loadFile(join(__dirname, '../renderer/index.html'), {
+        hash: '#/live2d-pet',
+      })
     }
 
     // 允许鼠标穿透（点击透明区域时忽略）
