@@ -75,7 +75,7 @@ function Live2DPageContent() {
               <Live2DCanvas
                 key={retryKey}
                 width="100%"
-                height={400}
+                height="100%"
                 onReady={() => console.log('[Live2DPage] 模型就绪')}
                 onError={(msg) => console.error('[Live2DPage] 模型加载失败:', msg)}
               />
