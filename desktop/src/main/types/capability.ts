@@ -6,6 +6,8 @@ export interface Capability {
   priority: number
   moduleId: string
   handler?: CapabilityHandler
+  /** 工具参数 JSON Schema（仅 tool 类型有效，用于 LLM 工具调用） */
+  parameters?: Record<string, unknown>
 }
 
 /** 工具类型能力的执行函数 */

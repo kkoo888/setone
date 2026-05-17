@@ -4,6 +4,7 @@
  */
 import React, { useState, useCallback, useEffect } from 'react'
 import { useLive2DContext } from '../components/live2d/Live2DContext'
+import { Live2DCanvas } from '../components/live2d/Live2DCanvas'
 import { Live2DStatus } from '../components/live2d/types/live2d'
 
 export function Live2DPage() {
@@ -63,25 +64,12 @@ export function Live2DPage() {
         <div className="live2d-preview-section">
           <div className="live2d-preview-card">
             <div className="live2d-preview-image">
-              {isLoaded ? (
-                <div className="live2d-preview-loaded">
-                  <span className="live2d-preview-icon">🐱</span>
-                  <span className="live2d-preview-text">Hiyori 模型已加载</span>
-                </div>
-              ) : isError ? (
-                <div className="live2d-preview-error">
-                  <span className="live2d-preview-icon">😿</span>
-                  <span className="live2d-preview-text">模型加载失败</span>
-                  <span className="live2d-preview-hint">
-                    请确认已安装 pixi.js 和 pixi-live2d-display
-                  </span>
-                </div>
-              ) : (
-                <div className="live2d-preview-placeholder">
-                  <span className="live2d-preview-icon">🐱</span>
-                  <span className="live2d-preview-text">加载中...</span>
-                </div>
-              )}
+              <Live2DCanvas
+                width="100%"
+                height={400}
+                onReady={() => console.log('[Live2DPage] 模型就绪')}
+                onError={(msg) => console.error('[Live2DPage] 模型加载失败:', msg)}
+              />
             </div>
             <div className="live2d-preview-info">
               <h3 className="live2d-model-name">Hiyori</h3>

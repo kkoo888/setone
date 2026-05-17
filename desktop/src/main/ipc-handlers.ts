@@ -15,6 +15,7 @@ import type { DatabaseManager as ConcreteDatabaseManager } from './core/database
 import type { ModuleManager } from './core/module-manager'
 import type { PerformanceMonitor } from './core/performance-monitor'
 import type { ToolDefinition, ToolCall } from './types/ai'
+import { getToolParamSchema } from './core/tool-param-schemas'
 import { SoulManager } from './core/soul-manager'
 import { readAssistantNameFromSoul } from './core/soul-reader'
 
@@ -476,13 +477,13 @@ export function registerIpcHandlers(
           // 跳过元工具（工具注册/路由等），避免循环调用
           if (['tool_register', 'tool_execute', 'tool_list', 'tool_route'].includes(cap.name)) continue
 
-          const schema = TOOL_PARAM_SCHEMAS[cap.name]
+          // 优先级：模块自定义参数 > 静态映射表 > 空 schema
           tools.push({
             type: 'function',
             function: {
               name: cap.name,
               description: cap.description || `模块 ${reg.meta.id} 的 ${cap.name} 能力`,
-              parameters: schema ?? { type: 'object', properties: {}, required: [] }
+              parameters: cap.parameters ?? getToolParamSchema(cap.name)
             }
           })
         }
@@ -491,245 +492,6 @@ export function registerIpcHandlers(
       }
     }
     return tools
-  }
-
-  /** 工具参数 schema 映射表（为没有自带 schema 的模块提供参数定义） */
-  const TOOL_PARAM_SCHEMAS: Record<string, Record<string, unknown>> = {
-    // 文件操作
-    file_read: {
-      type: 'object',
-      properties: { path: { type: 'string', description: '文件路径（绝对路径或相对路径）' } },
-      required: ['path']
-    },
-    file_write: {
-      type: 'object',
-      properties: {
-        path: { type: 'string', description: '文件路径' },
-        content: { type: 'string', description: '要写入的内容' }
-      },
-      required: ['path', 'content']
-    },
-    file_list: {
-      type: 'object',
-      properties: { path: { type: 'string', description: '目录路径' } },
-      required: ['path']
-    },
-    file_watch: {
-      type: 'object',
-      properties: { path: { type: 'string', description: '要监听的文件或目录路径' } },
-      required: ['path']
-    },
-    // 记忆系统
-    memory_save: {
-      type: 'object',
-      properties: {
-        content: { type: 'string', description: '记忆内容' },
-        type: { type: 'string', enum: ['short-term', 'long-term'], description: '记忆类型' },
-        tags: { type: 'array', items: { type: 'string' }, description: '标签列表' }
-      },
-      required: ['content']
-    },
-    memory_search: {
-      type: 'object',
-      properties: {
-        query: { type: 'string', description: '搜索关键词' },
-        limit: { type: 'number', description: '返回数量上限' }
-      },
-      required: ['query']
-    },
-    memory_delete: {
-      type: 'object',
-      properties: { id: { type: 'string', description: '记忆 ID' } },
-      required: ['id']
-    },
-    // 知识库
-    kb_import: {
-      type: 'object',
-      properties: {
-        path: { type: 'string', description: '文件或目录路径' },
-        recursive: { type: 'boolean', description: '是否递归扫描子目录' }
-      },
-      required: ['path']
-    },
-    kb_search: {
-      type: 'object',
-      properties: {
-        query: { type: 'string', description: '搜索查询' },
-        limit: { type: 'number', description: '返回数量' }
-      },
-      required: ['query']
-    },
-    kb_list: { type: 'object', properties: {}, required: [] },
-    kb_delete: {
-      type: 'object',
-      properties: { id: { type: 'string', description: '文档 ID' } },
-      required: ['id']
-    },
-    kb_ask: {
-      type: 'object',
-      properties: {
-        question: { type: 'string', description: '要提问的问题' },
-        limit: { type: 'number', description: '检索相关片段数量' }
-      },
-      required: ['question']
-    },
-    // 屏幕
-    screen_capture: {
-      type: 'object',
-      properties: {
-        display: { type: 'number', description: '显示器索引（0 为主显示器）' }
-      },
-      required: []
-    },
-    screen_ocr: {
-      type: 'object',
-      properties: {
-        image: { type: 'string', description: 'Base64 编码的图片（不传则截取当前屏幕）' }
-      },
-      required: []
-    },
-    // 视觉
-    vision_start: { type: 'object', properties: {}, required: [] },
-    vision_stop: { type: 'object', properties: {}, required: [] },
-    vision_analyze: {
-      type: 'object',
-      properties: { prompt: { type: 'string', description: '分析提示词' } },
-      required: []
-    },
-    // 提醒 & 天气
-    reminder_add: {
-      type: 'object',
-      properties: {
-        title: { type: 'string', description: '提醒标题' },
-        time: { type: 'string', description: '提醒时间（ISO 8601 或自然语言如"明天早上9点"）' },
-        repeat: { type: 'string', enum: ['none', 'daily', 'weekly', 'monthly'], description: '重复频率' }
-      },
-      required: ['title', 'time']
-    },
-    reminder_list: { type: 'object', properties: {}, required: [] },
-    reminder_toggle: {
-      type: 'object',
-      properties: {
-        id: { type: 'string', description: '提醒 ID' },
-        enabled: { type: 'boolean', description: '是否启用' }
-      },
-      required: ['id', 'enabled']
-    },
-    weather_check: {
-      type: 'object',
-      properties: {
-        city: { type: 'string', description: '城市名称（如"北京"）' }
-      },
-      required: []
-    },
-    // 翻译
-    translate_text: {
-      type: 'object',
-      properties: {
-        text: { type: 'string', description: '要翻译的文本' },
-        from: { type: 'string', description: '源语言（如 zh, en, ja）' },
-        to: { type: 'string', description: '目标语言' }
-      },
-      required: ['text', 'to']
-    },
-    translate_detect: {
-      type: 'object',
-      properties: { text: { type: 'string', description: '要检测语言的文本' } },
-      required: ['text']
-    },
-    translate_history: { type: 'object', properties: {}, required: [] },
-    translate_favorites: { type: 'object', properties: {}, required: [] },
-    // 任务
-    task_create: {
-      type: 'object',
-      properties: {
-        title: { type: 'string', description: '任务标题' },
-        description: { type: 'string', description: '任务描述' },
-        priority: { type: 'string', enum: ['low', 'medium', 'high'], description: '优先级' }
-      },
-      required: ['title']
-    },
-    task_execute: {
-      type: 'object',
-      properties: { id: { type: 'string', description: '任务 ID' } },
-      required: ['id']
-    },
-    task_list: { type: 'object', properties: {}, required: [] },
-    // 输入模拟
-    mouse_move: {
-      type: 'object',
-      properties: {
-        x: { type: 'number', description: 'X 坐标' },
-        y: { type: 'number', description: 'Y 坐标' }
-      },
-      required: ['x', 'y']
-    },
-    mouse_click: {
-      type: 'object',
-      properties: {
-        x: { type: 'number', description: 'X 坐标' },
-        y: { type: 'number', description: 'Y 坐标' },
-        button: { type: 'string', enum: ['left', 'right', 'middle'], description: '鼠标按键' }
-      },
-      required: ['x', 'y']
-    },
-    keyboard_type: {
-      type: 'object',
-      properties: { text: { type: 'string', description: '要输入的文本' } },
-      required: ['text']
-    },
-    keyboard_shortcut: {
-      type: 'object',
-      properties: { keys: { type: 'string', description: '快捷键组合（如 "ctrl+c", "alt+tab"）' } },
-      required: ['keys']
-    },
-    // 通知 & 快捷键
-    notify: {
-      type: 'object',
-      properties: {
-        title: { type: 'string', description: '通知标题' },
-        body: { type: 'string', description: '通知内容' }
-      },
-      required: ['title']
-    },
-    hotkey_register: {
-      type: 'object',
-      properties: {
-        accelerator: { type: 'string', description: '快捷键（如 "CommandOrControl+Shift+K"）' },
-        action: { type: 'string', description: '触发时执行的动作标识' }
-      },
-      required: ['accelerator', 'action']
-    },
-    // 工作流
-    workflow_create: {
-      type: 'object',
-      properties: {
-        name: { type: 'string', description: '工作流名称' },
-        steps: { type: 'array', description: '工作流步骤列表' }
-      },
-      required: ['name', 'steps']
-    },
-    workflow_execute: {
-      type: 'object',
-      properties: { id: { type: 'string', description: '工作流 ID' } },
-      required: ['id']
-    },
-    workflow_list: { type: 'object', properties: {}, required: [] },
-    workflow_delete: {
-      type: 'object',
-      properties: { id: { type: 'string', description: '工作流 ID' } },
-      required: ['id']
-    },
-    workflow_pause: {
-      type: 'object',
-      properties: { id: { type: 'string', description: '工作流 ID' } },
-      required: ['id']
-    },
-    workflow_log: {
-      type: 'object',
-      properties: { id: { type: 'string', description: '工作流 ID' } },
-      required: ['id']
-    }
   }
 
   /**
