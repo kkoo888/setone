@@ -26,12 +26,46 @@ const Live2DPetPage: React.FC = () => {
 
     const loadModel = async () => {
       try {
-        // 获取模型资源路径（开发模式用相对路径）
-        const resourcesPath = '/src/renderer/src/assets/live2d/hiyori'
+        // 等待 Cubism Core 加载完成（HTML 中已有 script 标签）
+        for (let i = 0; i < 20; i++) {
+          if ((window as any).Live2DCubismCore) break
+          await new Promise(r => setTimeout(r, 250))
+        }
+        if (!(window as any).Live2DCubismCore) {
+          throw new Error('Live2DCubismCore 未加载，请检查 public/lib/live2dcubismcore.min.js')
+        }
 
+        // 防止 live2d-easy-control 重复从 CDN 加载 Cubism Core
+        // 如果 core 已存在，拦截 createElement('script') 阻止 CDN 请求
+        const origCreate = document.createElement.bind(document)
+        const coreReady = (window as any).Live2DCubismCore
+        if (coreReady) {
+          (document as any).createElement = function(tag: string) {
+            const el = origCreate(tag)
+            if (tag === 'script') {
+              const origSetSrc = Object.getOwnPropertyDescriptor(HTMLScriptElement.prototype, 'src')?.set
+              if (origSetSrc) {
+                Object.defineProperty(el, 'src', {
+                  set(val: string) {
+                    if (val.includes('live2dcubismcore')) {
+                      // 跳过 CDN 加载，直接触发 onload
+                      setTimeout(() => el.dispatchEvent(new Event('load')), 0)
+                      return
+                    }
+                    origSetSrc.call(el, val)
+                  },
+                  get() { return el.getAttribute('src') ?? '' }
+                })
+              }
+            }
+            return el
+          }
+        }
+
+        // 模型资源路径：public/live2d/hiyori/ → Vite 开发服务器提供
         await live2dEasyControl.load({
           modelDir: 'Hiyori',
-          resourcesPath,
+          resourcesPath: '/live2d/hiyori',
           canvasSize: 'auto',
           canvasWidth: '100vw',
           canvasHeight: '100vh',
@@ -50,6 +84,11 @@ const Live2DPetPage: React.FC = () => {
           debugLogEnable: false,
           debugTouchLogEnable: false,
         })
+
+        // 恢复原始 createElement
+        if (coreReady) {
+          (document as any).createElement = origCreate
+        }
 
         if (cancelled) return
         setReady(true)
