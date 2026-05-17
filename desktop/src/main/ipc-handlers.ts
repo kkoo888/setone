@@ -2,7 +2,7 @@
  * IPC 处理器注册
  * 处理渲染进程的 invoke 请求
  */
-import { ipcMain, BrowserWindow, dialog } from 'electron'
+import { ipcMain, BrowserWindow, dialog, globalShortcut } from 'electron'
 import { execFile } from 'node:child_process'
 import { join } from 'node:path'
 import { readdir, stat, readFile } from 'node:fs/promises'
@@ -1166,6 +1166,57 @@ export function registerIpcHandlers(
     if (!live2dWindow || live2dWindow.isDestroyed()) return
     live2dWindow.setPosition(args.x, args.y)
     return true
+  })
+
+  // ========== 全局快捷键 IPC ==========
+
+  /** 已注册的快捷键映射 accelerator → callback */
+  const registeredHotkeys = new Map<string, () => void>()
+
+  /** 注册全局快捷键 */
+  ipcMain.handle('hotkey_register', async (_event, args: { accelerator: string; description?: string }) => {
+    try {
+      const { accelerator } = args
+      // 如果已注册，先注销
+      if (registeredHotkeys.has(accelerator)) {
+        globalShortcut.unregister(accelerator)
+        registeredHotkeys.delete(accelerator)
+      }
+      const cb = () => {
+        const win = BrowserWindow.getAllWindows()[0]
+        if (win) {
+          win.webContents.send('hotkey:triggered', { accelerator })
+        }
+      }
+      globalShortcut.register(accelerator, cb)
+      registeredHotkeys.set(accelerator, cb)
+      logger.info(`快捷键注册成功: ${accelerator}`)
+      return { success: true }
+    } catch (err) {
+      logger.warn(`快捷键注册失败: ${args.accelerator}`, err as Error)
+      return { success: false, error: (err as Error).message }
+    }
+  })
+
+  /** 注销全局快捷键 */
+  ipcMain.handle('hotkey_unregister', async (_event, args: { accelerator: string }) => {
+    try {
+      const { accelerator } = args
+      if (registeredHotkeys.has(accelerator)) {
+        globalShortcut.unregister(accelerator)
+        registeredHotkeys.delete(accelerator)
+        logger.info(`快捷键已注销: ${accelerator}`)
+      }
+      return { success: true }
+    } catch (err) {
+      logger.warn(`快捷键注销失败: ${args.accelerator}`, err as Error)
+      return { success: false, error: (err as Error).message }
+    }
+  })
+
+  /** 列出已注册的快捷键 */
+  ipcMain.handle('hotkey_list', async () => {
+    return Array.from(registeredHotkeys.keys())
   })
 
   // ========== SOUL 人格系统 ==========

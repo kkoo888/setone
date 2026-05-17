@@ -89,50 +89,67 @@ export function TranslatorPage() {
 
   return (
     <div className="trans-page">
+      {/* 标题栏：标题左上，tabs 右侧对齐标题底边，分割线贯穿 */}
       <div className="trans-header">
-        <h1>🌐 翻译面板</h1>
+        <div className="trans-header-left">
+          <span className="trans-header-icon">🌐</span>
+          <h1 className="trans-title">翻译面板</h1>
+        </div>
         <div className="trans-tabs">
           {(['translate', 'history', 'favorites'] as const).map(tab => (
-            <button key={tab} className={`tab-btn ${activeTab === tab ? 'active' : ''}`}
+            <button key={tab} className={`trans-tab ${activeTab === tab ? 'active' : ''}`}
               onClick={() => setActiveTab(tab)}>
-              {tab === 'translate' ? '翻译' : tab === 'history' ? '📋 历史' : '⭐ 收藏'}
+              {tab === 'translate' ? '翻译' : tab === 'history' ? '历史' : '收藏'}
             </button>
           ))}
         </div>
       </div>
+      <div className="trans-header-divider" />
 
       {activeTab === 'translate' && (
-        <div className="trans-section">
+        <div className="trans-content">
           <div className="trans-lang-bar">
             <select value={sourceLang} onChange={e => setSourceLang(e.target.value)} className="trans-select">
               {Object.entries(LANGS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
             </select>
-            <button onClick={handleSwapLangs} className="btn-icon" title="交换语言">⇄</button>
+            <button onClick={handleSwapLangs} className="trans-swap-btn" title="交换语言">⇄</button>
             <select value={targetLang} onChange={e => setTargetLang(e.target.value)} className="trans-select">
               {Object.entries(LANGS).filter(([k]) => k !== 'auto').map(([k, v]) => <option key={k} value={k}>{v}</option>)}
             </select>
           </div>
-          <div className="trans-io">
-            <textarea value={sourceText} onChange={e => setSourceText(e.target.value)}
-              placeholder="输入待翻译文本..." className="trans-textarea" rows={6} />
-            <textarea value={translatedText} readOnly placeholder="翻译结果..."
-              className="trans-textarea trans-result" rows={6} />
+          <div className="trans-panels">
+            <div className="trans-panel">
+              <label>原文</label>
+              <textarea value={sourceText} onChange={e => setSourceText(e.target.value)}
+                placeholder="输入待翻译文本..." className="trans-textarea" rows={8} />
+            </div>
+            <div className="trans-panel">
+              <label>译文</label>
+              <textarea value={translatedText} readOnly placeholder="翻译结果..."
+                className="trans-textarea" rows={8} />
+            </div>
           </div>
-          <button onClick={handleTranslate} disabled={loading || !sourceText.trim()} className="btn btn-primary">
-            {loading ? '翻译中...' : '🌐 翻译'}
-          </button>
+          <div className="trans-btn-row">
+            <button onClick={handleTranslate} disabled={loading || !sourceText.trim()} className="trans-translate-btn">
+              {loading ? '翻译中...' : '🌐 翻译'}
+            </button>
+          </div>
         </div>
       )}
 
       {activeTab === 'history' && (
-        <div className="trans-section">
-          {history.length === 0 ? <div className="trans-empty">暂无翻译历史</div> : history.map(renderRecord)}
+        <div className="trans-content">
+          {history.length === 0 ? <div className="trans-empty">暂无翻译历史</div> : (
+            <div className="trans-history-list">{history.map(renderRecord)}</div>
+          )}
         </div>
       )}
 
       {activeTab === 'favorites' && (
-        <div className="trans-section">
-          {favorites.length === 0 ? <div className="trans-empty">暂无收藏</div> : favorites.map(renderRecord)}
+        <div className="trans-content">
+          {favorites.length === 0 ? <div className="trans-empty">暂无收藏</div> : (
+            <div className="trans-history-list">{favorites.map(renderRecord)}</div>
+          )}
         </div>
       )}
     </div>

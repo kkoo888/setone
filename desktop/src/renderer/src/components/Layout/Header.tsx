@@ -2,6 +2,9 @@ import React from 'react'
 import { useTheme } from '../../hooks/useTheme'
 import { useAppStore } from '../../stores/useAppStore'
 
+/** 页面自带标题的页面列表（Header 不再显示标题，避免重复） */
+const PAGES_WITH_OWN_TITLE = new Set(['translator'])
+
 const panelTitles: Record<string, string> = { chat: '智能对话', settings: '设置', modules: '模块管理' }
 
 export function Header() {
@@ -10,9 +13,10 @@ export function Header() {
   const showChangesPanel = useAppStore((s) => s.showChangesPanel)
   const setShowChangesPanel = useAppStore((s) => s.setShowChangesPanel)
   const { theme, setTheme } = useTheme()
+  const showTitle = !PAGES_WITH_OWN_TITLE.has(activePanel ?? 'chat')
   return (
     <header className="header">
-      <h1 className="header-title">{panelTitles[activePanel ?? 'chat'] ?? '智能助手'}</h1>
+      {showTitle && <h1 className="header-title">{panelTitles[activePanel ?? 'chat'] ?? '智能助手'}</h1>}
       <div className="header-actions">
         <select className="theme-select" value={theme} onChange={(e) => setTheme(e.target.value as 'light' | 'dark' | 'system')} aria-label="主题切换">
           <option value="system">跟随系统</option>
