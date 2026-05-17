@@ -12,11 +12,8 @@ const Live2DPetPage: React.FC = () => {
   const [ready, setReady] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loadingTimeout, setLoadingTimeout] = useState(false)
-  const [isDragging, setIsDragging] = useState(false)
   const [showResizeUI, setShowResizeUI] = useState(false)
-  const dragStartRef = useRef<{ x: number; y: number; winX: number; winY: number } | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
-  const isDraggingRef = useRef(false)
 
   const handleReady = useCallback(() => setReady(true), [])
   const handleError = useCallback((msg: string) => setError(msg), [])
@@ -39,16 +36,17 @@ const Live2DPetPage: React.FC = () => {
     }
   }, [])
 
-  // ========== 鼠标穿透动态控制 ==========
-  const isOverModelRef = useRef(false)
-  const lastCheckTimeRef = useRef(0)
-
+  // ========== 统一鼠标处理（原生DOM事件） ==========
   useEffect(() => {
     const container = containerRef.current
     if (!container) return
 
     let tmpCanvas: HTMLCanvasElement | null = null
     let tmpCtx: CanvasRenderingContext2D | null = null
+    let isOverModel = false
+    let isDragging = false
+    let dragStart: { x: number; y: number; winX: number; winY: number } | null = null
+    let lastCheckTime = 0
 
     const checkPixelHit = (e: MouseEvent): boolean => {
       const canvas = container.querySelector('canvas')
@@ -73,39 +71,121 @@ const Live2DPetPage: React.FC = () => {
       }
     }
 
-    const handleMouseMove = (e: MouseEvent) => {
-      // 拖拽中不切换穿透状态
-      if (isDraggingRef.current) return
-      const now = Date.now()
-      if (now - lastCheckTimeRef.current < 50) return
-      lastCheckTimeRef.current = now
+    // 统一 mousedown 处理
+    const onMouseDown = async (e: MouseEvent) => {
+      // 右键 → 切换菜单
+      if (e.button === 2) return // contextmenu 单独处理
 
-      const overModel = checkPixelHit(e)
-      if (overModel === isOverModelRef.current) return
-      isOverModelRef.current = overModel
-      window.electronAPI.invoke('live2d:set-ignore-mouse', !overModel).catch(() => {})
-    }
+      // 左键拖拽
+      if (e.button === 0) {
+        // 先确保取消穿透
+        await window.electronAPI.invoke('live2d:set-ignore-mouse', false).catch(() => {})
 
-    const handleMouseDown = (e: MouseEvent) => {
-      // 点击时确保取消穿透，让事件能被接收
-      if (isOverModelRef.current) {
-        window.electronAPI.invoke('live2d:set-ignore-mouse', false).catch(() => {})
+        // 检查是否在模型上
+        const overModel = checkPixelHit(e)
+        if (!overModel) return
+
+        isDragging = true
+        try {
+          const bounds = await window.electronAPI.invoke('live2d:get-bounds')
+          if (bounds) {
+            dragStart = { x: e.screenX, y: e.screenY, winX: bounds.x, winY: bounds.y }
+          }
+        } catch { /* ignore */ }
       }
     }
 
-    const handleMouseLeave = () => {
-      if (!isOverModelRef.current) return
-      isOverModelRef.current = false
-      window.electronAPI.invoke('live2d:set-ignore-mouse', true).catch(() => {})
+    // 统一 mousemove 处理
+    const onMouseMove = async (e: MouseEvent) => {
+      // 拖拽中 → 移动窗口
+      if (isDragging && dragStart) {
+        const dx = e.screenX - dragStart.x
+        const dy = e.screenY - dragStart.y
+        try {
+          await window.electronAPI.invoke('live2d:set-position', {
+            x: dragStart.winX + dx,
+            y: dragStart.winY + dy,
+          })
+        } catch { /* ignore */ }
+        return
+      }
+
+      // 非拖拽 → 像素检测控制穿透
+      const now = Date.now()
+      if (now - lastCheckTime < 50) return
+      lastCheckTime = now
+
+      const overModel = checkPixelHit(e)
+      if (overModel !== isOverModel) {
+        isOverModel = overModel
+        window.electronAPI.invoke('live2d:set-ignore-mouse', !overModel).catch(() => {})
+      }
     }
 
-    container.addEventListener('mousemove', handleMouseMove)
-    container.addEventListener('mousedown', handleMouseDown)
-    container.addEventListener('mouseleave', handleMouseLeave)
+    // 统一 mouseup 处理
+    const onMouseUp = () => {
+      if (isDragging) {
+        isDragging = false
+        dragStart = null
+      }
+    }
+
+    // mouseleave → 恢复穿透
+    const onMouseLeave = () => {
+      if (isDragging) {
+        isDragging = false
+        dragStart = null
+      }
+      if (isOverModel) {
+        isOverModel = false
+        window.electronAPI.invoke('live2d:set-ignore-mouse', true).catch(() => {})
+      }
+    }
+
+    // 滚轮缩放
+    const onWheel = async (e: WheelEvent) => {
+      e.preventDefault()
+      try {
+        const bounds = await window.electronAPI.invoke('live2d:get-bounds')
+        if (!bounds) return
+        const delta = e.deltaY > 0 ? -20 : 20
+        const aspectRatio = bounds.width / bounds.height
+        const newWidth = Math.max(150, Math.min(600, bounds.width + delta))
+        const newHeight = Math.max(200, Math.min(800, Math.round(newWidth / aspectRatio)))
+        await window.electronAPI.invoke('live2d:set-size', { width: newWidth, height: newHeight })
+      } catch { /* ignore */ }
+    }
+
+    // 右键菜单
+    const onContextMenu = (e: MouseEvent) => {
+      e.preventDefault()
+      setShowResizeUI(v => !v)
+    }
+
+    // 全局 mouseup（防止鼠标移出窗口时拖拽卡住）
+    const onGlobalMouseUp = () => {
+      if (isDragging) {
+        isDragging = false
+        dragStart = null
+      }
+    }
+
+    container.addEventListener('mousedown', onMouseDown)
+    container.addEventListener('mousemove', onMouseMove)
+    container.addEventListener('mouseup', onMouseUp)
+    container.addEventListener('mouseleave', onMouseLeave)
+    container.addEventListener('wheel', onWheel, { passive: false })
+    container.addEventListener('contextmenu', onContextMenu)
+    window.addEventListener('mouseup', onGlobalMouseUp)
+
     return () => {
-      container.removeEventListener('mousemove', handleMouseMove)
-      container.removeEventListener('mousedown', handleMouseDown)
-      container.removeEventListener('mouseleave', handleMouseLeave)
+      container.removeEventListener('mousedown', onMouseDown)
+      container.removeEventListener('mousemove', onMouseMove)
+      container.removeEventListener('mouseup', onMouseUp)
+      container.removeEventListener('mouseleave', onMouseLeave)
+      container.removeEventListener('wheel', onWheel)
+      container.removeEventListener('contextmenu', onContextMenu)
+      window.removeEventListener('mouseup', onGlobalMouseUp)
       tmpCanvas = null
       tmpCtx = null
     }
@@ -118,68 +198,6 @@ const Live2DPetPage: React.FC = () => {
     }, 15000)
     return () => clearTimeout(timer)
   }, [ready, error])
-
-  // ========== 拖拽移动 ==========
-  const handleMouseDown = useCallback(async (e: React.MouseEvent) => {
-    if (e.button !== 0) return
-    const target = e.target as HTMLElement
-    if (target.closest('.pet-resize-handle') || target.closest('.pet-resize-menu')) return
-
-    setIsDragging(true)
-    isDraggingRef.current = true
-    // 拖拽开始时确保穿透关闭
-    window.electronAPI.invoke('live2d:set-ignore-mouse', false).catch(() => {})
-    try {
-      const bounds = await window.electronAPI.invoke('live2d:get-bounds')
-      if (bounds) {
-        dragStartRef.current = {
-          x: e.screenX,
-          y: e.screenY,
-          winX: bounds.x,
-          winY: bounds.y,
-        }
-      }
-    } catch { /* ignore */ }
-  }, [])
-
-  const handleMouseMove = useCallback(async (e: React.MouseEvent) => {
-    if (!isDragging || !dragStartRef.current) return
-    const dx = e.screenX - dragStartRef.current.x
-    const dy = e.screenY - dragStartRef.current.y
-    try {
-      await window.electronAPI.invoke('live2d:set-position', {
-        x: dragStartRef.current.winX + dx,
-        y: dragStartRef.current.winY + dy,
-      })
-    } catch { /* ignore */ }
-  }, [isDragging])
-
-  const handleMouseUp = useCallback(() => {
-    if (!isDragging) return
-    setIsDragging(false)
-    isDraggingRef.current = false
-    dragStartRef.current = null
-  }, [isDragging])
-
-  // ========== 滚轮缩放 ==========
-  const handleWheel = useCallback(async (e: React.WheelEvent) => {
-    e.preventDefault()
-    try {
-      const bounds = await window.electronAPI.invoke('live2d:get-bounds')
-      if (!bounds) return
-      const delta = e.deltaY > 0 ? -20 : 20
-      const aspectRatio = bounds.width / bounds.height
-      const newWidth = Math.max(150, Math.min(600, bounds.width + delta))
-      const newHeight = Math.max(200, Math.min(800, Math.round(newWidth / aspectRatio)))
-      await window.electronAPI.invoke('live2d:set-size', { width: newWidth, height: newHeight })
-    } catch { /* ignore */ }
-  }, [])
-
-  // ========== 右键菜单 ==========
-  const handleContextMenu = useCallback((e: React.MouseEvent) => {
-    e.preventDefault()
-    setShowResizeUI((v) => !v)
-  }, [])
 
   // ========== 预设尺寸 ==========
   const handlePresetSize = useCallback(async (width: number, height: number) => {
@@ -201,15 +219,9 @@ const Live2DPetPage: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          cursor: isDragging ? 'grabbing' : 'grab',
+          cursor: 'grab',
           userSelect: 'none',
         }}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
-        onWheel={handleWheel}
-        onContextMenu={handleContextMenu}
       >
         {!ready && !error && (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, pointerEvents: 'none' }}>
@@ -233,7 +245,6 @@ const Live2DPetPage: React.FC = () => {
         {/* 右键菜单 */}
         {showResizeUI && (
           <div
-            className="pet-resize-menu"
             style={{
               position: 'fixed',
               bottom: 60,
@@ -262,7 +273,6 @@ const Live2DPetPage: React.FC = () => {
             ].map((preset) => (
               <button
                 key={preset.label}
-                className="pet-resize-handle"
                 onClick={() => void handlePresetSize(preset.w, preset.h)}
                 style={{
                   background: 'rgba(255,255,255,0.08)',
@@ -294,7 +304,7 @@ const Live2DPetPage: React.FC = () => {
         )}
 
         {/* 操作提示 */}
-        {ready && !isDragging && (
+        {ready && (
           <div
             style={{
               position: 'fixed',
