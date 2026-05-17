@@ -8,7 +8,7 @@ export const Live2DFallback: React.FC<Live2DFallbackProps> = ({ errorMessage, on
       <div className="fallback-icon" aria-hidden="true">🤖</div>
       <p className="fallback-message">{message}</p>
       {errorMessage && <p className="fallback-error" title={errorMessage}>{errorMessage.length > 100 ? `${errorMessage.slice(0, 100)}...` : errorMessage}</p>}
-      {onRetry && <button className="fallback-retry-btn" onClick={onRetry}>重新加载</button>}
+      {onRetry && <button className="fallback-retry-btn" onClick={onRetry}>🔄 重新加载</button>}
     </div>
   )
 }

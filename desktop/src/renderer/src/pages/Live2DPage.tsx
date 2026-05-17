@@ -3,13 +3,15 @@
  * 展示当前 Live2D 形象预览、桌面宠物开关
  */
 import React, { useState, useCallback, useEffect } from 'react'
-import { useLive2DContext } from '../components/live2d/Live2DContext'
+import { Live2DProvider, useLive2DContext } from '../components/live2d/Live2DContext'
 import { Live2DCanvas } from '../components/live2d/Live2DCanvas'
 import { Live2DStatus } from '../components/live2d/types/live2d'
 
-export function Live2DPage() {
-  const { state } = useLive2DContext()
+/** Live2D 页面内部内容（必须在 Live2DProvider 内部使用） */
+function Live2DPageContent() {
+  const { state, reset } = useLive2DContext()
   const [petEnabled, setPetEnabled] = useState(false)
+  const [retryKey, setRetryKey] = useState(0)
 
   /** 检查宠物窗口是否已打开 */
   useEffect(() => {
@@ -46,6 +48,12 @@ export function Live2DPage() {
   const isLoaded = state.status === Live2DStatus.LOADED
   const isError = state.status === Live2DStatus.ERROR
 
+  /** 重试加载 */
+  const handleRetry = useCallback(() => {
+    reset()
+    setRetryKey((k) => k + 1)
+  }, [reset])
+
   return (
     <div className="live2d-page">
       {/* 顶部标题 */}
@@ -65,6 +73,7 @@ export function Live2DPage() {
           <div className="live2d-preview-card">
             <div className="live2d-preview-image">
               <Live2DCanvas
+                key={retryKey}
                 width="100%"
                 height={400}
                 onReady={() => console.log('[Live2DPage] 模型就绪')}
@@ -122,6 +131,13 @@ export function Live2DPage() {
                 <li>确保 <code>public/lib/live2dcubismcore.min.js</code> 存在</li>
                 <li>重启应用后重试</li>
               </ol>
+              <button
+                className="btn btn-primary"
+                style={{ marginTop: 12 }}
+                onClick={handleRetry}
+              >
+                🔄 重新加载
+              </button>
             </div>
           )}
 
@@ -156,6 +172,18 @@ export function Live2DPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+/**
+ * Live2D 管理页面（带 Provider 包裹）
+ * 将 Live2DProvider 限制在页面级别，避免错误时影响全局布局
+ */
+export function Live2DPage() {
+  return (
+    <Live2DProvider>
+      <Live2DPageContent />
+    </Live2DProvider>
   )
 }
 

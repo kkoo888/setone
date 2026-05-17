@@ -15,10 +15,8 @@ interface Live2DCanvasProps {
 /** 默认模型配置 */
 const DEFAULT_MODEL_CONFIG = {
   name: 'Hiyori',
-  modelPath: new URL(
-    '../../assets/live2d/hiyori/Hiyori.model3.json',
-    import.meta.url
-  ).href,
+  // Vite 会通过 import.meta.url 正确处理 public/ 下的静态资源
+  modelPath: new URL('/live2d/hiyori/Hiyori.model3.json', import.meta.url).href,
   scale: 0.18,
   offsetX: 0.5,
   offsetY: 0.5,
@@ -52,9 +50,8 @@ export const Live2DCanvas: React.FC<Live2DCanvasProps> = ({
       console.log('[Live2DCanvas] 模型路径:', DEFAULT_MODEL_CONFIG.modelPath)
       console.log('[Live2DCanvas] 容器尺寸:', container.clientWidth, 'x', container.clientHeight)
 
-      // 加载模型，传入容器用于挂载 canvas
-      await managerRef.current.loadModel(DEFAULT_MODEL_CONFIG, container)
-      await loadModel(DEFAULT_MODEL_CONFIG)
+      // 只通过 context 的 loadModel 加载（传入容器用于挂载 canvas）
+      await loadModel(DEFAULT_MODEL_CONFIG, container)
 
       console.log('[Live2DCanvas] 🎉 初始化完成')
     } catch (err) {
@@ -62,7 +59,7 @@ export const Live2DCanvas: React.FC<Live2DCanvasProps> = ({
       console.error('[Live2DCanvas] ❌ 初始化失败:', message)
       onError?.(message)
     }
-  }, [loadModel, onError])
+  }, [onError])
 
   useEffect(() => {
     initModel()
@@ -119,7 +116,29 @@ export const Live2DCanvas: React.FC<Live2DCanvasProps> = ({
         backgroundColor: 'transparent',
       }}
       data-status={state.status}
-    />
+    >
+      {state.status === Live2DStatus.LOADING && (
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 12,
+          zIndex: 1,
+        }}>
+          <div style={{
+            width: 32, height: 32,
+            border: '3px solid rgba(255,255,255,0.2)',
+            borderTopColor: '#a78bfa',
+            borderRadius: '50%',
+            animation: 'spin 0.8s linear infinite',
+          }} />
+          <span style={{ fontSize: 13, color: '#a78bfa' }}>加载 Live2D 模型中...</span>
+        </div>
+      )}
+    </div>
   )
 }
 

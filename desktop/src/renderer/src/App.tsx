@@ -2,8 +2,6 @@ import { useEffect } from 'react'
 import { ErrorBoundary } from './components/common/ErrorBoundary'
 import { MainLayout } from './components/Layout/MainLayout'
 import { ToastContainer } from './components/common/Toast'
-import { Live2DProvider } from './components/live2d/Live2DContext'
-import { Live2DFallback } from './components/live2d/Live2DFallback'
 import { SoulOnboarding } from './components/soul/SoulOnboarding'
 import { useAppStore } from './stores/useAppStore'
 import { useSettingsStore } from './stores/useSettingsStore'
@@ -47,9 +45,7 @@ function AppContent() {
 
   return (
     <>
-      <Live2DProvider fallback={<Live2DFallback />}>
-        <MainLayout />
-      </Live2DProvider>
+      <MainLayout />
       <ToastContainer />
       {showOnboarding && <SoulOnboarding />}
     </>

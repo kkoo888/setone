@@ -39,7 +39,7 @@ function live2DReducer(state: Live2DState, action: Live2DAction): Live2DState {
 
 interface Live2DContextValue {
   state: Live2DState
-  loadModel: (config: Live2DModelConfig) => Promise<void>
+  loadModel: (config: Live2DModelConfig, container?: HTMLElement) => Promise<void>
   setExpression: (expressionId: string) => Promise<void>
   playMotion: (motionId: string) => Promise<void>
   toggleMouseTracking: () => void
@@ -58,10 +58,10 @@ export function Live2DProvider({ children, fallback }: { children: ReactNode; fa
     return () => { manager.destroy() }
   }, [])
 
-  const loadModel = useCallback(async (config: Live2DModelConfig) => {
+  const loadModel = useCallback(async (config: Live2DModelConfig, container?: HTMLElement) => {
     try {
       dispatch({ type: 'SET_ERROR', payload: null })
-      await managerRef.current.loadModel(config)
+      await managerRef.current.loadModel(config, container)
       dispatch({ type: 'SET_MODEL', payload: config })
     } catch (error) {
       dispatch({ type: 'SET_ERROR', payload: error instanceof Error ? error.message : '加载失败' })
