@@ -19,12 +19,6 @@
   border-bottom: 1px solid var(--color-border);
 }
 
-/* 有标签页时去掉头部底边线，避免和标签底线重叠变粗 */
-.mod-header:has(.mod-tabs) {
-  border-bottom: none;
-  padding-bottom: 0;
-}
-
 .mod-header-left {
   display: flex;
   align-items: center;
@@ -61,9 +55,6 @@
   display: flex;
   gap: 4px;
   align-items: flex-end;
-  border-bottom: 1px solid var(--color-border);
-  padding-bottom: 0;
-  margin-bottom: 0;
 }
 
 .mod-tab {
