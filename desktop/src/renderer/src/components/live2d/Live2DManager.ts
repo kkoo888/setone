@@ -197,7 +197,8 @@ export class Live2DManager implements ILive2DManager {
       // 步骤5: 加载 Live2D 模型
       console.log('[Live2D] 📦 加载模型文件:', config.modelPath)
       this.model = await live2dModule.Live2DModel.from(config.modelPath, {
-        autoInteract: false,
+        autoHitTest: false,
+        autoFocus: false,
       })
       console.log('[Live2D] ✅ 模型加载成功')
 

@@ -59,17 +59,16 @@ export const Live2DCanvas: React.FC<Live2DCanvasProps> = ({
       console.error('[Live2DCanvas] ❌ 初始化失败:', message)
       onError?.(message)
     }
-  }, [onError])
+    // 注意：onError 不加入依赖，避免父组件重渲染导致 effect 重跑
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   useEffect(() => {
     initModel()
 
-    return () => {
-      if (initializedRef.current) {
-        managerRef.current.destroy()
-        initializedRef.current = false
-      }
-    }
+    // 不在 cleanup 中销毁单例 manager，避免竞态条件：
+    // 父组件重渲染 → initModel 引用变化 → cleanup 销毁正在工作的 PIXI App
+    // 单例 manager 的生命周期由应用整体管理，不由单个组件控制
   }, [initModel])
 
   /** 监听状态变化触发回调 */
