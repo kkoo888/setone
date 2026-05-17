@@ -16,6 +16,7 @@
   justify-content: space-between;
   padding: 15px 24px 10px;
   flex-shrink: 0;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .mod-header-left {
@@ -93,11 +94,6 @@
   text-align: center;
 }
 
-/* ─── 头部分割线 ─── */
-.mod-header + .mod-toolbar {
-  border-top: 1px solid var(--color-border);
-}
-
 /* ─── 工具栏 ─── */
 .mod-toolbar {
   display: flex;
@@ -106,7 +102,6 @@
   padding: 12px 24px;
   gap: 12px;
   flex-shrink: 0;
-  border-top: 1px solid var(--color-border);
 }
 
 .mod-toolbar-left {
