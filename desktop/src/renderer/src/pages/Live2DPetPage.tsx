@@ -64,10 +64,10 @@ const Live2DPetPage: React.FC = () => {
 
         // 模型资源路径：
         // 库拼接方式: resourcesPath + modelDir + "/"
-        // 目录结构:   public/live2d/hiyori/Hiyori.model3.json
-        // 所以: resourcesPath='/live2d/'  modelDir='hiyori'
+        // 目录结构:   public/live2d/Hiyori/Hiyori.model3.json
+        // 所以: resourcesPath='/live2d/'  modelDir='Hiyori'
         await live2dEasyControl.load({
-          modelDir: 'hiyori',
+          modelDir: 'Hiyori',
           resourcesPath: '/live2d/',
           canvasSize: 'auto',
           canvasWidth: '100vw',

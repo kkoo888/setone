@@ -16,7 +16,7 @@ interface Live2DCanvasProps {
 const DEFAULT_MODEL_CONFIG = {
   name: 'Hiyori',
   // Vite 会通过 import.meta.url 正确处理 public/ 下的静态资源
-  modelPath: new URL('/live2d/hiyori/Hiyori.model3.json', import.meta.url).href,
+  modelPath: new URL('/live2d/Hiyori/Hiyori.model3.json', import.meta.url).href,
   scale: 0.08,
   offsetX: 0.5,
   offsetY: 0.5,
