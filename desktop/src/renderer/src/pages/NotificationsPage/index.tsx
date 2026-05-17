@@ -1,10 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react'
+import { ModuleHeader } from '../../components/common/module/ModuleHeader'
+import { ModuleToolbar, FilterButtons } from '../../components/common/module/ModuleToolbar'
+import { ModuleList, ModuleListItem } from '../../components/common/module/ModuleList'
 
 interface Notification { id: string; title: string; body: string; type: 'info' | 'success' | 'warning' | 'error'; read: boolean; createdAt: number }
 
+const TYPE_ICON: Record<string, string> = { info: 'ℹ️', success: '✅', warning: '⚠️', error: '❌' }
+
 export function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([])
-  const [filter, setFilter] = useState<'all' | 'unread' | 'info' | 'success' | 'warning' | 'error'>('all')
+  const [filter, setFilter] = useState('all')
 
   const loadNotifications = useCallback(async () => {
     try {
@@ -31,48 +36,57 @@ export function NotificationsPage() {
     try { await window.electronAPI.invoke('notify', { title: '测试通知', body: '这是一条测试通知' }); loadNotifications() } catch { /* ignore */ }
   }
 
+  const unreadCount = notifications.filter(n => !n.read).length
+
   const filtered = notifications.filter(n => {
     if (filter === 'unread') return !n.read
     if (['info', 'success', 'warning', 'error'].includes(filter)) return n.type === filter
     return true
   })
 
-  const unreadCount = notifications.filter(n => !n.read).length
-  const icon = (type: string) => ({ info: 'ℹ️', success: '✅', warning: '⚠️', error: '❌' }[type] ?? 'ℹ️')
-
   return (
-    <div className="notif-page">
-      <div className="notif-header">
-        <h1>🔔 通知中心</h1>
-        <div className="notif-header-actions">
-          {unreadCount > 0 && <span className="notif-badge">{unreadCount}</span>}
-          <button onClick={handleMarkAllRead} className="btn btn-sm">全部已读</button>
-          <button onClick={handleTest} className="btn btn-sm">🔔 测试</button>
-        </div>
-      </div>
-      <div className="notif-filters">
-        {(['all', 'unread', 'info', 'success', 'warning', 'error'] as const).map(f => (
-          <button key={f} className={`tab-btn ${filter === f ? 'active' : ''}`} onClick={() => setFilter(f)}>
-            {f === 'all' ? '全部' : f === 'unread' ? '未读' : f}
-          </button>
+    <div className="mod-page">
+      <ModuleHeader
+        icon="🔔"
+        title="通知中心"
+        tabs={[
+          { key: 'all', label: '全部' },
+          { key: 'unread', label: '未读', count: unreadCount },
+          { key: 'info', label: '信息' },
+          { key: 'success', label: '成功' },
+          { key: 'warning', label: '警告' },
+          { key: 'error', label: '错误' },
+        ]}
+        activeTab={filter}
+        onTabChange={setFilter}
+        actions={
+          <>
+            <button onClick={handleMarkAllRead} className="btn btn-sm">全部已读</button>
+            <button onClick={handleTest} className="btn btn-sm">🔔 测试</button>
+          </>
+        }
+      />
+
+      <ModuleList emptyText="暂无通知" emptyIcon="🔔">
+        {filtered.map(n => (
+          <ModuleListItem
+            key={n.id}
+            id={n.id}
+            highlight={!n.read}
+            icon={<span style={{ fontSize: 18 }}>{TYPE_ICON[n.type] ?? 'ℹ️'}</span>}
+            title={n.title}
+            subtitle={n.body}
+            badge={!n.read ? <span style={{ fontSize: 10, background: 'var(--color-accent)', color: '#fff', padding: '1px 6px', borderRadius: 12 }}>新</span> : undefined}
+            actions={
+              <>
+                {!n.read && <button onClick={() => handleMarkRead(n.id)} className="btn-icon-lg" title="已读">✓</button>}
+                <button onClick={() => handleDelete(n.id)} className="btn-icon-lg" title="删除">🗑</button>
+              </>
+            }
+            extra={<span style={{ fontSize: 11, color: 'var(--color-text-tertiary)' }}>{new Date(n.createdAt).toLocaleString()}</span>}
+          />
         ))}
-      </div>
-      <div className="notif-list">
-        {filtered.length === 0 ? <div className="notif-empty">暂无通知</div> : filtered.map(n => (
-          <div key={n.id} className={`notif-item ${!n.read ? 'notif-unread' : ''}`}>
-            <span className="notif-icon">{icon(n.type)}</span>
-            <div className="notif-body">
-              <div className="notif-title">{n.title}</div>
-              <div className="notif-text">{n.body}</div>
-              <div className="notif-time">{new Date(n.createdAt).toLocaleString()}</div>
-            </div>
-            <div className="notif-actions">
-              {!n.read && <button onClick={() => handleMarkRead(n.id)} className="btn btn-sm">已读</button>}
-              <button onClick={() => handleDelete(n.id)} className="btn btn-danger btn-sm">🗑</button>
-            </div>
-          </div>
-        ))}
-      </div>
+      </ModuleList>
     </div>
   )
 }

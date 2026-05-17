@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
+import { ModuleHeader } from '../../components/common/module/ModuleHeader'
+import { ModuleList, ModuleListItem } from '../../components/common/module/ModuleList'
 
 interface Session { id: string; name: string; model: string; messageCount: number; createdAt: number; lastActiveAt: number; pinned: boolean }
 
@@ -47,55 +49,46 @@ export function MultiSessionPage() {
   const pinned = sessions.filter(s => s.pinned)
   const unpinned = sessions.filter(s => !s.pinned)
 
+  const renderSession = (s: Session) => (
+    <ModuleListItem
+      key={s.id}
+      id={s.id}
+      highlight={activeId === s.id}
+      onClick={() => handleSwitch(s.id)}
+      icon={s.pinned ? '📌' : '💬'}
+      title={s.name}
+      subtitle={`${s.model} · ${s.messageCount} 条消息`}
+      actions={
+        <>
+          <button onClick={(e) => { e.stopPropagation(); handlePin(s.id) }} className="btn-icon-lg" title="固定">{s.pinned ? '📌' : '📍'}</button>
+          <button onClick={(e) => { e.stopPropagation(); handleRename(s.id) }} className="btn-icon-lg" title="重命名">✏️</button>
+          <button onClick={(e) => { e.stopPropagation(); handleDelete(s.id) }} className="btn-icon-lg" title="删除">🗑</button>
+        </>
+      }
+    />
+  )
+
   return (
-    <div className="sess-page">
-      <div className="sess-header">
-        <h1>💬 多会话管理</h1>
-        <button onClick={() => setShowCreate(true)} className="btn btn-primary">＋ 新建会话</button>
-      </div>
+    <div className="mod-page">
+      <ModuleHeader
+        icon="💬"
+        title="多会话管理"
+        actions={<button onClick={() => setShowCreate(true)} className="btn btn-primary">＋ 新建会话</button>}
+      />
+
       {showCreate && (
-        <div className="sess-create-form">
-          <input value={newName} onChange={e => setNewName(e.target.value)} placeholder="会话名称" className="sess-input" />
-          <input value={newModel} onChange={e => setNewModel(e.target.value)} placeholder="模型（可选）" className="sess-input" />
-          <div className="sess-form-actions">
-            <button onClick={handleCreate} className="btn btn-primary">创建</button>
-            <button onClick={() => setShowCreate(false)} className="btn">取消</button>
-          </div>
+        <div style={{ padding: '0 24px 16px', display: 'flex', gap: 8, animation: 'scSlideDown 0.2s ease' }}>
+          <input value={newName} onChange={e => setNewName(e.target.value)} placeholder="会话名称" className="mod-search" />
+          <input value={newModel} onChange={e => setNewModel(e.target.value)} placeholder="模型（可选）" className="mod-search" />
+          <button onClick={handleCreate} className="btn btn-primary">创建</button>
+          <button onClick={() => setShowCreate(false)} className="btn">取消</button>
         </div>
       )}
-      {pinned.length > 0 && (
-        <div className="sess-section">
-          <h3>📌 已固定</h3>
-          {pinned.map(s => (
-            <div key={s.id} className={`sess-item ${activeId === s.id ? 'sess-active' : ''}`} onClick={() => handleSwitch(s.id)}>
-              <div className="sess-info">
-                <span className="sess-name">{s.name}</span>
-                <span className="sess-meta">{s.model} · {s.messageCount} 条消息</span>
-              </div>
-              <div className="sess-actions" onClick={e => e.stopPropagation()}>
-                <button onClick={() => handlePin(s.id)} className="btn btn-sm">📌</button>
-                <button onClick={() => handleRename(s.id)} className="btn btn-sm">✏️</button>
-                <button onClick={() => handleDelete(s.id)} className="btn btn-danger btn-sm">🗑</button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-      <div className="sess-section">
-        {unpinned.length === 0 ? <div className="sess-empty">暂无会话</div> : unpinned.map(s => (
-          <div key={s.id} className={`sess-item ${activeId === s.id ? 'sess-active' : ''}`} onClick={() => handleSwitch(s.id)}>
-            <div className="sess-info">
-              <span className="sess-name">{s.name}</span>
-              <span className="sess-meta">{s.model} · {s.messageCount} 条消息</span>
-            </div>
-            <div className="sess-actions" onClick={e => e.stopPropagation()}>
-              <button onClick={() => handlePin(s.id)} className="btn btn-sm">📌</button>
-              <button onClick={() => handleRename(s.id)} className="btn btn-sm">✏️</button>
-              <button onClick={() => handleDelete(s.id)} className="btn btn-danger btn-sm">🗑</button>
-            </div>
-          </div>
-        ))}
-      </div>
+
+      <ModuleList emptyText="暂无会话" emptyIcon="💬">
+        {pinned.map(renderSession)}
+        {unpinned.map(renderSession)}
+      </ModuleList>
     </div>
   )
 }

@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react'
+import { ModuleHeader } from '../../components/common/module/ModuleHeader'
+import { ModuleToolbar, FilterButtons } from '../../components/common/module/ModuleToolbar'
 
 interface Theme { id: string; name: string; author: string; description: string; preview: string; colors: Record<string, string>; installed: boolean; active: boolean }
 
 export function ThemeStorePage() {
   const [themes, setThemes] = useState<Theme[]>([])
-  const [filter, setFilter] = useState<'all' | 'installed' | 'store'>('all')
+  const [filter, setFilter] = useState('all')
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -45,18 +47,24 @@ export function ThemeStorePage() {
   })
 
   return (
-    <div className="theme-page">
-      <div className="theme-header">
-        <h1>🎨 主题商店</h1>
-        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="搜索主题..." className="theme-search" />
-      </div>
-      <div className="theme-filters">
-        {(['all', 'installed', 'store'] as const).map(f => (
-          <button key={f} className={`tab-btn ${filter === f ? 'active' : ''}`} onClick={() => setFilter(f)}>
-            {f === 'all' ? '全部' : f === 'installed' ? '已安装' : '商店'}
-          </button>
-        ))}
-      </div>
+    <div className="mod-page">
+      <ModuleHeader
+        icon="🎨"
+        title="主题商店"
+      />
+
+      <ModuleToolbar search={search} onSearchChange={setSearch} searchPlaceholder="搜索主题...">
+        <FilterButtons
+          options={[
+            { key: 'all', label: '全部' },
+            { key: 'installed', label: '已安装' },
+            { key: 'store', label: '商店' },
+          ]}
+          active={filter}
+          onChange={setFilter}
+        />
+      </ModuleToolbar>
+
       <div className="theme-grid">
         {filtered.map(t => (
           <div key={t.id} className={`theme-card ${t.active ? 'theme-active' : ''}`}>

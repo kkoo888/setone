@@ -2,6 +2,7 @@ import { StrictMode, lazy, Suspense, useState, useEffect } from 'react'
 import { createRoot } from 'react-dom/client'
 import { App } from './App'
 import './styles/global.css'
+import './styles/module-common.css'
 
 const Live2DPetPage = lazy(() => import('./pages/Live2DPetPage'))
 
