@@ -98,9 +98,9 @@ export const Live2DCanvas: React.FC<Live2DCanvasProps> = ({
     return () => observer.disconnect()
   }, [])
 
-  /** 鼠标追踪 */
+  /** 鼠标追踪 - 始终在模型加载后启用 */
   useMouseTracking(containerRef, {
-    enabled: state.mouseTrackingEnabled && state.status === Live2DStatus.LOADED,
+    enabled: state.status === Live2DStatus.LOADED,
   })
 
   return (

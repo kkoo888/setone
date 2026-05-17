@@ -222,15 +222,15 @@ export class Live2DManager implements ILive2DManager {
       console.log('[Live2D] 📦 加载模型文件:', config.modelPath)
       try {
         this.model = await live2dModule.Live2DModel.from(config.modelPath, {
-          autoHitTest: false,
-          autoFocus: false,
+          autoHitTest: true,
+          autoFocus: true,
         })
       } catch (modelErr) {
         console.warn('[Live2D] ⚠️ 首次加载失败，等待 1 秒后重试...')
         await new Promise((resolve) => setTimeout(resolve, 1000))
         this.model = await live2dModule.Live2DModel.from(config.modelPath, {
-          autoHitTest: false,
-          autoFocus: false,
+          autoHitTest: true,
+          autoFocus: true,
         })
       }
       console.log('[Live2D] ✅ 模型加载成功')
