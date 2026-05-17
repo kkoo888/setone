@@ -1,0 +1,20 @@
+{
+  "id": "proactive",
+  "name": "主动关怀",
+  "version": "1.0.0",
+  "description": "定时提醒、天气查询、主动问候等关怀功能",
+  "author": "小茜",
+  "enabled": true,
+  "dependencies": [],
+  "hostVersion": ">=1.0.0",
+  "priority": 25,
+  "resourceLimits": { "maxMemoryMB": 128, "maxCpuPercent": 5 },
+  "provides": [
+    { "type": "tool", "name": "reminder_add", "description": "添加提醒", "priority": 10 },
+    { "type": "tool", "name": "reminder_list", "description": "列出提醒", "priority": 10 },
+    { "type": "tool", "name": "reminder_toggle", "description": "切换提醒状态", "priority": 10 },
+    { "type": "tool", "name": "weather_check", "description": "查询天气", "priority": 10 }
+  ],
+  "consumes": [],
+  "settings": {}
+}

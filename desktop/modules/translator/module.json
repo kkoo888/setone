@@ -1,0 +1,25 @@
+{
+  "id": "translator",
+  "name": "翻译面板",
+  "version": "1.0.0",
+  "description": "划词翻译、全文翻译、翻译历史",
+  "author": "小茜",
+  "enabled": true,
+  "dependencies": [],
+  "hostVersion": ">=1.0.0",
+  "priority": 22,
+  "resourceLimits": { "maxMemoryMB": 128, "maxCpuPercent": 10 },
+  "provides": [
+    { "type": "tool", "name": "translate_text", "description": "翻译文本", "priority": 10 },
+    { "type": "tool", "name": "translate_detect", "description": "检测语言", "priority": 10 },
+    { "type": "tool", "name": "translate_history", "description": "翻译历史", "priority": 10 },
+    { "type": "tool", "name": "translate_favorites", "description": "收藏常用翻译", "priority": 10 }
+  ],
+  "consumes": [],
+  "settings": {
+    "defaultSourceLang": "auto",
+    "defaultTargetLang": "zh-CN",
+    "engine": "ollama",
+    "maxHistory": 200
+  }
+}

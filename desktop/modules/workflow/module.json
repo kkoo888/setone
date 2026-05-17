@@ -1,0 +1,34 @@
+{
+  "id": "workflow",
+  "name": "工作流自动化",
+  "version": "1.0.0",
+  "description": "可视化工作流编排，触发器 + 多步骤自动化",
+  "author": "小茜",
+  "enabled": true,
+  "dependencies": ["tools", "task"],
+  "hostVersion": ">=1.0.0",
+  "priority": 25,
+  "resourceLimits": {
+    "maxMemoryMB": 256,
+    "maxCpuPercent": 15
+  },
+  "provides": [
+    { "type": "tool", "name": "workflow_create", "description": "创建工作流", "priority": 10 },
+    { "type": "tool", "name": "workflow_execute", "description": "执行工作流", "priority": 10 },
+    { "type": "tool", "name": "workflow_list", "description": "列出工作流", "priority": 10 },
+    { "type": "tool", "name": "workflow_delete", "description": "删除工作流", "priority": 10 },
+    { "type": "tool", "name": "workflow_pause", "description": "暂停执行中的工作流", "priority": 10 },
+    { "type": "tool", "name": "workflow_log", "description": "获取执行日志", "priority": 10 }
+  ],
+  "consumes": [
+    { "type": "event", "name": "cron:fired" },
+    { "type": "event", "name": "file:changed" },
+    { "type": "event", "name": "hotkey:pressed" }
+  ],
+  "settings": {
+    "maxWorkflows": 50,
+    "maxStepsPerWorkflow": 20,
+    "executionTimeout": 300000,
+    "enableLogging": true
+  }
+}

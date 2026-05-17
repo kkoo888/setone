@@ -1,0 +1,29 @@
+{
+  "id": "skill",
+  "name": "技能系统",
+  "version": "1.0.0",
+  "description": "技能的发现、安装、创建、打磨、统计、导入导出等完整生命周期管理",
+  "author": "小茜",
+  "enabled": true,
+  "dependencies": [],
+  "hostVersion": ">=1.0.0",
+  "priority": 10,
+  "resourceLimits": { "maxMemoryMB": 256, "maxCpuPercent": 10 },
+  "provides": [
+    { "type": "tool", "name": "skill_list", "description": "获取技能列表", "priority": 10 },
+    { "type": "tool", "name": "skill_discover", "description": "扫描发现技能", "priority": 10 },
+    { "type": "tool", "name": "skill_toggle", "description": "激活/停用技能", "priority": 10 },
+    { "type": "tool", "name": "skill_create", "description": "创建新技能", "priority": 10 },
+    { "type": "tool", "name": "skill_refine", "description": "AI打磨优化技能", "priority": 10 },
+    { "type": "tool", "name": "skill_delete", "description": "删除技能", "priority": 10 },
+    { "type": "tool", "name": "skill_scan", "description": "扫描本地技能目录", "priority": 10 },
+    { "type": "tool", "name": "skill_stats", "description": "技能使用统计", "priority": 10 },
+    { "type": "tool", "name": "skill_export", "description": "导出技能", "priority": 10 },
+    { "type": "tool", "name": "skill_import", "description": "导入技能", "priority": 10 },
+    { "type": "tool", "name": "skill_install_url", "description": "从URL安装技能", "priority": 10 },
+    { "type": "tool", "name": "skill_update_check", "description": "检查技能更新", "priority": 10 },
+    { "type": "tool", "name": "skill_update_run", "description": "执行技能更新", "priority": 10 }
+  ],
+  "consumes": [],
+  "settings": {}
+}

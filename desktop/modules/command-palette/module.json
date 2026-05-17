@@ -1,0 +1,29 @@
+{
+  "id": "command-palette",
+  "name": "命令面板",
+  "version": "1.0.0",
+  "description": "全局快捷命令面板，Ctrl+K 呼出，模糊搜索快速执行",
+  "author": "小茜",
+  "enabled": true,
+  "dependencies": [],
+  "hostVersion": ">=1.0.0",
+  "priority": 5,
+  "resourceLimits": { "maxMemoryMB": 64, "maxCpuPercent": 5 },
+  "provides": [
+    { "type": "tool", "name": "palette_open", "description": "打开命令面板", "priority": 5 },
+    { "type": "tool", "name": "palette_close", "description": "关闭命令面板", "priority": 5 },
+    { "type": "tool", "name": "palette_register_command", "description": "注册自定义命令", "priority": 5 },
+    { "type": "tool", "name": "palette_search", "description": "搜索命令", "priority": 5 },
+    { "type": "tool", "name": "palette_list_commands", "description": "列出所有命令", "priority": 5 }
+  ],
+  "consumes": [
+    { "type": "event", "name": "palette:open" },
+    { "type": "event", "name": "palette:close" }
+  ],
+  "settings": {
+    "hotkey": "Ctrl+K",
+    "maxResults": 20,
+    "showRecentFirst": true,
+    "recentLimit": 5
+  }
+}

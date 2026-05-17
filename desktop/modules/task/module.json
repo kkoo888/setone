@@ -1,0 +1,19 @@
+{
+  "id": "task",
+  "name": "任务规划",
+  "version": "1.0.0",
+  "description": "复杂任务拆解为多步执行，状态追踪与进度管理",
+  "author": "小茜",
+  "enabled": true,
+  "dependencies": [],
+  "hostVersion": ">=1.0.0",
+  "priority": 20,
+  "resourceLimits": { "maxMemoryMB": 128, "maxCpuPercent": 10 },
+  "provides": [
+    { "type": "tool", "name": "task_create", "description": "创建任务", "priority": 10 },
+    { "type": "tool", "name": "task_execute", "description": "执行任务", "priority": 10 },
+    { "type": "tool", "name": "task_list", "description": "列出任务", "priority": 10 }
+  ],
+  "consumes": [],
+  "settings": {}
+}

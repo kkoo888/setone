@@ -1,0 +1,18 @@
+{
+  "id": "screen",
+  "name": "屏幕理解",
+  "version": "1.0.0",
+  "description": "截图捕获、OCR文字识别、屏幕区域选择",
+  "author": "system",
+  "enabled": true,
+  "dependencies": [],
+  "hostVersion": ">=1.0.0",
+  "priority": 20,
+  "resourceLimits": { "maxMemoryMB": 512, "maxCpuPercent": 20 },
+  "provides": [
+    { "type": "tool", "name": "screen_capture", "description": "截取屏幕", "priority": 10 },
+    { "type": "tool", "name": "screen_ocr", "description": "OCR文字识别", "priority": 10 }
+  ],
+  "consumes": [],
+  "settings": { "captureQuality": 80, "maxCaptureWidth": 1920 }
+}

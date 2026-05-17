@@ -1,0 +1,28 @@
+{
+  "id": "knowledge-base",
+  "name": "本地知识库",
+  "version": "1.0.0",
+  "description": "文件导入、向量化、语义检索，本地 RAG",
+  "author": "小茜",
+  "enabled": true,
+  "dependencies": ["memory"],
+  "hostVersion": ">=1.0.0",
+  "priority": 30,
+  "resourceLimits": { "maxMemoryMB": 1024, "maxCpuPercent": 25 },
+  "provides": [
+    { "type": "tool", "name": "kb_import", "description": "导入文件/目录到知识库", "priority": 10 },
+    { "type": "tool", "name": "kb_search", "description": "语义搜索知识库", "priority": 10 },
+    { "type": "tool", "name": "kb_list", "description": "列出知识库文档", "priority": 10 },
+    { "type": "tool", "name": "kb_delete", "description": "删除文档", "priority": 10 },
+    { "type": "tool", "name": "kb_ask", "description": "基于知识库问答（RAG）", "priority": 10 }
+  ],
+  "consumes": [{ "type": "event", "name": "file:changed" }],
+  "settings": {
+    "chunkSize": 512,
+    "chunkOverlap": 64,
+    "embeddingModel": "nomic-embed-text",
+    "maxDocuments": 1000,
+    "supportedFormats": [".md", ".txt", ".pdf", ".docx", ".json", ".csv", ".ts", ".js", ".py"],
+    "autoReindex": true
+  }
+}

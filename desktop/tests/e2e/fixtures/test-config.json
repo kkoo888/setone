@@ -1,0 +1,26 @@
+{
+  "ollama": {
+    "baseUrl": "http://127.0.0.1:11435",
+    "model": "qwen2.5:7b",
+    "visionModel": "llava:7b",
+    "timeout": 30000
+  },
+  "ui": {
+    "theme": "dark",
+    "language": "zh-CN",
+    "live2dModel": "default"
+  },
+  "modules": {
+    "enabled": [],
+    "disabled": []
+  },
+  "security": {
+    "encryptionEnabled": false,
+    "backupRetentionDays": 7
+  },
+  "performance": {
+    "maxMemoryMB": 512,
+    "maxCpuPercent": 50,
+    "monitoringInterval": 5000
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "id": "tools",
+  "name": "工具路由",
+  "version": "1.0.0",
+  "description": "工具注册/发现/执行、意图路由、置信度校验",
+  "author": "system",
+  "enabled": true,
+  "dependencies": [],
+  "hostVersion": ">=1.0.0",
+  "priority": 30,
+  "resourceLimits": { "maxMemoryMB": 128, "maxCpuPercent": 10 },
+  "provides": [
+    { "type": "tool", "name": "tool_register", "description": "注册工具", "priority": 10 },
+    { "type": "tool", "name": "tool_execute", "description": "执行工具", "priority": 10 },
+    { "type": "tool", "name": "tool_list", "description": "列出所有工具", "priority": 10 }
+  ],
+  "consumes": [],
+  "settings": { "confidenceThreshold": 0.6, "maxConcurrentExecutions": 5 }
+}

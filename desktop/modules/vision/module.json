@@ -1,0 +1,19 @@
+{
+  "id": "vision",
+  "name": "视觉感知",
+  "version": "1.0.0",
+  "description": "视频流捕获、帧变化检测、视觉分析模式切换",
+  "author": "system",
+  "enabled": true,
+  "dependencies": [],
+  "hostVersion": ">=1.0.0",
+  "priority": 25,
+  "resourceLimits": { "maxMemoryMB": 512, "maxCpuPercent": 20 },
+  "provides": [
+    { "type": "tool", "name": "vision_start", "description": "开始视觉捕获", "priority": 10 },
+    { "type": "tool", "name": "vision_stop", "description": "停止视觉捕获", "priority": 10 },
+    { "type": "tool", "name": "vision_analyze", "description": "分析当前画面", "priority": 10 }
+  ],
+  "consumes": [{ "type": "event", "name": "screen" }],
+  "settings": { "defaultFps": 1, "continuousMode": false, "changeThreshold": 0.05 }
+}

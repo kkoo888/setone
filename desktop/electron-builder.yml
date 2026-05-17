@@ -1,0 +1,26 @@
+appId: com.setone.desktop
+productName: 智能桌面助手
+directories:
+  output: dist-packaged
+files:
+  - dist/**/*
+  - modules/**/*
+  - modules-dist/**/*
+  - skills/**/*
+asar: true
+asarUnpack:
+  - "node_modules/better-sqlite3/**/*"
+  - "node_modules/bindings/**/*"
+  - "node_modules/file-uri-to-path/**/*"
+buildDependenciesFromSource: true
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  artifactName: ${productName}-Setup-${version}.${ext}
+  shortcutName: 智能桌面助手

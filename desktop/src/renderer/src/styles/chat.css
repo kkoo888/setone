@@ -1,0 +1,106 @@
+/* ─── 头像情绪动画 ─── */
+.avatar-emotion--shake { animation: avatar-shake 0.4s ease-in-out; }
+@keyframes avatar-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-3px) rotate(-2deg); }
+  40% { transform: translateX(3px) rotate(2deg); }
+  60% { transform: translateX(-2px) rotate(-1deg); }
+  80% { transform: translateX(2px) rotate(1deg); }
+}
+.avatar-emotion--pulse { animation: avatar-pulse 1.5s ease-in-out infinite; }
+@keyframes avatar-pulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.3); }
+  50% { transform: scale(1.05); box-shadow: 0 0 0 6px rgba(99, 102, 241, 0); }
+}
+.avatar-emotion--bounce { animation: avatar-bounce 1s ease-in-out infinite; }
+@keyframes avatar-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+.message-avatar { transition: transform 0.2s ease; }
+.message-avatar:hover { transform: scale(1.1); }
+.message-avatar-emoji { font-size: 1.1rem; line-height: 1; }
+
+/* ─── StreamingText 流式渲染 ─── */
+.streaming-text { position: relative; display: inline; line-height: 1.7; }
+.streaming-cursor { display: inline-block; margin-left: 2px; font-weight: 300; color: var(--color-accent); animation: cursor-blink 0.8s ease-in-out infinite; vertical-align: text-bottom; }
+@keyframes cursor-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+.streaming-text--transitioning .streaming-cursor { animation: cursor-fade-out 0.3s ease-out forwards; }
+@keyframes cursor-fade-out { to { opacity: 0; transform: translateY(-2px); } }
+.streaming-content { display: inline; }
+.streaming-markdown .inline-code { background: rgba(99, 102, 241, 0.1); border-radius: 4px; padding: 1px 6px; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.9em; }
+.streaming-markdown .code-block { background: var(--color-bg-tertiary); border-radius: 8px; padding: 12px 16px; margin: 8px 0; overflow-x: auto; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.85em; line-height: 1.5; }
+.streaming-markdown .code-block-lang { font-size: 0.75em; color: var(--color-text-tertiary); text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.05em; }
+.streaming-markdown a { color: var(--color-accent); text-decoration: underline; text-underline-offset: 2px; transition: color 0.15s ease; }
+.streaming-markdown a:hover { color: var(--color-accent-hover); }
+.streaming-markdown strong { font-weight: 600; }
+.streaming-fade-overlay { display: block; height: 1px; animation: fade-shrink 0.3s ease-out forwards; }
+@keyframes fade-shrink { from { opacity: 0.5; height: 4px; } to { opacity: 0; height: 0; } }
+
+/* ─── 消息气泡 ─── */
+.message-bubble { display: flex; gap: 10px; max-width: 85%; width: fit-content; animation: message-enter 0.2s ease-out; align-items: flex-start; }
+@keyframes message-enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.message-bubble.user { align-self: flex-end; flex-direction: row-reverse; }
+.message-bubble.assistant { align-self: flex-start; margin-right: auto; }
+.message-bubble.system { align-self: center; max-width: 70%; width: auto; opacity: 0.85; }
+.message-bubble.error { align-self: flex-start; margin-right: auto; max-width: 85%; }
+.message-bubble.error .message-text { background: rgba(239, 68, 68, 0.08); color: var(--color-error, #ef4444); border: 1px solid rgba(239, 68, 68, 0.2); border-bottom-left-radius: 4px; }
+.message-bubble.error .message-avatar { background: rgba(239, 68, 68, 0.1); }
+.message-avatar { flex-shrink: 0; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; background: rgba(99, 102, 241, 0.1); }
+.message-content { display: flex; flex-direction: column; gap: 4px; position: relative; }
+.message-text { padding: 10px 14px; border-radius: 12px; line-height: 1.6; word-break: break-word; white-space: pre-wrap; }
+.message-bubble.user .message-text { background: var(--color-accent); color: #fff; border-bottom-right-radius: 4px; }
+.message-bubble.assistant .message-text { background: var(--color-bg-secondary); color: var(--color-text-primary); border-bottom-left-radius: 4px; }
+.message-bubble.system .message-text { background: var(--color-bg-tertiary); color: var(--color-text-secondary); border-radius: 8px; font-size: 0.85rem; text-align: center; }
+.message-time { font-size: 0.7rem; color: var(--color-text-tertiary); padding: 0 4px; }
+.message-bubble.user .message-time { text-align: right; }
+
+/* ─── 消息操作菜单 ─── */
+.message-actions { position: absolute; top: -8px; right: 8px; display: flex; gap: 4px; opacity: 0; transition: opacity 200ms ease; pointer-events: none; z-index: 10; }
+.message-bubble:hover .message-actions, .message-bubble:focus-within .message-actions { opacity: 1; pointer-events: auto; }
+.message-action-btn { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-bg-primary); cursor: pointer; font-size: 14px; transition: background 150ms ease; }
+.message-action-btn:hover { background: var(--color-bg-secondary); }
+
+/* ─── 工具调用卡片 ─── */
+.tool-calls { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
+.tool-call-card { border: 1px solid var(--color-border); border-radius: 8px; overflow: hidden; font-size: 0.85rem; }
+.tool-call-card.tool-call-success { border-color: var(--color-success); }
+.tool-call-card.tool-call-error { border-color: var(--color-error); }
+.tool-call-card.tool-call-running { border-color: var(--color-warning); }
+.tool-call-header { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: var(--color-bg-secondary); border: none; width: 100%; cursor: pointer; font-size: inherit; color: inherit; text-align: left; }
+.tool-call-header:hover { background: var(--color-bg-tertiary); }
+.tool-call-icon { font-size: 0.9rem; }
+.tool-call-name { font-weight: 600; flex: 1; }
+.tool-call-duration { font-size: 0.75rem; color: var(--color-text-tertiary); font-variant-numeric: tabular-nums; }
+.tool-call-spinner .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid var(--color-border); border-top-color: var(--color-warning); border-radius: 50%; animation: spin 0.6s linear infinite; }
+.tool-call-toggle { font-size: 0.7rem; color: var(--color-text-tertiary); }
+.tool-call-body { padding: 8px 12px; border-top: 1px solid var(--color-border); background: var(--color-bg-primary); }
+.tool-call-args summary { cursor: pointer; font-size: 0.8rem; color: var(--color-text-secondary); margin-bottom: 4px; }
+.tool-call-body pre { margin: 4px 0; padding: 8px; background: var(--color-bg-secondary); border-radius: 6px; overflow-x: auto; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.8em; line-height: 1.5; }
+.tool-call-result-label, .tool-call-error-label { font-size: 0.75rem; font-weight: 600; color: var(--color-text-secondary); margin-bottom: 2px; }
+.tool-call-error pre { background: rgba(239, 68, 68, 0.08); color: var(--color-error); }
+.tool-call-running-hint { font-size: 0.8rem; color: var(--color-warning); padding: 4px 0; }
+
+/* ─── 输入框 ─── */
+.chat-input-container { display: flex; align-items: flex-end; gap: 10px; padding: 12px 16px; background: transparent; flex-shrink: 0; }
+.chat-input-wrapper { flex: 1; display: flex; align-items: flex-end; gap: 6px; background: #fff; border: 1px solid var(--color-border); border-radius: 20px; padding: 6px 6px 6px 12px; transition: border-color 0.15s ease, box-shadow 0.15s ease; }
+.chat-input-wrapper:focus-within { border-color: var(--color-accent); box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1); }
+.chat-input-attach { flex-shrink: 0; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border: none; border-radius: 50%; background: var(--color-bg-tertiary); color: var(--color-text-secondary); cursor: pointer; transition: background 0.15s ease, color 0.15s ease; }
+.chat-input-attach:hover { background: var(--color-border); color: var(--color-text-primary); }
+.chat-input { flex: 1; resize: none; border: none; padding: 6px 0; font-size: 0.95rem; line-height: 1.5; background: transparent; color: var(--color-text-primary); outline: none; max-height: 150px; font-family: inherit; }
+.chat-input:disabled { opacity: 0.5; cursor: not-allowed; }
+.chat-input::placeholder { color: var(--color-text-tertiary); }
+.chat-input-charcount { font-size: 0.7rem; color: var(--color-text-tertiary); white-space: nowrap; user-select: none; flex-shrink: 0; padding-bottom: 8px; }
+.chat-input-charcount--warn { color: var(--color-warning); }
+.chat-input-charcount--error { color: var(--color-error); font-weight: 600; }
+.chat-send-btn { flex-shrink: 0; display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border: none; border-radius: 50%; background: #999; color: #fff; cursor: pointer; transition: background 0.15s ease, transform 0.1s ease, opacity 0.15s ease; }
+.chat-send-btn:hover:not(:disabled) { background: #777; }
+.chat-send-btn:active:not(:disabled) { transform: scale(0.95); }
+.chat-send-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+.chat-send-btn--stop { background: #666; }
+.chat-send-btn--stop:hover { background: #555; }
+
+/* ─── 聊天页面布局 ─── */
+.chat-loading { padding: var(--spacing-sm) var(--spacing-md); display: flex; justify-content: center; }
+.chat-error-fallback { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: var(--spacing-md); text-align: center; }
+.chat-error-icon { font-size: 48px; }

@@ -1,0 +1,257 @@
+/* ─── 侧边栏头像 ─── */
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 128px;
+  font-size: 28px;
+  flex-shrink: 0;
+  padding: 8px;
+}
+.sidebar-logo-avatar {
+  width: 112px;
+  height: 112px;
+  border-radius: var(--radius-lg);
+  object-fit: cover;
+  transition: box-shadow var(--transition-fast);
+}
+.sidebar-logo-avatar:hover {
+  box-shadow: 0 2px 8px var(--color-shadow);
+}
+
+/* ─── 消息气泡头像图片 ─── */
+.message-avatar-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+/* ─── 头像上传组件 ─── */
+.avatar-uploader {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+.avatar-uploader-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+.avatar-uploader-preview {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 2px dashed var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  overflow: hidden;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  flex-shrink: 0;
+}
+.avatar-uploader-preview:hover {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+.avatar-uploader-preview:focus-visible {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3);
+}
+.avatar-uploader-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.avatar-uploader-emoji {
+  font-size: 36px;
+  line-height: 1;
+}
+.avatar-uploader-hover {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.45);
+  color: #fff;
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+  border-radius: 50%;
+}
+.avatar-uploader-preview:hover .avatar-uploader-hover {
+  opacity: 1;
+}
+.avatar-uploader-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.avatar-uploader-title {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+.avatar-uploader-hint {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+}
+.avatar-uploader-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-top: 4px;
+}
+.avatar-uploader-error {
+  font-size: var(--font-size-xs);
+  color: var(--color-error);
+  padding: 4px 0;
+}
+.avatar-uploader-input {
+  display: none;
+}
+
+/* ─── 裁剪编辑器 ─── */
+.avatar-editor-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+}
+.avatar-editor {
+  background: var(--color-bg-primary);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  width: 380px;
+  max-width: 90vw;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.avatar-editor-header {
+  padding: var(--spacing-lg) var(--spacing-lg) var(--spacing-sm);
+}
+.avatar-editor-header h3 {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0 0 4px;
+}
+.avatar-editor-header p {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+  margin: 0;
+}
+.avatar-editor-body {
+  padding: var(--spacing-sm) var(--spacing-lg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+.avatar-editor-crop-area {
+  position: relative;
+  width: 240px;
+  height: 240px;
+  cursor: grab;
+  overflow: hidden;
+  border-radius: var(--radius-md);
+  background: var(--color-bg-tertiary);
+}
+.avatar-editor-crop-area:active {
+  cursor: grabbing;
+}
+.avatar-editor-mask {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* 半透明遮罩效果 */
+  background:
+    linear-gradient(to right, rgba(0,0,0,0.4) 0%, transparent 20%, transparent 80%, rgba(0,0,0,0.4) 100%),
+    linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, transparent 20%, transparent 80%, rgba(0,0,0,0.4) 100%);
+}
+.avatar-editor-crop-window {
+  width: 200px;
+  height: 200px;
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.35);
+  position: relative;
+}
+.avatar-editor-canvas {
+  display: block;
+  width: 200px;
+  height: 200px;
+}
+.avatar-editor-controls {
+  width: 100%;
+  padding: 0 var(--spacing-sm);
+}
+.avatar-editor-scale-label {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+}
+.avatar-editor-scale-slider {
+  flex: 1;
+  height: 4px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: var(--color-border);
+  border-radius: var(--radius-full);
+  outline: none;
+  cursor: pointer;
+}
+.avatar-editor-scale-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  cursor: pointer;
+  border: 2px solid var(--color-bg-primary);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+.avatar-editor-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+.avatar-editor-preview-label {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+}
+.avatar-editor-preview-circle {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid var(--color-border);
+  background: var(--color-bg-tertiary);
+}
+.avatar-editor-preview-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.avatar-editor-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md) var(--spacing-lg) var(--spacing-lg);
+}

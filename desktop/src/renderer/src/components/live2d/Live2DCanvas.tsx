@@ -1,0 +1,126 @@
+import React, { useRef, useEffect, useCallback } from 'react'
+import { Live2DManager } from './Live2DManager'
+import { useLive2DContext } from './Live2DContext'
+import { useMouseTracking } from './hooks/useMouseTracking'
+import { Live2DStatus } from './types/live2d'
+
+interface Live2DCanvasProps {
+  width?: number | string
+  height?: number | string
+  className?: string
+  onReady?: () => void
+  onError?: (error: string) => void
+}
+
+/** 默认模型配置 */
+const DEFAULT_MODEL_CONFIG = {
+  name: 'Hiyori',
+  modelPath: new URL(
+    '../../assets/live2d/hiyori/Hiyori.model3.json',
+    import.meta.url
+  ).href,
+  scale: 0.18,
+  offsetX: 0.5,
+  offsetY: 0.5,
+}
+
+/**
+ * Live2D 渲染画布组件
+ * 管理 pixi.js Application 的创建、模型加载和生命周期
+ */
+export const Live2DCanvas: React.FC<Live2DCanvasProps> = ({
+  width = '100%',
+  height = 400,
+  className = '',
+  onReady,
+  onError,
+}) => {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const { state, loadModel } = useLive2DContext()
+  const managerRef = useRef<Live2DManager>(Live2DManager.getInstance())
+  const initializedRef = useRef(false)
+
+  /** 初始化模型加载 */
+  const initModel = useCallback(async () => {
+    const container = containerRef.current
+    if (!container || initializedRef.current) return
+
+    initializedRef.current = true
+
+    try {
+      console.log('[Live2DCanvas] 🚀 开始初始化...')
+      console.log('[Live2DCanvas] 模型路径:', DEFAULT_MODEL_CONFIG.modelPath)
+      console.log('[Live2DCanvas] 容器尺寸:', container.clientWidth, 'x', container.clientHeight)
+
+      // 加载模型，传入容器用于挂载 canvas
+      await managerRef.current.loadModel(DEFAULT_MODEL_CONFIG, container)
+      await loadModel(DEFAULT_MODEL_CONFIG)
+
+      console.log('[Live2DCanvas] 🎉 初始化完成')
+    } catch (err) {
+      const message = err instanceof Error ? err.message : '初始化失败'
+      console.error('[Live2DCanvas] ❌ 初始化失败:', message)
+      onError?.(message)
+    }
+  }, [loadModel, onError])
+
+  useEffect(() => {
+    initModel()
+
+    return () => {
+      if (initializedRef.current) {
+        managerRef.current.destroy()
+        initializedRef.current = false
+      }
+    }
+  }, [initModel])
+
+  /** 监听状态变化触发回调 */
+  useEffect(() => {
+    if (state.status === Live2DStatus.LOADED) {
+      onReady?.()
+    } else if (state.status === Live2DStatus.ERROR) {
+      onError?.(state.errorMessage ?? '未知错误')
+    }
+  }, [state.status, state.errorMessage, onReady, onError])
+
+  /** 监听窗口尺寸变化 */
+  useEffect(() => {
+    const container = containerRef.current
+    if (!container) return
+
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width: w, height: h } = entry.contentRect
+        if (w > 0 && h > 0) {
+          managerRef.current.resize(w, h)
+        }
+      }
+    })
+
+    observer.observe(container)
+    return () => observer.disconnect()
+  }, [])
+
+  /** 鼠标追踪 */
+  useMouseTracking(containerRef, {
+    enabled: state.mouseTrackingEnabled && state.status === Live2DStatus.LOADED,
+  })
+
+  return (
+    <div
+      ref={containerRef}
+      className={`live2d-canvas ${className}`}
+      style={{
+        width,
+        height,
+        position: 'relative',
+        overflow: 'hidden',
+        backgroundColor: 'transparent',
+      }}
+      data-status={state.status}
+    />
+  )
+}
+
+export default Live2DCanvas
