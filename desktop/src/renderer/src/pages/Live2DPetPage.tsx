@@ -16,6 +16,7 @@ const Live2DPetPage: React.FC = () => {
   const [showResizeUI, setShowResizeUI] = useState(false)
   const dragStartRef = useRef<{ x: number; y: number; winX: number; winY: number } | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+  const isDraggingRef = useRef(false)
 
   const handleReady = useCallback(() => setReady(true), [])
   const handleError = useCallback((msg: string) => setError(msg), [])
@@ -39,7 +40,6 @@ const Live2DPetPage: React.FC = () => {
   }, [])
 
   // ========== 鼠标穿透动态控制 ==========
-  // 鼠标在 Live2D 模型（非透明像素）上时禁用穿透，离开模型时恢复穿透
   const isOverModelRef = useRef(false)
   const lastCheckTimeRef = useRef(0)
 
@@ -47,7 +47,6 @@ const Live2DPetPage: React.FC = () => {
     const container = containerRef.current
     if (!container) return
 
-    // WebGL canvas 像素缓存，避免每次 mousemove 都 drawImage
     let tmpCanvas: HTMLCanvasElement | null = null
     let tmpCtx: CanvasRenderingContext2D | null = null
 
@@ -59,7 +58,6 @@ const Live2DPetPage: React.FC = () => {
       const y = Math.floor(e.clientY - rect.top)
       if (x < 0 || y < 0 || x >= canvas.width || y >= canvas.height) return false
       try {
-        // 创建或复用临时 canvas 读取 WebGL 像素
         if (!tmpCanvas || tmpCanvas.width !== canvas.width || tmpCanvas.height !== canvas.height) {
           tmpCanvas = document.createElement('canvas')
           tmpCanvas.width = canvas.width
@@ -69,14 +67,15 @@ const Live2DPetPage: React.FC = () => {
         if (!tmpCtx) return false
         tmpCtx.drawImage(canvas, 0, 0)
         const pixel = tmpCtx.getImageData(x, y, 1, 1).data
-        return pixel[3] > 10 // alpha > 10 视为非透明
+        return pixel[3] > 10
       } catch {
         return false
       }
     }
 
     const handleMouseMove = (e: MouseEvent) => {
-      // 节流：每 50ms 检测一次像素
+      // 拖拽中不切换穿透状态
+      if (isDraggingRef.current) return
       const now = Date.now()
       if (now - lastCheckTimeRef.current < 50) return
       lastCheckTimeRef.current = now
@@ -84,8 +83,14 @@ const Live2DPetPage: React.FC = () => {
       const overModel = checkPixelHit(e)
       if (overModel === isOverModelRef.current) return
       isOverModelRef.current = overModel
-      // 通知主进程切换鼠标穿透状态
       window.electronAPI.invoke('live2d:set-ignore-mouse', !overModel).catch(() => {})
+    }
+
+    const handleMouseDown = (e: MouseEvent) => {
+      // 点击时确保取消穿透，让事件能被接收
+      if (isOverModelRef.current) {
+        window.electronAPI.invoke('live2d:set-ignore-mouse', false).catch(() => {})
+      }
     }
 
     const handleMouseLeave = () => {
@@ -95,9 +100,11 @@ const Live2DPetPage: React.FC = () => {
     }
 
     container.addEventListener('mousemove', handleMouseMove)
+    container.addEventListener('mousedown', handleMouseDown)
     container.addEventListener('mouseleave', handleMouseLeave)
     return () => {
       container.removeEventListener('mousemove', handleMouseMove)
+      container.removeEventListener('mousedown', handleMouseDown)
       container.removeEventListener('mouseleave', handleMouseLeave)
       tmpCanvas = null
       tmpCtx = null
@@ -119,6 +126,9 @@ const Live2DPetPage: React.FC = () => {
     if (target.closest('.pet-resize-handle') || target.closest('.pet-resize-menu')) return
 
     setIsDragging(true)
+    isDraggingRef.current = true
+    // 拖拽开始时确保穿透关闭
+    window.electronAPI.invoke('live2d:set-ignore-mouse', false).catch(() => {})
     try {
       const bounds = await window.electronAPI.invoke('live2d:get-bounds')
       if (bounds) {
@@ -147,6 +157,7 @@ const Live2DPetPage: React.FC = () => {
   const handleMouseUp = useCallback(() => {
     if (!isDragging) return
     setIsDragging(false)
+    isDraggingRef.current = false
     dragStartRef.current = null
   }, [isDragging])
 
