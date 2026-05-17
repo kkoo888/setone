@@ -12,6 +12,14 @@ export default class ThemeStoreModule implements Module {
     this.context = context
     this.store = new ThemeStore(context.db, context.config)
     await this.store.loadInstalled()
+    // 加载并应用上次保存的主题
+    try {
+      const activeId = await context.config.get<string>('activeTheme')
+      if (activeId) {
+        const t = this.store.apply(activeId)
+        if (t) context.eventBus.emit('theme:changed', { themeId: activeId, colors: t.colors })
+      }
+    } catch { /* ignore */ }
     context.logger.info('主题商店模块已激活')
   }
 
@@ -41,6 +49,8 @@ export default class ThemeStoreModule implements Module {
             const { id } = p as ThemeIdParams
             const t = this.store.apply(id)
             if (!t) return { success: false, error: '主题不存在或未安装' }
+            // 持久化到配置
+            try { await this.context.config.set('activeTheme', id) } catch { /* ignore */ }
             this.context.eventBus.emit('theme:changed', { themeId: id, colors: t.colors })
             return { success: true, data: t }
           }

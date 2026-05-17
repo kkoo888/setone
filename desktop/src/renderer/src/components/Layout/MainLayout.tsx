@@ -96,6 +96,45 @@ export function MainLayout() {
     return unsub
   }, [])
 
+  // 监听主题变更事件，应用自定义主题颜色
+  useEffect(() => {
+    const unsub = window.electronAPI.on('theme:changed', (data: { themeId: string; colors: Record<string, string> }) => {
+      if (!data?.colors) return
+      const root = document.documentElement
+      const c = data.colors
+      if (c.primary) root.style.setProperty('--color-accent', c.primary)
+      if (c.accent) root.style.setProperty('--color-accent-hover', c.accent)
+      if (c.bg) root.style.setProperty('--color-bg-primary', c.bg)
+      if (c.surface) root.style.setProperty('--color-bg-secondary', c.surface)
+      try { localStorage.setItem('active-theme-id', data.themeId) } catch { /* ignore */ }
+    })
+    return unsub
+  }, [])
+
+  // 启动时加载已保存的主题颜色
+  useEffect(() => {
+    const loadSavedTheme = async () => {
+      try {
+        const themeId = await window.electronAPI.invoke('config:get', { key: 'activeTheme' })
+        if (themeId && typeof themeId === 'string') {
+          const res = await window.electronAPI.invoke('theme_list')
+          if (res?.success) {
+            const theme = (res.data as Array<{ id: string; colors: Record<string, string> }>).find((t) => t.id === themeId)
+            if (theme?.colors) {
+              const root = document.documentElement
+              const c = theme.colors
+              if (c.primary) root.style.setProperty('--color-accent', c.primary)
+              if (c.accent) root.style.setProperty('--color-accent-hover', c.accent)
+              if (c.bg) root.style.setProperty('--color-bg-primary', c.bg)
+              if (c.surface) root.style.setProperty('--color-bg-secondary', c.surface)
+            }
+          }
+        }
+      } catch { /* ignore */ }
+    }
+    loadSavedTheme()
+  }, [])
+
   const isChat = activePanel === 'chat'
 
   const renderPage = () => {

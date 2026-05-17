@@ -39,6 +39,8 @@ export class ThemeStore {
     const t = this.themes.find(x => x.id === id)
     if (!t || !t.installed) return null
     this.themes.forEach(x => x.active = x.id === id)
+    // 持久化到配置
+    try { (this.config as Record<string, unknown>).activeTheme = id } catch { /* ignore */ }
     return t
   }
 
