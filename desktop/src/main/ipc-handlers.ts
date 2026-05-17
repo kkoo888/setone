@@ -1140,9 +1140,8 @@ export function registerIpcHandlers(
   })
 
   /** 开启/关闭鼠标穿透（拖拽模式切换） */
-  ipcMain.handle('live2d:set-ignore-mouse', async (_event, ignore: boolean) => {
-    if (!live2dWindow || live2dWindow.isDestroyed()) return false
-    live2dWindow.setIgnoreMouseEvents(ignore, { forward: true })
+  ipcMain.handle('live2d:set-ignore-mouse', async (_event, _ignore: boolean) => {
+    // 不再使用鼠标穿透，窗口始终接收鼠标事件，确保拖拽可靠
     return true
   })
 
