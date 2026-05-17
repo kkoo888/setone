@@ -1,4 +1,4 @@
-import React, { Suspense, lazy, Component, type ReactNode, type ErrorInfo } from 'react'
+import React, { Suspense, lazy, Component, useEffect, type ReactNode, type ErrorInfo } from 'react'
 import { Sidebar } from './Sidebar'
 import { Header } from './Header'
 import { StatusBar } from '../common/StatusBar'
