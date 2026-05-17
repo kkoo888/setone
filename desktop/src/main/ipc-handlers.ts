@@ -1071,6 +1071,9 @@ export function registerIpcHandlers(
       },
     })
 
+    // 初始关闭鼠标穿透，等模型加载完成后开启
+    live2dWindow.setIgnoreMouseEvents(false)
+
     // 开发模式加载 dev server，生产模式加载文件
     if (process.env.VITE_DEV_SERVER_URL) {
       live2dWindow.loadURL(`${process.env.VITE_DEV_SERVER_URL}#/live2d-pet`)
@@ -1121,6 +1124,47 @@ export function registerIpcHandlers(
       return false
     }
     live2dWindow.show()
+    return true
+  })
+
+  /** 开启/关闭鼠标穿透（拖拽模式切换） */
+  ipcMain.handle('live2d:set-ignore-mouse', async (_event, ignore: boolean) => {
+    if (!live2dWindow || live2dWindow.isDestroyed()) return false
+    live2dWindow.setIgnoreMouseEvents(ignore, { forward: true })
+    return true
+  })
+
+  /** 开始窗口拖拽（无边框窗口拖拽移动） */
+  ipcMain.handle('live2d:start-drag', async () => {
+    if (!live2dWindow || live2dWindow.isDestroyed()) return
+    // 使用 Electron 内置的窗口拖拽 API
+    live2dWindow.webContents.sendInputEvent({
+      type: 'mouseDown',
+      x: 0,
+      y: 0,
+      button: 'left',
+      clickCount: 1,
+    })
+  })
+
+  /** 获取窗口位置和大小 */
+  ipcMain.handle('live2d:get-bounds', async () => {
+    if (!live2dWindow || live2dWindow.isDestroyed()) return null
+    return live2dWindow.getBounds()
+  })
+
+  /** 设置窗口大小 */
+  ipcMain.handle('live2d:set-size', async (_event, args: { width: number; height: number }) => {
+    if (!live2dWindow || live2dWindow.isDestroyed()) return
+    const [x, y] = live2dWindow.getPosition()
+    live2dWindow.setBounds({ x, y, width: Math.max(150, args.width), height: Math.max(200, args.height) })
+    return true
+  })
+
+  /** 设置窗口位置 */
+  ipcMain.handle('live2d:set-position', async (_event, args: { x: number; y: number }) => {
+    if (!live2dWindow || live2dWindow.isDestroyed()) return
+    live2dWindow.setPosition(args.x, args.y)
     return true
   })
 
