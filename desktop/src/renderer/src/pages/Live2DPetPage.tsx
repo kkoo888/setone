@@ -36,41 +36,12 @@ const Live2DPetPage: React.FC = () => {
     }
   }, [])
 
-  // ========== 拖拽移动（原生DOM事件） ==========
+  // ========== 拖拽移动（原生 CSS drag） ==========
+  // 使用 -webkit-app-region: drag 实现原生窗口拖拽，无需 IPC，零延迟
+  // 滚轮缩放和右键菜单通过事件处理
   useEffect(() => {
     const container = containerRef.current
     if (!container) return
-
-    let isDragging = false
-    let dragStart: { x: number; y: number; winX: number; winY: number } | null = null
-
-    const onMouseDown = async (e: MouseEvent) => {
-      if (e.button !== 0) return
-      isDragging = true
-      try {
-        const bounds = await window.electronAPI.invoke('live2d:get-bounds')
-        if (bounds) {
-          dragStart = { x: e.screenX, y: e.screenY, winX: bounds.x, winY: bounds.y }
-        }
-      } catch { /* ignore */ }
-    }
-
-    const onMouseMove = async (e: MouseEvent) => {
-      if (!isDragging || !dragStart) return
-      const dx = e.screenX - dragStart.x
-      const dy = e.screenY - dragStart.y
-      try {
-        await window.electronAPI.invoke('live2d:set-position', {
-          x: dragStart.winX + dx,
-          y: dragStart.winY + dy,
-        })
-      } catch { /* ignore */ }
-    }
-
-    const onMouseUp = () => {
-      isDragging = false
-      dragStart = null
-    }
 
     const onWheel = async (e: WheelEvent) => {
       e.preventDefault()
@@ -90,22 +61,12 @@ const Live2DPetPage: React.FC = () => {
       setShowResizeUI(v => !v)
     }
 
-    container.addEventListener('mousedown', onMouseDown)
-    container.addEventListener('mousemove', onMouseMove)
-    container.addEventListener('mouseup', onMouseUp)
-    container.addEventListener('mouseleave', onMouseUp)
     container.addEventListener('wheel', onWheel, { passive: false })
     container.addEventListener('contextmenu', onContextMenu)
-    window.addEventListener('mouseup', onMouseUp)
 
     return () => {
-      container.removeEventListener('mousedown', onMouseDown)
-      container.removeEventListener('mousemove', onMouseMove)
-      container.removeEventListener('mouseup', onMouseUp)
-      container.removeEventListener('mouseleave', onMouseUp)
       container.removeEventListener('wheel', onWheel)
       container.removeEventListener('contextmenu', onContextMenu)
-      window.removeEventListener('mouseup', onMouseUp)
     }
   }, [])
 
@@ -139,6 +100,7 @@ const Live2DPetPage: React.FC = () => {
           justifyContent: 'center',
           cursor: 'grab',
           userSelect: 'none',
+          WebkitAppRegion: 'drag',  // 原生窗口拖拽
         }}
       >
         {!ready && !error && (
@@ -178,6 +140,7 @@ const Live2DPetPage: React.FC = () => {
               border: '1px solid rgba(255,255,255,0.1)',
               zIndex: 100,
               minWidth: 140,
+              WebkitAppRegion: 'no-drag',  // 菜单区域不参与拖拽
             }}
           >
             <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', marginBottom: 4, textAlign: 'center' }}>
@@ -202,6 +165,7 @@ const Live2DPetPage: React.FC = () => {
                   cursor: 'pointer',
                   textAlign: 'left',
                   transition: 'all 0.15s',
+                  WebkitAppRegion: 'no-drag',  // 按钮不参与拖拽
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.background = 'rgba(99, 102, 241, 0.3)'
