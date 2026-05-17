@@ -9,11 +9,42 @@
   "hostVersion": ">=1.0.0",
   "priority": 10,
   "provides": [
-    { "type": "tool", "name": "session_list", "description": "列出所有会话", "priority": 10 },
-    { "type": "tool", "name": "session_create", "description": "创建新会话", "priority": 10 },
-    { "type": "tool", "name": "session_switch", "description": "切换会话", "priority": 10 },
-    { "type": "tool", "name": "session_delete", "description": "删除会话", "priority": 10 },
-    { "type": "tool", "name": "session_rename", "description": "重命名会话", "priority": 10 },
-    { "type": "tool", "name": "session_pin", "description": "固定/取消固定会话", "priority": 10 }
-  ]
+    {
+      "type": "tool",
+      "name": "session_list",
+      "description": "列出所有会话",
+      "priority": 10
+    },
+    {
+      "type": "tool",
+      "name": "session_create",
+      "description": "创建新会话",
+      "priority": 10
+    },
+    {
+      "type": "tool",
+      "name": "session_switch",
+      "description": "切换会话",
+      "priority": 10
+    },
+    {
+      "type": "tool",
+      "name": "session_delete",
+      "description": "删除会话",
+      "priority": 10
+    },
+    {
+      "type": "tool",
+      "name": "session_rename",
+      "description": "重命名会话",
+      "priority": 10
+    },
+    {
+      "type": "tool",
+      "name": "session_pin",
+      "description": "固定/取消固定会话",
+      "priority": 10
+    }
+  ],
+  "consumes": []
 }

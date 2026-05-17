@@ -18,10 +18,15 @@ export class SystemInfoService {
 
   async getDiskUsage(): Promise<{ used: number; total: number; percent: number }> {
     try {
-      const { execSync } = require('child_process')
+      const { exec } = require('child_process')
       const isWin = platform() === 'win32'
       const cmd = isWin ? 'wmic logicaldisk where "DeviceID=\'C:\'" get FreeSpace,Size /format:csv' : 'df -B1 / | tail -1'
-      const out = execSync(cmd, { encoding: 'utf-8' }).trim()
+      const out: string = await new Promise((resolve, reject) => {
+        exec(cmd, { encoding: 'utf-8' }, (err: unknown, stdout: string) => {
+          if (err) reject(err)
+          else resolve(stdout.trim())
+        })
+      })
       if (isWin) {
         const parts = out.split('\n').pop()?.split(',').filter(Boolean) ?? []
         const free = parseInt(parts[1] ?? '0'), size = parseInt(parts[2] ?? '0')

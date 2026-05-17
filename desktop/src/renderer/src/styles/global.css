@@ -9,6 +9,16 @@
 @import './skills.css';
 @import './modules.css';
 @import './avatar.css';
+@import './pages/calendar.css';
+@import './pages/clipboard.css';
+@import './pages/dashboard.css';
+@import './pages/theme-store.css';
+@import './pages/snippets.css';
+@import './pages/knowledge-base.css';
+@import './pages/sessions.css';
+@import './pages/notifications-preview.css';
+@import './pages/shortcuts-translator.css';
+@import './pages/workflow.css';
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html, body, #root { height: 100%; width: 100%; overflow: hidden; }
@@ -186,6 +196,7 @@ body { font-family: var(--font-family); font-size: var(--font-size-md); color: v
   min-width: 0;
 }
 .model-selector-input:focus { border-color: var(--color-accent); }
+.model-selector-input--focused { border-color: var(--color-accent); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12); }
 .model-selector-refresh {
   display: flex;
   align-items: center;

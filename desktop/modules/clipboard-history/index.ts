@@ -8,13 +8,20 @@ export default class ClipboardHistoryModule implements Module {
   private context!: ModuleContext
   private pollTimer?: NodeJS.Timeout
   private store!: ClipboardStore
+  /** 缓存 electron clipboard 引用，避免每次 require */
+  private clipboardRef: { readText: () => string; writeText: (text: string) => void } | null = null
 
   async activate(context: ModuleContext): Promise<void> {
     this.context = context
     this.store = new ClipboardStore(context.db)
     await this.store.loadAll()
-    // 轮询剪贴板变化（2秒间隔）
-    this.pollTimer = setInterval(() => this.checkClipboard(), 2000)
+    // 缓存 electron clipboard 引用
+    try {
+      const electron = require('electron')
+      this.clipboardRef = electron.clipboard
+    } catch { /* 非 Electron 环境 */ }
+    // 轮询剪贴板变化（5秒间隔，平衡响应性与 CPU/电量消耗）
+    this.pollTimer = setInterval(() => this.checkClipboard(), 5000)
     context.logger.info('剪贴板历史模块已激活')
   }
 
@@ -23,13 +30,14 @@ export default class ClipboardHistoryModule implements Module {
       clearInterval(this.pollTimer)
       this.pollTimer = undefined
     }
+    this.clipboardRef = null
     this.context.logger.info('剪贴板历史模块已停用')
   }
 
   private async checkClipboard(): Promise<void> {
     try {
-      const { clipboard } = require('electron')
-      const text = clipboard.readText()
+      if (!this.clipboardRef) return
+      const text = this.clipboardRef.readText()
       await this.store.addFromText(text)
     } catch { /* ignore */ }
   }
@@ -62,8 +70,9 @@ export default class ClipboardHistoryModule implements Module {
             const { id } = p as { id: string }
             const item = this.store.findById(id)
             if (!item) return { success: false, error: '记录不存在' }
-            const { clipboard } = require('electron')
-            clipboard.writeText(item.content)
+            if (this.clipboardRef) {
+              this.clipboardRef.writeText(item.content)
+            }
             return { success: true }
           }
         }
@@ -120,8 +129,9 @@ export default class ClipboardHistoryModule implements Module {
         handler: {
           execute: async (p) => {
             const { content } = p as { content: string }
-            const { clipboard } = require('electron')
-            clipboard.writeText(content)
+            if (this.clipboardRef) {
+              this.clipboardRef.writeText(content)
+            }
             return { success: true }
           }
         }

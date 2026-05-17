@@ -15,8 +15,10 @@ export function SystemDashboardPage() {
       if (res?.success) setSysInfo(res.data)
     } catch { /* ignore */ }
     try {
-      const res = await window.electronAPI.invoke('module_list')
-      if (res?.success) setModules(res.data ?? [])
+      // module:list 返回数组（非 {success, data} 格式）
+      const res = await window.electronAPI.invoke('module:list')
+      if (Array.isArray(res)) setModules(res)
+      else if (res?.success) setModules(res.data ?? [])
     } catch { /* ignore */ }
   }, [])
 

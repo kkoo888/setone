@@ -9,6 +9,21 @@
   "hostVersion": ">=1.0.0",
   "priority": 10,
   "provides": [
-    { "type": "tool", "name": "system_info", "description": "获取系统信息", "priority": 10 }
+    {
+      "type": "tool",
+      "name": "system_info",
+      "description": "获取系统信息",
+      "priority": 10
+    }
+  ],
+  "consumes": [
+    {
+      "type": "event",
+      "name": "on_module_loaded"
+    },
+    {
+      "type": "event",
+      "name": "on_module_unloaded"
+    }
   ]
 }

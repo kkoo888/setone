@@ -264,8 +264,8 @@ export class ModuleLoader {
       eventBus: createScopedEventBus(
         this.eventBus,
         meta.id,
-        meta.provides,
-        meta.consumes
+        meta.provides ?? [],
+        meta.consumes ?? []
       ),
       config: runtimeConfig,
       ai: this.ai,

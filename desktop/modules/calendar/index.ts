@@ -101,6 +101,7 @@ export default class CalendarModule implements Module {
             const idx = this.events.findIndex(e => e.id === id)
             if (idx === -1) return { success: false, error: '日程不存在' }
             this.events[idx] = { ...this.events[idx], ...updates }
+            this.checker.resetNotification(id)
             await this.store.save(this.events[idx])
             return { success: true, data: this.events[idx] }
           }

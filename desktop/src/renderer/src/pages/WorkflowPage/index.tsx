@@ -60,9 +60,13 @@ export function WorkflowPage() {
     } catch { /* ignore */ }
   }
 
-  const handleCreateFromTemplate = async (idx: number) => {
+  const handleCreateFromTemplate = async (template: { name: string; desc: string; trigger: string }) => {
     try {
-      const res = await window.electronAPI.invoke('workflow_create_from_template', { templateIndex: idx })
+      const res = await window.electronAPI.invoke('workflow_create', {
+        name: template.name,
+        description: template.desc,
+        trigger: { type: template.trigger }
+      })
       if (res?.success) { setActiveTab('list'); loadWorkflows() }
     } catch { /* ignore */ }
   }
@@ -143,7 +147,7 @@ export function WorkflowPage() {
             <div key={i} className="wf-card">
               <div className="wf-name">{t.name}</div>
               <div className="wf-desc">{t.desc}</div>
-              <button onClick={() => handleCreateFromTemplate(i)} className="btn btn-primary btn-sm">📥 使用模板</button>
+              <button onClick={() => handleCreateFromTemplate(t)} className="btn btn-primary btn-sm">📥 使用模板</button>
             </div>
           ))}
         </div>

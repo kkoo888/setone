@@ -45,14 +45,14 @@ export class ModuleScopedEventBus implements ScopedEventBus {
 export function createScopedEventBus(
   globalBus: EventBus,
   moduleId: string,
-  provides: Array<{ type: string; name: string }>,
-  consumes: Array<{ type: string; name: string }>
+  provides?: Array<{ type: string; name: string }>,
+  consumes?: Array<{ type: string; name: string }>
 ): ScopedEventBus {
   const allowedEmit = new Set(
-    provides.filter(p => p.type === 'event').map(p => p.name)
+    (provides ?? []).filter(p => p.type === 'event').map(p => p.name)
   )
   const allowedListen = new Set(
-    consumes.filter(c => c.type === 'event').map(c => c.name)
+    (consumes ?? []).filter(c => c.type === 'event').map(c => c.name)
   )
 
   return new ModuleScopedEventBus(globalBus, moduleId, allowedEmit, allowedListen)

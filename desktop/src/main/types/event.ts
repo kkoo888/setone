@@ -54,4 +54,10 @@ export interface EventMap {
   // 关怀事件
   on_reminder_triggered: { id: string; message: string }
   on_health_check: void
+
+  // 通知事件（calendar 等模块使用）
+  notify: { title: string; body: string; level?: 'info' | 'warn' | 'error' }
+
+  // 主题事件（theme-store 使用）
+  'theme:changed': { themeId: string; colors: Record<string, string> }
 }

@@ -9,11 +9,42 @@
   "hostVersion": ">=1.0.0",
   "priority": 10,
   "provides": [
-    { "type": "tool", "name": "clipboard_list", "description": "获取剪贴板历史", "priority": 10 },
-    { "type": "tool", "name": "clipboard_copy", "description": "复制历史记录到剪贴板", "priority": 10 },
-    { "type": "tool", "name": "clipboard_pin", "description": "固定/取消固定记录", "priority": 10 },
-    { "type": "tool", "name": "clipboard_delete", "description": "删除记录", "priority": 10 },
-    { "type": "tool", "name": "clipboard_clear", "description": "清空历史", "priority": 10 },
-    { "type": "tool", "name": "clipboard_write", "description": "写入剪贴板", "priority": 10 }
-  ]
+    {
+      "type": "tool",
+      "name": "clipboard_list",
+      "description": "获取剪贴板历史",
+      "priority": 10
+    },
+    {
+      "type": "tool",
+      "name": "clipboard_copy",
+      "description": "复制历史记录到剪贴板",
+      "priority": 10
+    },
+    {
+      "type": "tool",
+      "name": "clipboard_pin",
+      "description": "固定/取消固定记录",
+      "priority": 10
+    },
+    {
+      "type": "tool",
+      "name": "clipboard_delete",
+      "description": "删除记录",
+      "priority": 10
+    },
+    {
+      "type": "tool",
+      "name": "clipboard_clear",
+      "description": "清空历史",
+      "priority": 10
+    },
+    {
+      "type": "tool",
+      "name": "clipboard_write",
+      "description": "写入剪贴板",
+      "priority": 10
+    }
+  ],
+  "consumes": []
 }

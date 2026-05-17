@@ -1,0 +1,18 @@
+{
+  "id": "notifications",
+  "name": "通知管理",
+  "version": "1.0.0",
+  "description": "系统通知的持久化存储、查询、已读/未读管理",
+  "author": "小茜",
+  "enabled": true,
+  "dependencies": [],
+  "hostVersion": ">=1.0.0",
+  "priority": 5,
+  "provides": [
+    { "type": "tool", "name": "notification_list", "description": "获取通知列表", "priority": 10 },
+    { "type": "tool", "name": "notification_read", "description": "标记通知已读", "priority": 10 },
+    { "type": "tool", "name": "notification_read_all", "description": "标记全部通知已读", "priority": 10 },
+    { "type": "tool", "name": "notification_delete", "description": "删除通知", "priority": 10 }
+  ],
+  "consumes": [{ "type": "event", "name": "notify" }]
+}

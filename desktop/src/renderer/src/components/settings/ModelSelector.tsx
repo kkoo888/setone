@@ -3,7 +3,7 @@
  * 从 Ollama 获取已安装模型列表，支持下拉选择和手动输入
  * 仅在点击刷新按钮时扫描，不自动加载
  */
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useRef, useEffect } from 'react'
 
 interface ModelSelectorProps {
   /** 当前选中的模型名称 */
@@ -27,13 +27,15 @@ interface OllamaModel {
 export function ModelSelector({
   value,
   onChange,
-  placeholder = '选择或输入模型名称',
+  placeholder = '输入模型名称',
   disabled = false,
   filterKeyword,
 }: ModelSelectorProps) {
   const [models, setModels] = useState<OllamaModel[]>([])
   const [loading, setLoading] = useState(false)
   const [scanned, setScanned] = useState(false)
+  const [inputFocused, setInputFocused] = useState(false)
+  const inputRef = useRef<HTMLInputElement>(null)
 
   /** 从 Ollama 获取模型列表（仅手动触发） */
   const fetchModels = useCallback(async () => {
@@ -52,13 +54,19 @@ export function ModelSelector({
         }
         setModels(list)
         setScanned(true)
+        // 扫描无结果时，自动聚焦输入框引导用户手动输入
+        if (list.length === 0) {
+          setTimeout(() => inputRef.current?.focus(), 100)
+        }
       } else {
         setModels([])
         setScanned(true)
+        setTimeout(() => inputRef.current?.focus(), 100)
       }
     } catch {
       setModels([])
       setScanned(true)
+      setTimeout(() => inputRef.current?.focus(), 100)
     } finally {
       setLoading(false)
     }
@@ -71,36 +79,61 @@ export function ModelSelector({
     return gb >= 1 ? `${gb.toFixed(1)}GB` : `${(bytes / (1024 * 1024)).toFixed(0)}MB`
   }
 
+  /** 从下拉选择模型 */
+  const handleSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selected = e.target.value
+    if (selected === '__input__') {
+      // 选择"手动输入" → 聚焦输入框
+      inputRef.current?.focus()
+      inputRef.current?.select()
+    } else if (selected !== '__placeholder__') {
+      onChange(selected)
+    }
+  }
+
+  // 判断当前值是否匹配下拉列表中的模型
+  const matchedModel = models.find((m) => m.name === value)
+  const selectValue = matchedModel ? value : (value ? '__input__' : '__placeholder__')
+
   return (
     <div className="model-selector">
       <select
         className="model-selector-select"
-        value={models.some((m) => m.name === value) ? value : '__custom__'}
-        onChange={(e) => {
-          if (e.target.value !== '__custom__') {
-            onChange(e.target.value)
-          }
-        }}
+        value={selectValue}
+        onChange={handleSelect}
         disabled={disabled}
       >
-        {!scanned && <option value="__custom__">点击 🔄 扫描模型</option>}
-        {scanned && loading && <option value="__custom__">扫描中…</option>}
-        {scanned && !loading && models.length === 0 && (
-          <option value="__custom__">未发现模型</option>
+        {/* 占位提示 */}
+        {!scanned && !value && (
+          <option value="__placeholder__">点击 🔄 扫描可用模型</option>
         )}
+        {scanned && loading && (
+          <option value="__placeholder__">扫描中…</option>
+        )}
+        {scanned && !loading && models.length === 0 && (
+          <option value="__placeholder__">未发现模型，请手动输入</option>
+        )}
+        {scanned && !loading && models.length > 0 && !matchedModel && (
+          <option value="__placeholder__">请选择模型</option>
+        )}
+        {/* 模型列表 */}
         {models.map((m) => (
           <option key={m.name} value={m.name}>
             {m.name} {formatSize(m.size) ? `(${formatSize(m.size)})` : ''}
           </option>
         ))}
-        <option value="__custom__">✏️ 手动输入…</option>
+        {/* 手动输入入口 */}
+        <option value="__input__">✏️ 手动输入模型名</option>
       </select>
       <input
-        className="model-selector-input"
+        ref={inputRef}
+        className={`model-selector-input${inputFocused ? ' model-selector-input--focused' : ''}`}
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
+        onFocus={() => setInputFocused(true)}
+        onBlur={() => setInputFocused(false)}
+        placeholder={scanned && models.length === 0 ? '例如：qwen2.5、llama3.2' : placeholder}
         disabled={disabled}
       />
       <button

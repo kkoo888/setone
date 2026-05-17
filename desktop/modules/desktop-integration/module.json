@@ -11,7 +11,9 @@
   "resourceLimits": { "maxMemoryMB": 64, "maxCpuPercent": 5 },
   "provides": [
     { "type": "tool", "name": "notify", "description": "发送系统通知", "priority": 5 },
-    { "type": "tool", "name": "hotkey_register", "description": "注册全局快捷键", "priority": 5 }
+    { "type": "tool", "name": "hotkey_register", "description": "注册全局快捷键", "priority": 5 },
+    { "type": "tool", "name": "hotkey_list", "description": "获取已注册的快捷键列表", "priority": 5 },
+    { "type": "tool", "name": "hotkey_unregister", "description": "注销全局快捷键", "priority": 5 }
   ],
   "consumes": [],
   "settings": { "showTrayIcon": true, "autostart": false }

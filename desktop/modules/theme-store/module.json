@@ -9,10 +9,46 @@
   "hostVersion": ">=1.0.0",
   "priority": 10,
   "provides": [
-    { "type": "tool", "name": "theme_list", "description": "获取主题列表", "priority": 10 },
-    { "type": "tool", "name": "theme_apply", "description": "应用主题", "priority": 10 },
-    { "type": "tool", "name": "theme_install", "description": "安装主题", "priority": 10 },
-    { "type": "tool", "name": "theme_uninstall", "description": "卸载主题", "priority": 10 },
-    { "type": "tool", "name": "theme_export", "description": "导出主题", "priority": 10 }
+    {
+      "type": "tool",
+      "name": "theme_list",
+      "description": "获取主题列表",
+      "priority": 10
+    },
+    {
+      "type": "tool",
+      "name": "theme_apply",
+      "description": "应用主题",
+      "priority": 10
+    },
+    {
+      "type": "tool",
+      "name": "theme_install",
+      "description": "安装主题",
+      "priority": 10
+    },
+    {
+      "type": "tool",
+      "name": "theme_uninstall",
+      "description": "卸载主题",
+      "priority": 10
+    },
+    {
+      "type": "tool",
+      "name": "theme_export",
+      "description": "导出主题",
+      "priority": 10
+    },
+    {
+      "type": "event",
+      "name": "theme:changed",
+      "description": "主题切换通知"
+    }
+  ],
+  "consumes": [
+    {
+      "type": "event",
+      "name": "theme:changed"
+    }
   ]
 }

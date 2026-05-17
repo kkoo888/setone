@@ -9,9 +9,40 @@
   "hostVersion": ">=1.0.0",
   "priority": 10,
   "provides": [
-    { "type": "tool", "name": "calendar_list", "description": "获取日程列表", "priority": 10 },
-    { "type": "tool", "name": "calendar_create", "description": "创建日程", "priority": 10 },
-    { "type": "tool", "name": "calendar_update", "description": "更新日程", "priority": 10 },
-    { "type": "tool", "name": "calendar_delete", "description": "删除日程", "priority": 10 }
+    {
+      "type": "tool",
+      "name": "calendar_list",
+      "description": "获取日程列表",
+      "priority": 10
+    },
+    {
+      "type": "tool",
+      "name": "calendar_create",
+      "description": "创建日程",
+      "priority": 10
+    },
+    {
+      "type": "tool",
+      "name": "calendar_update",
+      "description": "更新日程",
+      "priority": 10
+    },
+    {
+      "type": "tool",
+      "name": "calendar_delete",
+      "description": "删除日程",
+      "priority": 10
+    },
+    {
+      "type": "event",
+      "name": "notify",
+      "description": "日程提醒通知"
+    }
+  ],
+  "consumes": [
+    {
+      "type": "event",
+      "name": "notify"
+    }
   ]
 }
