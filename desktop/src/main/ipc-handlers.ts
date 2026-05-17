@@ -1173,8 +1173,9 @@ export function registerIpcHandlers(
   /** 已注册的快捷键映射 accelerator → callback */
   const registeredHotkeys = new Map<string, () => void>()
 
-  /** 注册全局快捷键 */
+  /** 注册全局快捷键（兜底：当 desktop-integration 模块未加载时使用） */
   ipcMain.handle('hotkey_register', async (_event, args: { accelerator: string; description?: string }) => {
+    registeredModuleIpc.add('hotkey_register')
     try {
       const { accelerator } = args
       // 如果已注册，先注销
@@ -1200,6 +1201,7 @@ export function registerIpcHandlers(
 
   /** 注销全局快捷键 */
   ipcMain.handle('hotkey_unregister', async (_event, args: { accelerator: string }) => {
+    registeredModuleIpc.add('hotkey_unregister')
     try {
       const { accelerator } = args
       if (registeredHotkeys.has(accelerator)) {
@@ -1216,6 +1218,7 @@ export function registerIpcHandlers(
 
   /** 列出已注册的快捷键 */
   ipcMain.handle('hotkey_list', async () => {
+    registeredModuleIpc.add('hotkey_list')
     return Array.from(registeredHotkeys.keys())
   })
 
