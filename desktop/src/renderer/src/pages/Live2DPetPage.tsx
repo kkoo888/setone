@@ -5,8 +5,8 @@ import { Live2DFallback } from '../components/live2d/Live2DFallback'
 
 /**
  * Live2D 桌面宠物独立页面
- * 用于在透明窗口中展示 Live2D 模型
- * 支持：拖拽移动、滚轮缩放、右键菜单调整大小、鼠标跟随
+ * 透明窗口中展示 Live2D 模型
+ * 支持：拖拽移动、滚轮缩放、右键菜单、鼠标跟随、点击互动
  */
 const Live2DPetPage: React.FC = () => {
   const [ready, setReady] = useState(false)
@@ -14,14 +14,13 @@ const Live2DPetPage: React.FC = () => {
   const [loadingTimeout, setLoadingTimeout] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
   const [showResizeUI, setShowResizeUI] = useState(false)
-  const [mouseOver, setMouseOver] = useState(false)
   const dragStartRef = useRef<{ x: number; y: number; winX: number; winY: number } | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
   const handleReady = useCallback(() => setReady(true), [])
   const handleError = useCallback((msg: string) => setError(msg), [])
 
-  // 挂载时清除 body/html/root 背景，确保透明窗口无底色
+  // 挂载时清除背景，确保透明
   useEffect(() => {
     const htmlEl = document.documentElement
     const bodyEl = document.body
@@ -39,32 +38,13 @@ const Live2DPetPage: React.FC = () => {
     }
   }, [])
 
-  // 加载超时检测
+  // 加载超时
   useEffect(() => {
     const timer = setTimeout(() => {
       if (!ready && !error) setLoadingTimeout(true)
     }, 15000)
     return () => clearTimeout(timer)
   }, [ready, error])
-
-  // ========== 鼠标穿透控制 ==========
-  // 鼠标进入窗口内容区域 → 关闭穿透（接收事件，模型跟随鼠标）
-  // 鼠标离开窗口 → 开启穿透（点击穿透到桌面）
-  const handleMouseEnter = useCallback(async () => {
-    setMouseOver(true)
-    try {
-      await window.electronAPI.invoke('live2d:set-ignore-mouse', false)
-    } catch { /* ignore */ }
-  }, [])
-
-  const handleMouseLeave = useCallback(async () => {
-    setMouseOver(false)
-    if (!isDragging) {
-      try {
-        await window.electronAPI.invoke('live2d:set-ignore-mouse', true)
-      } catch { /* ignore */ }
-    }
-  }, [isDragging])
 
   // ========== 拖拽移动 ==========
   const handleMouseDown = useCallback(async (e: React.MouseEvent) => {
@@ -83,7 +63,6 @@ const Live2DPetPage: React.FC = () => {
           winY: bounds.y,
         }
       }
-      await window.electronAPI.invoke('live2d:set-ignore-mouse', false)
     } catch { /* ignore */ }
   }, [])
 
@@ -99,17 +78,11 @@ const Live2DPetPage: React.FC = () => {
     } catch { /* ignore */ }
   }, [isDragging])
 
-  const handleMouseUp = useCallback(async () => {
+  const handleMouseUp = useCallback(() => {
     if (!isDragging) return
     setIsDragging(false)
     dragStartRef.current = null
-    // 拖拽结束后，如果鼠标还在窗口内，保持不穿透；否则恢复穿透
-    if (!mouseOver) {
-      try {
-        await window.electronAPI.invoke('live2d:set-ignore-mouse', true)
-      } catch { /* ignore */ }
-    }
-  }, [isDragging, mouseOver])
+  }, [isDragging])
 
   // ========== 滚轮缩放 ==========
   const handleWheel = useCallback(async (e: React.WheelEvent) => {
@@ -139,13 +112,6 @@ const Live2DPetPage: React.FC = () => {
     } catch { /* ignore */ }
   }, [])
 
-  // ========== 点击交互（触发 tap 动画） ==========
-  const handleClick = useCallback(() => {
-    // 点击事件通过 Live2DCanvas 内部的 setupInteraction 处理
-    // 这里关闭右键菜单
-    if (showResizeUI) setShowResizeUI(false)
-  }, [showResizeUI])
-
   return (
     <Live2DProvider fallback={<Live2DFallback message="Live2D 模型加载失败" errorMessage={error ?? undefined} />}>
       <div
@@ -161,14 +127,12 @@ const Live2DPetPage: React.FC = () => {
           cursor: isDragging ? 'grabbing' : 'grab',
           userSelect: 'none',
         }}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
         onWheel={handleWheel}
         onContextMenu={handleContextMenu}
-        onClick={handleClick}
       >
         {!ready && !error && (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, pointerEvents: 'none' }}>
@@ -189,7 +153,7 @@ const Live2DPetPage: React.FC = () => {
           onError={handleError}
         />
 
-        {/* 右键菜单：预设尺寸 */}
+        {/* 右键菜单 */}
         {showResizeUI && (
           <div
             className="pet-resize-menu"
@@ -252,7 +216,7 @@ const Live2DPetPage: React.FC = () => {
           </div>
         )}
 
-        {/* 底部操作提示 */}
+        {/* 操作提示 */}
         {ready && !isDragging && (
           <div
             style={{
@@ -266,7 +230,6 @@ const Live2DPetPage: React.FC = () => {
               color: 'rgba(255,255,255,0.35)',
               textShadow: '0 1px 2px rgba(0,0,0,0.5)',
               pointerEvents: 'none',
-              transition: 'opacity 0.5s',
             }}
           >
             <span>🖱️ 拖拽移动</span>
