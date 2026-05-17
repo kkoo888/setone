@@ -84,6 +84,11 @@ export function Live2DPage() {
                   {isLoaded ? '模型就绪' : state.status === Live2DStatus.LOADING ? '加载中...' : isError ? '加载失败' : '待机'}
                 </span>
               </div>
+              {isError && state.errorMessage && (
+                <p className="live2d-error-detail" style={{ color: '#ef4444', fontSize: 12, marginTop: 8 }}>
+                  ❌ {state.errorMessage}
+                </p>
+              )}
             </div>
           </div>
         </div>
