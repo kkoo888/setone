@@ -86,78 +86,84 @@ export function Sidebar() {
 
   return (
     <nav className={`sidebar ${collapsed ? 'sidebar--collapsed' : ''}`} aria-label="主导航">
-      <div className="sidebar-logo" aria-hidden="true">
-        {avatar ? (
-          <img src={avatar} alt="" className="sidebar-logo-avatar" />
-        ) : (
-          '🌸'
-        )}
+      {/* 顶部固定区域：logo + 对话 */}
+      <div className="sidebar-top">
+        <div className="sidebar-logo" aria-hidden="true">
+          {avatar ? (
+            <img src={avatar} alt="" className="sidebar-logo-avatar" />
+          ) : (
+            '🌸'
+          )}
+        </div>
+        <ul className="sidebar-nav">
+          {FIXED_PANELS.map((p) => (
+            <li key={p.id}>
+              <button
+                className={`sidebar-item ${activePanel === p.id ? 'active' : ''}`}
+                onClick={() => setActivePanel(p.id)}
+                title={p.label}
+                aria-current={activePanel === p.id ? 'page' : undefined}
+              >
+                <span className="sidebar-icon">{p.icon}</span>
+                {!collapsed && <span className="sidebar-label">{p.label}</span>}
+              </button>
+            </li>
+          ))}
+        </ul>
       </div>
 
-      {/* 顶部固定项 */}
-      <ul className="sidebar-nav">
-        {FIXED_PANELS.map((p) => (
-          <li key={p.id}>
-            <button
-              className={`sidebar-item ${activePanel === p.id ? 'active' : ''}`}
-              onClick={() => setActivePanel(p.id)}
-              title={p.label}
-              aria-current={activePanel === p.id ? 'page' : undefined}
-            >
-              <span className="sidebar-icon">{p.icon}</span>
-              {!collapsed && <span className="sidebar-label">{p.label}</span>}
-            </button>
-          </li>
-        ))}
-
-        {/* 模块专属项（动态显示） */}
-        {visibleModulePanels.length > 0 && (
-          <li className="sidebar-divider" aria-hidden="true">
+      {/* 中间滚动区域：模块面板 */}
+      {visibleModulePanels.length > 0 && (
+        <div className="sidebar-middle">
+          <div className="sidebar-divider" aria-hidden="true">
             <hr className="sidebar-divider-line" />
-          </li>
-        )}
-        {visibleModulePanels.map((p) => (
-          <li key={p.id}>
-            <button
-              className={`sidebar-item sidebar-item--module ${activePanel === p.id ? 'active' : ''}`}
-              onClick={() => setActivePanel(p.id)}
-              title={p.label}
-              aria-current={activePanel === p.id ? 'page' : undefined}
-            >
-              <span className="sidebar-icon">{p.icon}</span>
-              {!collapsed && <span className="sidebar-label">{p.label}</span>}
-            </button>
-          </li>
-        ))}
-      </ul>
+          </div>
+          <ul className="sidebar-nav sidebar-nav--scrollable">
+            {visibleModulePanels.map((p) => (
+              <li key={p.id}>
+                <button
+                  className={`sidebar-item sidebar-item--module ${activePanel === p.id ? 'active' : ''}`}
+                  onClick={() => setActivePanel(p.id)}
+                  title={p.label}
+                  aria-current={activePanel === p.id ? 'page' : undefined}
+                >
+                  <span className="sidebar-icon">{p.icon}</span>
+                  {!collapsed && <span className="sidebar-label">{p.label}</span>}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
-      {/* 底部固定项 */}
-      <ul className="sidebar-nav sidebar-nav--bottom">
-        {BOTTOM_PANELS.map((p) => (
-          <li key={p.id}>
-            <button
-              className={`sidebar-item ${activePanel === p.id ? 'active' : ''}`}
-              onClick={() => setActivePanel(p.id)}
-              title={p.label}
-              aria-current={activePanel === p.id ? 'page' : undefined}
-            >
-              <span className="sidebar-icon">{p.icon}</span>
-              {!collapsed && <span className="sidebar-label">{p.label}</span>}
-            </button>
-          </li>
-        ))}
-      </ul>
-
-      <div className="sidebar-footer">
-        <button
-          className="sidebar-toggle"
-          onClick={toggleCollapse}
-          title={collapsed ? '展开侧边栏' : '收起侧边栏'}
-          aria-label={collapsed ? '展开侧边栏' : '收起侧边栏'}
-          aria-expanded={!collapsed}
-        >
-          <span className="sidebar-toggle-icon">{collapsed ? '▶' : '◀'}</span>
-        </button>
+      {/* 底部固定区域：模块/设置/Live2D + 折叠按钮 */}
+      <div className="sidebar-bottom">
+        <ul className="sidebar-nav">
+          {BOTTOM_PANELS.map((p) => (
+            <li key={p.id}>
+              <button
+                className={`sidebar-item ${activePanel === p.id ? 'active' : ''}`}
+                onClick={() => setActivePanel(p.id)}
+                title={p.label}
+                aria-current={activePanel === p.id ? 'page' : undefined}
+              >
+                <span className="sidebar-icon">{p.icon}</span>
+                {!collapsed && <span className="sidebar-label">{p.label}</span>}
+              </button>
+            </li>
+          ))}
+        </ul>
+        <div className="sidebar-footer">
+          <button
+            className="sidebar-toggle"
+            onClick={toggleCollapse}
+            title={collapsed ? '展开侧边栏' : '收起侧边栏'}
+            aria-label={collapsed ? '展开侧边栏' : '收起侧边栏'}
+            aria-expanded={!collapsed}
+          >
+            <span className="sidebar-toggle-icon">{collapsed ? '▶' : '◀'}</span>
+          </button>
+        </div>
       </div>
     </nav>
   )
