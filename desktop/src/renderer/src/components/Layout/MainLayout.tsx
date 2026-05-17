@@ -5,6 +5,7 @@ import { StatusBar } from '../common/StatusBar'
 import { ChangesPanel } from '../changes/ChangesPanel'
 import { CommandPalette } from '../command-palette/CommandPalette'
 import { useAppStore } from '../../stores/useAppStore'
+import { useCommandPaletteStore } from '../../stores/useCommandPaletteStore'
 
 const ChatPage = lazy(() => import('../../pages/ChatPage').then(m => ({ default: m.ChatPage })))
 const SkillsPage = lazy(() => import('../../pages/SkillsPage').then(m => ({ default: m.SkillsPage })))
@@ -79,6 +80,21 @@ export function MainLayout() {
     })
     return unsub
   }, [setActivePanel])
+
+  // 监听全局快捷键触发
+  useEffect(() => {
+    const unsub = window.electronAPI.on('hotkey:triggered', (data: { accelerator: string }) => {
+      const { accelerator } = data
+      if (accelerator === 'CommandOrControl+K') {
+        // 直接打开命令面板
+        useCommandPaletteStore.getState().open()
+      } else if (accelerator === 'CommandOrControl+Shift+A') {
+        // 切换窗口显示/隐藏
+        window.electronAPI.invoke('window:toggle', {})
+      }
+    })
+    return unsub
+  }, [])
 
   const isChat = activePanel === 'chat'
 

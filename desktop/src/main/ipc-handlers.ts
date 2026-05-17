@@ -1234,6 +1234,19 @@ export function registerIpcHandlers(
     return Array.from(registeredHotkeys.keys())
   })
 
+  /** 切换主窗口显示/隐藏 */
+  ipcMain.handle('window:toggle', async () => {
+    const win = BrowserWindow.getAllWindows()[0]
+    if (!win) return
+    if (win.isVisible() && !win.isMinimized()) {
+      win.minimize()
+    } else {
+      win.restore()
+      win.show()
+      win.focus()
+    }
+  })
+
   // ========== SOUL 人格系统 ==========
 
   /** 获取 SoulManager 单例 */
