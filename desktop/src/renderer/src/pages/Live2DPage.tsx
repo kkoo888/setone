@@ -1,17 +1,23 @@
 /**
  * Live2D 管理页面
- * 展示当前 Live2D 形象预览、桌面宠物开关
+ * 展示当前 Live2D 形象预览、桌面宠物开关、模型信息
  */
 import React, { useState, useCallback, useEffect } from 'react'
 import { Live2DProvider, useLive2DContext } from '../components/live2d/Live2DContext'
 import { Live2DCanvas } from '../components/live2d/Live2DCanvas'
 import { Live2DStatus } from '../components/live2d/types/live2d'
+import { live2dEasyControl, type Live2DPetState } from '../services/Live2DEasyControlService'
 
 /** Live2D 页面内部内容（必须在 Live2DProvider 内部使用） */
 function Live2DPageContent() {
   const { state, reset } = useLive2DContext()
   const [petEnabled, setPetEnabled] = useState(false)
   const [retryKey, setRetryKey] = useState(0)
+  const [petState, setPetState] = useState<Live2DPetState>({
+    loaded: false, mouseTracking: true, clickInteraction: true,
+    currentExpression: '', currentMotion: '',
+    expressions: [], motions: [], messageText: '', lipSyncActive: false,
+  })
 
   /** 检查宠物窗口是否已打开 */
   useEffect(() => {
@@ -21,6 +27,13 @@ function Live2DPageContent() {
         if (typeof val === 'boolean') setPetEnabled(val)
       })
       .catch(() => {})
+  }, [])
+
+  /** 监听宠物状态变更 */
+  useEffect(() => {
+    live2dEasyControl.setStateChangeCallback(setPetState)
+    setPetState(live2dEasyControl.getState())
+    return () => live2dEasyControl.setStateChangeCallback(null)
   }, [])
 
   /** 切换桌面宠物 */
@@ -167,6 +180,74 @@ function Live2DPageContent() {
                   <span className="live2d-info-value">{state.mouseTrackingEnabled ? '开启' : '关闭'}</span>
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* 宠物实时状态（live2d-easy-control） */}
+          {petEnabled && (
+            <div className="live2d-info-card">
+              <h3>🐾 宠物实时状态</h3>
+              <div className="live2d-info-grid">
+                <div className="live2d-info-item">
+                  <span className="live2d-info-label">库加载</span>
+                  <span className="live2d-info-value">{petState.loaded ? '✅ 已加载' : '⏳ 等待中'}</span>
+                </div>
+                <div className="live2d-info-item">
+                  <span className="live2d-info-label">鼠标跟随</span>
+                  <span className="live2d-info-value">{petState.mouseTracking ? '🟢 开启' : '🔴 关闭'}</span>
+                </div>
+                <div className="live2d-info-item">
+                  <span className="live2d-info-label">点击交互</span>
+                  <span className="live2d-info-value">{petState.clickInteraction ? '🟢 开启' : '🔴 关闭'}</span>
+                </div>
+                <div className="live2d-info-item">
+                  <span className="live2d-info-label">当前表情</span>
+                  <span className="live2d-info-value">{petState.currentExpression || '默认'}</span>
+                </div>
+                <div className="live2d-info-item">
+                  <span className="live2d-info-label">当前动作</span>
+                  <span className="live2d-info-value">{petState.currentMotion || '默认'}</span>
+                </div>
+                <div className="live2d-info-item">
+                  <span className="live2d-info-label">嘴型同步</span>
+                  <span className="live2d-info-value">{petState.lipSyncActive ? '🟢 活跃' : '🔴 关闭'}</span>
+                </div>
+                <div className="live2d-info-item">
+                  <span className="live2d-info-label">对话气泡</span>
+                  <span className="live2d-info-value">{petState.messageText || '无'}</span>
+                </div>
+              </div>
+
+              {/* 可用表情列表 */}
+              {petState.expressions.length > 0 && (
+                <div style={{ marginTop: 12 }}>
+                  <span className="live2d-info-label" style={{ display: 'block', marginBottom: 6 }}>😊 可用表情</span>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                    {petState.expressions.map((exp) => (
+                      <span key={exp} style={{
+                        padding: '2px 8px', borderRadius: 4, fontSize: 11,
+                        background: petState.currentExpression === exp ? 'rgba(99,102,241,0.15)' : 'var(--color-bg-tertiary)',
+                        color: petState.currentExpression === exp ? 'var(--color-accent)' : 'var(--color-text-secondary)',
+                        border: '1px solid var(--color-border)',
+                      }}>{exp || '默认'}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* 可用动作列表 */}
+              {petState.motions.length > 0 && (
+                <div style={{ marginTop: 12 }}>
+                  <span className="live2d-info-label" style={{ display: 'block', marginBottom: 6 }}>🏃 可用动作</span>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    {petState.motions.map((m) => (
+                      <div key={m.group} style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>
+                        <strong>{m.group}</strong>: {m.names.join(', ')}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
