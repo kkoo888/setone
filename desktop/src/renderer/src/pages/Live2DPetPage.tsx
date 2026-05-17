@@ -21,6 +21,24 @@ const Live2DPetPage: React.FC = () => {
   const handleReady = useCallback(() => setReady(true), [])
   const handleError = useCallback((msg: string) => setError(msg), [])
 
+  // 挂载时清除 body/html/root 背景，确保透明窗口无底色
+  useEffect(() => {
+    const htmlEl = document.documentElement
+    const bodyEl = document.body
+    const rootEl = document.getElementById('root')
+    const prevHtml = htmlEl.style.background
+    const prevBody = bodyEl.style.background
+    const prevRoot = rootEl?.style.background
+    htmlEl.style.background = 'transparent'
+    bodyEl.style.background = 'transparent'
+    if (rootEl) rootEl.style.background = 'transparent'
+    return () => {
+      htmlEl.style.background = prevHtml
+      bodyEl.style.background = prevBody
+      if (rootEl) rootEl.style.background = prevRoot ?? ''
+    }
+  }, [])
+
   // 加载超时检测
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -153,12 +171,12 @@ const Live2DPetPage: React.FC = () => {
         onClick={handleClick}
       >
         {!ready && !error && (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
-            <div style={{ color: '#fff', fontSize: 14, textShadow: '0 1px 3px rgba(0,0,0,0.5)' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, pointerEvents: 'none' }}>
+            <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 14, textShadow: '0 1px 6px rgba(0,0,0,0.8)' }}>
               🐱 加载中...
             </div>
             {loadingTimeout && (
-              <div style={{ color: '#fbbf24', fontSize: 12, textShadow: '0 1px 3px rgba(0,0,0,0.5)', textAlign: 'center', maxWidth: 200 }}>
+              <div style={{ color: 'rgba(251,191,36,0.8)', fontSize: 12, textShadow: '0 1px 6px rgba(0,0,0,0.8)', textAlign: 'center', maxWidth: 200 }}>
                 ⏳ 加载时间较长，请检查模型文件是否正常
               </div>
             )}

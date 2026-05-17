@@ -113,6 +113,7 @@ export const Live2DCanvas: React.FC<Live2DCanvasProps> = ({
         position: 'relative',
         overflow: 'hidden',
         backgroundColor: 'transparent',
+        background: 'transparent',
       }}
       data-status={state.status}
     >
