@@ -28,6 +28,7 @@ export function WorkflowPage() {
   const [newDesc, setNewDesc] = useState('')
   const [newTrigger, setNewTrigger] = useState('manual')
   const [newCron, setNewCron] = useState('')
+  const [selectedTemplate, setSelectedTemplate] = useState<typeof TEMPLATES[0] | null>(null)
 
   const loadWorkflows = useCallback(async () => {
     try {
@@ -69,10 +70,15 @@ export function WorkflowPage() {
     try { await window.electronAPI.invoke('workflow_delete', { workflowId: id }); loadWorkflows() } catch { /* ignore */ }
   }
 
-  const handleCreateFromTemplate = async (template: { name: string; desc: string; trigger: string }) => {
+  const handleCreateFromTemplate = (template: typeof TEMPLATES[0]) => {
+    setSelectedTemplate(template)
+  }
+
+  const handleConfirmTemplate = async () => {
+    if (!selectedTemplate) return
     try {
-      const res = await window.electronAPI.invoke('workflow_create', { name: template.name, description: template.desc, trigger: { type: template.trigger } })
-      if (res?.success) { setActiveTab('list'); loadWorkflows() }
+      const res = await window.electronAPI.invoke('workflow_create', { name: selectedTemplate.name, description: selectedTemplate.desc, trigger: { type: selectedTemplate.trigger } })
+      if (res?.success) { setSelectedTemplate(null); setActiveTab('list'); loadWorkflows() }
     } catch { /* ignore */ }
   }
 
@@ -98,7 +104,7 @@ export function WorkflowPage() {
         ]}
         activeTab={activeTab}
         onTabChange={setActiveTab}
-        actions={activeTab === 'list' ? <button onClick={() => setShowCreate(true)} className="btn btn-primary wf-create-btn">＋ 新建工作流</button> : undefined}
+        actions={<button onClick={() => setShowCreate(true)} className="btn btn-primary wf-create-btn" style={{ visibility: activeTab === 'list' ? 'visible' : 'hidden' }}>＋ 新建工作流</button>}
       />
 
       {/* 新建工作流弹窗 */}
@@ -211,6 +217,44 @@ export function WorkflowPage() {
         </div>
       )}
 
+      {/* 模板详情弹窗 */}
+      {selectedTemplate && (
+        <div className="wf-modal-overlay" onClick={() => setSelectedTemplate(null)}>
+          <div className="wf-modal" onClick={e => e.stopPropagation()}>
+            <div className="wf-modal-header">
+              <h3>{selectedTemplate.icon} {selectedTemplate.name}</h3>
+              <button className="wf-modal-close" onClick={() => setSelectedTemplate(null)}>✕</button>
+            </div>
+            <div className="wf-modal-body">
+              <div className="wf-template-detail">
+                <div className="wf-template-detail-icon">{selectedTemplate.icon}</div>
+                <div className="wf-template-detail-info">
+                  <h4>{selectedTemplate.name}</h4>
+                  <p>{selectedTemplate.desc}</p>
+                  <div className="wf-template-detail-meta">
+                    <span className="wf-trigger-badge">
+                      {TRIGGER_ICONS[selectedTemplate.trigger]} {TRIGGER_LABELS[selectedTemplate.trigger]}触发
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div className="wf-template-detail-steps">
+                <label>包含步骤</label>
+                <div className="wf-template-step-list">
+                  <div className="wf-template-step"><span className="wf-step-num">1</span> 初始化配置</div>
+                  <div className="wf-template-step"><span className="wf-step-num">2</span> 执行核心逻辑</div>
+                  <div className="wf-template-step"><span className="wf-step-num">3</span> 生成结果报告</div>
+                </div>
+              </div>
+            </div>
+            <div className="wf-modal-footer">
+              <button className="btn" onClick={() => setSelectedTemplate(null)}>取消</button>
+              <button className="btn btn-primary" onClick={handleConfirmTemplate}>使用此模板</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {activeTab === 'templates' && (
         <div className="wf-templates-grid">
           {TEMPLATES.map((t, i) => (
@@ -223,7 +267,7 @@ export function WorkflowPage() {
                   {TRIGGER_ICONS[t.trigger]} {TRIGGER_LABELS[t.trigger]}
                 </span>
               </div>
-              <span className="wf-template-action">使用</span>
+              <button className="wf-template-use-btn" onClick={(e) => { e.stopPropagation(); handleCreateFromTemplate(t) }}>使用</button>
             </div>
           ))}
         </div>

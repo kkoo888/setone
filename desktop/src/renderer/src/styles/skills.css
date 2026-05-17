@@ -153,7 +153,7 @@
   gap: 4px;
   padding: 0 20px;
   flex-shrink: 0;
-  border-bottom: 1px solid var(--color-border);
+  /* 移除 border-bottom，ModuleHeader 已有统一分割线 */
 }
 
 .skills-nav-tab {
