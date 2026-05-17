@@ -14,6 +14,15 @@ const MODULE_PANELS: Array<{ id: PanelId; icon: string; label: string; moduleId:
   { id: 'workflow', icon: '🔄', label: '工作流', moduleId: 'workflow' },
   { id: 'knowledge-base', icon: '📚', label: '知识库', moduleId: 'knowledge-base' },
   { id: 'translator', icon: '🌐', label: '翻译', moduleId: 'translator' },
+  { id: 'shortcuts', icon: '⌨️', label: '快捷指令', moduleId: 'input' },
+  { id: 'clipboard-history', icon: '📋', label: '剪贴板', moduleId: 'clipboard-history' },
+  { id: 'notifications', icon: '🔔', label: '通知', moduleId: 'desktop' },
+  { id: 'multi-session', icon: '💬', label: '多会话', moduleId: 'multi-session' },
+  { id: 'calendar', icon: '📅', label: '日程', moduleId: 'calendar' },
+  { id: 'quick-preview', icon: '👁', label: '预览', moduleId: 'quick-preview' },
+  { id: 'system-dashboard', icon: '📊', label: '仪表盘', moduleId: 'system-dashboard' },
+  { id: 'theme-store', icon: '🎨', label: '主题', moduleId: 'theme-store' },
+  { id: 'code-snippets', icon: '✂️', label: '代码片段', moduleId: 'code-snippets' },
 ]
 
 /** 底部固定面板项 */

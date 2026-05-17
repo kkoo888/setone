@@ -1,0 +1,18 @@
+{
+  "id": "theme-store",
+  "name": "主题商店",
+  "version": "1.0.0",
+  "description": "主题管理、安装、切换、导入导出",
+  "author": "setone",
+  "enabled": true,
+  "dependencies": [],
+  "hostVersion": ">=1.0.0",
+  "priority": 10,
+  "provides": [
+    { "type": "tool", "name": "theme_list", "description": "获取主题列表", "priority": 10 },
+    { "type": "tool", "name": "theme_apply", "description": "应用主题", "priority": 10 },
+    { "type": "tool", "name": "theme_install", "description": "安装主题", "priority": 10 },
+    { "type": "tool", "name": "theme_uninstall", "description": "卸载主题", "priority": 10 },
+    { "type": "tool", "name": "theme_export", "description": "导出主题", "priority": 10 }
+  ]
+}

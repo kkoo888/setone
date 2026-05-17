@@ -11,6 +11,18 @@ const SkillsPage = lazy(() => import('../../pages/SkillsPage').then(m => ({ defa
 const SettingsPage = lazy(() => import('../../pages/SettingsPage').then(m => ({ default: m.SettingsPage })))
 const ModulesPage = lazy(() => import('../../pages/ModulesPage').then(m => ({ default: m.ModulesPage })))
 const Live2DPage = lazy(() => import('../../pages/Live2DPage').then(m => ({ default: m.Live2DPage })))
+const KnowledgeBasePage = lazy(() => import('../../pages/KnowledgeBasePage').then(m => ({ default: m.KnowledgeBasePage })))
+const TranslatorPage = lazy(() => import('../../pages/TranslatorPage').then(m => ({ default: m.TranslatorPage })))
+const WorkflowPage = lazy(() => import('../../pages/WorkflowPage').then(m => ({ default: m.WorkflowPage })))
+const ShortcutsPage = lazy(() => import('../../pages/ShortcutsPage').then(m => ({ default: m.ShortcutsPage })))
+const ClipboardHistoryPage = lazy(() => import('../../pages/ClipboardHistoryPage').then(m => ({ default: m.ClipboardHistoryPage })))
+const NotificationsPage = lazy(() => import('../../pages/NotificationsPage').then(m => ({ default: m.NotificationsPage })))
+const MultiSessionPage = lazy(() => import('../../pages/MultiSessionPage').then(m => ({ default: m.MultiSessionPage })))
+const CalendarPage = lazy(() => import('../../pages/CalendarPage').then(m => ({ default: m.CalendarPage })))
+const QuickPreviewPage = lazy(() => import('../../pages/QuickPreviewPage').then(m => ({ default: m.QuickPreviewPage })))
+const SystemDashboardPage = lazy(() => import('../../pages/SystemDashboardPage').then(m => ({ default: m.SystemDashboardPage })))
+const ThemeStorePage = lazy(() => import('../../pages/ThemeStorePage').then(m => ({ default: m.ThemeStorePage })))
+const CodeSnippetsPage = lazy(() => import('../../pages/CodeSnippetsPage').then(m => ({ default: m.CodeSnippetsPage })))
 
 function PageLoading() {
   return (<div className="page-loading" role="status" aria-label="页面加载中"><div className="page-loading-spinner" /><span className="page-loading-text">加载中…</span></div>)
@@ -76,9 +88,21 @@ export function MainLayout() {
       case 'settings': return <SettingsPage />
       case 'modules': return <ModulesPage />
       case 'live2d': return <Live2DPage />
+      case 'knowledge-base': return <KnowledgeBasePage />
+      case 'translator': return <TranslatorPage />
+      case 'workflow': return <WorkflowPage />
+      case 'shortcuts': return <ShortcutsPage />
+      case 'clipboard-history': return <ClipboardHistoryPage />
+      case 'notifications': return <NotificationsPage />
+      case 'multi-session': return <MultiSessionPage />
+      case 'calendar': return <CalendarPage />
+      case 'quick-preview': return <QuickPreviewPage />
+      case 'system-dashboard': return <SystemDashboardPage />
+      case 'theme-store': return <ThemeStorePage />
+      case 'code-snippets': return <CodeSnippetsPage />
       case 'chat': return <ChatPage />
       default: {
-        // 模块专属页面
+        // 模块专属页面（记忆、任务、视觉、屏幕、主动关怀）
         const config = activePanel ? MODULE_PAGE_CONFIG[activePanel] : null
         if (config) {
           return <ModulePlaceholderPage {...config} />

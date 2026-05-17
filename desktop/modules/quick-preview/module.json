@@ -1,0 +1,15 @@
+{
+  "id": "quick-preview",
+  "name": "快速预览",
+  "version": "1.0.0",
+  "description": "文件快速预览，支持文本、代码、图片等多种格式",
+  "author": "setone",
+  "enabled": true,
+  "dependencies": ["file"],
+  "hostVersion": ">=1.0.0",
+  "priority": 10,
+  "provides": [
+    { "type": "tool", "name": "file_preview", "description": "预览文件内容", "priority": 10 },
+    { "type": "tool", "name": "file_open_dialog", "description": "打开文件选择对话框", "priority": 10 }
+  ]
+}

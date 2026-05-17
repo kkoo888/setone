@@ -1,0 +1,14 @@
+{
+  "id": "system-dashboard",
+  "name": "系统仪表盘",
+  "version": "1.0.0",
+  "description": "系统资源监控，CPU/内存/磁盘使用率，模块状态总览",
+  "author": "setone",
+  "enabled": true,
+  "dependencies": [],
+  "hostVersion": ">=1.0.0",
+  "priority": 10,
+  "provides": [
+    { "type": "tool", "name": "system_info", "description": "获取系统信息", "priority": 10 }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "id": "code-snippets",
+  "name": "代码片段",
+  "version": "1.0.0",
+  "description": "代码片段管理、搜索、分类、复制使用",
+  "author": "setone",
+  "enabled": true,
+  "dependencies": [],
+  "hostVersion": ">=1.0.0",
+  "priority": 10,
+  "provides": [
+    { "type": "tool", "name": "snippet_list", "description": "获取代码片段列表", "priority": 10 },
+    { "type": "tool", "name": "snippet_create", "description": "创建代码片段", "priority": 10 },
+    { "type": "tool", "name": "snippet_update", "description": "更新代码片段", "priority": 10 },
+    { "type": "tool", "name": "snippet_delete", "description": "删除代码片段", "priority": 10 },
+    { "type": "tool", "name": "snippet_use", "description": "使用代码片段（复制到剪贴板）", "priority": 10 }
+  ]
+}
