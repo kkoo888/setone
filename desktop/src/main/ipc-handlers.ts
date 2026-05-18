@@ -390,6 +390,15 @@ export function registerIpcHandlers(
     setTimeout(() => registerModuleCapabilities(), 500)
   })
 
+  // 桥接主题变更事件到渲染进程
+  eventBus?.on('theme:changed', (data: { themeId: string; colors: Record<string, string> }) => {
+    for (const win of BrowserWindow.getAllWindows()) {
+      if (!win.isDestroyed()) {
+        win.webContents.send('theme:changed', data)
+      }
+    }
+  })
+
   // 模块已加载完成，立即注册所有模块能力的 IPC 处理器
   // ⚠️ 将手动注册的 IPC 通道加入 registeredModuleIpc，防止 registerModuleCapabilities 重复注册
   for (const ch of [
@@ -562,31 +571,6 @@ export function registerIpcHandlers(
   })
   ipcMain.handle('file:list', async (_event, args: { path: string }) => {
     return invokeModuleCapability('file', 'file_list', args)
-  })
-
-  // ============================================================
-  // 主题商店 IPC
-  // ============================================================
-  ipcMain.handle('theme_list', async () => {
-    return invokeModuleCapability('theme-store', 'theme_list')
-  })
-  ipcMain.handle('theme_apply', async (event, args: { id: string }) => {
-    const result = await invokeModuleCapability('theme-store', 'theme_apply', args) as { success?: boolean; data?: { colors?: Record<string, string> } } | undefined
-    // 将主题变更事件桥接到渲染进程
-    if (result?.success && result.data?.colors) {
-      const win = BrowserWindow.fromWebContents(event.sender)
-      win?.webContents.send('theme:changed', { themeId: args.id, colors: result.data.colors })
-    }
-    return result
-  })
-  ipcMain.handle('theme_install', async (_event, args: { id: string }) => {
-    return invokeModuleCapability('theme-store', 'theme_install', args)
-  })
-  ipcMain.handle('theme_uninstall', async (_event, args: { id: string }) => {
-    return invokeModuleCapability('theme-store', 'theme_uninstall', args)
-  })
-  ipcMain.handle('theme_export', async (_event, args: { id: string }) => {
-    return invokeModuleCapability('theme-store', 'theme_export', args)
   })
 
   // ============================================================
