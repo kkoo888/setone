@@ -7,7 +7,10 @@
  */
 import type { Module, ModuleContext, Capability } from '../../src/main/types/module'
 import { BrowserWindow } from 'electron'
-import { join } from 'path'
+import { join, dirname } from 'path'
+import { fileURLToPath } from 'url'
+
+const __dirname = dirname(fileURLToPath(import.meta.url))
 
 /** 宠物窗口默认尺寸 */
 const PET_WINDOW_WIDTH = 400
