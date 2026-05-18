@@ -16,6 +16,7 @@
   justify-content: space-between;
   padding: 15px 24px 12px;
   flex-shrink: 0;
+  margin-bottom: 10px;
   border-bottom: 1px solid var(--color-border);
 }
 
