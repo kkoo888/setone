@@ -50,7 +50,7 @@ const Live2D5PetPage: React.FC = () => {
   // 拖拽支持
   useEffect(() => {
     const handleMouseDown = () => {
-      window.electronAPI?.invoke('live2d5:start-drag')
+      window.electronAPI?.invoke('live2d5_start_drag')
     }
     document.addEventListener('mousedown', handleMouseDown)
     return () => document.removeEventListener('mousedown', handleMouseDown)

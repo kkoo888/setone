@@ -2,6 +2,9 @@
  * Live2D Cubism 5 控制面板组件
  * 嵌入主窗口，控制独立宠物窗口
  * 使用 ModuleHeader 统一头部
+ *
+ * 所有 IPC 调用统一使用能力工具名（live2d5_open 等），
+ * 不使用内部 IPC（live2d5:xxx）。
  */
 import React, { useState, useCallback, useEffect } from 'react'
 import { ModuleHeader } from '../../components/common/module/ModuleHeader'
@@ -17,8 +20,10 @@ export const Live2D5Controls: React.FC = () => {
   /** 查询状态 */
   const refreshStatus = useCallback(async () => {
     try {
-      const result = await window.electronAPI.invoke('live2d5:get-status')
-      setStatus(result)
+      const result = await window.electronAPI.invoke('live2d5_status')
+      if (result?.success) {
+        setStatus(result.data)
+      }
     } catch (err) {
       console.error('[Live2D5] 查询状态失败:', err)
     }
@@ -32,7 +37,7 @@ export const Live2D5Controls: React.FC = () => {
   const handleOpen = useCallback(async () => {
     setLoading(true)
     try {
-      await window.electronAPI.invoke('live2d5:create-window')
+      await window.electronAPI.invoke('live2d5_open')
       await refreshStatus()
     } catch (err) {
       console.error('打开 Live2D 5 窗口失败:', err)
@@ -44,7 +49,7 @@ export const Live2D5Controls: React.FC = () => {
   const handleClose = useCallback(async () => {
     setLoading(true)
     try {
-      await window.electronAPI.invoke('live2d5:close-window')
+      await window.electronAPI.invoke('live2d5_close')
       await refreshStatus()
     } catch (err) {
       console.error('关闭 Live2D 5 窗口失败:', err)

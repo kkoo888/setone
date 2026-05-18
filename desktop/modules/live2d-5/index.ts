@@ -2,6 +2,8 @@
  * Live2D Cubism 5 模块
  * 基于 Cubism 5 SDK for Web R5
  * 独立窗口运行，与旧版 Live2D 模块完全隔离
+ *
+ * 所有能力统一通过 getCapabilities() 暴露，不使用内部 IPC。
  */
 import type { Module, ModuleContext, Capability } from '../../src/main/types/module'
 
@@ -14,17 +16,14 @@ export default class Live2D5Module implements Module {
   meta!: import('../../src/main/types/module').ModuleMeta
   private context!: ModuleContext
   private petWindow: import('electron').BrowserWindow | null = null
-  private ipcHandlers: string[] = []
 
   async activate(context: ModuleContext): Promise<void> {
     this.context = context
-    this.registerIPC()
     context.logger.info('Live2D Cubism 5 模块已激活')
   }
 
   async deactivate(): Promise<void> {
     this.closePetWindow()
-    this.unregisterIPC()
     this.context.logger.info('Live2D Cubism 5 模块已停用')
   }
 
@@ -63,6 +62,28 @@ export default class Live2D5Module implements Module {
           execute: async () => {
             this.closePetWindow()
             return { success: true, message: 'Live2D 5 宠物窗口已关闭' }
+          }
+        }
+      },
+      {
+        type: 'tool',
+        name: 'live2d5_status',
+        description: '查询 Live2D 5 宠物窗口状态',
+        priority: 10,
+        moduleId: this.id,
+        parameters: {
+          type: 'object',
+          properties: {},
+          required: []
+        },
+        handler: {
+          execute: async () => {
+            return {
+              success: true,
+              data: {
+                windowOpen: this.petWindow !== null && !this.petWindow.isDestroyed()
+              }
+            }
           }
         }
       },
@@ -107,39 +128,28 @@ export default class Live2D5Module implements Module {
             return { success: true, message: `播放动作: ${motionId}` }
           }
         }
+      },
+      {
+        type: 'tool',
+        name: 'live2d5_start_drag',
+        description: '开始拖拽 Live2D 5 宠物窗口',
+        priority: 10,
+        moduleId: this.id,
+        parameters: {
+          type: 'object',
+          properties: {},
+          required: []
+        },
+        handler: {
+          execute: async () => {
+            if (this.petWindow && !this.petWindow.isDestroyed()) {
+              this.petWindow.webContents.send('live2d5:start-drag')
+            }
+            return { success: true }
+          }
+        }
       }
     ]
-  }
-
-  /** 注册 IPC 通道（使用 live2d5: 前缀，避免与旧模块冲突） */
-  private registerIPC(): void {
-    const { ipcMain } = require('electron')
-
-    ipcMain.handle('live2d5:create-window', async () => {
-      await this.openPetWindow()
-    })
-    this.ipcHandlers.push('live2d5:create-window')
-
-    ipcMain.handle('live2d5:close-window', async () => {
-      this.closePetWindow()
-    })
-    this.ipcHandlers.push('live2d5:close-window')
-
-    ipcMain.handle('live2d5:get-status', async () => {
-      return {
-        windowOpen: this.petWindow !== null && !this.petWindow.isDestroyed()
-      }
-    })
-    this.ipcHandlers.push('live2d5:get-status')
-  }
-
-  /** 注销 IPC 处理器 */
-  private unregisterIPC(): void {
-    const { ipcMain } = require('electron')
-    for (const channel of this.ipcHandlers) {
-      ipcMain.removeHandler(channel)
-    }
-    this.ipcHandlers = []
   }
 
   /** 打开宠物窗口（独立 renderer 进程，Cubism 5 SDK 独立加载） */

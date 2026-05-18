@@ -1,5 +1,22 @@
 # Changelog - Live2D Cubism 5 模块
 
+## [1.2.0] - 2026-05-18
+
+### 重构
+- **移除内部 IPC** — 删除 `registerIPC()` / `unregisterIPC()`，所有能力统一走 `getCapabilities()`
+- **新增 `live2d5_status` 工具** — 查询宠物窗口开关状态，替代原 `live2d5:get-status` 内部 IPC
+- **新增 `live2d5_start_drag` 工具** — 开始拖拽宠物窗口，替代原 `live2d5:start-drag` 内部 IPC
+- **前端统一调用方式** — `Live2D5Controls`、`Live2D5Page`、`Live2D5PetPage` 全部改用能力工具名
+
+### 清理
+- 删除 `ipcHandlers` 字段
+- 删除 `registerIPC()` 方法（3 个 `ipcMain.handle`）
+- 删除 `unregisterIPC()` 方法
+- `deactivate()` 简化为仅关闭窗口
+
+### 原因
+原内部 IPC 中 `create-window` / `close-window` 与能力工具 `live2d5_open` / `live2d5_close` 完全重复，`get-status` / `start-drag` 可以作为能力工具暴露。统一走 Path A（getCapabilities）后代码更简洁，生命周期管理更清晰。
+
 ## [1.1.0] - 2026-05-18
 
 ### 重构
