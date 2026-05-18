@@ -1,6 +1,7 @@
 import { app, BrowserWindow, dialog } from 'electron'
 import { join } from 'path'
 import { execSync } from 'child_process'
+import { existsSync } from 'fs'
 
 // Windows 控制台 UTF-8 编码，防止中文日志乱码
 if (process.platform === 'win32') {
@@ -34,8 +35,6 @@ let mainWindow: BrowserWindow | null = null
  * 优先使用 ncc 编译后的 modules-dist，回退到源码 modules
  */
 function getModulesPath(): string {
-  const { existsSync } = require('fs') as typeof import('fs')
-
   if (!app.isPackaged) {
     // 开发模式：优先用编译后的 modules-dist
     const compiledDir = join(__dirname, '../../modules-dist')

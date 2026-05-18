@@ -1,4 +1,5 @@
 import { cpus, totalmem, freemem, uptime, platform, hostname } from 'os'
+import { exec } from 'child_process'
 import type { SystemInfoResult } from '../types'
 
 /**
@@ -18,7 +19,6 @@ export class SystemInfoService {
 
   async getDiskUsage(): Promise<{ used: number; total: number; percent: number }> {
     try {
-      const { exec } = require('child_process')
       const isWin = platform() === 'win32'
       const cmd = isWin ? 'wmic logicaldisk where "DeviceID=\'C:\'" get FreeSpace,Size /format:csv' : 'df -B1 / | tail -1'
       const out: string = await new Promise((resolve, reject) => {

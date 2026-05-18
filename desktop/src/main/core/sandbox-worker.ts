@@ -1,6 +1,8 @@
 // 此文件在 utilityProcess 子进程中运行
 // 注意：utilityProcess 中使用 process.parentPort（非 worker_threads.parentPort）
 
+import { createHash, createHmac, randomBytes, randomUUID, randomInt, timingSafeEqual } from 'crypto'
+
 const moduleId = process.env.MODULE_ID!
 const modulePath = process.env.MODULE_PATH!
 
@@ -175,15 +177,13 @@ function createSafeImport(
  * @returns 安全的 crypto 子集对象
  */
 function createSafeCrypto(): Record<string, unknown> {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const crypto = require('crypto') as Record<string, unknown>
   return {
-    createHash: crypto.createHash,
-    createHmac: crypto.createHmac,
-    randomBytes: crypto.randomBytes,
-    randomUUID: crypto.randomUUID,
-    randomInt: crypto.randomInt,
-    timingSafeEqual: crypto.timingSafeEqual,
+    createHash,
+    createHmac,
+    randomBytes,
+    randomUUID,
+    randomInt,
+    timingSafeEqual,
   }
 }
 
@@ -232,8 +232,9 @@ parentPort.on(
           } as unknown as typeof globalThis.Function
 
           // 3. 拦截 require（兼容 CommonJS 模块加载）
-          if (typeof require !== 'undefined') {
-            const originalRequire = require
+          {
+            const { createRequire } = await import('module')
+            const originalRequire = createRequire(import.meta.url)
             const safeRequire = Object.assign(
               function safeReq(specifier: string): unknown {
                 if (!isModuleAllowed(specifier)) {

@@ -7,7 +7,7 @@
  */
 
 import { join } from 'path'
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs'
+import { readFileSync, writeFileSync, existsSync, mkdirSync, unlinkSync } from 'fs'
 import { app } from 'electron'
 import type { SoulConfig, SoulCreateRequest, SoulStatus } from '../../shared/types/soul'
 import { DEFAULT_SOUL_CONFIG } from '../../shared/types/soul'
@@ -260,7 +260,6 @@ export class SoulManager {
     this.cache = null
     this.status = 'none'
     try {
-      const { unlinkSync } = require('fs')
       if (existsSync(this.soulPath)) {
         unlinkSync(this.soulPath)
       }

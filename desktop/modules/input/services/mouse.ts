@@ -1,6 +1,10 @@
 import type { Logger } from '../../../src/main/types/logger'
 import { execSync } from 'child_process'
 import { platform } from 'os'
+import { createRequire } from 'module'
+import { fileURLToPath } from 'url'
+
+const _require = createRequire(fileURLToPath(import.meta.url))
 
 export interface Position { x: number; y: number }
 
@@ -319,8 +323,7 @@ export class MouseService {
  */
 function tryLoadRobotjs(): any {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    return require('robotjs')
+    return _require('robotjs')
   } catch {
     return null
   }

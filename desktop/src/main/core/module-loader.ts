@@ -1,6 +1,7 @@
 import { existsSync } from 'fs'
 import { join, isAbsolute } from 'path'
 import { pathToFileURL } from 'url'
+import { app } from 'electron'
 import type { Module, ModuleContext, ModuleRegistration, ModuleMeta } from '../types/module'
 import type { EventBus } from '../types/event'
 import type { Logger } from '../types/logger'
@@ -242,9 +243,6 @@ export class ModuleLoader {
 
   /** 创建模块上下文 */
   private createContext(meta: ModuleMeta): ModuleContext {
-    const { app } = require('electron') as typeof import('electron')
-    const { join } = require('path') as typeof import('path')
-
     // 组合运行时值 + 配置管理器
     const runtimeConfig = Object.assign(Object.create(this.config), {
       dataDir: join(app.getPath('userData'), 'data'),

@@ -1,6 +1,7 @@
 {
   "name": "smart-desktop-assistant",
   "version": "0.1.0",
+  "type": "module",
   "description": "智能桌面助手",
   "main": "dist/main/index.js",
   "scripts": {

@@ -1,4 +1,5 @@
 import { readFile, stat } from 'fs/promises'
+import { dialog } from 'electron'
 
 /**
  * 文件预览服务
@@ -22,7 +23,6 @@ export class FilePreviewService {
   }
 
   async openDialog(): Promise<string | null> {
-    const { dialog } = require('electron')
     const result = await dialog.showOpenDialog({ properties: ['openFile'] })
     if (result.canceled || result.filePaths.length === 0) return null
     return result.filePaths[0]

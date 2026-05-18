@@ -1,6 +1,7 @@
 import type { Module, ModuleContext, Capability } from '../../src/main/types/module'
 import type { ClipItem } from './types'
 import { ClipboardStore } from './services/clipboard-store'
+import { clipboard } from 'electron'
 
 export default class ClipboardHistoryModule implements Module {
   id = 'clipboard-history'
@@ -17,8 +18,7 @@ export default class ClipboardHistoryModule implements Module {
     await this.store.loadAll()
     // 缓存 electron clipboard 引用
     try {
-      const electron = require('electron')
-      this.clipboardRef = electron.clipboard
+      this.clipboardRef = clipboard
     } catch { /* 非 Electron 环境 */ }
     // 轮询剪贴板变化（5秒间隔，平衡响应性与 CPU/电量消耗）
     this.pollTimer = setInterval(() => this.checkClipboard(), 5000)

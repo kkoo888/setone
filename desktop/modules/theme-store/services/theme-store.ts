@@ -1,4 +1,6 @@
 import type { Theme } from '../types'
+import { dialog } from 'electron'
+import { writeFile } from 'fs/promises'
 
 const BUILTIN_THEMES: Theme[] = [
   { id: 'default', name: '默认主题', author: 'setone', description: '清新蓝白默认主题', preview: '', colors: { primary: '#4a9eff', accent: '#a855f7', bg: '#0f172a', surface: '#1e293b' }, installed: true, active: true },
@@ -64,10 +66,8 @@ export class ThemeStore {
   async exportToFile(id: string): Promise<string | null> {
     const t = this.themes.find(x => x.id === id)
     if (!t) return null
-    const { dialog } = require('electron')
     const result = await dialog.showSaveDialog({ defaultPath: `${t.name}.json`, filters: [{ name: 'JSON', extensions: ['json'] }] })
     if (!result.canceled && result.filePath) {
-      const { writeFile } = require('fs/promises')
       await writeFile(result.filePath, JSON.stringify(t, null, 2))
       return result.filePath
     }

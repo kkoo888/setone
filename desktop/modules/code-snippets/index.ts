@@ -1,6 +1,7 @@
 import type { Module, ModuleContext, Capability } from '../../src/main/types/module'
 import type { SnippetCreateParams, SnippetUpdateParams, SnippetIdParams } from './types'
 import { SnippetStore } from './services/snippet-store'
+import { clipboard } from 'electron'
 
 export default class CodeSnippetsModule implements Module {
   id = 'code-snippets'
@@ -97,7 +98,7 @@ export default class CodeSnippetsModule implements Module {
             const { id } = p as SnippetIdParams
             const s = this.store.incrementUsage(id)
             if (!s) return { success: false, error: '片段不存在' }
-            try { const { clipboard } = require('electron'); clipboard.writeText(s.code) } catch { /* ignore */ }
+            try { clipboard.writeText(s.code) } catch { /* ignore */ }
             return { success: true, data: { code: s.code, usageCount: s.usageCount } }
           }
         }
