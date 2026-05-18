@@ -45,7 +45,7 @@ export function StatusBar() {
     void fetchSnapshot()
     timerRef.current = setInterval(() => {
       fetchSnapshot()
-      tickPolling('status-bar-resources')
+      tickPolling('status-bar-resources', '正在读取 CPU/内存快照')
     }, 3000)
 
     // 注册到轮询注册中心

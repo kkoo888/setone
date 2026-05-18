@@ -1309,9 +1309,15 @@ export function registerIpcHandlers(
 
   // ── 轮询注册中心 ──
 
-  /** 注册轮询任务 */
+  /** 注册核心轮询任务（不绑定模块，常驻） */
   ipcMain.handle('polling:register', async (_event, task) => {
     pollingRegistry.register(task)
+    return { success: true }
+  })
+
+  /** 注册模块轮询任务（绑定 moduleId，模块 deactivate 时自动清理） */
+  ipcMain.handle('polling:registerModule', async (_event, args: { task: Record<string, unknown>; moduleId: string }) => {
+    pollingRegistry.registerForModule(args.task as Parameters<typeof pollingRegistry.registerForModule>[0], args.moduleId)
     return { success: true }
   })
 
@@ -1327,13 +1333,13 @@ export function registerIpcHandlers(
     return { success: true }
   })
 
-  /** 标记轮询任务执行一次 */
-  ipcMain.handle('polling:tick', async (_event, args: { id: string }) => {
-    pollingRegistry.tick(args.id)
+  /** 标记轮询任务执行一次，可附带活动描述 */
+  ipcMain.handle('polling:tick', async (_event, args: { id: string; activity?: string }) => {
+    pollingRegistry.tick(args.id, args.activity)
     return { success: true }
   })
 
-  /** 获取所有轮询任务 */
+  /** 获取所有轮询任务（初始化用，后续靠推送更新） */
   ipcMain.handle('polling:list', async () => {
     return pollingRegistry.getAll()
   })

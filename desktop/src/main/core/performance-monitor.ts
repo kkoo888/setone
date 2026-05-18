@@ -93,7 +93,7 @@ export class PerformanceMonitor implements IPerformanceMonitor {
     // 定时采集
     this.timer = setInterval(() => {
       void this.tick()
-      pollingRegistry.tick('performance-monitor')
+      pollingRegistry.tick('performance-monitor', '正在采集 CPU/内存/磁盘/GPU 数据')
     }, this.config.interval)
   }
 

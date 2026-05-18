@@ -11,6 +11,7 @@ import type { DatabaseManager } from '../types/database'
 import type { ScopedStore } from '../types/store'
 import { createScopedEventBus } from './scoped-event-bus'
 import { createLogger } from './logger'
+import { pollingRegistry } from './polling-registry'
 
 /** deactivate 默认超时时间（ms） */
 const DEFAULT_DEACTIVATE_TIMEOUT_MS = 5000
@@ -234,6 +235,8 @@ export class ModuleLoader {
     } finally {
       reg.instance = null
       reg.status = 'disabled'
+      // 清理该模块注册的所有轮询任务
+      pollingRegistry.unregisterByModule(moduleId)
       this.eventBus.emit('on_module_unloaded', { moduleId })
       if (!timedOut) {
         this.logger.info(`模块 "${moduleId}" 已停用`)

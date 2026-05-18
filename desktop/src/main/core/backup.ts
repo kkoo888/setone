@@ -55,10 +55,13 @@ export class BackupManager {
     const runBackup = () => {
       try {
         this.logger.info('自动备份开始执行')
+        pollingRegistry.update('auto-backup', { lastActivity: '正在备份数据库...' })
         this.createBackup(sourcePath)
+        pollingRegistry.update('auto-backup', { lastActivity: '备份完成 ✅' })
         this.logger.info('自动备份执行完成')
       } catch (err) {
         this.logger.error('自动备份执行失败', err as Error)
+        pollingRegistry.update('auto-backup', { lastError: (err as Error).message })
       }
     }
 
