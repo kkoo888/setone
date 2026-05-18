@@ -1108,17 +1108,12 @@ export function registerIpcHandlers(
 
     // 开发模式加载 dev server，生产模式加载文件
     if (process.env.VITE_DEV_SERVER_URL) {
-      const url = `${process.env.VITE_DEV_SERVER_URL}#/live2d-pet`
-      logger.info(`[Live2D] 加载 dev server URL: ${url}`)
-      await live2dWindow.loadURL(url)
+      live2dWindow.loadURL(`${process.env.VITE_DEV_SERVER_URL}#/live2d-pet`)
     } else {
-      const filePath = join(__dirname, '../renderer/index.html')
-      logger.info(`[Live2D] 加载本地文件: ${filePath}`)
-      await live2dWindow.loadFile(filePath, {
+      live2dWindow.loadFile(join(__dirname, '../renderer/index.html'), {
         hash: '#/live2d-pet',
       })
     }
-    logger.info('[Live2D] 页面加载完成')
 
     // 注意：不在这里开启鼠标穿透，由渲染进程根据鼠标是否在模型上来动态控制
     // 解决鼠标穿透导致无法点击宠物的问题

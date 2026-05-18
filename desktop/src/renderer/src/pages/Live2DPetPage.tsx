@@ -10,6 +10,7 @@ const Live2DPetPage: React.FC = () => {
   const [ready, setReady] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showMenu, setShowMenu] = useState(false)
+  const [retryKey, setRetryKey] = useState(0)
   const [state, setState] = useState<Live2DPetState>({
     loaded: false, mouseTracking: true, clickInteraction: true,
     currentExpression: '', currentMotion: '',
@@ -20,12 +21,24 @@ const Live2DPetPage: React.FC = () => {
     dragging: false, startX: 0, startY: 0, winX: 0, winY: 0,
   })
 
-  // ========== 加载模型 ==========
+  /** 手动重试 */
+  const handleRetry = useCallback(() => {
+    setError(null)
+    setReady(false)
+    live2dEasyControl.stop().catch(() => {})
+    setRetryKey((k) => k + 1)
+  }, [])
+
+  // ========== 加载模型（带自动重试） ==========
   useEffect(() => {
     let cancelled = false
+    let retryTimer: ReturnType<typeof setTimeout> | null = null
 
-    const loadModel = async () => {
+    const loadModel = async (attempt: number = 1) => {
+      const MAX_RETRIES = 2
       try {
+        console.log(`[Live2DPet] 🚀 开始加载 (尝试 ${attempt}/${MAX_RETRIES + 1})...`)
+
         // 等待 Cubism Core 加载完成（HTML 中已有 script 标签）
         for (let i = 0; i < 20; i++) {
           if ((window as any).Live2DCubismCore) break
@@ -34,10 +47,9 @@ const Live2DPetPage: React.FC = () => {
         if (!(window as any).Live2DCubismCore) {
           throw new Error('Live2DCubismCore 未加载，请检查 public/lib/live2dcubismcore.min.js')
         }
+        console.log('[Live2DPet] ✅ Cubism Core 已就绪')
 
-        console.log('[Live2DPet] Cubism Core 已就绪，设置 script 拦截...')
         // 防止 live2d-easy-control 重复从 CDN 加载 Cubism Core
-        // 如果 core 已存在，拦截 createElement('script') 阻止 CDN 请求
         const origCreate = document.createElement.bind(document)
         const coreReady = (window as any).Live2DCubismCore
         if (coreReady) {
@@ -49,12 +61,10 @@ const Live2DPetPage: React.FC = () => {
                 Object.defineProperty(el, 'src', {
                   set(val: string) {
                     if (val.includes('live2dcubismcore')) {
-                      // 跳过 CDN 加载，直接触发 onload
-                      console.log('[Live2DPet] 🚫 拦截 Cubism Core CDN 加载:', val)
+                      console.log('[Live2DPet] 🚫 拦截 Cubism Core CDN 加载')
                       setTimeout(() => el.dispatchEvent(new Event('load')), 0)
                       return
                     }
-                    console.log('[Live2DPet] 允许 script 加载:', val)
                     origSetSrc.call(el, val)
                   },
                   get() { return el.getAttribute('src') ?? '' }
@@ -64,17 +74,8 @@ const Live2DPetPage: React.FC = () => {
             return el
           }
         }
-        console.log('[Live2DPet] script 拦截设置完成')
 
-        console.log('[Live2DPet] 🚀 开始加载桌面宠物...')
-        console.log('[Live2DPet] Cubism Core 状态:', !!(window as any).Live2DCubismCore)
-        console.log('[Live2DPet] live2dEasyControl 模块:', live2dEasyControl)
-
-        // 模型资源路径：
-        // 库拼接方式: resourcesPath + modelDir + "/"
-        // 目录结构:   public/live2d/Hiyori/Hiyori.model3.json
-        // 所以: resourcesPath='/live2d/'  modelDir='Hiyori'
-        const loadConfig = {
+        await live2dEasyControl.load({
           modelDir: 'Hiyori',
           resourcesPath: '/live2d/',
           canvasSize: 'auto',
@@ -94,10 +95,7 @@ const Live2DPetPage: React.FC = () => {
           },
           debugLogEnable: true,
           debugTouchLogEnable: false,
-        }
-        console.log('[Live2DPet] 加载配置:', JSON.stringify(loadConfig, null, 2))
-        await live2dEasyControl.load(loadConfig)
-        console.log('[Live2DPet] ✅ live2dEasyControl.load() 完成')
+        })
 
         // 恢复原始 createElement
         if (coreReady) {
@@ -105,15 +103,25 @@ const Live2DPetPage: React.FC = () => {
         }
 
         if (cancelled) return
+        console.log('[Live2DPet] ✅ 模型加载成功！')
         setReady(true)
         live2dEasyControl.setStateChangeCallback((s) => {
           if (!cancelled) setState(s)
         })
         setState(live2dEasyControl.getState())
       } catch (err) {
-        if (!cancelled) {
-          console.error('[Live2DPet] 模型加载失败:', err)
-          setError(String(err))
+        if (cancelled) return
+        const message = err instanceof Error ? err.message : String(err)
+        console.error(`[Live2DPet] ❌ 加载失败 (尝试 ${attempt}):`, message)
+
+        // 自动重试
+        if (attempt <= MAX_RETRIES) {
+          console.log(`[Live2DPet] ⏳ 1.5秒后自动重试...`)
+          retryTimer = setTimeout(() => {
+            if (!cancelled) loadModel(attempt + 1)
+          }, 1500)
+        } else {
+          setError(`加载失败: ${message}`)
         }
       }
     }
@@ -122,10 +130,11 @@ const Live2DPetPage: React.FC = () => {
 
     return () => {
       cancelled = true
+      if (retryTimer) clearTimeout(retryTimer)
       live2dEasyControl.setStateChangeCallback(null)
       live2dEasyControl.stop().catch(() => {})
     }
-  }, [])
+  }, [retryKey])
 
   // ========== 窗口拖拽（原生 DOM 事件） ==========
   useEffect(() => {
@@ -272,9 +281,16 @@ const Live2DPetPage: React.FC = () => {
         <div style={{
           position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
           color: 'rgba(239,68,68,0.8)', fontSize: 12, textShadow: '0 1px 6px rgba(0,0,0,0.8)',
-          textAlign: 'center', maxWidth: 200,
+          textAlign: 'center', maxWidth: 250, display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'center',
         }}>
-          ❌ {error}
+          <span>❌ {error}</span>
+          <button
+            onClick={handleRetry}
+            style={{
+              padding: '4px 16px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.3)',
+              background: 'rgba(255,255,255,0.1)', color: '#fff', fontSize: 12, cursor: 'pointer',
+            }}
+          >🔄 重新加载</button>
         </div>
       )}
 
