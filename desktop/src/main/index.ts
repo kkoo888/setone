@@ -61,7 +61,7 @@ function createWindow(config: ConfigManagerImpl | null): void {
     minWidth: 800,
     minHeight: 600,
     webPreferences: {
-      preload: join(__dirname, '../preload/index.js'),
+      preload: join(__dirname, '../preload/index.mjs'),
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: false

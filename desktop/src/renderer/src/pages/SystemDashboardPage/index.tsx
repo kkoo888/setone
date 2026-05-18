@@ -32,7 +32,7 @@ export function SystemDashboardPage() {
 
   // 首次加载轮询列表 + 监听推送更新
   useEffect(() => {
-    window.electronAPI.invoke('polling:list').then((tasks: unknown) => {
+    window.electronAPI?.invoke('polling:list').then((tasks: unknown) => {
       if (Array.isArray(tasks)) setPollingTasks(tasks as PollingTask[])
     }).catch(() => {})
     const unsub = onPollingUpdate((tasks: unknown[]) => {

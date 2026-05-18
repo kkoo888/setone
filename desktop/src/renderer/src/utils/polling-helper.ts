@@ -69,5 +69,6 @@ export async function updatePolling(id: string, patch: Record<string, unknown>):
  * 返回取消监听的函数
  */
 export function onPollingUpdate(callback: (tasks: unknown[]) => void): () => void {
+  if (!window.electronAPI) return () => {}
   return window.electronAPI.on('polling:updated', callback)
 }

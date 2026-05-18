@@ -1106,7 +1106,7 @@ export function registerIpcHandlers(
       hasShadow: false,
       backgroundColor: '#00000000',
       webPreferences: {
-        preload: join(__dirname, '../preload/index.js'),
+        preload: join(__dirname, '../preload/index.mjs'),
         nodeIntegration: false,
         contextIsolation: true,
         sandbox: false,
