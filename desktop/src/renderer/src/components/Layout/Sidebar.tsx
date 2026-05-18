@@ -30,6 +30,7 @@ const BOTTOM_PANELS: Array<{ id: PanelId; icon: string; label: string }> = [
   { id: 'modules', icon: '🧩', label: '模块' },
   { id: 'settings', icon: '⚙️', label: '设置' },
   { id: 'live2d', icon: '🐾', label: 'Live2D' },
+  { id: 'live2d5', icon: '🎭', label: 'Live2D-5' },
 ]
 
 export function Sidebar() {
