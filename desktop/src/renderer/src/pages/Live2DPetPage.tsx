@@ -26,8 +26,6 @@ const Live2DPetPage: React.FC = () => {
     setError(null)
     setReady(false)
     live2dEasyControl.stop().catch(() => {})
-    // 恢复 createElement（清理上次拦截的副作用）
-    try { (document as any).createElement = document.createElement.bind(document) } catch {}
     setRetryKey((k) => k + 1)
   }, [])
 
@@ -41,49 +39,26 @@ const Live2DPetPage: React.FC = () => {
       try {
         console.log(`[Live2DPet] 🚀 开始加载 (尝试 ${attempt}/${MAX_RETRIES + 1})...`)
 
-        // 等待 Cubism Core 完全加载（包括 Memory 子对象）
+        // 等待 Cubism Core 加载完成
         for (let i = 0; i < 40; i++) {
-          const core = (window as any).Live2DCubismCore
-          if (core?.Memory?.initializeAmountOfMemory) break
+          if ((window as any).Live2DCubismCore) break
           await new Promise(r => setTimeout(r, 250))
         }
         const core = (window as any).Live2DCubismCore
-        if (!core?.Memory?.initializeAmountOfMemory) {
-          throw new Error('Live2DCubismCore.Memory 未就绪，SDK 加载不完整')
+        if (!core) {
+          throw new Error('Live2DCubismCore 未加载')
         }
-        console.log('[Live2DPet] ✅ Cubism Core (含 Memory) 已就绪')
 
-        // 防止 live2d-easy-control 重复从 CDN 加载 Cubism Core
-        // 只在第一次尝试时设置拦截，避免 Cannot redefine property 错误
-        if (attempt === 1) {
-          const origCreate = document.createElement.bind(document)
-          ;(document as any).__origCreate = origCreate
-          ;(document as any).createElement = function(tag: string) {
-            const el = origCreate(tag)
-            if (tag === 'script') {
-              try {
-                const origSetSrc = Object.getOwnPropertyDescriptor(HTMLScriptElement.prototype, 'src')?.set
-                if (origSetSrc) {
-                  Object.defineProperty(el, 'src', {
-                    configurable: true,
-                    set(val: string) {
-                      if (val.includes('live2dcubismcore')) {
-                        console.log('[Live2DPet] 🚫 拦截 Cubism Core CDN 加载')
-                        setTimeout(() => el.dispatchEvent(new Event('load')), 0)
-                        return
-                      }
-                      origSetSrc.call(el, val)
-                    },
-                    get() { return el.getAttribute('src') ?? '' }
-                  })
-                }
-              } catch {
-                // defineProperty 失败就跳过拦截
-              }
-            }
-            return el
+        // ⚡ 兼容性修复：补全 Memory 对象（部分 Core 版本缺少此 API）
+        if (!core.Memory) {
+          console.log('[Live2DPet] ⚠️ Cubism Core 缺少 Memory，注入兼容层')
+          core.Memory = {
+            initializeAmountOfMemory: (size: number) => {
+              console.log('[Live2DPet] Memory.initializeAmountOfMemory 兼容层:', size)
+            },
           }
         }
+        console.log('[Live2DPet] ✅ Cubism Core 已就绪')
 
         await live2dEasyControl.load({
           modelDir: 'Hiyori',
@@ -106,14 +81,6 @@ const Live2DPetPage: React.FC = () => {
           debugLogEnable: true,
           debugTouchLogEnable: false,
         })
-
-        // 恢复原始 createElement
-        try {
-          if ((document as any).__origCreate) {
-            (document as any).createElement = (document as any).__origCreate
-            delete (document as any).__origCreate
-          }
-        } catch {}
 
         if (cancelled) return
         console.log('[Live2DPet] ✅ 模型加载成功！')
