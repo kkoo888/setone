@@ -10,6 +10,7 @@ import { VectorStore } from './VectorStore'
 /**
  * 知识库管理器
  * 负责文件导入、文本提取、切片、向量化和存储
+ * 支持联网开关：关闭时仅导入文本，跳过向量化
  */
 export class KBManager {
   private readonly logger: Logger
@@ -101,8 +102,18 @@ export class KBManager {
       const documentId = randomUUID()
       const fileSize = Buffer.byteLength(content, 'utf-8')
 
-      // 批量生成嵌入向量
-      const embeddings = await this.embeddingService.embedBatch(textChunks)
+      // 根据联网状态决定是否生成向量
+      const isNetworkOn = this.embeddingService.isNetworkEnabled()
+      let embeddings: number[][] = []
+
+      if (isNetworkOn) {
+        // 联网开启：批量生成嵌入向量
+        embeddings = await this.embeddingService.embedBatch(textChunks)
+      } else {
+        // 联网关闭：跳过向量化，用空向量占位
+        this.logger.warn(`联网已关闭，文件 "${fileName}" 仅导入文本，未生成向量`)
+        embeddings = textChunks.map(() => [])
+      }
 
       // 构建片段对象
       const chunks: KBChunk[] = textChunks.map((text, index) => ({

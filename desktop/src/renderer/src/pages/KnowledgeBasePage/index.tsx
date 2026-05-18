@@ -3,19 +3,66 @@ import { ModuleHeader } from '../../components/common/module/ModuleHeader'
 import { ModuleList, ModuleListItem, ModuleModal } from '../../components/common/module/ModuleList'
 import { KBDocument, KBSearchResult, KBAskResult } from '../types/knowledge-base'
 
+/** 数据集信息 */
+interface DatasetInfo {
+  id: string
+  name: string
+  category: string
+  downloads: string
+  size: string
+  description: string
+  url: string
+  relevance: string
+  tags: string[]
+}
+
+/** 下载进度 */
+interface DownloadProgress {
+  datasetId: string
+  datasetName: string
+  state: string
+  receivedBytes: number
+  totalBytes: number
+  percent: number
+  savePath: string
+}
+
+/** 分类颜色映射 */
+const CATEGORY_COLORS: Record<string, { bg: string; text: string }> = {
+  '百科评估': { bg: 'rgba(99,102,241,0.1)', text: 'var(--color-accent)' },
+  '指令对话': { bg: 'rgba(34,197,94,0.1)', text: 'var(--color-success)' },
+  '数学推理': { bg: 'rgba(251,191,36,0.1)', text: '#d97706' },
+  '专业领域': { bg: 'rgba(236,72,153,0.1)', text: '#ec4899' },
+  '语音': { bg: 'rgba(168,85,247,0.1)', text: '#a855f7' },
+  '视觉OCR': { bg: 'rgba(14,165,233,0.1)', text: '#0ea5e9' },
+  '通用语料': { bg: 'rgba(107,114,128,0.1)', text: 'var(--color-text-secondary)' },
+}
+
 export function KnowledgeBasePage() {
+  // ── 文档管理 ──
   const [documents, setDocuments] = useState<KBDocument[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<KBSearchResult[]>([])
   const [askQuestion, setAskQuestion] = useState('')
   const [askResult, setAskResult] = useState<KBAskResult | null>(null)
   const [importPath, setImportPath] = useState('')
-  const [activeTab, setActiveTab] = useState('docs')
+  const [activeTab, setActiveTab] = useState('datasets')
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [showImportDialog, setShowImportDialog] = useState(false)
   const [importMode, setImportMode] = useState<'file' | 'folder'>('file')
+  const [networkEnabled, setNetworkEnabled] = useState(true)
 
+  // ── 数据集广场 ──
+  const [datasets, setDatasets] = useState<DatasetInfo[]>([])
+  const [datasetCategories, setDatasetCategories] = useState<string[]>(['全部'])
+  const [selectedCategory, setSelectedCategory] = useState('全部')
+  const [remoteUrl, setRemoteUrl] = useState('')
+  const [loadingDatasets, setLoadingDatasets] = useState(false)
+  const [downloads, setDownloads] = useState<Map<string, DownloadProgress>>(new Map())
+  const [showDownloadConfirm, setShowDownloadConfirm] = useState<DatasetInfo | null>(null)
+
+  // ── 加载数据 ──
   const loadDocuments = useCallback(async () => {
     try {
       const res = await window.electronAPI.invoke('kb_list')
@@ -23,8 +70,64 @@ export function KnowledgeBasePage() {
     } catch { /* ignore */ }
   }, [])
 
-  useEffect(() => { loadDocuments() }, [loadDocuments])
+  const loadNetworkStatus = useCallback(async () => {
+    try {
+      const res = await window.electronAPI.invoke('kb_network_status')
+      if (res?.success) setNetworkEnabled(res.data.networkEnabled ?? true)
+    } catch { /* ignore */ }
+  }, [])
 
+  const loadDatasets = useCallback(async () => {
+    setLoadingDatasets(true)
+    try {
+      const res = await window.electronAPI.invoke('kb_dataset_list', { category: selectedCategory === '全部' ? undefined : selectedCategory })
+      if (res?.success) {
+        setDatasets(res.data.datasets ?? [])
+        setDatasetCategories(res.data.categories ?? ['全部'])
+      }
+    } catch { /* ignore */ }
+    setLoadingDatasets(false)
+  }, [selectedCategory])
+
+  useEffect(() => { loadDocuments(); loadNetworkStatus(); loadDatasets() }, [loadDocuments, loadNetworkStatus, loadDatasets])
+
+  // ── 监听下载进度 ──
+  useEffect(() => {
+    const handler = (_event: unknown, progress: DownloadProgress) => {
+      setDownloads(prev => {
+        const next = new Map(prev)
+        next.set(progress.datasetId, progress)
+        return next
+      })
+      if (progress.state === 'completed') {
+        setMessage(`✅ "${progress.datasetName}" 下载完成！`)
+        loadDatasets()
+      } else if (progress.state === 'cancelled') {
+        setMessage(`❌ "${progress.datasetName}" 下载已取消`)
+      }
+    }
+
+    // @ts-expect-error - Electron IPC listener
+    window.electronAPI.on?.('kb_dataset_download_progress', handler)
+    return () => {
+      // @ts-expect-error
+      window.electronAPI.off?.('kb_dataset_download_progress', handler)
+    }
+  }, [loadDatasets])
+
+  // ── 联网切换 ──
+  const handleToggleNetwork = async () => {
+    try {
+      const newState = !networkEnabled
+      const res = await window.electronAPI.invoke('kb_network_status', { enabled: newState })
+      if (res?.success) {
+        setNetworkEnabled(newState)
+        setMessage(newState ? '✅ 联网功能已开启' : '⚠️ 联网功能已关闭（本地文件操作和已有向量搜索不受影响）')
+      }
+    } catch (e) { setMessage(`切换失败：${(e as Error).message}`) }
+  }
+
+  // ── 文档导入 ──
   const handleImport = async () => {
     if (!importPath.trim()) return
     setLoading(true)
@@ -41,6 +144,7 @@ export function KnowledgeBasePage() {
     setLoading(false)
   }
 
+  // ── 搜索 / 问答 ──
   const handleSearch = async () => {
     if (!searchQuery.trim()) return
     setLoading(true)
@@ -84,28 +188,288 @@ export function KnowledgeBasePage() {
     } catch { /* ignore */ }
   }
 
+  // ── 远程加载数据集 ──
+  const handleFetchRemote = async () => {
+    if (!remoteUrl.trim()) return
+    setLoadingDatasets(true)
+    try {
+      const res = await window.electronAPI.invoke('kb_dataset_fetch_remote', { url: remoteUrl })
+      if (res?.success) {
+        setMessage(`✅ ${res.data.message}`)
+        loadDatasets()
+      } else {
+        setMessage(`❌ 加载失败：${res?.error}`)
+      }
+    } catch (e) { setMessage(`❌ 错误：${(e as Error).message}`) }
+    setLoadingDatasets(false)
+  }
+
+  // ── 下载数据集 ──
+  const handleDownloadClick = (dataset: DatasetInfo) => {
+    setShowDownloadConfirm(dataset)
+  }
+
+  const handleConfirmDownload = () => {
+    if (!showDownloadConfirm) return
+    const dataset = showDownloadConfirm
+    setShowDownloadConfirm(null)
+
+    // 调用 Electron IPC 开始下载
+    // @ts-expect-error - Electron IPC send
+    window.electronAPI.send?.('kb_dataset_download_start', dataset.id, dataset.name, dataset.url)
+
+    // 初始化下载状态
+    setDownloads(prev => {
+      const next = new Map(prev)
+      next.set(dataset.id, {
+        datasetId: dataset.id,
+        datasetName: dataset.name,
+        state: 'pending',
+        receivedBytes: 0,
+        totalBytes: 0,
+        percent: 0,
+        savePath: ''
+      })
+      return next
+    })
+  }
+
+  const handleCancelDownload = (datasetId: string) => {
+    // @ts-expect-error
+    window.electronAPI.send?.('kb_dataset_download_cancel', datasetId)
+    setDownloads(prev => {
+      const next = new Map(prev)
+      next.delete(datasetId)
+      return next
+    })
+  }
+
+  // ── 格式化字节 ──
+  const formatBytes = (bytes: number): string => {
+    if (bytes === 0) return '0 B'
+    const k = 1024
+    const sizes = ['B', 'KB', 'MB', 'GB']
+    const i = Math.floor(Math.log(bytes) / Math.log(k))
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i]
+  }
+
+  // ── 获取下载按钮状态 ──
+  const renderDownloadButton = (dataset: DatasetInfo) => {
+    const dl = downloads.get(dataset.id)
+    if (!dl) {
+      return (
+        <button
+          onClick={() => handleDownloadClick(dataset)}
+          className="btn btn-primary"
+          style={{ fontSize: 12, padding: '4px 12px', whiteSpace: 'nowrap' }}
+        >
+          📥 下载
+        </button>
+      )
+    }
+
+    if (dl.state === 'completed') {
+      return (
+        <span style={{ fontSize: 12, color: 'var(--color-success)', fontWeight: 600 }}>✅ 已完成</span>
+      )
+    }
+
+    if (dl.state === 'pending') {
+      return (
+        <span style={{ fontSize: 12, color: 'var(--color-text-tertiary)' }}>⏳ 准备中...</span>
+      )
+    }
+
+    if (dl.state === 'downloading') {
+      return (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 120 }}>
+          <div style={{ flex: 1, height: 6, background: 'var(--color-bg-tertiary)', borderRadius: 3, overflow: 'hidden' }}>
+            <div style={{
+              width: `${dl.percent}%`, height: '100%', borderRadius: 3,
+              background: 'var(--color-accent)', transition: 'width 0.3s ease'
+            }} />
+          </div>
+          <span style={{ fontSize: 11, color: 'var(--color-accent)', fontWeight: 600, minWidth: 36, textAlign: 'right' }}>
+            {dl.percent}%
+          </span>
+          <button
+            onClick={() => handleCancelDownload(dataset.id)}
+            style={{ fontSize: 11, padding: '2px 6px', background: 'none', border: 'none', color: 'var(--color-error)', cursor: 'pointer' }}
+            title="取消下载"
+          >
+            ✕
+          </button>
+        </div>
+      )
+    }
+
+    return null
+  }
+
   return (
     <div className="mod-page">
       <ModuleHeader
         icon="📚"
         title="知识库"
         tabs={[
+          { key: 'datasets', label: '🌐 数据集广场', count: datasets.length },
           { key: 'docs', label: '📄 文档管理', count: documents.length },
           { key: 'search', label: '🔍 语义搜索' },
           { key: 'ask', label: '💡 RAG问答' },
         ]}
         activeTab={activeTab}
         onTabChange={setActiveTab}
+        actions={
+          <button
+            onClick={handleToggleNetwork}
+            className={`btn ${networkEnabled ? 'btn-primary' : ''}`}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6, fontSize: 13,
+              background: networkEnabled ? undefined : 'var(--color-bg-tertiary)',
+              color: networkEnabled ? undefined : 'var(--color-text-secondary)',
+              border: networkEnabled ? undefined : '1px solid var(--color-border)'
+            }}
+            title={networkEnabled ? '点击关闭联网' : '点击开启联网'}
+          >
+            {networkEnabled ? '🌐 联网中' : '🔌 已断网'}
+          </button>
+        }
       />
 
+      {/* 消息提示 */}
       {message && (
         <div style={{ padding: '0 24px', animation: 'scSlideDown 0.2s ease' }}>
-          <div style={{ padding: '10px 16px', borderRadius: 8, fontSize: 13, background: message.includes('失败') || message.includes('错误') ? 'rgba(239,68,68,0.1)' : 'rgba(34,197,94,0.1)', color: message.includes('失败') || message.includes('错误') ? 'var(--color-error)' : 'var(--color-success)', border: `1px solid ${message.includes('失败') || message.includes('错误') ? 'rgba(239,68,68,0.2)' : 'rgba(34,197,94,0.2)'}` }}>
+          <div style={{ padding: '10px 16px', borderRadius: 8, fontSize: 13, background: message.includes('失败') || message.includes('错误') || message.includes('❌') ? 'rgba(239,68,68,0.1)' : 'rgba(34,197,94,0.1)', color: message.includes('失败') || message.includes('错误') || message.includes('❌') ? 'var(--color-error)' : 'var(--color-success)', border: `1px solid ${message.includes('失败') || message.includes('错误') || message.includes('❌') ? 'rgba(239,68,68,0.2)' : 'rgba(34,197,94,0.2)'}` }}>
             {message}
           </div>
         </div>
       )}
 
+      {/* 联网警告 */}
+      {!networkEnabled && (
+        <div style={{ padding: '0 24px', animation: 'scSlideDown 0.2s ease' }}>
+          <div style={{ padding: '10px 16px', borderRadius: 8, fontSize: 13, background: 'rgba(251,191,36,0.1)', color: 'var(--color-warning)', border: '1px solid rgba(251,191,36,0.2)', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span>⚠️</span>
+            <span>联网已关闭 — 向量化和 RAG 问答不可用，本地文件操作和已有向量搜索正常</span>
+          </div>
+        </div>
+      )}
+
+      {/* ══════════ 数据集广场 ══════════ */}
+      {activeTab === 'datasets' && (
+        <>
+          {/* 远程导入栏 */}
+          <div style={{ padding: '12px 24px', display: 'flex', gap: 8, borderTop: '1px solid var(--color-border)' }}>
+            <input
+              value={remoteUrl}
+              onChange={e => setRemoteUrl(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleFetchRemote()}
+              placeholder="输入数据集目录的 Markdown 地址（如 GitHub URL）..."
+              className="mod-search"
+              style={{ maxWidth: 'none', flex: 1 }}
+            />
+            <button onClick={handleFetchRemote} disabled={loadingDatasets || !remoteUrl.trim()} className="btn btn-primary">
+              {loadingDatasets ? '加载中...' : '🔗 解析导入'}
+            </button>
+          </div>
+
+          {/* 分类筛选 */}
+          <div style={{ padding: '8px 24px', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            {datasetCategories.map(cat => (
+              <button
+                key={cat}
+                onClick={() => setSelectedCategory(cat)}
+                className={`mod-filter-btn ${selectedCategory === cat ? 'active' : ''}`}
+                style={{ fontSize: 12 }}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+
+          {/* 数据集列表 */}
+          <div style={{ padding: '0 24px 24px', overflow: 'auto', flex: 1 }}>
+            {datasets.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--color-text-tertiary)' }}>
+                <div style={{ fontSize: 48, opacity: 0.3, marginBottom: 12 }}>🌐</div>
+                <div>暂无数据集，请输入远程地址加载</div>
+              </div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 12 }}>
+                {datasets.map(ds => {
+                  const catColor = CATEGORY_COLORS[ds.category] ?? CATEGORY_COLORS['通用语料']
+                  return (
+                    <div
+                      key={ds.id}
+                      style={{
+                        background: 'var(--color-bg-secondary)',
+                        border: '1px solid var(--color-border)',
+                        borderRadius: 12,
+                        padding: 16,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 10,
+                        transition: 'all var(--transition-fast)',
+                      }}
+                      onMouseEnter={e => {
+                        (e.currentTarget as HTMLElement).style.borderColor = 'rgba(99,102,241,0.3)'
+                        ;(e.currentTarget as HTMLElement).style.boxShadow = '0 2px 8px rgba(0,0,0,0.04)'
+                      }}
+                      onMouseLeave={e => {
+                        (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-border)'
+                        ;(e.currentTarget as HTMLElement).style.boxShadow = 'none'
+                      }}
+                    >
+                      {/* 头部：名称 + 下载按钮 */}
+                      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-text-primary)', marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {ds.name}
+                          </div>
+                          <div style={{ fontSize: 12, color: 'var(--color-text-tertiary)', lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                            {ds.description}
+                          </div>
+                        </div>
+                        {renderDownloadButton(ds)}
+                      </div>
+
+                      {/* 标签行 */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                        <span style={{
+                          fontSize: 11, padding: '2px 8px', borderRadius: 4,
+                          background: catColor.bg, color: catColor.text, fontWeight: 500
+                        }}>
+                          {ds.category}
+                        </span>
+                        {ds.size && ds.size !== '—' && (
+                          <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)' }}>📦 {ds.size}</span>
+                        )}
+                        {ds.downloads && (
+                          <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)' }}>⬇️ {ds.downloads}</span>
+                        )}
+                        {ds.tags.slice(0, 3).map(tag => (
+                          <span key={tag} style={{ fontSize: 10, padding: '1px 6px', borderRadius: 3, background: 'var(--color-bg-tertiary)', color: 'var(--color-text-tertiary)' }}>
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+
+                      {/* 外链 */}
+                      <div style={{ fontSize: 11 }}>
+                        <a href={ds.url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-accent)', textDecoration: 'none' }}>
+                          🔗 在 ModelScope 查看
+                        </a>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        </>
+      )}
+
+      {/* ══════════ 文档管理 ══════════ */}
       {activeTab === 'docs' && (
         <>
           <div style={{ padding: '12px 24px', display: 'flex', gap: 8, borderTop: '1px solid var(--color-border)' }}>
@@ -130,6 +494,7 @@ export function KnowledgeBasePage() {
         </>
       )}
 
+      {/* ══════════ 语义搜索 ══════════ */}
       {activeTab === 'search' && (
         <>
           <div style={{ padding: '12px 24px', display: 'flex', gap: 8, borderTop: '1px solid var(--color-border)' }}>
@@ -153,6 +518,7 @@ export function KnowledgeBasePage() {
         </>
       )}
 
+      {/* ══════════ RAG 问答 ══════════ */}
       {activeTab === 'ask' && (
         <>
           <div style={{ padding: '12px 24px', display: 'flex', gap: 8, borderTop: '1px solid var(--color-border)' }}>
@@ -181,7 +547,7 @@ export function KnowledgeBasePage() {
         </>
       )}
 
-      {/* 导入弹窗 */}
+      {/* ══════════ 导入弹窗 ══════════ */}
       {showImportDialog && (
         <ModuleModal title="导入到知识库" onClose={() => setShowImportDialog(false)} footer={
           <>
@@ -202,6 +568,32 @@ export function KnowledgeBasePage() {
             {importMode === 'file' ? '📂 选择文件' : '📂 选择文件夹'}
           </button>
           {importPath && <p style={{ fontSize: 12, color: 'var(--color-text-secondary)', marginTop: 8 }}>已选择：{importPath}</p>}
+        </ModuleModal>
+      )}
+
+      {/* ══════════ 下载确认弹窗 ══════════ */}
+      {showDownloadConfirm && (
+        <ModuleModal title="确认下载" onClose={() => setShowDownloadConfirm(null)} footer={
+          <>
+            <button className="btn" onClick={() => setShowDownloadConfirm(null)}>取消</button>
+            <button className="btn btn-primary" onClick={handleConfirmDownload}>确认下载</button>
+          </>
+        }>
+          <div style={{ textAlign: 'center', padding: '16px 0' }}>
+            <div style={{ fontSize: 48, marginBottom: 16 }}>📥</div>
+            <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 8, color: 'var(--color-text-primary)' }}>
+              {showDownloadConfirm.name}
+            </div>
+            <div style={{ fontSize: 13, color: 'var(--color-text-secondary)', marginBottom: 16, lineHeight: 1.6 }}>
+              {showDownloadConfirm.description}
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: 16, fontSize: 12, color: 'var(--color-text-tertiary)' }}>
+              {showDownloadConfirm.size && showDownloadConfirm.size !== '—' && (
+                <span>📦 大小：{showDownloadConfirm.size}</span>
+              )}
+              <span>⬇️ 下载量：{showDownloadConfirm.downloads}</span>
+            </div>
+          </div>
         </ModuleModal>
       )}
     </div>

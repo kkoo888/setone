@@ -14,7 +14,11 @@
     { "type": "tool", "name": "kb_search", "description": "语义搜索知识库", "priority": 10 },
     { "type": "tool", "name": "kb_list", "description": "列出知识库文档", "priority": 10 },
     { "type": "tool", "name": "kb_delete", "description": "删除文档", "priority": 10 },
-    { "type": "tool", "name": "kb_ask", "description": "基于知识库问答（RAG）", "priority": 10 }
+    { "type": "tool", "name": "kb_ask", "description": "基于知识库问答（RAG）", "priority": 10 },
+    { "type": "tool", "name": "kb_network_status", "description": "查看知识库联网状态", "priority": 5 },
+    { "type": "tool", "name": "kb_dataset_list", "description": "列出数据集广场的数据集", "priority": 5 },
+    { "type": "tool", "name": "kb_dataset_fetch_remote", "description": "从远程加载数据集目录", "priority": 5 },
+    { "type": "tool", "name": "kb_dataset_download_status", "description": "获取下载状态", "priority": 5 }
   ],
   "consumes": [{ "type": "event", "name": "file:changed" }],
   "settings": {
@@ -23,6 +27,7 @@
     "embeddingModel": "nomic-embed-text",
     "maxDocuments": 1000,
     "supportedFormats": [".md", ".txt", ".pdf", ".docx", ".json", ".csv", ".ts", ".js", ".py"],
-    "autoReindex": true
+    "autoReindex": true,
+    "networkEnabled": true
   }
 }

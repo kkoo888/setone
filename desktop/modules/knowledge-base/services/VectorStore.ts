@@ -109,6 +109,8 @@ export class VectorStore {
     const scored: KBSearchResult[] = []
     for (const row of rows) {
       const chunkEmbedding = this.bufferToFloat32Array(row.embedding)
+      // 跳过空向量（联网关闭时导入的文档）
+      if (chunkEmbedding.length === 0) continue
       const score = this.cosineSimilarity(queryEmbedding, chunkEmbedding)
       scored.push({
         chunkId: row.id,

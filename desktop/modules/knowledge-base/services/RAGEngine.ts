@@ -15,12 +15,14 @@ const DEFAULT_RAG_SYSTEM_PROMPT = `你是一个基于本地知识库的问答助
 /**
  * RAG 问答引擎
  * 搜索知识库 Top-K 片段 → 拼接上下文 → AI 生成回答
+ * 支持联网开关：关闭后拒绝 AI 调用
  */
 export class RAGEngine {
   private readonly logger: Logger
   private readonly embeddingService: EmbeddingService
   private readonly vectorStore: VectorStore
   private readonly ai: AIService
+  private networkEnabled: boolean
 
   constructor(
     logger: Logger,
@@ -32,6 +34,16 @@ export class RAGEngine {
     this.embeddingService = embeddingService
     this.vectorStore = vectorStore
     this.ai = ai
+    this.networkEnabled = true
+  }
+
+  /**
+   * 设置联网开关
+   * @param enabled - 是否允许联网
+   */
+  setNetworkEnabled(enabled: boolean): void {
+    this.networkEnabled = enabled
+    this.logger.info(`RAGEngine 联网状态: ${enabled ? '已开启' : '已关闭'}`)
   }
 
   /**
@@ -41,6 +53,9 @@ export class RAGEngine {
    * @returns 回答和引用来源
    */
   async ask(question: string, topK: number = 5): Promise<KBAskResult> {
+    if (!this.networkEnabled) {
+      throw new Error('联网功能已关闭，无法进行 RAG 问答。请在知识库设置中开启联网后重试。')
+    }
     // 1. 生成问题的嵌入向量
     const queryEmbedding = await this.embeddingService.embed(question)
 

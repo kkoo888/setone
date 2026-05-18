@@ -54,4 +54,15 @@ export interface KBSettings {
   maxDocuments: number
   supportedFormats: string[]
   autoReindex: boolean
+  /** 联网开关：控制 Embedding 和 AI 调用，不影响本地文件操作和搜索 */
+  networkEnabled: boolean
+}
+
+/** 联网状态信息 */
+export interface KBNetworkStatus {
+  networkEnabled: boolean
+  /** 联网功能列表 */
+  networkFeatures: string[]
+  /** 本地功能列表（不受联网开关影响） */
+  localFeatures: string[]
 }

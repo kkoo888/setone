@@ -26,3 +26,10 @@ export interface KBAskResult {
   answer: string
   sources: KBSearchResult[]
 }
+
+/** 联网状态信息 */
+export interface KBNetworkStatus {
+  networkEnabled: boolean
+  networkFeatures: string[]
+  localFeatures: string[]
+}
