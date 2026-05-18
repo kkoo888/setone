@@ -26,7 +26,7 @@ const Live2D5PetPage: React.FC = () => {
 
   /** 动态加载 Cubism 5 服务 */
   const loadCubism5Service = async () => {
-    const { cubism5Service } = await import('../../../modules/live2d-5/services/cubism5-service')
+    const { cubism5Service } = await import('@modules/live2d-5/services/cubism5-service')
     return cubism5Service
   }
 
