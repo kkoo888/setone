@@ -1,5 +1,6 @@
 /**
  * Live2D Cubism 5 模块类型定义
+ * 原生渲染，不依赖 pixi.js
  */
 
 /** Cubism 5 模型配置 */

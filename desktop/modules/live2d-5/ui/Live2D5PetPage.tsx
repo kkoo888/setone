@@ -1,7 +1,7 @@
 /**
  * Live2D Cubism 5 桌面宠物页面
  * 在独立 renderer 进程中运行
- * 使用 Cubism 5 SDK，与旧版完全隔离
+ * 使用 Cubism 5 原生渲染，不依赖 pixi.js
  */
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { cubism5Service, type Cubism5ModelState } from '../services/cubism5-service'

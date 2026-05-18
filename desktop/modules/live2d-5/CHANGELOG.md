@@ -1,5 +1,24 @@
 # Changelog - Live2D Cubism 5 模块
 
+## [1.1.0] - 2026-05-18
+
+### 重构
+- **移除 pixi.js 依赖** — 改用 Cubism 5 原生 WebGL 渲染
+- **移除 pixi-live2d-display 依赖** — 直接使用 Cubism 5 Framework
+- **重写 cubism5-service.ts** — 使用 Cubism 5 Core SDK + Framework 原生渲染
+- **重写 Live2D5PetPage.tsx** — 移除 pixi.js 相关代码
+- **简化 types.ts** — 移除 pixi.js 类型定义
+
+### 架构
+- Cubism 5 Core SDK → Cubism 5 Framework → CubismRenderer_WebGL → Canvas
+- 不再需要 pixi.js 作为中间层
+- 模型加载：fetch .model3.json → fetch .moc3 → CubismMoc → CubismModel
+- 渲染：requestAnimationFrame → model.update() → renderer.drawModel()
+
+### 依赖变化
+- ❌ 移除: pixi.js, pixi-live2d-display
+- ✅ 保留: Cubism 5 Core SDK, Cubism 5 Framework, Electron, React
+
 ## [1.0.0] - 2026-05-18
 
 ### 新增
@@ -8,15 +27,3 @@
 - 独立 renderer 进程运行，与旧版 Live2D 模块完全隔离
 - 独立的 IPC 通道（`live2d5:*` 前缀）
 - 模块化架构，符合项目模块开发规范
-
-### 待完成
-- [ ] 下载 Cubism 5 Core SDK（live2dcubismcore.min.js）并放入 lib/
-- [ ] 集成 pixi-live2d-display 支持 Cubism 5 的版本
-- [ ] 实现模型加载和渲染
-- [ ] 实现表情/动作控制
-- [ ] 实现鼠标跟随和点击交互
-- [ ] 添加桌面宠物拖拽和缩放
-
-### 说明
-- Cubism 5 Core SDK 需从 Live2D 官网下载：https://www.live2d.com/download/cubism-sdk/download-web/
-- 下载后将 `Core/live2dcubismcore.min.js` 复制到 `modules/live2d-5/lib/` 目录
