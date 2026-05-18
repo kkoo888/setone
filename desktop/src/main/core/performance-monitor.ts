@@ -7,6 +7,7 @@
 import { ResourceCollector } from './resource-collector'
 import { ThrottleStrategyEngine } from './throttle-strategy'
 import { ModuleResourceController, type ModuleControlCallbacks } from './module-resource-controller'
+import { pollingRegistry } from './polling-registry'
 import type {
   SystemResourceSnapshot,
   ThrottleLevel,
@@ -77,12 +78,22 @@ export class PerformanceMonitor implements IPerformanceMonitor {
     if (this.running) return
     this.running = true
 
+    // 注册到轮询注册中心
+    pollingRegistry.register({
+      id: 'performance-monitor',
+      module: '性能监控',
+      description: `系统资源采集（CPU/内存/磁盘/GPU）`,
+      intervalMs: this.config.interval,
+      status: 'running',
+    })
+
     // 立即采集一次
     void this.tick()
 
     // 定时采集
     this.timer = setInterval(() => {
       void this.tick()
+      pollingRegistry.tick('performance-monitor')
     }, this.config.interval)
   }
 
@@ -95,6 +106,7 @@ export class PerformanceMonitor implements IPerformanceMonitor {
       this.timer = null
     }
     this.running = false
+    pollingRegistry.update('performance-monitor', { status: 'stopped' })
   }
 
   /**

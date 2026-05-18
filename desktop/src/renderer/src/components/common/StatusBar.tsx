@@ -5,6 +5,7 @@
  */
 import React, { useState, useEffect, useRef } from 'react'
 import { useSettingsStore } from '../../stores/useSettingsStore'
+import { registerPolling, unregisterPolling, tickPolling } from '../../utils/polling-helper'
 
 /** 资源快照 */
 interface ResourceSnapshot {
@@ -42,12 +43,24 @@ export function StatusBar() {
     }
 
     void fetchSnapshot()
-    timerRef.current = setInterval(fetchSnapshot, 3000)
+    timerRef.current = setInterval(() => {
+      fetchSnapshot()
+      tickPolling('status-bar-resources')
+    }, 3000)
+
+    // 注册到轮询注册中心
+    registerPolling({
+      id: 'status-bar-resources',
+      module: '状态栏',
+      description: '系统资源快照（CPU/内存）',
+      intervalMs: 3000,
+    })
 
     return () => {
       if (timerRef.current) {
         clearInterval(timerRef.current)
       }
+      unregisterPolling('status-bar-resources')
     }
   }, [showInStatusBar])
 

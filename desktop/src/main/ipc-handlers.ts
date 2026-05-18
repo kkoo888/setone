@@ -18,6 +18,7 @@ import type { ToolDefinition, ToolCall } from './types/ai'
 import { getToolParamSchema } from './core/tool-param-schemas'
 import { SoulManager } from './core/soul-manager'
 import { readAssistantNameFromSoul } from './core/soul-reader'
+import { pollingRegistry } from './core/polling-registry'
 
 /** Ollama 模型信息 */
 interface OllamaModel {
@@ -1304,5 +1305,36 @@ export function registerIpcHandlers(
     const sm = await getSoulManager()
     sm.resetSoul()
     return { success: true }
+  })
+
+  // ── 轮询注册中心 ──
+
+  /** 注册轮询任务 */
+  ipcMain.handle('polling:register', async (_event, task) => {
+    pollingRegistry.register(task)
+    return { success: true }
+  })
+
+  /** 注销轮询任务 */
+  ipcMain.handle('polling:unregister', async (_event, args: { id: string }) => {
+    pollingRegistry.unregister(args.id)
+    return { success: true }
+  })
+
+  /** 更新轮询任务状态 */
+  ipcMain.handle('polling:update', async (_event, args: { id: string; patch: Record<string, unknown> }) => {
+    pollingRegistry.update(args.id, args.patch as Parameters<typeof pollingRegistry.update>[1])
+    return { success: true }
+  })
+
+  /** 标记轮询任务执行一次 */
+  ipcMain.handle('polling:tick', async (_event, args: { id: string }) => {
+    pollingRegistry.tick(args.id)
+    return { success: true }
+  })
+
+  /** 获取所有轮询任务 */
+  ipcMain.handle('polling:list', async () => {
+    return pollingRegistry.getAll()
   })
 }

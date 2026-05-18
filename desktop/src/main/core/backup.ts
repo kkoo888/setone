@@ -4,6 +4,7 @@ import { mkdirSync, copyFileSync, readdirSync, statSync, unlinkSync } from 'fs'
 import { copyFile, unlink, access } from 'fs/promises'
 import type { Logger } from '../types/logger'
 import type { DatabaseManager } from './database'
+import { pollingRegistry } from './polling-registry'
 
 /** 一天的毫秒数 */
 const ONE_DAY_MS = 24 * 60 * 60 * 1000
@@ -74,6 +75,16 @@ export class BackupManager {
       minute,
       nextRunInMs: initialDelay
     })
+
+    // 注册到轮询注册中心
+    pollingRegistry.register({
+      id: 'auto-backup',
+      module: '自动备份',
+      description: `每日 ${hour}:${String(minute).padStart(2, '0')} 自动备份数据库`,
+      intervalMs: ONE_DAY_MS,
+      status: 'running',
+      meta: { sourcePath, hour, minute },
+    })
   }
 
   /** 停止自动备份调度 */
@@ -83,6 +94,7 @@ export class BackupManager {
       clearTimeout(this.autoBackupTimer as unknown as ReturnType<typeof setTimeout>)
       this.autoBackupTimer = null
       this.logger.info('每日自动备份已停止')
+      pollingRegistry.update('auto-backup', { status: 'stopped' })
     }
   }
 
