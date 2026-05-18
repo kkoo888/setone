@@ -2,32 +2,11 @@
  * Live2D Easy Control 服务
  * 封装 live2d-easy-control 库的所有功能
  * 用于桌面宠物窗口的模型控制
+ *
+ * 注意：live2d-easy-control 是 CommonJS 模块，所有函数都是命名导出
+ * Vite 的 CJS 互操作可能导致 import() 返回的模块结构不同
+ * 因此直接从模块对象上取函数调用，避免类型转换问题
  */
-
-// live2d-easy-control 的类型声明
-interface Live2DEasyControlAPI {
-  load: (config: string | object) => Promise<void>
-  stop: () => Promise<void>
-  setPointMovedEvent: () => Promise<void>
-  removePointMovedEvent: () => Promise<void>
-  setPointClickEvent: () => Promise<void>
-  removePointClickEvent: () => Promise<void>
-  getAllMotionsInfo: () => Promise<Array<{ group: string; names: string[] }>>
-  getAllExpressionsInfo: () => Promise<string[]>
-  getDefine: () => Promise<Record<string, unknown>>
-  getMotion: () => Promise<Record<string, unknown>>
-  getExpression: () => Promise<Record<string, unknown>>
-  playMotion: (group: string, no: number, priority: number) => Promise<void>
-  playExpression: (name: string) => Promise<void>
-  stopExpression: () => Promise<void>
-  setAngle: (e: MouseEvent, duration?: number) => Promise<void>
-  setAngleXY: (X: number, Y: number, duration?: number) => Promise<void>
-  reSetAngle: () => Promise<void>
-  setMessage: (message: string, duration?: number) => Promise<void>
-  hideMessageBox: () => Promise<void>
-  setLipSync: (value: number) => Promise<void>
-  setLipSyncWithWeight?: (value: number, weight: number) => Promise<void>
-}
 
 /** 宠物状态 */
 export interface Live2DPetState {
@@ -45,8 +24,24 @@ export interface Live2DPetState {
 /** 状态变更回调 */
 type StateChangeCallback = (state: Live2DPetState) => void
 
+/** 从模块中安全获取函数 */
+function getFn(mod: any, name: string): ((...args: any[]) => Promise<any>) | null {
+  // 直接命名导出
+  if (typeof mod[name] === 'function') return mod[name]
+  // CJS default export 上
+  if (mod.default && typeof mod.default[name] === 'function') return mod.default[name]
+  // 整个 module.exports 就是函数集合
+  if (typeof mod === 'object' && mod !== null) {
+    for (const key of Object.keys(mod)) {
+      if (typeof mod[key]?.[name] === 'function') return mod[key][name].bind(mod[key])
+    }
+  }
+  console.warn(`[Live2DEasyControl] 函数 "${name}" 未找到于模块中, keys:`, Object.keys(mod))
+  return null
+}
+
 class Live2DEasyControlService {
-  private api: Live2DEasyControlAPI | null = null
+  private mod: any = null
   private loaded = false
   private mouseTracking = false
   private clickInteraction = false
@@ -87,19 +82,34 @@ class Live2DEasyControlService {
   /** 加载模型 */
   async load(config: string | object): Promise<void> {
     try {
-      // 动态导入（避免 SSR 问题）
-      const mod = await import('live2d-easy-control')
-      this.api = mod as unknown as Live2DEasyControlAPI
-      await this.api.load(config)
+      console.log('[Live2DEasyControl] 📦 开始导入 live2d-easy-control...')
+      this.mod = await import('live2d-easy-control')
+      console.log('[Live2DEasyControl] 模块导入完成')
+      console.log('[Live2DEasyControl] mod keys:', Object.keys(this.mod))
+      console.log('[Live2DEasyControl] mod.default:', this.mod.default)
+      console.log('[Live2DEasyControl] mod.load 类型:', typeof this.mod.load)
+
+      const loadFn = getFn(this.mod, 'load')
+      if (!loadFn) {
+        throw new Error('live2d-easy-control 的 load 函数未找到，请检查库版本')
+      }
+
+      console.log('[Live2DEasyControl] 调用 load(config)...')
+      await loadFn(config)
+      console.log('[Live2DEasyControl] ✅ load() 完成')
       this.loaded = true
 
       // 获取模型信息
+      const getAllExprFn = getFn(this.mod, 'getAllExpressionsInfo')
+      const getAllMotionFn = getFn(this.mod, 'getAllMotionsInfo')
       try {
-        this.expressions = await this.api.getAllExpressionsInfo()
-      } catch { this.expressions = [] }
+        if (getAllExprFn) this.expressions = await getAllExprFn()
+        console.log('[Live2DEasyControl] 表情列表:', this.expressions)
+      } catch (e) { console.warn('[Live2DEasyControl] 获取表情失败:', e); this.expressions = [] }
       try {
-        this.motions = await this.api.getAllMotionsInfo()
-      } catch { this.motions = [] }
+        if (getAllMotionFn) this.motions = await getAllMotionFn()
+        console.log('[Live2DEasyControl] 动作列表:', this.motions)
+      } catch (e) { console.warn('[Live2DEasyControl] 获取动作失败:', e); this.motions = [] }
 
       // 默认开启鼠标跟随和点击交互
       await this.enableMouseTracking()
@@ -107,7 +117,7 @@ class Live2DEasyControlService {
 
       this.notify()
     } catch (err) {
-      console.error('[Live2DEasyControl] 加载失败:', err)
+      console.error('[Live2DEasyControl] ❌ 加载失败:', err)
       throw err
     }
   }
@@ -115,154 +125,152 @@ class Live2DEasyControlService {
   /** 停止渲染 */
   async stop(): Promise<void> {
     this.stopLipSync()
-    await this.api?.stop()
+    const stopFn = getFn(this.mod, 'stop')
+    if (stopFn) await stopFn()
     this.loaded = false
-    this.api = null
+    this.mod = null
     this.notify()
   }
 
   // ========== 鼠标交互 ==========
 
-  /** 开启鼠标跟随（眼睛/头部跟随鼠标） */
   async enableMouseTracking(): Promise<void> {
-    await this.api?.setPointMovedEvent()
+    const fn = getFn(this.mod, 'setPointMovedEvent')
+    if (fn) await fn()
     this.mouseTracking = true
     this.notify()
   }
 
-  /** 关闭鼠标跟随 */
   async disableMouseInteraction(): Promise<void> {
-    await this.api?.removePointMovedEvent()
+    const fn = getFn(this.mod, 'removePointMovedEvent')
+    if (fn) await fn()
     this.mouseTracking = false
     this.notify()
   }
 
-  /** 开启点击交互（点击切换表情/动作） */
   async enableClickInteraction(): Promise<void> {
-    await this.api?.setPointClickEvent()
+    const fn = getFn(this.mod, 'setPointClickEvent')
+    if (fn) await fn()
     this.clickInteraction = true
     this.notify()
   }
 
-  /** 关闭点击交互 */
   async disableClickInteraction(): Promise<void> {
-    await this.api?.removePointClickEvent()
+    const fn = getFn(this.mod, 'removePointClickEvent')
+    if (fn) await fn()
     this.clickInteraction = false
     this.notify()
   }
 
   // ========== 表情控制 ==========
 
-  /** 播放指定表情 */
   async playExpression(name: string): Promise<void> {
-    await this.api?.playExpression(name)
+    const fn = getFn(this.mod, 'playExpression')
+    if (fn) await fn(name)
     this.currentExpression = name
     this.notify()
   }
 
-  /** 停止当前表情（回到默认） */
   async stopExpression(): Promise<void> {
-    await this.api?.stopExpression()
+    const fn = getFn(this.mod, 'stopExpression')
+    if (fn) await fn()
     this.currentExpression = ''
     this.notify()
   }
 
-  /** 获取所有表情列表 */
   getExpressions(): string[] {
     return this.expressions
   }
 
   // ========== 动作控制 ==========
 
-  /** 播放指定动作 */
   async playMotion(group: string, no: number, priority: number = 2): Promise<void> {
-    await this.api?.playMotion(group, no, priority)
+    const fn = getFn(this.mod, 'playMotion')
+    if (fn) await fn(group, no, priority)
     this.currentMotion = `${group}[${no}]`
     this.notify()
   }
 
-  /** 获取所有动作信息 */
   getMotions(): Array<{ group: string; names: string[] }> {
     return this.motions
   }
 
   // ========== 模型朝向 ==========
 
-  /** 根据坐标设置朝向 */
   async setAngle(x: number, y: number, duration?: number): Promise<void> {
-    await this.api?.setAngleXY(x, y, duration)
+    const fn = getFn(this.mod, 'setAngleXY')
+    if (fn) await fn(x, y, duration)
   }
 
-  /** 恢复默认朝向 */
   async resetAngle(): Promise<void> {
-    await this.api?.reSetAngle()
+    const fn = getFn(this.mod, 'reSetAngle')
+    if (fn) await fn()
   }
 
   // ========== 对话气泡 ==========
 
-  /** 显示对话气泡 */
   async setMessage(message: string, duration?: number): Promise<void> {
-    await this.api?.setMessage(message, duration)
+    const fn = getFn(this.mod, 'setMessage')
+    if (fn) await fn(message, duration)
     this.messageText = message
     this.notify()
   }
 
-  /** 隐藏对话气泡 */
   async hideMessage(): Promise<void> {
-    await this.api?.hideMessageBox()
+    const fn = getFn(this.mod, 'hideMessageBox')
+    if (fn) await fn()
     this.messageText = ''
     this.notify()
   }
 
   // ========== 嘴型同步 ==========
 
-  /** 设置嘴型（0.0~0.5） */
   async setLipSync(value: number): Promise<void> {
-    await this.api?.setLipSync(value)
+    const fn = getFn(this.mod, 'setLipSync')
+    if (fn) await fn(value)
     this.lipSyncActive = value > 0
     this.notify()
   }
 
-  /** 开始嘴型同步（配合 TTS 语音，模拟说话） */
   startLipSync(intervalMs: number = 100): void {
     this.stopLipSync()
     let phase = 0
     this.lipSyncTimer = setInterval(() => {
-      // 模拟说话的嘴型变化
       const value = Math.abs(Math.sin(phase)) * 0.4
-      this.api?.setLipSync(value)
+      const fn = getFn(this.mod, 'setLipSync')
+      if (fn) fn(value)
       phase += 0.3
     }, intervalMs)
     this.lipSyncActive = true
     this.notify()
   }
 
-  /** 停止嘴型同步 */
   stopLipSync(): void {
     if (this.lipSyncTimer) {
       clearInterval(this.lipSyncTimer)
       this.lipSyncTimer = null
     }
-    this.api?.setLipSync(0)
+    const fn = getFn(this.mod, 'setLipSync')
+    if (fn) fn(0)
     this.lipSyncActive = false
     this.notify()
   }
 
   // ========== 信息查询 ==========
 
-  /** 获取当前配置 */
   async getDefine(): Promise<Record<string, unknown>> {
-    return (await this.api?.getDefine()) ?? {}
+    const fn = getFn(this.mod, 'getDefine')
+    return fn ? await fn() : {}
   }
 
-  /** 获取当前动作信息 */
   async getCurrentMotion(): Promise<Record<string, unknown>> {
-    return (await this.api?.getMotion()) ?? {}
+    const fn = getFn(this.mod, 'getMotion')
+    return fn ? await fn() : {}
   }
 
-  /** 获取当前表情信息 */
   async getCurrentExpression(): Promise<Record<string, unknown>> {
-    return (await this.api?.getExpression()) ?? {}
+    const fn = getFn(this.mod, 'getExpression')
+    return fn ? await fn() : {}
   }
 }
 

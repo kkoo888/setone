@@ -35,6 +35,7 @@ const Live2DPetPage: React.FC = () => {
           throw new Error('Live2DCubismCore 未加载，请检查 public/lib/live2dcubismcore.min.js')
         }
 
+        console.log('[Live2DPet] Cubism Core 已就绪，设置 script 拦截...')
         // 防止 live2d-easy-control 重复从 CDN 加载 Cubism Core
         // 如果 core 已存在，拦截 createElement('script') 阻止 CDN 请求
         const origCreate = document.createElement.bind(document)
@@ -49,9 +50,11 @@ const Live2DPetPage: React.FC = () => {
                   set(val: string) {
                     if (val.includes('live2dcubismcore')) {
                       // 跳过 CDN 加载，直接触发 onload
+                      console.log('[Live2DPet] 🚫 拦截 Cubism Core CDN 加载:', val)
                       setTimeout(() => el.dispatchEvent(new Event('load')), 0)
                       return
                     }
+                    console.log('[Live2DPet] 允许 script 加载:', val)
                     origSetSrc.call(el, val)
                   },
                   get() { return el.getAttribute('src') ?? '' }
@@ -61,12 +64,17 @@ const Live2DPetPage: React.FC = () => {
             return el
           }
         }
+        console.log('[Live2DPet] script 拦截设置完成')
+
+        console.log('[Live2DPet] 🚀 开始加载桌面宠物...')
+        console.log('[Live2DPet] Cubism Core 状态:', !!(window as any).Live2DCubismCore)
+        console.log('[Live2DPet] live2dEasyControl 模块:', live2dEasyControl)
 
         // 模型资源路径：
         // 库拼接方式: resourcesPath + modelDir + "/"
         // 目录结构:   public/live2d/Hiyori/Hiyori.model3.json
         // 所以: resourcesPath='/live2d/'  modelDir='Hiyori'
-        await live2dEasyControl.load({
+        const loadConfig = {
           modelDir: 'Hiyori',
           resourcesPath: '/live2d/',
           canvasSize: 'auto',
@@ -84,9 +92,12 @@ const Live2DPetPage: React.FC = () => {
             'idle2': { group: 'Idle', no: 1, priority: 1 },
             'tap': { group: 'TapBody', no: 0, priority: 2 },
           },
-          debugLogEnable: false,
+          debugLogEnable: true,
           debugTouchLogEnable: false,
-        })
+        }
+        console.log('[Live2DPet] 加载配置:', JSON.stringify(loadConfig, null, 2))
+        await live2dEasyControl.load(loadConfig)
+        console.log('[Live2DPet] ✅ live2dEasyControl.load() 完成')
 
         // 恢复原始 createElement
         if (coreReady) {
