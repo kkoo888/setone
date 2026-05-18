@@ -6,6 +6,8 @@
  * 所有能力统一通过 getCapabilities() 暴露，不使用内部 IPC。
  */
 import type { Module, ModuleContext, Capability } from '../../src/main/types/module'
+import { BrowserWindow } from 'electron'
+import { join } from 'path'
 
 /** 宠物窗口默认尺寸 */
 const PET_WINDOW_WIDTH = 400
@@ -154,9 +156,6 @@ export default class Live2D5Module implements Module {
 
   /** 打开宠物窗口（独立 renderer 进程，Cubism 5 SDK 独立加载） */
   private async openPetWindow(): Promise<void> {
-    const { BrowserWindow } = require('electron')
-    const { join } = require('path')
-
     if (this.petWindow && !this.petWindow.isDestroyed()) {
       this.petWindow.focus()
       return
