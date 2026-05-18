@@ -274,7 +274,42 @@ import './styles/global.css'
 
 ---
 
-## 5. 导出规范
+## 5. ESM 模块规范（强制）
+
+本项目 `package.json` 已声明 `"type": "module"`，所有 `.js` 文件默认按 **ES Module** 解析。
+
+### 强制规则
+
+1. **禁止使用 `require()`** — 统一使用 `import` / `import()` 语法
+2. **禁止使用 `module.exports`** — 统一使用 `export` / `export default`
+3. **禁止使用 `__dirname` / `__filename`** — 使用 ESM 等价写法：
+   ```typescript
+   import { fileURLToPath } from 'url'
+   import { dirname } from 'path'
+   const __dirname = dirname(fileURLToPath(import.meta.url))
+   ```
+
+### 兼容场景
+
+仅在以下情况允许使用 `createRequire` 兼容 CJS：
+
+- **原生模块**（`.node` 文件，如 `robotjs`）不支持 `import()`，必须用 `createRequire`：
+  ```typescript
+  import { createRequire } from 'module'
+  import { fileURLToPath } from 'url'
+  const _require = createRequire(fileURLToPath(import.meta.url))
+  const robotjs = _require('robotjs')
+  ```
+- 使用 `createRequire` 需在代码注释中说明原因
+
+### 相对导入路径
+
+- `src/main/` 下的文件：由 electron-vite 处理，**无需** `.js` 扩展名
+- `modules/` 下的文件：由 esbuild 编译，`fixEsmImportExtensions` 自动补 `.js` 扩展名，源码中**无需**手动添加
+
+---
+
+## 6. 导出规范
 
 - 优先使用命名导出（`export class` / `export interface`）
 - 默认导出仅用于 React 组件（`export default function App()`）
@@ -282,7 +317,7 @@ import './styles/global.css'
 
 ---
 
-## 6. Prettier 配置（强制执行）
+## 7. Prettier 配置（强制执行）
 
 ```json
 {
@@ -299,7 +334,7 @@ import './styles/global.css'
 
 ---
 
-## 7. 检查清单
+## 8. 检查清单
 
 提交代码前自查：
 
