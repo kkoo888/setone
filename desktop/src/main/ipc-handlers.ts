@@ -565,6 +565,31 @@ export function registerIpcHandlers(
   })
 
   // ============================================================
+  // 主题商店 IPC
+  // ============================================================
+  ipcMain.handle('theme_list', async () => {
+    return invokeModuleCapability('theme-store', 'theme_list')
+  })
+  ipcMain.handle('theme_apply', async (event, args: { id: string }) => {
+    const result = await invokeModuleCapability('theme-store', 'theme_apply', args) as { success?: boolean; data?: { colors?: Record<string, string> } } | undefined
+    // 将主题变更事件桥接到渲染进程
+    if (result?.success && result.data?.colors) {
+      const win = BrowserWindow.fromWebContents(event.sender)
+      win?.webContents.send('theme:changed', { themeId: args.id, colors: result.data.colors })
+    }
+    return result
+  })
+  ipcMain.handle('theme_install', async (_event, args: { id: string }) => {
+    return invokeModuleCapability('theme-store', 'theme_install', args)
+  })
+  ipcMain.handle('theme_uninstall', async (_event, args: { id: string }) => {
+    return invokeModuleCapability('theme-store', 'theme_uninstall', args)
+  })
+  ipcMain.handle('theme_export', async (_event, args: { id: string }) => {
+    return invokeModuleCapability('theme-store', 'theme_export', args)
+  })
+
+  // ============================================================
   // 命令面板 IPC
   // ============================================================
   ipcMain.handle('palette:search', async (_event, args: { query?: string }) => {
