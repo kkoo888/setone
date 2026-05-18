@@ -27,7 +27,17 @@ interface DownloadProgress {
   savePath: string
 }
 
-/** 分类颜色映射 */
+/** 去掉类别名称中的编号前缀（如"一、""二、""1.""(1)"等） */
+function stripCategoryPrefix(name: string): string {
+  return name
+    .replace(/^[一二三四五六七八九十]+[、.．]\s*/u, '')
+    .replace(/^\d+[、.．]\s*/, '')
+    .replace(/^\(\d+\)\s*/, '')
+    .replace(/^（\d+）\s*/, '')
+    .trim()
+}
+
+/** 分类颜色映射（key 为去编号后的标准名） */
 const CATEGORY_COLORS: Record<string, { bg: string; text: string }> = {
   '百科评估': { bg: 'rgba(99,102,241,0.1)', text: 'var(--color-accent)' },
   '指令对话': { bg: 'rgba(34,197,94,0.1)', text: 'var(--color-success)' },
@@ -36,6 +46,25 @@ const CATEGORY_COLORS: Record<string, { bg: string; text: string }> = {
   '语音': { bg: 'rgba(168,85,247,0.1)', text: '#a855f7' },
   '视觉OCR': { bg: 'rgba(14,165,233,0.1)', text: '#0ea5e9' },
   '通用语料': { bg: 'rgba(107,114,128,0.1)', text: 'var(--color-text-secondary)' },
+}
+
+/** 标准化分类名：去编号 + 聚合同义词 */
+function normalizeCategory(raw: string): string {
+  const stripped = stripCategoryPrefix(raw)
+  // 聚合同义/近义分类
+  const synonyms: Record<string, string[]> = {
+    '百科评估': ['百科', '评估', '知识评估'],
+    '指令对话': ['指令', '对话', '对话指令'],
+    '数学推理': ['数学', '推理', '数学推理'],
+    '专业领域': ['专业', '领域', '医疗', '法律', '金融'],
+    '语音': ['语音', '音频', 'ASR', 'TTS'],
+    '视觉OCR': ['视觉', 'OCR', '图像', '图片'],
+    '通用语料': ['通用', '语料', '文本'],
+  }
+  for (const [canonical, aliases] of Object.entries(synonyms)) {
+    if (stripped === canonical || aliases.some(a => stripped.includes(a))) return canonical
+  }
+  return stripped
 }
 
 export function KnowledgeBasePage() {
@@ -83,7 +112,11 @@ export function KnowledgeBasePage() {
       const res = await window.electronAPI.invoke('kb_dataset_list', { category: selectedCategory === '全部' ? undefined : selectedCategory })
       if (res?.success) {
         setDatasets(res.data.datasets ?? [])
-        setDatasetCategories(res.data.categories ?? ['全部'])
+        // 去编号 + 聚合类似分类
+        const rawCats: string[] = res.data.categories ?? ['全部']
+        const normalized = rawCats.map(c => c === '全部' ? '全部' : normalizeCategory(c))
+        const unique = ['全部', ...Array.from(new Set(normalized.filter(c => c !== '全部')))]
+        setDatasetCategories(unique)
       }
     } catch { /* ignore */ }
     setLoadingDatasets(false)
@@ -130,6 +163,12 @@ export function KnowledgeBasePage() {
   // ── 文档导入 ──
   const handleImport = async () => {
     if (!importPath.trim()) return
+    // 网络地址需要联网，本地路径不需要
+    const isRemotePath = /^https?:\/\//i.test(importPath.trim())
+    if (isRemotePath && !networkEnabled) {
+      setMessage('⚠️ 当前处于断网状态，无法从网络地址导入。请使用本地路径或开启联网功能')
+      return
+    }
     setLoading(true)
     try {
       const res = await window.electronAPI.invoke('kb_import', { path: importPath })
@@ -191,6 +230,10 @@ export function KnowledgeBasePage() {
   // ── 远程加载数据集 ──
   const handleFetchRemote = async () => {
     if (!remoteUrl.trim()) return
+    if (!networkEnabled) {
+      setMessage('⚠️ 当前处于断网状态，无法加载远程数据集。请先在设置中开启联网功能')
+      return
+    }
     setLoadingDatasets(true)
     try {
       const res = await window.electronAPI.invoke('kb_dataset_fetch_remote', { url: remoteUrl })
@@ -209,8 +252,18 @@ export function KnowledgeBasePage() {
     setShowDownloadConfirm(dataset)
   }
 
+  // ── 点击卡片 → 显示详情弹窗 ──
+  const handleCardClick = (dataset: DatasetInfo) => {
+    setShowDownloadConfirm(dataset)
+  }
+
   const handleConfirmDownload = () => {
     if (!showDownloadConfirm) return
+    if (!networkEnabled) {
+      setMessage('⚠️ 当前处于断网状态，无法下载数据集。请先在设置中开启联网功能')
+      setShowDownloadConfirm(null)
+      return
+    }
     const dataset = showDownloadConfirm
     setShowDownloadConfirm(null)
 
@@ -232,6 +285,19 @@ export function KnowledgeBasePage() {
       })
       return next
     })
+
+    // 兜底：如果 5 秒后仍为 pending，自动转为 downloading 防止卡住
+    setTimeout(() => {
+      setDownloads(prev => {
+        const dl = prev.get(dataset.id)
+        if (dl && dl.state === 'pending') {
+          const next = new Map(prev)
+          next.set(dataset.id, { ...dl, state: 'downloading' })
+          return next
+        }
+        return prev
+      })
+    }, 5000)
   }
 
   const handleCancelDownload = (datasetId: string) => {
@@ -259,7 +325,7 @@ export function KnowledgeBasePage() {
     if (!dl) {
       return (
         <button
-          onClick={() => handleDownloadClick(dataset)}
+          onClick={e => { e.stopPropagation(); handleCardClick(dataset) }}
           className="btn btn-primary"
           style={{ fontSize: 12, padding: '4px 12px', whiteSpace: 'nowrap' }}
         >
@@ -282,7 +348,7 @@ export function KnowledgeBasePage() {
 
     if (dl.state === 'downloading') {
       return (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 120 }}>
+        <div onClick={e => e.stopPropagation()} style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 120 }}>
           <div style={{ flex: 1, height: 6, background: 'var(--color-bg-tertiary)', borderRadius: 3, overflow: 'hidden' }}>
             <div style={{
               width: `${dl.percent}%`, height: '100%', borderRadius: 3,
@@ -319,21 +385,6 @@ export function KnowledgeBasePage() {
         ]}
         activeTab={activeTab}
         onTabChange={setActiveTab}
-        actions={
-          <button
-            onClick={handleToggleNetwork}
-            className={`btn ${networkEnabled ? 'btn-primary' : ''}`}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 6, fontSize: 13,
-              background: networkEnabled ? undefined : 'var(--color-bg-tertiary)',
-              color: networkEnabled ? undefined : 'var(--color-text-secondary)',
-              border: networkEnabled ? undefined : '1px solid var(--color-border)'
-            }}
-            title={networkEnabled ? '点击关闭联网' : '点击开启联网'}
-          >
-            {networkEnabled ? '🌐 联网中' : '🔌 已断网'}
-          </button>
-        }
       />
 
       {/* 消息提示 */}
@@ -341,16 +392,6 @@ export function KnowledgeBasePage() {
         <div style={{ padding: '0 24px', animation: 'scSlideDown 0.2s ease' }}>
           <div style={{ padding: '10px 16px', borderRadius: 8, fontSize: 13, background: message.includes('失败') || message.includes('错误') || message.includes('❌') ? 'rgba(239,68,68,0.1)' : 'rgba(34,197,94,0.1)', color: message.includes('失败') || message.includes('错误') || message.includes('❌') ? 'var(--color-error)' : 'var(--color-success)', border: `1px solid ${message.includes('失败') || message.includes('错误') || message.includes('❌') ? 'rgba(239,68,68,0.2)' : 'rgba(34,197,94,0.2)'}` }}>
             {message}
-          </div>
-        </div>
-      )}
-
-      {/* 联网警告 */}
-      {!networkEnabled && (
-        <div style={{ padding: '0 24px', animation: 'scSlideDown 0.2s ease' }}>
-          <div style={{ padding: '10px 16px', borderRadius: 8, fontSize: 13, background: 'rgba(251,191,36,0.1)', color: 'var(--color-warning)', border: '1px solid rgba(251,191,36,0.2)', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span>⚠️</span>
-            <span>联网已关闭 — 向量化和 RAG 问答不可用，本地文件操作和已有向量搜索正常</span>
           </div>
         </div>
       )}
@@ -397,10 +438,11 @@ export function KnowledgeBasePage() {
             ) : (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 12 }}>
                 {datasets.map(ds => {
-                  const catColor = CATEGORY_COLORS[ds.category] ?? CATEGORY_COLORS['通用语料']
+                  const catColor = CATEGORY_COLORS[normalizeCategory(ds.category)] ?? CATEGORY_COLORS['通用语料']
                   return (
                     <div
                       key={ds.id}
+                      onClick={() => handleCardClick(ds)}
                       style={{
                         background: 'var(--color-bg-secondary)',
                         border: '1px solid var(--color-border)',
@@ -410,17 +452,20 @@ export function KnowledgeBasePage() {
                         flexDirection: 'column',
                         gap: 10,
                         transition: 'all var(--transition-fast)',
+                        cursor: 'pointer',
                       }}
                       onMouseEnter={e => {
-                        (e.currentTarget as HTMLElement).style.borderColor = 'rgba(99,102,241,0.3)'
-                        ;(e.currentTarget as HTMLElement).style.boxShadow = '0 2px 8px rgba(0,0,0,0.04)'
+                        (e.currentTarget as HTMLElement).style.background = '#fff'
+                        ;(e.currentTarget as HTMLElement).style.borderColor = 'rgba(99,102,241,0.3)'
+                        ;(e.currentTarget as HTMLElement).style.boxShadow = '0 2px 8px rgba(0,0,0,0.06)'
                       }}
                       onMouseLeave={e => {
-                        (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-border)'
+                        (e.currentTarget as HTMLElement).style.background = 'var(--color-bg-secondary)'
+                        ;(e.currentTarget as HTMLElement).style.borderColor = 'var(--color-border)'
                         ;(e.currentTarget as HTMLElement).style.boxShadow = 'none'
                       }}
                     >
-                      {/* 头部：名称 + 下载按钮 */}
+                      {/* 头部：名称 + 状态 */}
                       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-text-primary)', marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -439,7 +484,7 @@ export function KnowledgeBasePage() {
                           fontSize: 11, padding: '2px 8px', borderRadius: 4,
                           background: catColor.bg, color: catColor.text, fontWeight: 500
                         }}>
-                          {ds.category}
+                          {normalizeCategory(ds.category)}
                         </span>
                         {ds.size && ds.size !== '—' && (
                           <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)' }}>📦 {ds.size}</span>
@@ -452,13 +497,6 @@ export function KnowledgeBasePage() {
                             {tag}
                           </span>
                         ))}
-                      </div>
-
-                      {/* 外链 */}
-                      <div style={{ fontSize: 11 }}>
-                        <a href={ds.url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-accent)', textDecoration: 'none' }}>
-                          🔗 在 ModelScope 查看
-                        </a>
                       </div>
                     </div>
                   )
@@ -571,31 +609,99 @@ export function KnowledgeBasePage() {
         </ModuleModal>
       )}
 
-      {/* ══════════ 下载确认弹窗 ══════════ */}
-      {showDownloadConfirm && (
-        <ModuleModal title="确认下载" onClose={() => setShowDownloadConfirm(null)} footer={
-          <>
-            <button className="btn" onClick={() => setShowDownloadConfirm(null)}>取消</button>
-            <button className="btn btn-primary" onClick={handleConfirmDownload}>确认下载</button>
-          </>
-        }>
-          <div style={{ textAlign: 'center', padding: '16px 0' }}>
-            <div style={{ fontSize: 48, marginBottom: 16 }}>📥</div>
-            <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 8, color: 'var(--color-text-primary)' }}>
-              {showDownloadConfirm.name}
-            </div>
-            <div style={{ fontSize: 13, color: 'var(--color-text-secondary)', marginBottom: 16, lineHeight: 1.6 }}>
-              {showDownloadConfirm.description}
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'center', gap: 16, fontSize: 12, color: 'var(--color-text-tertiary)' }}>
-              {showDownloadConfirm.size && showDownloadConfirm.size !== '—' && (
-                <span>📦 大小：{showDownloadConfirm.size}</span>
+      {/* ══════════ 数据集详情弹窗 ══════════ */}
+      {showDownloadConfirm && (() => {
+        const dl = downloads.get(showDownloadConfirm.id)
+        const isDownloading = dl && (dl.state === 'pending' || dl.state === 'downloading')
+        const isCompleted = dl?.state === 'completed'
+        const catColor = CATEGORY_COLORS[normalizeCategory(showDownloadConfirm.category)] ?? CATEGORY_COLORS['通用语料']
+        return (
+          <ModuleModal title="数据集详情" onClose={() => setShowDownloadConfirm(null)} footer={
+            <>
+              <button className="btn" onClick={() => setShowDownloadConfirm(null)}>
+                {isCompleted ? '关闭' : '取消'}
+              </button>
+              {!isCompleted && (
+                <button
+                  className="btn btn-primary"
+                  onClick={handleConfirmDownload}
+                  disabled={!!isDownloading}
+                  style={{ opacity: isDownloading ? 0.6 : 1 }}
+                >
+                  {isDownloading ? '⏳ 下载中...' : '📥 下载'}
+                </button>
               )}
-              <span>⬇️ 下载量：{showDownloadConfirm.downloads}</span>
+            </>
+          }>
+            <div style={{ padding: '8px 0' }}>
+              {/* 名称 */}
+              <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--color-text-primary)', marginBottom: 12 }}>
+                {showDownloadConfirm.name}
+              </div>
+
+              {/* 标签行 */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
+                <span style={{
+                  fontSize: 12, padding: '3px 10px', borderRadius: 4,
+                  background: catColor.bg, color: catColor.text, fontWeight: 500
+                }}>
+                  {normalizeCategory(showDownloadConfirm.category)}
+                </span>
+                {showDownloadConfirm.size && showDownloadConfirm.size !== '—' && (
+                  <span style={{ fontSize: 12, color: 'var(--color-text-tertiary)' }}>📦 {showDownloadConfirm.size}</span>
+                )}
+                {showDownloadConfirm.downloads && (
+                  <span style={{ fontSize: 12, color: 'var(--color-text-tertiary)' }}>⬇️ {showDownloadConfirm.downloads}</span>
+                )}
+              </div>
+
+              {/* 描述 */}
+              <div style={{ fontSize: 13, color: 'var(--color-text-secondary)', lineHeight: 1.7, marginBottom: 16 }}>
+                {showDownloadConfirm.description}
+              </div>
+
+              {/* 标签 */}
+              {showDownloadConfirm.tags.length > 0 && (
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 16 }}>
+                  {showDownloadConfirm.tags.map(tag => (
+                    <span key={tag} style={{ fontSize: 11, padding: '2px 8px', borderRadius: 4, background: 'var(--color-bg-tertiary)', color: 'var(--color-text-tertiary)' }}>
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {/* 下载进度（如果正在下载） */}
+              {dl && dl.state === 'downloading' && (
+                <div style={{ marginBottom: 16 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--color-text-secondary)', marginBottom: 6 }}>
+                    <span>下载进度</span>
+                    <span>{formatBytes(dl.receivedBytes)} / {formatBytes(dl.totalBytes)}</span>
+                  </div>
+                  <div style={{ height: 8, background: 'var(--color-bg-tertiary)', borderRadius: 4, overflow: 'hidden' }}>
+                    <div style={{ width: `${dl.percent}%`, height: '100%', borderRadius: 4, background: 'var(--color-accent)', transition: 'width 0.3s ease' }} />
+                  </div>
+                  <div style={{ textAlign: 'right', fontSize: 11, color: 'var(--color-accent)', fontWeight: 600, marginTop: 4 }}>{dl.percent}%</div>
+                </div>
+              )}
+
+              {/* 已完成提示 */}
+              {isCompleted && (
+                <div style={{ padding: '10px 16px', borderRadius: 8, background: 'rgba(34,197,94,0.1)', color: 'var(--color-success)', fontSize: 13, marginBottom: 16 }}>
+                  ✅ 下载完成
+                </div>
+              )}
+
+              {/* 外链 */}
+              <div style={{ fontSize: 12 }}>
+                <a href={showDownloadConfirm.url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-accent)', textDecoration: 'none' }}>
+                  🔗 在 ModelScope 查看
+                </a>
+              </div>
             </div>
-          </div>
-        </ModuleModal>
-      )}
+          </ModuleModal>
+        )
+      })()}
     </div>
   )
 }
