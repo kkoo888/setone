@@ -8,19 +8,28 @@ const Live2DPetPage = lazy(() => import('./pages/Live2DPetPage'))
 
 const root = createRoot(document.getElementById('root')!)
 
+console.log('[Main] 🚀 应用启动, hash:', window.location.hash, 'href:', window.location.href)
+
 /** 根据 hash 路由决定渲染内容，支持 hashchange 动态切换 */
 function RootComponent() {
   const [hash, setHash] = useState(window.location.hash)
 
+  console.log('[Main] RootComponent 渲染, hash:', hash)
+
   useEffect(() => {
-    const handleHashChange = () => setHash(window.location.hash)
+    const handleHashChange = () => {
+      const newHash = window.location.hash
+      console.log('[Main] hashchange 事件, 新 hash:', newHash)
+      setHash(newHash)
+    }
     window.addEventListener('hashchange', handleHashChange)
     return () => window.removeEventListener('hashchange', handleHashChange)
   }, [])
 
-  if (hash === '#/live2d-pet') {
+  if (hash === '#/live2d-pet' || hash.startsWith('#/live2d-pet')) {
+    console.log('[Main] 🐱 匹配到 live2d-pet 路由, 加载宠物页面')
     return (
-      <Suspense fallback={null}>
+      <Suspense fallback={<div style={{color:'#fff',padding:20}}>加载中...</div>}>
         <Live2DPetPage />
       </Suspense>
     )
