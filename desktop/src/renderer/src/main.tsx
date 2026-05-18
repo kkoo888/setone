@@ -5,6 +5,7 @@ import './styles/global.css'
 import './styles/module-common.css'
 
 const Live2DPetPage = lazy(() => import('./pages/Live2DPetPage'))
+const Live2D5PetPage = lazy(() => import('./pages/Live2D5PetPage'))
 
 const root = createRoot(document.getElementById('root')!)
 
@@ -25,6 +26,15 @@ function RootComponent() {
     window.addEventListener('hashchange', handleHashChange)
     return () => window.removeEventListener('hashchange', handleHashChange)
   }, [])
+
+  if (hash === '#/live2d5-pet' || hash.startsWith('#/live2d5-pet')) {
+    console.log('[Main] 🎭 匹配到 live2d5-pet 路由, 加载 Cubism 5 宠物页面')
+    return (
+      <Suspense fallback={<div style={{color:'#fff',padding:20}}>加载 Cubism 5...</div>}>
+        <Live2D5PetPage />
+      </Suspense>
+    )
+  }
 
   if (hash === '#/live2d-pet' || hash.startsWith('#/live2d-pet')) {
     console.log('[Main] 🐱 匹配到 live2d-pet 路由, 加载宠物页面')

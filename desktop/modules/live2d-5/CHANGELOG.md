@@ -1,5 +1,29 @@
 # Changelog - Live2D Cubism 5 模块
 
+## [1.3.0] - 2026-05-19
+
+### 修复
+- **宠物窗口路由** — `main.tsx` 新增 `#/live2d5-pet` 路由，宠物窗口可以正常打开
+- **preload.ts** — 创建宠物窗口 IPC 桥接脚本，`window.electronAPI` 可用
+- **Live2D5PetPage** — 在 `src/renderer/src/pages/` 创建宠物窗口页面组件
+- **表情切换** — 实现 `setExpression()`，从 model3.json 加载表情文件并播放
+- **动作播放** — 实现 `playMotion()`，从 model3.json 加载动作文件并播放
+- **Moc 创建** — 修正 `CubismMoc.create()` API 调用（原错误使用 `fromArrayBuffer`）
+- **scale 参数** — 移除 `void scale`，通过 ModelMatrix 正确应用缩放
+- **WebGL 清理** — `destroy()` 中增加 `WEBGL_lose_context` 释放和 canvas DOM 移除
+- **IPC 安全检查** — expression/motion/start_drag 的 IPC 发送增加 `isDestroyed()` 检查
+- **deactivate 清理** — 关闭窗口前发送 `live2d5:destroy` 通知 renderer 释放 WebGL 资源
+
+### 新增
+- **动作/表情管理器** — 初始化 `CubismExpressionMotionManager` 和 `CubismMotionManager`
+- **时间追踪** — 渲染循环中计算 deltaTime，驱动动作/表情更新
+- **重试按钮** — 模型加载失败后可点击重试
+- **destroy IPC** — 监听 `live2d5:destroy` 事件，窗口关闭前自动清理资源
+
+### 删除
+- **Live2D5Controls.tsx** — 与 Live2D5Page 功能重复，删除冗余组件
+- **Live2D5IPCChannels** — types.ts 中未使用的 IPC 通道映射接口
+
 ## [1.2.0] - 2026-05-18
 
 ### 重构

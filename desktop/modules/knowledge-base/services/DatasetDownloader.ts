@@ -1,5 +1,4 @@
-import { ipcMain } from 'electron'
-import type Electron from 'electron'
+import { ipcMain, BrowserWindow } from 'electron'
 import { join } from 'path'
 import { mkdir } from 'fs/promises'
 import { existsSync } from 'fs'
@@ -305,7 +304,6 @@ export class DatasetDownloader {
    * 查找活跃的 webContents
    */
   private findWebContents(): Electron.WebContents | null {
-    const { BrowserWindow } = require('electron') as typeof Electron
     const windows = BrowserWindow.getAllWindows()
     return windows.length > 0 ? windows[0].webContents : null
   }

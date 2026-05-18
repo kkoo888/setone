@@ -48,6 +48,14 @@ class Cubism5Service {
   // 模型配置
   private expressions: string[] = []
   private motions: MotionGroup[] = []
+  private modelPath = ''
+
+  // 动作/表情管理器（动态导入后缓存）
+  private expressionManager: unknown = null
+  private motionManager: unknown = null
+
+  // 时间追踪（用于动作更新）
+  private lastUpdateTime = 0
 
   setStateCallback(cb: StateCallback | null): void {
     this.onStateChange = cb
@@ -122,7 +130,7 @@ class Cubism5Service {
     }
 
     this.framework = CubismFramework
-    return CubismFramework
+    return this.framework
   }
 
   /**
@@ -134,6 +142,7 @@ class Cubism5Service {
     }
 
     this.updateState('loading')
+    this.modelPath = config.modelPath
 
     try {
       // 初始化 Framework
@@ -141,7 +150,6 @@ class Cubism5Service {
 
       // 动态导入模型相关模块
       const { CubismMoc } = await import('../lib/model/cubismmoc')
-      const { CubismModel } = await import('../lib/model/cubismmodel')
 
       // 获取 canvas 或创建
       this.canvas = container.querySelector('canvas') as HTMLCanvasElement
@@ -167,14 +175,14 @@ class Cubism5Service {
       const mocResponse = await fetch(mocPath)
       const mocBuffer = await mocResponse.arrayBuffer()
 
-      // 创建 Moc
-      this.moc = (CubismMoc as { fromArrayBuffer: (buf: ArrayBuffer) => CubismMocLike | null }).fromArrayBuffer(mocBuffer)
+      // 创建 Moc（使用正确的 API：CubismMoc.create）
+      this.moc = CubismMoc.create(mocBuffer, false) as unknown as CubismMocLike
       if (!this.moc) {
         throw new Error('Moc 创建失败')
       }
 
       // 创建模型
-      this.model = this.moc.createModel()
+      this.model = (this.moc as unknown as { createModel: () => CubismModelLike | null }).createModel()
       if (!this.model) {
         throw new Error('模型创建失败')
       }
@@ -188,10 +196,24 @@ class Cubism5Service {
       // 初始化渲染器
       await this.initRenderer()
 
-      // 设置模型参数
+      // 设置模型参数（应用 scale）
       const scale = config.scale ?? DEFAULT_MODEL_SCALE
-      void scale
       this.model.getModel().setPixelSize(this.canvas.width, this.canvas.height)
+      // 通过 ModelMatrix 应用缩放
+      try {
+        const modelMatrix = (this.model as unknown as { getModelMatrix?: () => { setScale: (x: number, y: number) => void } }).getModelMatrix?.()
+        if (modelMatrix) {
+          modelMatrix.setScale(scale, scale)
+        }
+      } catch {
+        // ModelMatrix 不可用时忽略
+      }
+
+      // 初始化动作/表情管理器
+      await this.initMotionManagers()
+
+      // 重置时间
+      this.lastUpdateTime = performance.now() / 1000
 
       this.updateState('loaded')
       console.log('[Cubism5] ✅ 模型加载完成:', config.name)
@@ -202,6 +224,21 @@ class Cubism5Service {
       console.error('[Cubism5] ❌ 模型加载失败:', err)
       this.updateState('error')
       throw err
+    }
+  }
+
+  /**
+   * 初始化动作和表情管理器
+   */
+  private async initMotionManagers(): Promise<void> {
+    try {
+      const { CubismExpressionMotionManager } = await import('../lib/motion/cubismexpressionmotionmanager')
+      const { CubismMotionManager } = await import('../lib/motion/cubismmotionmanager')
+
+      this.expressionManager = new CubismExpressionMotionManager()
+      this.motionManager = new CubismMotionManager()
+    } catch (err) {
+      console.warn('[Cubism5] 动作/表情管理器初始化失败:', err)
     }
   }
 
@@ -328,6 +365,14 @@ class Cubism5Service {
     gl.enable(gl.BLEND)
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 
+    // 计算 deltaTime
+    const now = performance.now() / 1000
+    const deltaTime = now - this.lastUpdateTime
+    this.lastUpdateTime = now
+
+    // 更新动作和表情
+    this.updateMotionAndExpression(deltaTime)
+
     // 更新模型
     const model = this.model.getModel()
     model.update()
@@ -337,6 +382,35 @@ class Cubism5Service {
     if (renderer) {
       renderer.setMvpMatrix(this.createMvpMatrix(canvas.width, canvas.height))
       renderer.drawModel()
+    }
+  }
+
+  /**
+   * 更新动作和表情状态
+   */
+  private updateMotionAndExpression(deltaTimeSeconds: number): void {
+    if (!this.model) return
+
+    const model = this.model.getModel() as unknown as import('../lib/model/cubismmodel').CubismModel
+
+    // 更新表情
+    if (this.expressionManager) {
+      try {
+        (this.expressionManager as { updateParameters: (model: unknown, dt: number) => boolean })
+          .updateParameters(model, deltaTimeSeconds)
+      } catch {
+        // 表情更新失败忽略
+      }
+    }
+
+    // 更新动作
+    if (this.motionManager) {
+      try {
+        (this.motionManager as { updateParameters: (model: unknown, dt: number) => boolean })
+          .updateParameters(model, deltaTimeSeconds)
+      } catch {
+        // 动作更新失败忽略
+      }
     }
   }
 
@@ -356,54 +430,166 @@ class Cubism5Service {
 
   /**
    * 切换表情
+   * 从模型文件中加载对应表情文件并播放
    */
   async setExpression(expressionId: string): Promise<void> {
-    if (!this.model) return
-    const model = this.model.getModel()
-    const paramCount = model.getParameterCount()
-    for (let i = 0; i < paramCount; i++) {
-      const id = model.getParameterIds()[i]
-      if (id && id.includes(expressionId)) {
-        console.log('[Cubism5] 设置表情参数:', id)
+    if (!this.model || !this.expressionManager) {
+      console.warn('[Cubism5] 模型未加载或表情管理器不可用')
+      return
+    }
+
+    try {
+      // 从 model3.json 中查找表情文件
+      const response = await fetch(this.modelPath)
+      const modelJson = (await response.json()) as Cubism3ModelJson
+      const expressionDef = modelJson.FileReferences.Expressions?.find(
+        (e) => e.Name === expressionId
+      )
+
+      if (!expressionDef) {
+        console.warn(`[Cubism5] 表情 "${expressionId}" 未找到`)
+        return
       }
+
+      // 加载表情文件
+      const expPath = new URL(expressionDef.File, this.modelPath).href
+      const expResponse = await fetch(expPath)
+      const expBuffer = await expResponse.arrayBuffer()
+
+      // 创建表情动作
+      const { CubismExpressionMotion } = await import('../lib/motion/cubismexpressionmotion')
+      const expression = CubismExpressionMotion.create(expBuffer, expBuffer.byteLength)
+
+      if (expression) {
+        // 开始播放表情
+        const mgr = this.expressionManager as { startMotion: (motion: unknown, autoDelete: boolean) => unknown }
+        mgr.startMotion(expression, false)
+        console.log(`[Cubism5] ✅ 切换表情: ${expressionId}`)
+      }
+    } catch (err) {
+      console.error(`[Cubism5] ❌ 切换表情失败: ${expressionId}`, err)
     }
   }
 
   /**
    * 播放动作
+   * 从模型文件中加载对应动作文件并播放
    */
   async playMotion(motionId: string): Promise<void> {
-    if (!this.model) return
-    console.log('[Cubism5] playMotion:', motionId)
+    if (!this.model || !this.motionManager) {
+      console.warn('[Cubism5] 模型未加载或动作管理器不可用')
+      return
+    }
+
+    try {
+      // 从 model3.json 中查找动作文件
+      const response = await fetch(this.modelPath)
+      const modelJson = (await response.json()) as Cubism3ModelJson
+
+      // 遍历所有动作组查找匹配的动作
+      let motionPath: string | null = null
+      if (modelJson.FileReferences.Motions) {
+        for (const [, motionList] of Object.entries(modelJson.FileReferences.Motions)) {
+          for (const m of motionList) {
+            const fileName = m.File.split('/').pop()?.replace('.motion3.json', '') ?? ''
+            if (fileName === motionId) {
+              motionPath = new URL(m.File, this.modelPath).href
+              break
+            }
+          }
+          if (motionPath) break
+        }
+      }
+
+      if (!motionPath) {
+        console.warn(`[Cubism5] 动作 "${motionId}" 未找到`)
+        return
+      }
+
+      // 加载动作文件
+      const motionResponse = await fetch(motionPath)
+      const motionBuffer = await motionResponse.arrayBuffer()
+
+      // 创建动作
+      const { CubismMotion } = await import('../lib/motion/cubismmotion')
+      const motion = CubismMotion.create(motionBuffer, motionBuffer.byteLength)
+
+      if (motion) {
+        // 开始播放动作（优先级 300 = 普通优先级）
+        const mgr = this.motionManager as {
+          startMotionPriority: (motion: unknown, autoDelete: boolean, priority: number) => unknown
+        }
+        mgr.startMotionPriority(motion, false, 300)
+        console.log(`[Cubism5] ✅ 播放动作: ${motionId}`)
+      }
+    } catch (err) {
+      console.error(`[Cubism5] ❌ 播放动作失败: ${motionId}`, err)
+    }
   }
 
   /**
-   * 销毁
+   * 销毁 — 释放所有资源
    */
   destroy(): void {
+    // 停止渲染循环
     if (this.animFrameId !== null) {
       cancelAnimationFrame(this.animFrameId)
       this.animFrameId = null
     }
 
+    // 释放动作/表情管理器
+    this.expressionManager = null
+    this.motionManager = null
+
+    // 释放渲染器
     if (this.model) {
-      const renderer = this.model.getRenderer()
-      if (renderer) {
-        renderer.release()
-        renderer.deleteRenderer()
+      try {
+        const renderer = this.model.getRenderer()
+        if (renderer) {
+          renderer.release()
+          renderer.deleteRenderer()
+        }
+      } catch {
+        // 忽略渲染器释放错误
       }
       this.model.release()
       this.model = null
     }
 
+    // 释放 Moc
     if (this.moc) {
-      this.moc.release()
+      try {
+        (this.moc as unknown as { release: () => void }).release()
+      } catch {
+        // 忽略 moc 释放错误
+      }
       this.moc = null
     }
 
-    this.gl = null
+    // 释放 WebGL 上下文
+    if (this.gl) {
+      try {
+        const ext = this.gl.getExtension('WEBGL_lose_context')
+        ext?.loseContext()
+      } catch {
+        // 忽略 WebGL 释放错误
+      }
+      this.gl = null
+    }
+
+    // 清理 canvas
+    if (this.canvas?.parentNode) {
+      this.canvas.parentNode.removeChild(this.canvas)
+    }
     this.canvas = null
+
+    // 重置状态
     this.sdkLoaded = false
+    this.framework = null
+    this.expressions = []
+    this.motions = []
+    this.modelPath = ''
+    this.lastUpdateTime = 0
     this.updateState('idle')
   }
 

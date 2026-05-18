@@ -108,7 +108,9 @@ export default class Live2D5Module implements Module {
         handler: {
           execute: async (p) => {
             const { expressionId } = p as { expressionId: string }
-            this.petWindow?.webContents.send('live2d5:set-expression', expressionId)
+            if (this.petWindow && !this.petWindow.isDestroyed()) {
+      this.petWindow.webContents.send('live2d5:set-expression', expressionId)
+    }
             return { success: true, message: `切换表情: ${expressionId}` }
           }
         }
@@ -129,7 +131,9 @@ export default class Live2D5Module implements Module {
         handler: {
           execute: async (p) => {
             const { motionId } = p as { motionId: string }
-            this.petWindow?.webContents.send('live2d5:play-motion', motionId)
+            if (this.petWindow && !this.petWindow.isDestroyed()) {
+      this.petWindow.webContents.send('live2d5:play-motion', motionId)
+    }
             return { success: true, message: `播放动作: ${motionId}` }
           }
         }
@@ -195,9 +199,15 @@ export default class Live2D5Module implements Module {
     })
   }
 
-  /** 关闭宠物窗口 */
+  /** 关闭宠物窗口（通知 renderer 清理资源后再关闭） */
   private closePetWindow(): void {
     if (this.petWindow && !this.petWindow.isDestroyed()) {
+      // 通知 renderer 端销毁 WebGL 资源
+      try {
+        this.petWindow.webContents.send('live2d5:destroy')
+      } catch {
+        // 忽略发送失败
+      }
       this.petWindow.close()
     }
     this.petWindow = null
