@@ -12,6 +12,7 @@ const SkillsPage = lazy(() => import('../../pages/SkillsPage').then(m => ({ defa
 const SettingsPage = lazy(() => import('../../pages/SettingsPage').then(m => ({ default: m.SettingsPage })))
 const ModulesPage = lazy(() => import('../../pages/ModulesPage').then(m => ({ default: m.ModulesPage })))
 const Live2DPage = lazy(() => import('../../pages/Live2DPage').then(m => ({ default: m.Live2DPage })))
+const Live2D5Page = lazy(() => import('../../pages/Live2D5Page').then(m => ({ default: m.Live2D5Page })))
 const KnowledgeBasePage = lazy(() => import('../../pages/KnowledgeBasePage').then(m => ({ default: m.KnowledgeBasePage })))
 const TranslatorPage = lazy(() => import('../../pages/TranslatorPage').then(m => ({ default: m.TranslatorPage })))
 const WorkflowPage = lazy(() => import('../../pages/WorkflowPage').then(m => ({ default: m.WorkflowPage })))
@@ -143,6 +144,7 @@ export function MainLayout() {
       case 'settings': return <SettingsPage />
       case 'modules': return <ModulesPage />
       case 'live2d': return <Live2DPage />
+      case 'live2d5': return <Live2D5Page />
       case 'knowledge-base': return <KnowledgeBasePage />
       case 'translator': return <TranslatorPage />
       case 'workflow': return <WorkflowPage />

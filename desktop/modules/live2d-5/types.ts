@@ -7,13 +7,76 @@
 export interface Cubism5ModelConfig {
   readonly name: string
   readonly modelPath: string
-  readonly scale: number
-  readonly offsetX: number
-  readonly offsetY: number
+  readonly scale?: number
+  readonly offsetX?: number
+  readonly offsetY?: number
 }
 
 /** Cubism 5 模型状态 */
 export type Cubism5ModelState = 'idle' | 'loading' | 'loaded' | 'error'
+
+/** 状态变更回调 */
+export type StateCallback = (state: Cubism5ModelState) => void
+
+/** 动作分组信息 */
+export interface MotionGroup {
+  readonly group: string
+  readonly names: string[]
+}
+
+/** 模型文件引用（model3.json 结构） */
+export interface Cubism3FileReferences {
+  readonly Moc: string
+  readonly Textures?: readonly string[]
+  readonly Expressions?: readonly Array<{ readonly Name: string; readonly File: string }>
+  readonly Motions?: Record<string, readonly Array<{ readonly File: string }>>
+}
+
+/** Cubism 3 模型 JSON 顶层结构 */
+export interface Cubism3ModelJson {
+  readonly Version: number
+  readonly FileReferences: Cubism3FileReferences
+  readonly Groups?: readonly unknown[]
+}
+
+/** Cubism Framework 接口 */
+export interface CubismFrameworkLike {
+  startUp?: () => void
+  initialize?: () => void
+}
+
+/** Moc 对象接口 */
+export interface CubismMocLike {
+  createModel: () => CubismModelLike | null
+  release: () => void
+}
+
+/** Model 对象接口 */
+export interface CubismModelLike {
+  getModel: () => CubismModelInternalLike
+  setTexture: (index: number, texture: WebGLTexture) => void
+  getRenderer: () => CubismRendererLike | null
+  setRenderer: (renderer: CubismRendererLike) => void
+  release: () => void
+}
+
+/** 内部 Model 对象接口 */
+export interface CubismModelInternalLike {
+  setPixelSize: (width: number, height: number) => void
+  update: () => void
+  getParameterCount: () => number
+  getParameterIds: () => string[]
+}
+
+/** Renderer 对象接口 */
+export interface CubismRendererLike {
+  initialize: (model: CubismModelInternalLike) => void
+  isPremultipliedAlpha: boolean
+  setMvpMatrix: (matrix: Float32Array) => void
+  drawModel: () => void
+  release: () => void
+  deleteRenderer: () => void
+}
 
 /** 宠物窗口状态 */
 export interface Live2D5PetState {
@@ -23,7 +86,7 @@ export interface Live2D5PetState {
   readonly currentExpression: string
   readonly currentMotion: string
   readonly expressions: string[]
-  readonly motions: Array<{ group: string; names: string[] }>
+  readonly motions: readonly MotionGroup[]
   readonly messageText: string
   readonly lipSyncActive: boolean
 }

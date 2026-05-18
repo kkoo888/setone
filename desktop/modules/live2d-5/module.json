@@ -21,6 +21,12 @@
     },
     {
       "type": "tool",
+      "name": "live2d5_close",
+      "description": "关闭 Live2D 5 桌面宠物窗口",
+      "priority": 10
+    },
+    {
+      "type": "tool",
       "name": "live2d5_expression",
       "description": "切换 Live2D 5 表情",
       "priority": 10

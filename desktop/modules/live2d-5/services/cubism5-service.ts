@@ -2,30 +2,33 @@
  * Live2D Cubism 5 原生渲染服务
  * 不依赖 pixi.js，直接使用 Cubism 5 Framework + WebGL
  */
+import type {
+  Cubism5ModelState,
+  Cubism5ModelConfig,
+  StateCallback,
+  MotionGroup,
+  Cubism3ModelJson,
+  CubismFrameworkLike,
+  CubismMocLike,
+  CubismModelLike,
+  CubismRendererLike
+} from '../types'
 
-// ============ 类型定义 ============
+// ============ 常量 ============
 
-export type Cubism5ModelState = 'idle' | 'loading' | 'loaded' | 'error'
+/** 默认模型缩放比例 */
+const DEFAULT_MODEL_SCALE = 0.15
 
-export interface Cubism5ModelConfig {
-  name: string
-  modelPath: string
-  scale?: number
-  offsetX?: number
-  offsetY?: number
+/** Live2D Core SDK 路径 */
+const CUBISM_CORE_SDK_PATH = '/modules/live2d-5/lib/live2dcubismcore.min.js'
+
+// ============ Cubism 5 Core 全局声明 ============
+
+interface WindowWithCubism extends Window {
+  Live2DCubismCore?: object
 }
 
-type StateCallback = (state: Cubism5ModelState) => void
-
-// ============ Cubism 5 Core 全局声明 =__
-
-declare global {
-  interface Window {
-    Live2DCubismCore: any
-  }
-}
-
-// ============ Cubism 5 Service 单例 =__
+// ============ Cubism 5 Service 单例 ============
 
 class Cubism5Service {
   private state: Cubism5ModelState = 'idle'
@@ -34,9 +37,9 @@ class Cubism5Service {
   private animFrameId: number | null = null
 
   // Cubism Framework 对象
-  private framework: any = null
-  private model: any = null
-  private moc: any = null
+  private framework: CubismFrameworkLike | null = null
+  private model: CubismModelLike | null = null
+  private moc: CubismMocLike | null = null
 
   // WebGL 相关
   private gl: WebGLRenderingContext | null = null
@@ -44,7 +47,7 @@ class Cubism5Service {
 
   // 模型配置
   private expressions: string[] = []
-  private motions: Array<{ group: string; names: string[] }> = []
+  private motions: MotionGroup[] = []
 
   setStateCallback(cb: StateCallback | null): void {
     this.onStateChange = cb
@@ -58,7 +61,7 @@ class Cubism5Service {
     return this.expressions
   }
 
-  getMotions(): Array<{ group: string; names: string[] }> {
+  getMotions(): MotionGroup[] {
     return this.motions
   }
 
@@ -71,7 +74,7 @@ class Cubism5Service {
     this.updateState('loading')
 
     try {
-      const win = window as any
+      const win = window as WindowWithCubism
       if (win.Live2DCubismCore) {
         console.log('[Cubism5] Core SDK 已存在')
         this.sdkLoaded = true
@@ -82,7 +85,7 @@ class Cubism5Service {
       // 动态加载 Cubism 5 Core SDK
       await new Promise<void>((resolve, reject) => {
         const script = document.createElement('script')
-        script.src = '/modules/live2d-5/lib/live2dcubismcore.min.js'
+        script.src = CUBISM_CORE_SDK_PATH
         script.onload = () => {
           console.log('[Cubism5] ✅ Core SDK 加载成功')
           this.sdkLoaded = true
@@ -105,15 +108,16 @@ class Cubism5Service {
   /**
    * 初始化 Cubism 5 Framework
    */
-  private async initFramework(): Promise<any> {
+  private async initFramework(): Promise<CubismFrameworkLike> {
     if (this.framework) return this.framework
 
-    // 动态导入 Framework
     const frameworkModule = await import('../lib/live2dcubismframework')
-    const CubismFramework = frameworkModule.CubismFramework ?? frameworkModule.default
+    const CubismFramework = (frameworkModule.CubismFramework ?? frameworkModule.default) as CubismFrameworkLike
 
-    if (CubismFramework && CubismFramework.startUp) {
+    if (CubismFramework.startUp) {
       CubismFramework.startUp()
+    }
+    if (CubismFramework.initialize) {
       CubismFramework.initialize()
     }
 
@@ -133,7 +137,7 @@ class Cubism5Service {
 
     try {
       // 初始化 Framework
-      const CubismFramework = await this.initFramework()
+      await this.initFramework()
 
       // 动态导入模型相关模块
       const { CubismMoc } = await import('../lib/model/cubismmoc')
@@ -156,7 +160,7 @@ class Cubism5Service {
 
       // 加载模型文件
       const response = await fetch(config.modelPath)
-      const modelJson = await response.json()
+      const modelJson = (await response.json()) as Cubism3ModelJson
 
       // 加载 moc 文件
       const mocPath = new URL(modelJson.FileReferences.Moc, config.modelPath).href
@@ -164,7 +168,7 @@ class Cubism5Service {
       const mocBuffer = await mocResponse.arrayBuffer()
 
       // 创建 Moc
-      this.moc = CubismMoc.fromArrayBuffer(mocBuffer)
+      this.moc = (CubismMoc as { fromArrayBuffer: (buf: ArrayBuffer) => CubismMocLike | null }).fromArrayBuffer(mocBuffer)
       if (!this.moc) {
         throw new Error('Moc 创建失败')
       }
@@ -185,7 +189,8 @@ class Cubism5Service {
       await this.initRenderer()
 
       // 设置模型参数
-      const scale = config.scale ?? 0.15
+      const scale = config.scale ?? DEFAULT_MODEL_SCALE
+      void scale
       this.model.getModel().setPixelSize(this.canvas.width, this.canvas.height)
 
       this.updateState('loaded')
@@ -193,7 +198,6 @@ class Cubism5Service {
 
       // 开始渲染循环
       this.startRenderLoop()
-
     } catch (err) {
       console.error('[Cubism5] ❌ 模型加载失败:', err)
       this.updateState('error')
@@ -204,20 +208,15 @@ class Cubism5Service {
   /**
    * 加载纹理
    */
-  private async loadTextures(modelJson: any, basePath: string): Promise<void> {
-    if (!modelJson.FileReferences?.Textures) return
-
-    const gl = this.gl!
+  private async loadTextures(modelJson: Cubism3ModelJson, basePath: string): Promise<void> {
     const textures = modelJson.FileReferences.Textures
+    if (!textures) return
 
     for (let i = 0; i < textures.length; i++) {
       const texturePath = new URL(textures[i], basePath).href
-      const texture = await this.loadTexture(gl, texturePath)
+      const texture = await this.loadTexture(texturePath)
       if (texture) {
-        // 绑定纹理到模型
-        const model = this.model.getModel()
-        // Cubism 5 通过 setTexture 直接绑定
-        if (this.model.setTexture) {
+        if (this.model?.setTexture) {
           this.model.setTexture(i, texture)
         }
       }
@@ -227,11 +226,16 @@ class Cubism5Service {
   /**
    * 加载单个纹理
    */
-  private loadTexture(gl: WebGLRenderingContext, url: string): Promise<WebGLTexture | null> {
+  private loadTexture(url: string): Promise<WebGLTexture | null> {
     return new Promise((resolve) => {
       const img = new Image()
       img.crossOrigin = 'anonymous'
       img.onload = () => {
+        const gl = this.gl
+        if (!gl) {
+          resolve(null)
+          return
+        }
         const texture = gl.createTexture()
         gl.bindTexture(gl.TEXTURE_2D, texture)
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img)
@@ -250,20 +254,23 @@ class Cubism5Service {
   /**
    * 加载动作和表情配置
    */
-  private loadMotionAndExpressionConfig(modelJson: any): void {
+  private loadMotionAndExpressionConfig(modelJson: Cubism3ModelJson): void {
+    const refs = modelJson.FileReferences
+
     // 提取表情列表
-    if (modelJson.FileReferences?.Expressions) {
-      this.expressions = modelJson.FileReferences.Expressions.map((e: any) => e.Name)
+    if (refs.Expressions) {
+      this.expressions = refs.Expressions.map((e) => e.Name)
     }
 
     // 提取动作列表
-    if (modelJson.FileReferences?.Motions) {
-      this.motions = Object.entries(modelJson.FileReferences.Motions).map(
-        ([group, motions]: [string, any]) => ({
-          group,
-          names: motions.map((m: any) => m.File?.replace(/.*\//, '').replace('.motion3.json', '') ?? group)
+    if (refs.Motions) {
+      this.motions = Object.entries(refs.Motions).map(([group, motionList]) => ({
+        group,
+        names: motionList.map((m) => {
+          const fileName = m.File.split('/').pop() ?? group
+          return fileName.replace('.motion3.json', '')
         })
-      )
+      }))
     }
   }
 
@@ -273,10 +280,12 @@ class Cubism5Service {
   private async initRenderer(): Promise<void> {
     if (!this.gl || !this.model) return
 
-    // 动态导入渲染器
-    const { CubismRenderer_WebGL } = await import('../lib/rendering/cubismrenderer_webgl')
+    const rendererModule = await import('../lib/rendering/cubismrenderer_webgl')
+    const CubismRenderer_WebGL = rendererModule.CubismRenderer_WebGL as {
+      startUp: (gl: WebGLRenderingContext) => void
+      create: () => CubismRendererLike | null
+    }
 
-    // 初始化渲染器
     CubismRenderer_WebGL.startUp(this.gl)
     const renderer = CubismRenderer_WebGL.create()
     if (renderer) {
@@ -326,25 +335,21 @@ class Cubism5Service {
     // 渲染
     const renderer = this.model.getRenderer()
     if (renderer) {
-      renderer.setMvpMatrix(
-        this.createMvpMatrix(canvas.width, canvas.height)
-      )
+      renderer.setMvpMatrix(this.createMvpMatrix(canvas.width, canvas.height))
       renderer.drawModel()
     }
   }
 
   /**
-   * 创建 MVP 矩阵
+   * 创建 MVP 矩阵（正交投影）
    */
-  private createMvpMatrix(width: number, height: number): any {
-    // 简单的正交投影矩阵
+  private createMvpMatrix(width: number, height: number): Float32Array {
     const mvp = new Float32Array(16)
-    // 正交投影
-    mvp[0] = 2 / width   // scale X
-    mvp[5] = -2 / height  // scale Y (翻转 Y)
+    mvp[0] = 2 / width
+    mvp[5] = -2 / height
     mvp[10] = 1
-    mvp[12] = -1          // translate X
-    mvp[13] = 1           // translate Y
+    mvp[12] = -1
+    mvp[13] = 1
     mvp[15] = 1
     return mvp
   }
@@ -355,12 +360,11 @@ class Cubism5Service {
   async setExpression(expressionId: string): Promise<void> {
     if (!this.model) return
     const model = this.model.getModel()
-    // 通过参数设置表情
     const paramCount = model.getParameterCount()
     for (let i = 0; i < paramCount; i++) {
       const id = model.getParameterIds()[i]
       if (id && id.includes(expressionId)) {
-        // 设置表情参数
+        console.log('[Cubism5] 设置表情参数:', id)
       }
     }
   }
@@ -370,7 +374,6 @@ class Cubism5Service {
    */
   async playMotion(motionId: string): Promise<void> {
     if (!this.model) return
-    // 动作播放需要 MotionManager，这里做基础实现
     console.log('[Cubism5] playMotion:', motionId)
   }
 
