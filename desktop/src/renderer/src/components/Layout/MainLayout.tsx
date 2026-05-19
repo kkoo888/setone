@@ -69,7 +69,7 @@ const MODULE_PAGE_CONFIG: Record<string, { title: string; description: string; i
 
 /** 所有可能被主题覆盖的 CSS 变量列表 */
 const THEME_CSS_VARS = [
-  '--color-accent', '--color-accent-hover',
+  '--color-accent', '--color-accent-hover', '--color-accent-light',
   '--color-bg-primary', '--color-bg-secondary', '--color-bg-tertiary',
   '--color-text-primary', '--color-text-secondary', '--color-text-tertiary',
   '--color-border', '--color-shadow',
@@ -112,6 +112,7 @@ function applyThemeToDOM(mode?: string, colors?: Record<string, string>) {
     const mapping: Record<string, string> = {
       accent: '--color-accent',
       'accent-hover': '--color-accent-hover',
+      'accent-light': '--color-accent-light',
       'bg-primary': '--color-bg-primary',
       'bg-secondary': '--color-bg-secondary',
       'bg-tertiary': '--color-bg-tertiary',

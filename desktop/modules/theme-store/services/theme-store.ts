@@ -13,7 +13,7 @@ const BUILTIN_THEMES: Theme[] = [
     id: 'light', name: '亮色模式', author: 'setone', description: '明亮清爽的默认亮色主题', preview: '',
     mode: 'light',
     colors: {
-      accent: '#4338ca', 'accent-hover': '#3730a3',
+      accent: '#4338ca', 'accent-hover': '#3730a3', 'accent-light': '#a78bfa',
       'bg-primary': '#ffffff', 'bg-secondary': '#f5f5f5', 'bg-tertiary': '#e8e8e8',
       'text-primary': '#1a1a1a', 'text-secondary': '#525252', 'text-tertiary': '#737373',
       border: '#e0e0e0', shadow: 'rgba(0, 0, 0, 0.1)',
@@ -25,7 +25,7 @@ const BUILTIN_THEMES: Theme[] = [
     id: 'dark', name: '暗色模式', author: 'setone', description: '柔和护眼的暗色主题', preview: '',
     mode: 'dark',
     colors: {
-      accent: '#818cf8', 'accent-hover': '#6366f1',
+      accent: '#818cf8', 'accent-hover': '#6366f1', 'accent-light': '#c4b5fd',
       'bg-primary': '#1a1a2e', 'bg-secondary': '#16213e', 'bg-tertiary': '#0f3460',
       'text-primary': '#e8e8e8', 'text-secondary': '#b0b0b0', 'text-tertiary': '#808080',
       border: '#2a2a4a', shadow: 'rgba(0, 0, 0, 0.3)',
@@ -36,31 +36,55 @@ const BUILTIN_THEMES: Theme[] = [
   {
     id: 'default', name: '清新蓝', author: 'setone', description: '蓝紫色强调色暗色主题', preview: '',
     mode: 'dark',
-    colors: { accent: '#4a9eff', 'accent-hover': '#3b82f6', 'bg-primary': '#0f172a', 'bg-secondary': '#1e293b' },
+    colors: {
+      accent: '#4a9eff', 'accent-hover': '#3b82f6', 'accent-light': '#93c5fd',
+      'bg-primary': '#0f172a', 'bg-secondary': '#1e293b', 'bg-tertiary': '#1e3a5f',
+      'text-primary': '#e2e8f0', 'text-secondary': '#94a3b8', 'text-tertiary': '#64748b',
+      border: '#1e3a5f', shadow: 'rgba(0, 0, 0, 0.3)',
+      success: '#34d399', warning: '#fbbf24', error: '#f87171', info: '#60a5fa'
+    },
     source: 'builtin', active: false
   },
   {
     id: 'sakura', name: '樱花粉', author: 'setone', description: '少女心粉色主题', preview: '',
     mode: 'light',
-    colors: { accent: '#be185d', 'accent-hover': '#9d174d', 'bg-primary': '#fdf2f8', 'bg-secondary': '#fce7f3' },
+    colors: { accent: '#be185d', 'accent-hover': '#9d174d', 'accent-light': '#f9a8d4', 'bg-primary': '#fdf2f8', 'bg-secondary': '#fce7f3' },
     source: 'builtin', active: false
   },
   {
     id: 'forest', name: '森林绿', author: 'setone', description: '自然绿色护眼主题', preview: '',
     mode: 'dark',
-    colors: { accent: '#22c55e', 'accent-hover': '#16a34a', 'bg-primary': '#052e16', 'bg-secondary': '#14532d' },
+    colors: {
+      accent: '#22c55e', 'accent-hover': '#16a34a', 'accent-light': '#86efac',
+      'bg-primary': '#052e16', 'bg-secondary': '#14532d', 'bg-tertiary': '#166534',
+      'text-primary': '#e8e8e8', 'text-secondary': '#b0b0b0', 'text-tertiary': '#808080',
+      border: '#166534', shadow: 'rgba(0, 0, 0, 0.3)',
+      success: '#34d399', warning: '#fbbf24', error: '#f87171', info: '#60a5fa'
+    },
     source: 'builtin', active: false
   },
   {
     id: 'sunset', name: '日落橙', author: 'setone', description: '温暖橙色主题', preview: '',
     mode: 'dark',
-    colors: { accent: '#f97316', 'accent-hover': '#ea580c', 'bg-primary': '#431407', 'bg-secondary': '#7c2d12' },
+    colors: {
+      accent: '#f97316', 'accent-hover': '#ea580c', 'accent-light': '#fdba74',
+      'bg-primary': '#431407', 'bg-secondary': '#7c2d12', 'bg-tertiary': '#9a3412',
+      'text-primary': '#fef3c7', 'text-secondary': '#fcd34d', 'text-tertiary': '#d97706',
+      border: '#92400e', shadow: 'rgba(0, 0, 0, 0.3)',
+      success: '#34d399', warning: '#fbbf24', error: '#f87171', info: '#60a5fa'
+    },
     source: 'builtin', active: false
   },
   {
     id: 'ocean', name: '深海蓝', author: 'setone', description: '深邃蓝色主题', preview: '',
     mode: 'dark',
-    colors: { accent: '#06b6d4', 'accent-hover': '#0891b2', 'bg-primary': '#0c1222', 'bg-secondary': '#162032' },
+    colors: {
+      accent: '#06b6d4', 'accent-hover': '#0891b2', 'accent-light': '#67e8f9',
+      'bg-primary': '#0c1222', 'bg-secondary': '#162032', 'bg-tertiary': '#1e3a5f',
+      'text-primary': '#e0f2fe', 'text-secondary': '#7dd3fc', 'text-tertiary': '#38bdf8',
+      border: '#155e75', shadow: 'rgba(0, 0, 0, 0.3)',
+      success: '#34d399', warning: '#fbbf24', error: '#f87171', info: '#60a5fa'
+    },
     source: 'builtin', active: false
   }
 ]
