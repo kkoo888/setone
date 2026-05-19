@@ -126,7 +126,22 @@ export function KnowledgeBasePage() {
 
   // ── 监听下载进度 ──
   useEffect(() => {
-    const handler = (_event: unknown, progress: DownloadProgress) => {
+    // 注意：preload 的 on 方法会剥离 event，回调只收到数据参数
+    const handler = (...args: unknown[]) => {
+      const progress = args[0] as DownloadProgress
+      if (!progress || typeof progress !== 'object') return
+
+      // cancelled 状态：显示消息后清理条目
+      if (progress.state === 'cancelled') {
+        setDownloads(prev => {
+          const next = new Map(prev)
+          next.delete(progress.datasetId)
+          return next
+        })
+        setMessage(`❌ "${progress.datasetName}" 下载已取消`)
+        return
+      }
+
       setDownloads(prev => {
         const next = new Map(prev)
         next.set(progress.datasetId, progress)
@@ -135,8 +150,8 @@ export function KnowledgeBasePage() {
       if (progress.state === 'completed') {
         setMessage(`✅ "${progress.datasetName}" 下载完成！`)
         loadDatasets()
-      } else if (progress.state === 'cancelled') {
-        setMessage(`❌ "${progress.datasetName}" 下载已取消`)
+      } else if (progress.state === 'interrupted') {
+        setMessage(`⚠️ "${progress.datasetName}" 下载中断`)
       }
     }
 
@@ -215,7 +230,9 @@ export function KnowledgeBasePage() {
     try {
       const properties = mode === 'folder' ? ['openDirectory'] : ['openFile']
       const filters = mode === 'file' ? [
-        { name: '文档', extensions: ['txt', 'md', 'pdf', 'doc', 'docx', 'json', 'csv'] },
+        { name: '文档', extensions: ['txt', 'md', 'pdf', 'doc', 'docx', 'json', 'csv', 'jsonl', 'yaml', 'yml'] },
+        { name: '网页/标记', extensions: ['html', 'htm', 'xml'] },
+        { name: '数据', extensions: ['parquet', 'zip'] },
         { name: '代码', extensions: ['js', 'ts', 'tsx', 'jsx', 'py', 'java', 'c', 'cpp', 'h', 'css', 'html'] },
         { name: '所有文件', extensions: ['*'] }
       ] : undefined
@@ -286,7 +303,7 @@ export function KnowledgeBasePage() {
       return next
     })
 
-    // 兜底：如果 5 秒后仍为 pending，自动转为 downloading 防止卡住
+    // 兜底：如果 15 秒后仍为 pending，自动转为 downloading 防止卡住
     setTimeout(() => {
       setDownloads(prev => {
         const dl = prev.get(dataset.id)
@@ -297,17 +314,25 @@ export function KnowledgeBasePage() {
         }
         return prev
       })
-    }, 5000)
+    }, 15000)
   }
 
   const handleCancelDownload = (datasetId: string) => {
     // @ts-expect-error
     window.electronAPI.send?.('kb_dataset_download_cancel', datasetId)
-    setDownloads(prev => {
-      const next = new Map(prev)
-      next.delete(datasetId)
-      return next
-    })
+    // 不立即删除，等待主进程的 'cancelled' 进度事件确认后再删除
+    // 设置 3 秒超时兜底，防止主进程未响应时 UI 卡住
+    setTimeout(() => {
+      setDownloads(prev => {
+        const dl = prev.get(datasetId)
+        if (dl && dl.state !== 'cancelled') {
+          const next = new Map(prev)
+          next.delete(datasetId)
+          return next
+        }
+        return prev
+      })
+    }, 3000)
   }
 
   // ── 格式化字节 ──

@@ -56,6 +56,8 @@ export interface KBSettings {
   autoReindex: boolean
   /** 联网开关：控制 Embedding 和 AI 调用，不影响本地文件操作和搜索 */
   networkEnabled: boolean
+  /** 临时文件目录（用于 ZIP 解压等） */
+  tempDir?: string
 }
 
 /** 联网状态信息 */

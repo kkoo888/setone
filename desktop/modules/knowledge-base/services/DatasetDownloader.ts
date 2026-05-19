@@ -27,6 +27,8 @@ interface ActiveDownload {
   datasetId: string
   datasetName: string
   state: DownloadState
+  /** 发起下载的 webContents，用于确保进度发回正确的窗口 */
+  webContents: Electron.WebContents | null
 }
 
 /**
@@ -127,10 +129,13 @@ export class DatasetDownloader {
       download.item = item
       download.state = 'downloading'
 
-      const webContents = this.findWebContents()
+      // 优先使用缓存的 webContents，兜底用 findWebContents
+      const webContents = download.webContents ?? this.findWebContents()
 
-      // 进度更新
+      // 进度更新（如果条目已被 cancelDownload 清理，跳过）
       item.on('updated', (_e: Electron.Event, state: string) => {
+        if (!this.activeDownloads.has(matchedId!)) return
+
         if (state === 'interrupted') {
           download.state = 'interrupted'
           this.sendProgress(webContents, {
@@ -160,8 +165,11 @@ export class DatasetDownloader {
         })
       })
 
-      // 下载完成
+      // 下载完成（done 事件可能在 cancel 之后触发，需检查条目是否仍存在）
       item.once('done', (_e: Electron.Event, state: string) => {
+        // 如果条目已被 cancelDownload 清理，跳过处理
+        if (!this.activeDownloads.has(matchedId!)) return
+
         if (state === 'completed') {
           download.state = 'completed'
           this.sendProgress(webContents, {
@@ -256,13 +264,14 @@ export class DatasetDownloader {
 
     this.logger.info(`开始下载数据集: ${datasetName} (${downloadUrl})`)
 
-    // 标记为 pending
+    // 标记为 pending（缓存 webContents 用于后续进度推送）
     const placeholder = { getSavePath: () => savePath } as unknown as Electron.DownloadItem
     this.activeDownloads.set(datasetId, {
       item: placeholder,
       datasetId,
       datasetName,
-      state: 'pending'
+      state: 'pending',
+      webContents
     })
 
     // 通过 Electron 下载（会触发 will-download 事件）
@@ -362,16 +371,32 @@ export class DatasetDownloader {
   }
 
   /**
-   * 取消下载
+   * 取消下载（支持 pending / downloading / paused 状态）
    */
   cancelDownload(datasetId: string): void {
     const dl = this.activeDownloads.get(datasetId)
-    if (dl && (dl.state === 'downloading' || dl.state === 'paused')) {
+    if (!dl) return
+
+    if (dl.state === 'downloading' || dl.state === 'paused') {
+      // 已有真实 DownloadItem，调用其 cancel
       dl.item.cancel()
-      dl.state = 'cancelled'
-      this.activeDownloads.delete(datasetId)
-      this.logger.info(`已取消下载: ${dl.datasetName}`)
     }
+    // 无论什么状态都清理
+    dl.state = 'cancelled'
+    this.activeDownloads.delete(datasetId)
+    this.logger.info(`已取消下载: ${dl.datasetName} (state=${dl.state})`)
+
+    // 通知渲染端
+    const webContents = this.findWebContents()
+    this.sendProgress(webContents, {
+      datasetId,
+      datasetName: dl.datasetName,
+      state: 'cancelled',
+      receivedBytes: 0,
+      totalBytes: 0,
+      percent: 0,
+      savePath: ''
+    })
   }
 
   /**
@@ -416,10 +441,11 @@ export class DatasetDownloader {
    * 清理文件名中的非法字符
    */
   private sanitizeFileName(name: string): string {
-    return name
+    const cleaned = name
       .replace(/[<>:"/\\|?*]/g, '_')
       .replace(/\s+/g, '_')
       .substring(0, 100)
+    return cleaned || 'dataset' // 兜底：清理后为空时用默认名
   }
 
   /**
@@ -433,12 +459,15 @@ export class DatasetDownloader {
    * 清理资源
    */
   dispose(): void {
-    // 暂停所有活跃下载
+    // 取消所有活跃下载（不只是暂停）
     for (const [id, dl] of this.activeDownloads) {
-      if (dl.state === 'downloading') {
-        dl.item.pause()
+      if (dl.state === 'downloading' || dl.state === 'paused') {
+        try {
+          dl.item.cancel()
+        } catch { /* item 可能已销毁 */ }
       }
     }
+    this.activeDownloads.clear()
 
     // 清理 IPC 监听
     for (const cleanup of this.ipcCleanups) {

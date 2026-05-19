@@ -22,6 +22,8 @@ export function TranslatorPage() {
   const [favorites, setFavorites] = useState<TranslationRecord[]>([])
   const [activeTab, setActiveTab] = useState('translate')
   const [loading, setLoading] = useState(false)
+  const [loadingKB, setLoadingKB] = useState(false)
+  const [translationSource, setTranslationSource] = useState('')
   const [modalRecord, setModalRecord] = useState<TranslationRecord | null>(null)
 
   const loadHistory = useCallback(async () => {
@@ -43,14 +45,34 @@ export function TranslatorPage() {
   const handleTranslate = async () => {
     if (!sourceText.trim()) return
     setLoading(true)
+    setTranslationSource('')
     try {
       const res = await window.electronAPI.invoke('translate_text', { text: sourceText, sourceLang, targetLang })
       if (res?.success) {
         setTranslatedText(res.data.translatedText)
+        setTranslationSource(res.data.translationSource ?? '')
         loadHistory()
+      } else {
+        setTranslatedText('')
+        setTranslationSource(res?.error ?? '📚 知识库中未找到相关翻译')
       }
     } catch { /* ignore */ }
     setLoading(false)
+  }
+
+  const handleTranslateWithKB = async () => {
+    if (!sourceText.trim()) return
+    setLoadingKB(true)
+    setTranslationSource('')
+    try {
+      const res = await window.electronAPI.invoke('translate_with_kb', { text: sourceText, sourceLang, targetLang })
+      if (res?.success) {
+        setTranslatedText(res.data.translatedText)
+        setTranslationSource(res.data.translationSource ?? '')
+        loadHistory()
+      }
+    } catch { /* ignore */ }
+    setLoadingKB(false)
   }
 
   const handleSwapLangs = () => {
@@ -130,10 +152,18 @@ export function TranslatorPage() {
             </div>
           </div>
           <div className="trans-btn-row">
-            <button onClick={handleTranslate} disabled={loading || !sourceText.trim()} className="trans-translate-btn">
+            <button onClick={handleTranslate} disabled={loading || loadingKB || !sourceText.trim()} className="trans-translate-btn">
               {loading ? '翻译中...' : '🌐 翻译'}
             </button>
+            <button onClick={handleTranslateWithKB} disabled={loading || loadingKB || !sourceText.trim()} className="trans-translate-btn trans-kb-btn">
+              {loadingKB ? '查找中...' : '💛 小希翻译'}
+            </button>
           </div>
+          {translationSource && (
+            <div style={{ textAlign: 'center', fontSize: 12, color: translationSource.includes('未找到') ? 'var(--color-error)' : translationSource.includes('知识库') ? 'var(--color-success)' : 'var(--color-text-tertiary)', marginTop: 8, padding: '4px 12px', background: translationSource.includes('未找到') ? 'rgba(239,68,68,0.08)' : translationSource.includes('知识库') ? 'rgba(34,197,94,0.08)' : 'rgba(99,102,241,0.08)', borderRadius: 6, display: 'inline-block' }}>
+              {translationSource}
+            </div>
+          )}
         </div>
       )}
 

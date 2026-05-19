@@ -5,12 +5,13 @@
   "description": "划词翻译、全文翻译、翻译历史",
   "author": "小茜",
   "enabled": true,
-  "dependencies": [],
+  "dependencies": ["knowledge-base"],
   "hostVersion": ">=1.0.0",
   "priority": 22,
   "resourceLimits": { "maxMemoryMB": 128, "maxCpuPercent": 10 },
   "provides": [
-    { "type": "tool", "name": "translate_text", "description": "翻译文本", "priority": 10 },
+    { "type": "tool", "name": "translate_text", "description": "翻译文本（使用大模型翻译）", "priority": 10 },
+    { "type": "tool", "name": "translate_with_kb", "description": "小希翻译：优先从知识库查找已有翻译，未命中再调用大模型", "priority": 15 },
     { "type": "tool", "name": "translate_detect", "description": "检测语言", "priority": 10 },
     { "type": "tool", "name": "translate_history", "description": "翻译历史", "priority": 10 },
     { "type": "tool", "name": "translate_favorites", "description": "收藏常用翻译", "priority": 10 }
@@ -20,6 +21,7 @@
     "defaultSourceLang": "auto",
     "defaultTargetLang": "zh-CN",
     "engine": "ollama",
-    "maxHistory": 200
+    "maxHistory": 200,
+    "assistantName": "小希"
   }
 }

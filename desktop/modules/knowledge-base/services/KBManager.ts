@@ -1,9 +1,11 @@
-import { readFile, stat, readdir } from 'fs/promises'
+import { stat, readdir } from 'fs/promises'
 import { join, extname, basename } from 'path'
 import { randomUUID } from 'crypto'
 import type { Logger } from '../../../src/main/types/logger'
 import type { KBDocument, KBChunk, KBImportResult, KBSettings } from '../types'
-import { Chunker } from './Chunker'
+import { SmartChunker as Chunker } from './SmartChunker'
+import { TextExtractor } from './TextExtractor'
+import { ZipExtractor } from './ZipExtractor'
 import { EmbeddingService } from './EmbeddingService'
 import { VectorStore } from './VectorStore'
 
@@ -11,10 +13,16 @@ import { VectorStore } from './VectorStore'
  * 知识库管理器
  * 负责文件导入、文本提取、切片、向量化和存储
  * 支持联网开关：关闭时仅导入文本，跳过向量化
+ *
+ * v2: 新增格式支持（jsonl, yaml, html, xml, parquet）
+ *     新增 ZIP 自动解压导入
+ *     新增智能切片策略（按记录/行/段落/固定）
  */
 export class KBManager {
   private readonly logger: Logger
   private readonly chunker: Chunker
+  private readonly textExtractor: TextExtractor
+  private readonly zipExtractor: ZipExtractor
   private readonly embeddingService: EmbeddingService
   private readonly vectorStore: VectorStore
   private readonly settings: KBSettings
@@ -29,13 +37,14 @@ export class KBManager {
     this.embeddingService = embeddingService
     this.vectorStore = vectorStore
     this.settings = settings
-    this.chunker = new Chunker(settings.chunkSize, settings.chunkOverlap)
+    this.chunker = new Chunker(settings.chunkSize, settings.chunkOverlap, logger)
+    this.textExtractor = new TextExtractor(logger)
+    this.zipExtractor = new ZipExtractor(logger)
   }
 
   /**
    * 导入文件或目录到知识库
-   * @param path - 文件或目录路径
-   * @returns 导入结果数组
+   * 自动识别 .zip/.tar.gz 并解压后遍历导入
    */
   async importPath(path: string): Promise<KBImportResult[]> {
     const fileStat = await stat(path)
@@ -48,11 +57,77 @@ export class KBManager {
         results.push(result)
       }
     } else {
-      const result = await this.importFile(path)
-      results.push(result)
+      // 检查是否是压缩包
+      if (this.isArchive(path)) {
+        const archiveResults = await this.importArchive(path)
+        results.push(...archiveResults)
+      } else {
+        const result = await this.importFile(path)
+        results.push(result)
+      }
     }
 
     return results
+  }
+
+  /**
+   * 导入压缩包（自动解压后遍历导入支持的文件）
+   */
+  async importArchive(archivePath: string): Promise<KBImportResult[]> {
+    const fileName = basename(archivePath)
+    const tempDir = join(this.settings.tempDir ?? '/tmp', `kb_import_${Date.now()}`)
+
+    this.logger.info(`解压压缩包: ${fileName}`)
+
+    try {
+      // 解压
+      const extractedFiles = await this.zipExtractor.extract(archivePath, tempDir)
+      this.logger.info(`解压完成，共 ${extractedFiles.length} 个文件`)
+
+      // 过滤支持的格式
+      const supportedExts = TextExtractor.getSupportedFormats()
+      const supportedFiles = extractedFiles.filter(f => {
+        const ext = extname(f).toLowerCase()
+        return supportedExts.includes(ext)
+      })
+
+      this.logger.info(`其中 ${supportedFiles.length} 个文件支持导入`)
+
+      // 逐个导入
+      const results: KBImportResult[] = []
+      for (const file of supportedFiles) {
+        try {
+          const result = await this.importFile(file)
+          results.push(result)
+        } catch (err) {
+          this.logger.warn(`导入文件失败: ${file} - ${(err as Error).message}`)
+          results.push({
+            documentId: '',
+            fileName: basename(file),
+            chunkCount: 0,
+            success: false,
+            error: (err as Error).message
+          })
+        }
+      }
+
+      // 清理临时目录
+      await this.zipExtractor.cleanup(tempDir)
+
+      return results
+    } catch (err) {
+      this.logger.error(`压缩包导入失败: ${fileName} - ${(err as Error).message}`)
+      // 清理可能残留的临时目录
+      await this.zipExtractor.cleanup(tempDir)
+
+      return [{
+        documentId: '',
+        fileName,
+        chunkCount: 0,
+        success: false,
+        error: `解压失败: ${(err as Error).message}`
+      }]
+    }
   }
 
   /**
@@ -74,20 +149,20 @@ export class KBManager {
     }
 
     try {
-      // 读取文件内容
-      const content = await this.extractText(filePath, ext)
+      // 使用 TextExtractor 提取文本
+      const content = await this.textExtractor.extract(filePath, ext)
       if (!content || content.trim().length === 0) {
         return {
           documentId: '',
           fileName,
           chunkCount: 0,
           success: false,
-          error: '文件内容为空'
+          error: '文件内容为空或无法提取文本'
         }
       }
 
-      // 文本切片
-      const textChunks = this.chunker.chunk(content)
+      // 智能切片（传入格式提示）
+      const textChunks = this.chunker.chunk(content, ext)
       if (textChunks.length === 0) {
         return {
           documentId: '',
@@ -107,10 +182,8 @@ export class KBManager {
       let embeddings: number[][] = []
 
       if (isNetworkOn) {
-        // 联网开启：批量生成嵌入向量
         embeddings = await this.embeddingService.embedBatch(textChunks)
       } else {
-        // 联网关闭：跳过向量化，用空向量占位
         this.logger.warn(`联网已关闭，文件 "${fileName}" 仅导入文本，未生成向量`)
         embeddings = textChunks.map(() => [])
       }
@@ -151,23 +224,11 @@ export class KBManager {
   }
 
   /**
-   * 提取文件文本内容
+   * 判断是否是压缩包
    */
-  private async extractText(filePath: string, ext: string): Promise<string> {
-    // 对于文本类文件直接读取
-    const textFormats = ['.md', '.txt', '.json', '.csv', '.ts', '.js', '.py']
-    if (textFormats.includes(ext)) {
-      return await readFile(filePath, 'utf-8')
-    }
-
-    // PDF 和 DOCX 等二进制格式，暂时返回空并记录警告
-    // TODO: 集成 pdf-parse 和 mammoth 库
-    if (ext === '.pdf' || ext === '.docx') {
-      this.logger.warn(`暂不支持 ${ext} 格式的文本提取，跳过: ${filePath}`)
-      return ''
-    }
-
-    return await readFile(filePath, 'utf-8')
+  private isArchive(path: string): boolean {
+    const lower = path.toLowerCase()
+    return lower.endsWith('.zip') || lower.endsWith('.tar.gz') || lower.endsWith('.tgz')
   }
 
   /**
@@ -187,7 +248,8 @@ export class KBManager {
         }
       } else if (entry.isFile()) {
         const ext = extname(entry.name).toLowerCase()
-        if (this.settings.supportedFormats.includes(ext)) {
+        // 支持的格式 + 压缩包
+        if (this.settings.supportedFormats.includes(ext) || this.isArchive(entry.name)) {
           files.push(fullPath)
         }
       }

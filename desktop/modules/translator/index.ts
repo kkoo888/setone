@@ -7,6 +7,7 @@ import { TranslationHistory } from './services/TranslationHistory'
 /**
  * 翻译面板模块
  * 文本翻译、语言检测、翻译历史管理、收藏功能
+ * v2: 新增"小希翻译"——先查知识库，没找到再调大模型
  */
 export default class TranslatorModule implements Module {
   id = 'translator'
@@ -16,11 +17,15 @@ export default class TranslatorModule implements Module {
   private engine!: TranslationEngine
   private detector!: LanguageDetector
   private history!: TranslationHistory
+  private assistantName: string = '小希'
 
   async activate(context: ModuleContext): Promise<void> {
     this.context = context
 
     const settings = context.config as unknown as TranslatorSettings
+
+    // 读取助手名称设置
+    this.assistantName = settings.assistantName ?? '小希'
 
     // 初始化翻译引擎
     this.engine = new TranslationEngine(context.ai, context.logger)
@@ -32,7 +37,7 @@ export default class TranslatorModule implements Module {
     this.history = new TranslationHistory(context.db, context.logger, settings.maxHistory ?? 200)
     await this.history.init()
 
-    context.logger.info('翻译面板模块已激活')
+    context.logger.info(`翻译面板模块已激活（助手名称: ${this.assistantName}）`)
   }
 
   async deactivate(): Promise<void> {
@@ -41,15 +46,42 @@ export default class TranslatorModule implements Module {
     this.context.logger.info('翻译面板模块已停用')
   }
 
+  /**
+   * 获取知识库搜索接口
+   * 通过模块系统获取 knowledge-base 模块的搜索能力
+   */
+  private async getKBSearch(): Promise<{ search: (q: string, topK?: number) => Promise<any[]> } | null> {
+    try {
+      // 通过 invoke 调用知识库的搜索工具
+      const kbSearch = {
+        search: async (query: string, topK: number = 5) => {
+          const result = await this.context.invoke?.('kb_search', { query, topK })
+          if (result?.success && result.data) {
+            return result.data.map((r: any) => ({
+              content: r.content,
+              score: r.score,
+              fileName: r.fileName
+            }))
+          }
+          return []
+        }
+      }
+      return kbSearch
+    } catch {
+      this.context.logger?.debug?.('知识库模块不可用，小希翻译将直接使用 LLM')
+      return null
+    }
+  }
+
   getCapabilities(): Capability[] {
     const settings = this.context?.config as unknown as TranslatorSettings
 
     return [
-      // --- 翻译文本 ---
+      // --- 翻译文本（仅查知识库）---
       {
         type: 'tool',
         name: 'translate_text',
-        description: '翻译文本',
+        description: '翻译文本（仅查知识库，未找到则提示）',
         priority: 10,
         moduleId: this.id,
         handler: {
@@ -61,13 +93,79 @@ export default class TranslatorModule implements Module {
               return { success: false, error: '请提供待翻译文本' }
             }
             try {
-              const result = await this.engine.translate(
+              const resolvedTarget = targetLang ?? settings?.defaultTargetLang ?? 'zh-CN'
+              const kbSearch = await this.getKBSearch()
+
+              if (!kbSearch) {
+                return { success: false, error: '知识库模块不可用，请检查知识库是否已启用' }
+              }
+
+              // 只查知识库
+              const result = await this.engine.translateWithKB(
                 text,
                 sourceLang ?? settings?.defaultSourceLang ?? 'auto',
-                targetLang ?? settings?.defaultTargetLang ?? 'zh-CN'
+                resolvedTarget,
+                kbSearch,
+                this.assistantName
               )
 
-              // 保存到历史记录
+              if (result.kbMatch) {
+                // 知识库命中
+                await this.history.save({
+                  sourceText: result.sourceText,
+                  translatedText: result.translatedText,
+                  sourceLang: result.sourceLang,
+                  targetLang: result.targetLang
+                })
+                return {
+                  success: true,
+                  data: {
+                    ...result,
+                    translationSource: `📚 知识库命中（来源: ${result.kbSource}）`
+                  }
+                }
+              } else {
+                // 知识库未找到
+                return {
+                  success: false,
+                  error: '📚 知识库中未找到相关翻译，请尝试导入翻译资料或使用「小希翻译」'
+                }
+              }
+            } catch (err) {
+              return { success: false, error: (err as Error).message }
+            }
+          }
+        }
+      },
+
+      // --- 小希翻译（新增：先查知识库，没找到再调大模型）---
+      {
+        type: 'tool',
+        name: 'translate_with_kb',
+        description: `${this.assistantName}翻译：优先从知识库查找已有翻译，未命中再调用大模型`,
+        priority: 15, // 优先级高于普通翻译
+        moduleId: this.id,
+        handler: {
+          execute: async (p) => {
+            const { text, sourceLang, targetLang } = p as {
+              text: string; sourceLang?: string; targetLang?: string
+            }
+            if (!text) {
+              return { success: false, error: '请提供待翻译文本' }
+            }
+            try {
+              // 获取知识库搜索接口
+              const kbSearch = await this.getKBSearch()
+
+              const result = await this.engine.translateWithKB(
+                text,
+                sourceLang ?? settings?.defaultSourceLang ?? 'auto',
+                targetLang ?? settings?.defaultTargetLang ?? 'zh-CN',
+                kbSearch,
+                this.assistantName
+              )
+
+              // 保存到历史记录（标记来源）
               await this.history.save({
                 sourceText: result.sourceText,
                 translatedText: result.translatedText,
@@ -75,7 +173,16 @@ export default class TranslatorModule implements Module {
                 targetLang: result.targetLang
               })
 
-              return { success: true, data: result }
+              return {
+                success: true,
+                data: {
+                  ...result,
+                  // 附加信息
+                  translationSource: result.kbMatch
+                    ? `📚 知识库命中（来源: ${result.kbSource}）`
+                    : `💛 ${this.assistantName} 翻译`
+                }
+              }
             } catch (err) {
               return { success: false, error: (err as Error).message }
             }

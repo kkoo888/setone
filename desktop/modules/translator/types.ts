@@ -23,6 +23,12 @@ export interface TranslateResult {
   translatedText: string
   sourceLang: string
   targetLang: string
+  /** 翻译引擎来源：'llm' | 'kb' | 'direct' | '小希-llm' 等 */
+  engine?: string
+  /** 是否命中知识库 */
+  kbMatch?: boolean
+  /** 知识库来源文件 */
+  kbSource?: string
 }
 
 /** 语言检测结果 */
@@ -38,6 +44,8 @@ export interface TranslatorSettings {
   defaultTargetLang: string
   engine: string
   maxHistory: number
+  /** 助手名称（用于"小希翻译"按钮显示） */
+  assistantName?: string
 }
 
 /** 语言代码 → 名称映射 */

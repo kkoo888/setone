@@ -30,6 +30,8 @@ export default class KnowledgeBaseModule implements Module {
     this.context = context
 
     const settings = context.config as unknown as KBSettings
+    // 注入临时目录路径（用于 ZIP 解压等）
+    settings.tempDir = context.dataDir ?? '.'
 
     // 读取联网开关设置（默认开启）
     this.networkEnabled = settings.networkEnabled ?? true
