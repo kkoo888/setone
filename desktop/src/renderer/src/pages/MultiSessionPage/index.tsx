@@ -77,7 +77,7 @@ export function MultiSessionPage() {
       />
 
       {showCreate && (
-        <div style={{ padding: '0 24px 16px', display: 'flex', gap: 8, animation: 'scSlideDown 0.2s ease' }}>
+        <div className="form-toolbar" style={{ animation: 'scSlideDown 0.2s ease' }}>
           <input value={newName} onChange={e => setNewName(e.target.value)} placeholder="会话名称" className="mod-search" />
           <input value={newModel} onChange={e => setNewModel(e.target.value)} placeholder="模型（可选）" className="mod-search" />
           <button onClick={handleCreate} className="btn btn-primary">创建</button>

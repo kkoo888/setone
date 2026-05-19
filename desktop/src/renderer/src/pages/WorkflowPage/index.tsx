@@ -104,7 +104,7 @@ export function WorkflowPage() {
         ]}
         activeTab={activeTab}
         onTabChange={setActiveTab}
-        actions={<button onClick={() => setShowCreate(true)} className="btn btn-primary wf-create-btn" style={{ visibility: activeTab === 'list' ? 'visible' : 'hidden' }}>＋ 新建工作流</button>}
+        actions={<button onClick={() => setShowCreate(true)} className="btn btn-primary wf-create-btn" className={activeTab === 'list' ? '' : 'hidden'}>＋ 新建工作流</button>}
       />
 
       {/* 新建工作流弹窗 */}

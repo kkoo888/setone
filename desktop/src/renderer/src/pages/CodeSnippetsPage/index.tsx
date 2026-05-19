@@ -84,14 +84,14 @@ export function CodeSnippetsPage() {
             <button className="btn btn-primary" onClick={handleSave}>{editId ? '更新' : '保存'}</button>
           </>
         }>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <input value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} placeholder="标题" className="mod-search" style={{ maxWidth: 'none' }} />
-            <select value={form.language} onChange={e => setForm(p => ({ ...p, language: e.target.value }))} style={{ padding: '8px 12px', border: '1px solid var(--color-border)', borderRadius: 8, background: '#fff', fontSize: 13 }}>
+          <div className="snippet-form">
+            <input value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} placeholder="标题" className="mod-search" />
+            <select value={form.language} onChange={e => setForm(p => ({ ...p, language: e.target.value }))} className="snippet-form-select">
               {['javascript', 'typescript', 'python', 'java', 'go', 'rust', 'c', 'cpp', 'html', 'css', 'sql', 'shell', 'json', 'yaml', 'markdown'].map(l => <option key={l} value={l}>{l}</option>)}
             </select>
-            <textarea value={form.code} onChange={e => setForm(p => ({ ...p, code: e.target.value }))} placeholder="代码内容..." rows={10} style={{ padding: '12px 14px', border: '1px solid var(--color-border)', borderRadius: 8, background: '#fff', fontSize: 13, fontFamily: 'var(--font-mono)', lineHeight: 1.6, resize: 'vertical' }} />
-            <input value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))} placeholder="描述" className="mod-search" style={{ maxWidth: 'none' }} />
-            <input value={form.tags} onChange={e => setForm(p => ({ ...p, tags: e.target.value }))} placeholder="标签（逗号分隔）" className="mod-search" style={{ maxWidth: 'none' }} />
+            <textarea value={form.code} onChange={e => setForm(p => ({ ...p, code: e.target.value }))} placeholder="代码内容..." rows={10} className="snippet-form-textarea" />
+            <input value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))} placeholder="描述" className="mod-search" />
+            <input value={form.tags} onChange={e => setForm(p => ({ ...p, tags: e.target.value }))} placeholder="标签（逗号分隔）" className="mod-search" />
           </div>
         </ModuleModal>
       )}
@@ -102,16 +102,16 @@ export function CodeSnippetsPage() {
             key={s.id}
             id={s.id}
             title={s.title}
-            badge={<span style={{ fontSize: 11, color: 'var(--color-accent)', background: 'rgba(99,102,241,0.1)', padding: '1px 6px', borderRadius: 4 }}>{s.language}</span>}
+            badge={<span className="badge-accent">{s.language}</span>}
             subtitle={s.description || s.code.slice(0, 150)}
             extra={
               <>
-                <pre style={{ margin: '4px 0', padding: 10, background: 'var(--color-bg-secondary)', borderRadius: 6, fontSize: 12, lineHeight: 1.5, fontFamily: 'var(--font-mono)', overflow: 'hidden', maxHeight: 120, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                <pre className="snippet-preview-code">
                   <code>{s.code.slice(0, 300)}{s.code.length > 300 ? '...' : ''}</code>
                 </pre>
                 {s.tags.length > 0 && (
-                  <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 4 }}>
-                    {s.tags.map(t => <span key={t} style={{ fontSize: 11, padding: '1px 6px', borderRadius: 4, background: 'var(--color-bg-tertiary)', color: 'var(--color-text-secondary)' }}>{t}</span>)}
+                  <div className="snippet-form-tags">
+                    {s.tags.map(t => <span key={t} className="badge-sm" style={{ background: 'var(--color-bg-tertiary)', color: 'var(--color-text-secondary)' }}>{t}</span>)}
                   </div>
                 )}
               </>

@@ -73,17 +73,17 @@ export function NotificationsPage() {
             key={n.id}
             id={n.id}
             highlight={!n.read}
-            icon={<span style={{ fontSize: 18 }}>{TYPE_ICON[n.type] ?? 'ℹ️'}</span>}
+            icon={<span className="notif-type-icon">{TYPE_ICON[n.type] ?? 'ℹ️'}</span>}
             title={n.title}
             subtitle={n.body}
-            badge={!n.read ? <span style={{ fontSize: 10, background: 'var(--color-accent)', color: '#fff', padding: '1px 6px', borderRadius: 12 }}>新</span> : undefined}
+            badge={!n.read ? <span className="notif-badge-new">新</span> : undefined}
             actions={
               <>
                 {!n.read && <button onClick={() => handleMarkRead(n.id)} className="btn-icon-lg" title="已读">✓</button>}
                 <button onClick={() => handleDelete(n.id)} className="btn-icon-lg" title="删除">🗑</button>
               </>
             }
-            extra={<span style={{ fontSize: 11, color: 'var(--color-text-tertiary)' }}>{new Date(n.createdAt).toLocaleString()}</span>}
+            extra={<span className="notif-time">{new Date(n.createdAt).toLocaleString()}</span>}
           />
         ))}
       </ModuleList>

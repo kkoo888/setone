@@ -57,9 +57,9 @@ export function CalendarPage() {
         icon="📅"
         title="日程日历"
         actions={
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <div className="cal-controls">
             <button onClick={() => setCurrentDate(new Date(year, month - 1, 1))} className="btn btn-sm">◀</button>
-            <span style={{ fontSize: 14, fontWeight: 600, minWidth: 100, textAlign: 'center' }}>{monthName}</span>
+            <span className="cal-month-label">{monthName}</span>
             <button onClick={() => setCurrentDate(new Date(year, month + 1, 1))} className="btn btn-sm">▶</button>
             <button onClick={() => setShowAdd(true)} className="btn btn-primary">＋ 新建日程</button>
           </div>
@@ -67,18 +67,18 @@ export function CalendarPage() {
       />
 
       {showAdd && (
-        <div style={{ padding: '12px 24px', display: 'flex', gap: 8, flexWrap: 'wrap', borderTop: '1px solid var(--color-border)', animation: 'scSlideDown 0.2s ease' }}>
+        <div className="cal-form">
           <input value={newTitle} onChange={e => setNewTitle(e.target.value)} placeholder="日程标题" className="mod-search" />
           <input value={newDesc} onChange={e => setNewDesc(e.target.value)} placeholder="描述" className="mod-search" />
-          <input type="datetime-local" value={newStart} onChange={e => setNewStart(e.target.value)} style={{ padding: '8px 12px', border: '1px solid var(--color-border)', borderRadius: 8, fontSize: 13 }} />
-          <input type="datetime-local" value={newEnd} onChange={e => setNewEnd(e.target.value)} style={{ padding: '8px 12px', border: '1px solid var(--color-border)', borderRadius: 8, fontSize: 13 }} />
-          <input type="color" value={newColor} onChange={e => setNewColor(e.target.value)} style={{ width: 36, height: 36, border: '1px solid var(--color-border)', borderRadius: 8, cursor: 'pointer', padding: 2 }} />
+          <input type="datetime-local" value={newStart} onChange={e => setNewStart(e.target.value)} className="input-base" />
+          <input type="datetime-local" value={newEnd} onChange={e => setNewEnd(e.target.value)} className="input-base" />
+          <input type="color" value={newColor} onChange={e => setNewColor(e.target.value)} className="cal-color-picker" />
           <button onClick={handleAdd} className="btn btn-primary">添加</button>
           <button onClick={() => setShowAdd(false)} className="btn">取消</button>
         </div>
       )}
 
-      <div style={{ flex: 1, overflow: 'auto', padding: '0 24px 24px' }}>
+      <div className="cal-scroll">
         <div className="cal-grid">
           {['日', '一', '二', '三', '四', '五', '六'].map(d => <div key={d} className="cal-weekday">{d}</div>)}
           {blanks.map(b => <div key={`b${b}`} className="cal-blank" />)}

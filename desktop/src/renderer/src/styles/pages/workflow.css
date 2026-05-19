@@ -95,7 +95,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px 24px;
+  padding: 20px 12px;
   border-bottom: 1px solid var(--color-border);
 }
 
@@ -127,7 +127,7 @@
 }
 
 .wf-modal-body {
-  padding: 24px;
+  padding: 12px;
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -138,7 +138,7 @@
   align-items: center;
   justify-content: flex-end;
   gap: 10px;
-  padding: 16px 24px;
+  padding: 16px 12px;
   border-top: 1px solid var(--color-border);
 }
 
@@ -230,7 +230,7 @@
 
 /* ── 执行日志 ── */
 .wf-logs-container {
-  padding: 20px 24px;
+  padding: 20px 12px;
   overflow-y: auto;
   flex: 1;
 }
@@ -342,7 +342,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 14px;
-  padding: 20px 24px;
+  padding: 20px 12px;
   overflow-y: auto;
   flex: 1;
 }

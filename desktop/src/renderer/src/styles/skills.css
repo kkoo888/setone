@@ -416,7 +416,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px 24px;
+  padding: 20px 12px;
   border-bottom: 1px solid var(--color-border);
   flex-shrink: 0;
 }
@@ -479,7 +479,7 @@
 .skill-detail-body {
   flex: 1;
   overflow-y: auto;
-  padding: 24px;
+  padding: 12px;
   display: flex;
   flex-direction: column;
   gap: 24px;
@@ -593,7 +593,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 24px;
+  padding: 16px 12px;
   border-top: 1px solid var(--color-border);
   flex-shrink: 0;
 }
@@ -724,7 +724,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px 24px;
+  padding: 20px 12px;
   border-bottom: 1px solid var(--color-border);
   flex-shrink: 0;
 }
@@ -776,7 +776,7 @@
 .skill-trash-body {
   flex: 1;
   overflow-y: auto;
-  padding: 16px 24px;
+  padding: 16px 12px;
   min-height: 200px;
 }
 
@@ -921,7 +921,7 @@
 }
 
 .skill-trash-footer {
-  padding: 16px 24px;
+  padding: 16px 12px;
   border-top: 1px solid var(--color-border);
   flex-shrink: 0;
 }
@@ -944,7 +944,7 @@
 .skill-trash-confirm {
   background: var(--color-bg-primary);
   border-radius: 12px;
-  padding: 24px;
+  padding: 12px;
   width: 360px;
   max-width: 90%;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
@@ -997,7 +997,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px 24px;
+  padding: 20px 12px;
   border-bottom: 1px solid var(--color-border);
   flex-shrink: 0;
 }
@@ -1081,7 +1081,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 12px 24px;
+  padding: 12px 12px;
   border-bottom: 1px solid var(--color-border);
 }
 
@@ -1105,7 +1105,7 @@
 
 /* 搜索结果 */
 .skill-install-results {
-  padding: 12px 24px;
+  padding: 12px 12px;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -1266,7 +1266,7 @@
 
 /* URL 安装表单 */
 .skill-install-url-form {
-  padding: 24px;
+  padding: 12px;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -1317,7 +1317,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 12px 24px;
+  padding: 12px 12px;
   border-top: 1px solid var(--color-border);
   font-size: 13px;
   color: var(--color-text-secondary);
@@ -1354,7 +1354,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px 24px;
+  padding: 20px 12px;
   border-bottom: 1px solid var(--color-border);
   flex-shrink: 0;
 }
@@ -1403,7 +1403,7 @@
 .skill-config-body {
   flex: 1;
   overflow-y: auto;
-  padding: 24px;
+  padding: 12px;
 }
 
 .skill-config-empty {
@@ -1575,7 +1575,7 @@
   align-items: center;
   justify-content: flex-end;
   gap: 12px;
-  padding: 16px 24px;
+  padding: 16px 12px;
   border-top: 1px solid var(--color-border);
   flex-shrink: 0;
 }
@@ -1691,7 +1691,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px 24px;
+  padding: 20px 12px;
   border-bottom: 1px solid var(--color-border);
   flex-shrink: 0;
 }
@@ -1760,7 +1760,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px 24px;
+  padding: 20px 12px;
   border-bottom: 1px solid var(--color-border);
   flex-shrink: 0;
 }
@@ -1804,7 +1804,7 @@
 .skill-create-body {
   flex: 1;
   overflow-y: auto;
-  padding: 24px;
+  padding: 12px;
 }
 
 .skill-create-input-section {
@@ -1912,13 +1912,13 @@
   align-items: center;
   justify-content: flex-end;
   gap: 10px;
-  padding: 16px 24px;
+  padding: 16px 12px;
   border-top: 1px solid var(--color-border);
   flex-shrink: 0;
 }
 
 .skill-create-btn {
-  padding: 10px 24px;
+  padding: 10px 12px;
   border: none;
   border-radius: var(--radius-md);
   font-size: 14px;
@@ -2008,7 +2008,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px 24px;
+  padding: 20px 12px;
   border-bottom: 1px solid var(--color-border);
   flex-shrink: 0;
 }
@@ -2105,7 +2105,7 @@
 }
 
 .skill-refine-preview {
-  padding: 16px 24px;
+  padding: 16px 12px;
 }
 
 .skill-refine-loading {
@@ -2136,7 +2136,7 @@
 
 /* 分析结果 */
 .skill-refine-analyze {
-  padding: 20px 24px;
+  padding: 20px 12px;
 }
 
 .skill-refine-analyze-empty {
@@ -2232,7 +2232,7 @@
 
 /* Diff 对比 */
 .skill-refine-diff {
-  padding: 16px 24px;
+  padding: 16px 12px;
 }
 
 .skill-refine-changes {
@@ -2313,7 +2313,7 @@
 
 /* 炼化输入区 */
 .skill-refine-input {
-  padding: 12px 24px;
+  padding: 12px 12px;
   border-top: 1px solid var(--color-border);
   flex-shrink: 0;
 }
@@ -2359,7 +2359,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 24px;
+  padding: 16px 12px;
   border-top: 1px solid var(--color-border);
   flex-shrink: 0;
 }
@@ -2844,7 +2844,7 @@
 }
 
 .btn-update-all {
-  padding: 8px 24px;
+  padding: 8px 12px;
   border-radius: 8px;
   border: none;
   background: var(--color-accent, #6c8);

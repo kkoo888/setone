@@ -83,8 +83,8 @@ export function TranslatorPage() {
       id={r.id}
       onClick={() => setModalRecord(r)}
       title={`${LANGS[r.sourceLang] ?? r.sourceLang} → ${LANGS[r.targetLang] ?? r.targetLang}`}
-      subtitle={<><span style={{ color: 'var(--color-text-secondary)' }}>{r.sourceText}</span> → <span style={{ fontWeight: 500 }}>{r.translatedText}</span></>}
-      badge={r.isFavorite ? <span style={{ fontSize: 14 }}>⭐</span> : null}
+      subtitle={<><span className="trans-compare-label" style={{ display: 'inline', marginBottom: 0 }}>{r.sourceText}</span> → <span style={{ fontWeight: 500 }}>{r.translatedText}</span></>}
+      badge={r.isFavorite ? <span className="trans-fav-icon">⭐</span> : null}
       actions={
         <>
           <button onClick={(e) => { e.stopPropagation(); handleToggleFavorite(r.id) }} className="btn-icon-lg" title="收藏">
@@ -107,7 +107,7 @@ export function TranslatorPage() {
       />
 
       {activeTab === 'translate' && (
-        <div style={{ flex: 1, overflow: 'auto', padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div className="trans-content">
           <div className="trans-lang-bar">
             <select value={sourceLang} onChange={e => setSourceLang(e.target.value)} className="trans-select">
               {Object.entries(LANGS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
@@ -161,17 +161,17 @@ export function TranslatorPage() {
             <button className="btn btn-danger btn-sm" onClick={() => { handleDelete(modalRecord.id); setModalRecord(null) }}>🗑 删除</button>
           </>
         }>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+          <div className="trans-compare-grid">
             <div>
-              <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-text-secondary)', display: 'block', marginBottom: 8 }}>原文</label>
+              <label className="trans-compare-label">原文</label>
               <div className="trans-modal-text">{modalRecord.sourceText}</div>
             </div>
             <div>
-              <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-text-secondary)', display: 'block', marginBottom: 8 }}>译文</label>
+              <label className="trans-compare-label">译文</label>
               <div className="trans-modal-text">{modalRecord.translatedText}</div>
             </div>
           </div>
-          <div style={{ marginTop: 12, textAlign: 'center' }}>
+          <div className="trans-result-actions">
             <span className="trans-modal-lang">
               {LANGS[modalRecord.sourceLang] ?? modalRecord.sourceLang} → {LANGS[modalRecord.targetLang] ?? modalRecord.targetLang}
             </span>
