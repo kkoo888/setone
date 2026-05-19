@@ -4,6 +4,9 @@ import { mkdir } from 'fs/promises'
 import { existsSync } from 'fs'
 import type { Logger } from '../../../src/main/types/logger'
 
+/** ModelScope API 基础地址 */
+const MODELSCOPE_API = 'https://modelscope.cn/api/v1'
+
 /** 下载状态 */
 export type DownloadState = 'pending' | 'downloading' | 'paused' | 'completed' | 'cancelled' | 'interrupted'
 
@@ -62,8 +65,8 @@ export class DatasetDownloader {
    */
   private registerIpcHandlers(): void {
     // 开始下载
-    const startHandler = (_event: Electron.IpcMainEvent, datasetId: string, datasetName: string, url: string) => {
-      this.startDownload(_event.sender, datasetId, datasetName, url)
+    const startHandler = async (_event: Electron.IpcMainEvent, datasetId: string, datasetName: string, url: string) => {
+      await this.startDownload(_event.sender, datasetId, datasetName, url)
     }
     ipcMain.on('kb_dataset_download_start', startHandler)
     this.ipcCleanups.push(() => ipcMain.removeListener('kb_dataset_download_start', startHandler))
@@ -207,18 +210,51 @@ export class DatasetDownloader {
 
   /**
    * 开始下载数据集
+   * 接收 ModelScope 页面 URL，自动查询文件列表并下载主数据文件
    */
-  startDownload(webContents: Electron.WebContents, datasetId: string, datasetName: string, url: string): void {
+  async startDownload(webContents: Electron.WebContents, datasetId: string, datasetName: string, pageUrl: string): Promise<void> {
     // 检查是否已在下载
     if (this.activeDownloads.has(datasetId)) {
       this.logger.warn(`数据集 ${datasetId} 已在下载中`)
       return
     }
 
+    // 从页面 URL 解析 owner/name
+    const parsed = this.parseModelScopeUrl(pageUrl)
+    if (!parsed) {
+      this.logger.error(`无法解析 ModelScope URL: ${pageUrl}`)
+      this.sendProgress(webContents, {
+        datasetId,
+        datasetName,
+        state: 'interrupted',
+        receivedBytes: 0,
+        totalBytes: 0,
+        percent: 0,
+        savePath: ''
+      })
+      return
+    }
+
+    // 查询文件列表，找到主数据文件
+    const downloadUrl = await this.resolveDownloadUrl(parsed.owner, parsed.name)
+    if (!downloadUrl) {
+      this.logger.error(`无法找到数据集 ${datasetName} 的下载文件`)
+      this.sendProgress(webContents, {
+        datasetId,
+        datasetName,
+        state: 'interrupted',
+        receivedBytes: 0,
+        totalBytes: 0,
+        percent: 0,
+        savePath: ''
+      })
+      return
+    }
+
     const fileName = this.sanitizeFileName(datasetName) + '.zip'
     const savePath = join(this.downloadDir, fileName)
 
-    this.logger.info(`开始下载数据集: ${datasetName} (${url})`)
+    this.logger.info(`开始下载数据集: ${datasetName} (${downloadUrl})`)
 
     // 标记为 pending
     const placeholder = { getSavePath: () => savePath } as unknown as Electron.DownloadItem
@@ -230,7 +266,75 @@ export class DatasetDownloader {
     })
 
     // 通过 Electron 下载（会触发 will-download 事件）
-    webContents.downloadURL(url)
+    webContents.downloadURL(downloadUrl)
+  }
+
+  /**
+   * 从 ModelScope 页面 URL 解析 owner/name
+   * 支持格式：https://modelscope.cn/datasets/{owner}/{name}
+   */
+  private parseModelScopeUrl(url: string): { owner: string; name: string } | null {
+    const match = url.match(/modelscope\.cn\/datasets\/([^/]+)\/([^/?#]+)/)
+    if (match) {
+      return { owner: match[1], name: match[2] }
+    }
+    return null
+  }
+
+  /**
+   * 查询 ModelScope 文件列表 API，找到主数据文件并返回下载 URL
+   * 优先选择 .zip / .tar.gz / .jsonl / .parquet 等数据文件
+   */
+  private async resolveDownloadUrl(owner: string, name: string): Promise<string | null> {
+    try {
+      const treeUrl = `${MODELSCOPE_API}/datasets/${owner}/${name}/repo/tree?Revision=master`
+      this.logger.info(`查询文件列表: ${treeUrl}`)
+
+      const response = await fetch(treeUrl)
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`)
+      }
+
+      const data = await response.json() as {
+        Code: number
+        Data?: { Files?: Array<{ Name: string; Path: string; Type: string; Size: number }> }
+      }
+
+      if (data.Code !== 200 || !data.Data?.Files) {
+        throw new Error(`API 返回错误: Code=${data.Code}`)
+      }
+
+      const files = data.Data.Files.filter(f => f.Type === 'blob')
+
+      // 优先级：.zip > .tar.gz > .jsonl > .parquet > .csv > 第一个非 py/md 文件
+      const priorityExts = ['.zip', '.tar.gz', '.jsonl', '.parquet', '.csv', '.json']
+      let selectedFile: typeof files[0] | null = null
+
+      for (const ext of priorityExts) {
+        const found = files.find(f => f.Name.toLowerCase().endsWith(ext))
+        if (found) {
+          selectedFile = found
+          break
+        }
+      }
+
+      // 兜底：选第一个非 py/md 的文件
+      if (!selectedFile) {
+        selectedFile = files.find(f => !f.Name.endsWith('.py') && !f.Name.endsWith('.md')) ?? null
+      }
+
+      if (!selectedFile) {
+        this.logger.warn(`数据集 ${owner}/${name} 中没有找到可下载的数据文件`)
+        return null
+      }
+
+      const downloadUrl = `${MODELSCOPE_API}/datasets/${owner}/${name}/repo?Revision=master&FilePath=${encodeURIComponent(selectedFile.Path)}`
+      this.logger.info(`选定文件: ${selectedFile.Name} (${selectedFile.Size} bytes) → ${downloadUrl}`)
+      return downloadUrl
+    } catch (err) {
+      this.logger.error(`查询文件列表失败: ${(err as Error).message}`)
+      return null
+    }
   }
 
   /**

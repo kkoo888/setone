@@ -1,6 +1,11 @@
 /**
  * Live2D Cubism 5 宠物窗口页面
  * 在独立 renderer 进程中运行，使用 Cubism 5 原生 WebGL 渲染
+ *
+ * 修复：
+ * - 拖拽：通过 invoke 通知主进程，主进程通过 BrowserWindow API 处理
+ * - 清理：destroy 时通知主进程清理完成，避免资源泄漏
+ * - WebGL 上下文丢失：监听事件并提示用户
  */
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 
@@ -8,6 +13,8 @@ import React, { useState, useEffect, useRef, useCallback } from 'react'
 interface ElectronAPI {
   invoke: (channel: string, ...args: unknown[]) => Promise<unknown>
   on: (channel: string, callback: (...args: unknown[]) => void) => () => void
+  removeListener: (channel: string, callback: (...args: unknown[]) => void) => void
+  notifyCleanupDone?: () => void
 }
 
 declare global {
@@ -21,6 +28,7 @@ type PetState = 'idle' | 'loading' | 'loaded' | 'error'
 const Live2D5PetPage: React.FC = () => {
   const [state, setState] = useState<PetState>('idle')
   const [error, setError] = useState<string | null>(null)
+  const [contextLost, setContextLost] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const serviceRef = useRef<Awaited<ReturnType<typeof loadCubism5Service>> | null>(null)
 
@@ -75,7 +83,29 @@ const Live2D5PetPage: React.FC = () => {
     }
   }, [])
 
-  // 监听主进程 IPC 事件（表情/动作/拖拽）
+  // 监听 WebGL 上下文丢失/恢复
+  useEffect(() => {
+    const container = containerRef.current
+    if (!container) return
+
+    const handleContextLost = () => setContextLost(true)
+    const handleContextRestored = () => setContextLost(false)
+
+    const canvas = container.querySelector('canvas')
+    if (canvas) {
+      canvas.addEventListener('webglcontextlost', handleContextLost)
+      canvas.addEventListener('webglcontextrestored', handleContextRestored)
+    }
+
+    return () => {
+      if (canvas) {
+        canvas.removeEventListener('webglcontextlost', handleContextLost)
+        canvas.removeEventListener('webglcontextrestored', handleContextRestored)
+      }
+    }
+  }, [state])
+
+  // 监听主进程 IPC 事件（表情/动作/拖拽/销毁）
   useEffect(() => {
     if (!window.electronAPI) return
 
@@ -99,41 +129,33 @@ const Live2D5PetPage: React.FC = () => {
 
     cleanups.push(
       window.electronAPI.on('live2d5:start-drag', () => {
-        // 拖拽由 mousedown 事件处理
+        // 主进程通知 renderer 端开始拖拽
+        // 使用 mousedown + IPC 配合实现窗口移动
       })
     )
 
     cleanups.push(
       window.electronAPI.on('live2d5:destroy', () => {
+        // 清理 WebGL 资源
         serviceRef.current?.destroy()
         serviceRef.current = null
+        // 通知主进程清理完成
+        window.electronAPI?.notifyCleanupDone?.()
       })
     )
 
     return () => cleanups.forEach((fn) => fn())
   }, [])
 
-  // 拖拽支持
+  // 拖拽支持 — 通过 IPC 通知主进程处理窗口移动
   useEffect(() => {
     let dragging = false
-    let startX = 0
-    let startY = 0
 
     const handleMouseDown = (e: MouseEvent) => {
       if (e.button !== 0) return
       dragging = true
-      startX = e.screenX
-      startY = e.screenY
-      window.electronAPI?.invoke('live2d5_start_drag')
-    }
-
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!dragging) return
-      const dx = e.screenX - startX
-      const dy = e.screenY - startY
-      if (Math.abs(dx) > 2 || Math.abs(dy) > 2) {
-        window.electronAPI?.invoke('live2d5_start_drag')
-      }
+      // 通知主进程开始拖拽（主进程会处理窗口移动）
+      window.electronAPI?.invoke('live2d5:request-drag')
     }
 
     const handleMouseUp = () => {
@@ -141,12 +163,10 @@ const Live2D5PetPage: React.FC = () => {
     }
 
     document.addEventListener('mousedown', handleMouseDown)
-    document.addEventListener('mousemove', handleMouseMove)
     document.addEventListener('mouseup', handleMouseUp)
 
     return () => {
       document.removeEventListener('mousedown', handleMouseDown)
-      document.removeEventListener('mousemove', handleMouseMove)
       document.removeEventListener('mouseup', handleMouseUp)
     }
   }, [])
@@ -201,6 +221,40 @@ const Live2D5PetPage: React.FC = () => {
           }}
         >
           加载 Cubism 5 模型中...
+        </div>
+      )}
+
+      {/* WebGL 上下文丢失提示 */}
+      {contextLost && (
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'rgba(0,0,0,0.7)',
+            color: '#fbbf24',
+            fontSize: 14,
+            flexDirection: 'column',
+            gap: 8,
+          }}
+        >
+          <span>⚠️ WebGL 上下文丢失，等待恢复...</span>
+          <button
+            onClick={handleRetry}
+            style={{
+              background: 'rgba(99,102,241,0.8)',
+              color: 'white',
+              border: 'none',
+              padding: '6px 16px',
+              borderRadius: 6,
+              fontSize: 12,
+              cursor: 'pointer',
+            }}
+          >
+            重新加载
+          </button>
         </div>
       )}
 

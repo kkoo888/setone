@@ -60,22 +60,24 @@ export interface CubismModelLike {
   release: () => void
 }
 
-/** 内部 Model 对象接口 */
+/** 内部 Model 对象接口（匹配 CubismModel 实际 API） */
 export interface CubismModelInternalLike {
   setPixelSize: (width: number, height: number) => void
   update: () => void
   getParameterCount: () => number
   getParameterIds: () => string[]
+  getCanvasWidth: () => number
+  getCanvasHeight: () => number
 }
 
-/** Renderer 对象接口 */
+/** Renderer 对象接口（匹配 Cubism SDK 实际 API） */
 export interface CubismRendererLike {
-  initialize: (model: CubismModelInternalLike) => void
+  initialize: (model: CubismModelInternalLike, maskBufferCount?: number) => void
+  startUp: (gl: WebGLRenderingContext | WebGL2RenderingContext) => void
   isPremultipliedAlpha: boolean
   setMvpMatrix: (matrix: Float32Array) => void
   drawModel: () => void
   release: () => void
-  deleteRenderer: () => void
 }
 
 /** 宠物窗口状态 */
@@ -89,6 +91,7 @@ export interface Live2D5PetState {
   readonly motions: readonly MotionGroup[]
   readonly messageText: string
   readonly lipSyncActive: boolean
+  readonly contextLost: boolean
 }
 
 /** IPC 通道映射 */
@@ -97,4 +100,6 @@ export interface Live2D5IPCChannels {
   'live2d5:close-window': () => Promise<void>
   'live2d5:get-status': () => Promise<{ windowOpen: boolean }>
   'live2d5:start-drag': () => Promise<void>
+  'live2d5:request-drag': () => Promise<void>
+  'live2d5:cleanup-done': () => void
 }

@@ -1,5 +1,6 @@
 import type { Module, ModuleContext, Capability } from '../../src/main/types/module'
 import type { KBSettings, KBImportResult, KBSearchResult, KBAskResult, KBNetworkStatus } from './types'
+import { session } from 'electron'
 import { EmbeddingService } from './services/EmbeddingService'
 import { VectorStore } from './services/VectorStore'
 import { KBManager } from './services/KBManager'
@@ -67,6 +68,9 @@ export default class KnowledgeBaseModule implements Module {
     // 初始化数据集下载管理器
     this.datasetDownloader = new DatasetDownloader(context.logger, context.dataDir ?? '.')
     await this.datasetDownloader.init()
+
+    // 注册 Electron session 下载监听（关键！没有这个 will-download 事件不会触发）
+    this.datasetDownloader.setupSessionListener(session.defaultSession)
 
     // 监听文件变更事件（自动重新索引）
     if (settings.autoReindex) {

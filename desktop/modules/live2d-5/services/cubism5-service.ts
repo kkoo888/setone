@@ -1,6 +1,8 @@
 /**
  * Live2D Cubism 5 原生渲染服务
  * 不依赖 pixi.js，直接使用 Cubism 5 Framework + WebGL
+ *
+ * @see https://docs.live2d.com/4.2/zh-CHS/cubism-sdk-manual/model-web/
  */
 import type {
   Cubism5ModelState,
@@ -49,6 +51,7 @@ class Cubism5Service {
   private expressions: string[] = []
   private motions: MotionGroup[] = []
   private modelPath = ''
+  private cachedModelJson: Cubism3ModelJson | null = null
 
   // 动作/表情管理器（动态导入后缓存）
   private expressionManager: unknown = null
@@ -56,6 +59,12 @@ class Cubism5Service {
 
   // 时间追踪（用于动作更新）
   private lastUpdateTime = 0
+
+  // WebGL 上下文丢失标志
+  private contextLost = false
+
+  // ModelMatrix（用于缩放和定位）
+  private _modelMatrix: import('../lib/math/cubismmodelmatrix').CubismModelMatrix | null = null
 
   setStateCallback(cb: StateCallback | null): void {
     this.onStateChange = cb
@@ -166,16 +175,19 @@ class Cubism5Service {
         throw new Error('WebGL 不可用')
       }
 
+      // 注册 WebGL 上下文丢失/恢复事件
+      this.registerContextEvents()
+
       // 加载模型文件
       const response = await fetch(config.modelPath)
-      const modelJson = (await response.json()) as Cubism3ModelJson
+      this.cachedModelJson = (await response.json()) as Cubism3ModelJson
 
       // 加载 moc 文件
-      const mocPath = new URL(modelJson.FileReferences.Moc, config.modelPath).href
+      const mocPath = new URL(this.cachedModelJson.FileReferences.Moc, config.modelPath).href
       const mocResponse = await fetch(mocPath)
       const mocBuffer = await mocResponse.arrayBuffer()
 
-      // 创建 Moc（使用正确的 API：CubismMoc.create）
+      // 创建 Moc — SDK API: CubismMoc.create(mocBytes, shouldCheckMocConsistency)
       this.moc = CubismMoc.create(mocBuffer, false) as unknown as CubismMocLike
       if (!this.moc) {
         throw new Error('Moc 创建失败')
@@ -188,26 +200,17 @@ class Cubism5Service {
       }
 
       // 加载纹理
-      await this.loadTextures(modelJson, config.modelPath)
+      await this.loadTextures(this.cachedModelJson, config.modelPath)
 
       // 加载动作和表情配置
-      this.loadMotionAndExpressionConfig(modelJson)
+      this.loadMotionAndExpressionConfig(this.cachedModelJson)
 
-      // 初始化渲染器
+      // 初始化渲染器（使用 SDK 正确 API）
       await this.initRenderer()
 
-      // 设置模型参数（应用 scale）
-      const scale = config.scale ?? DEFAULT_MODEL_SCALE
-      this.model.getModel().setPixelSize(this.canvas.width, this.canvas.height)
       // 通过 ModelMatrix 应用缩放
-      try {
-        const modelMatrix = (this.model as unknown as { getModelMatrix?: () => { setScale: (x: number, y: number) => void } }).getModelMatrix?.()
-        if (modelMatrix) {
-          modelMatrix.setScale(scale, scale)
-        }
-      } catch {
-        // ModelMatrix 不可用时忽略
-      }
+      const scale = config.scale ?? DEFAULT_MODEL_SCALE
+      await this.applyModelScale(scale)
 
       // 初始化动作/表情管理器
       await this.initMotionManagers()
@@ -224,6 +227,89 @@ class Cubism5Service {
       console.error('[Cubism5] ❌ 模型加载失败:', err)
       this.updateState('error')
       throw err
+    }
+  }
+
+  /**
+   * 应用模型缩放（通过 CubismModelMatrix，SDK 标准方式）
+   * @see https://docs.live2d.com/4.2/zh-CHS/cubism-sdk-manual/model-web/
+   */
+  private async applyModelScale(scale: number): Promise<void> {
+    if (!this.model || !this.canvas) return
+
+    try {
+      const { CubismModelMatrix } = await import('../lib/math/cubismmodelmatrix')
+      const internalModel = this.model.getModel()
+      if (!internalModel) return
+
+      const modelMatrix = new CubismModelMatrix(
+        internalModel.getCanvasWidth(),
+        internalModel.getCanvasHeight()
+      )
+      modelMatrix.scale(scale, scale)
+      // 存储到 service 上供渲染时使用
+      this._modelMatrix = modelMatrix
+    } catch (err) {
+      console.warn('[Cubism5] ModelMatrix 初始化失败:', err)
+    }
+  }
+
+  /**
+   * 注册 WebGL 上下文丢失/恢复事件
+   */
+  private registerContextEvents(): void {
+    if (!this.canvas) return
+
+    this.canvas.addEventListener('webglcontextlost', (e) => {
+      e.preventDefault()
+      console.warn('[Cubism5] ⚠️ WebGL 上下文丢失')
+      this.contextLost = true
+      // 停止渲染循环
+      if (this.animFrameId !== null) {
+        cancelAnimationFrame(this.animFrameId)
+        this.animFrameId = null
+      }
+    })
+
+    this.canvas.addEventListener('webglcontextrestored', () => {
+      console.log('[Cubism5] ✅ WebGL 上下文恢复')
+      this.contextLost = false
+      // 重新初始化渲染器并恢复渲染循环
+      this.recoverFromContextLost()
+    })
+  }
+
+  /**
+   * 从 WebGL 上下文丢失中恢复
+   */
+  private async recoverFromContextLost(): Promise<void> {
+    if (!this.canvas || !this.model) return
+
+    try {
+      // 重新获取 WebGL 上下文
+      this.gl = this.canvas.getContext('webgl2') || this.canvas.getContext('webgl')
+      if (!this.gl) {
+        console.error('[Cubism5] ❌ 恢复 WebGL 上下文失败')
+        this.updateState('error')
+        return
+      }
+
+      // 重新初始化渲染器
+      await this.initRenderer()
+
+      // 重新加载纹理
+      if (this.cachedModelJson) {
+        await this.loadTextures(this.cachedModelJson, this.modelPath)
+      }
+
+      // 恢复渲染循环
+      this.lastUpdateTime = performance.now() / 1000
+      this.startRenderLoop()
+
+      console.log('[Cubism5] ✅ 从上下文丢失中恢复完成')
+    } catch (err) {
+      console.error('[Cubism5] ❌ 恢复失败:', err)
+      this.updateState('error')
     }
   }
 
@@ -312,30 +398,42 @@ class Cubism5Service {
   }
 
   /**
-   * 初始化渲染器
+   * 初始化渲染器（SDK 正确 API）
+   *
+   * Cubism SDK 正确用法：
+   * 1. new CubismRenderer_WebGL(width, height)
+   * 2. renderer.startUp(gl)
+   * 3. renderer.initialize(model)
    */
   private async initRenderer(): Promise<void> {
-    if (!this.gl || !this.model) return
+    if (!this.gl || !this.model || !this.canvas) return
 
     const rendererModule = await import('../lib/rendering/cubismrenderer_webgl')
     const CubismRenderer_WebGL = rendererModule.CubismRenderer_WebGL as {
-      startUp: (gl: WebGLRenderingContext) => void
-      create: () => CubismRendererLike | null
+      new (width: number, height: number): CubismRendererLike & {
+        startUp: (gl: WebGLRenderingContext) => void
+      }
     }
 
-    CubismRenderer_WebGL.startUp(this.gl)
-    const renderer = CubismRenderer_WebGL.create()
-    if (renderer) {
-      renderer.initialize(this.model.getModel())
-      renderer.isPremultipliedAlpha = true
-      this.model.setRenderer(renderer)
-    }
+    // SDK 正确 API：new CubismRenderer_WebGL(width, height)
+    const renderer = new CubismRenderer_WebGL(this.canvas.width, this.canvas.height)
+
+    // 设置 GL 上下文
+    renderer.startUp(this.gl)
+
+    // 初始化渲染器（关联模型）
+    renderer.initialize(this.model.getModel())
+    renderer.isPremultipliedAlpha = true
+
+    this.model.setRenderer(renderer)
   }
 
   /**
    * 开始渲染循环
    */
   private startRenderLoop(): void {
+    if (this.animFrameId !== null) return
+
     const render = () => {
       this.renderFrame()
       this.animFrameId = requestAnimationFrame(render)
@@ -347,7 +445,7 @@ class Cubism5Service {
    * 渲染一帧
    */
   private renderFrame(): void {
-    if (!this.gl || !this.model || !this.canvas) return
+    if (!this.gl || !this.model || !this.canvas || this.contextLost) return
 
     const gl = this.gl
     const canvas = this.canvas
@@ -415,22 +513,42 @@ class Cubism5Service {
   }
 
   /**
-   * 创建 MVP 矩阵（正交投影）
+   * 创建 MVP 矩阵（正交投影 × 模型矩阵）
+   * @see https://docs.live2d.com/4.2/zh-CHS/cubism-sdk-manual/model-web/
    */
   private createMvpMatrix(width: number, height: number): Float32Array {
-    const mvp = new Float32Array(16)
-    mvp[0] = 2 / width
-    mvp[5] = -2 / height
-    mvp[10] = 1
-    mvp[12] = -1
-    mvp[13] = 1
-    mvp[15] = 1
-    return mvp
+    // 投影矩阵：正交投影
+    const projection = new Float32Array(16)
+    projection[0] = 2 / width
+    projection[5] = -2 / height
+    projection[10] = 1
+    projection[12] = -1
+    projection[13] = 1
+    projection[15] = 1
+
+    // 如果有 ModelMatrix，将投影矩阵与模型矩阵相乘
+    if (this._modelMatrix) {
+      const mm = this._modelMatrix.getArray()
+      // 矩阵乘法 projection × modelMatrix（4x4）
+      const mvp = new Float32Array(16)
+      for (let row = 0; row < 4; row++) {
+        for (let col = 0; col < 4; col++) {
+          mvp[row * 4 + col] =
+            projection[row * 4 + 0] * mm[0 * 4 + col] +
+            projection[row * 4 + 1] * mm[1 * 4 + col] +
+            projection[row * 4 + 2] * mm[2 * 4 + col] +
+            projection[row * 4 + 3] * mm[3 * 4 + col]
+        }
+      }
+      return mvp
+    }
+
+    return projection
   }
 
   /**
    * 切换表情
-   * 从模型文件中加载对应表情文件并播放
+   * 使用缓存的 modelJson，避免重复 fetch
    */
   async setExpression(expressionId: string): Promise<void> {
     if (!this.model || !this.expressionManager) {
@@ -439,10 +557,13 @@ class Cubism5Service {
     }
 
     try {
-      // 从 model3.json 中查找表情文件
-      const response = await fetch(this.modelPath)
-      const modelJson = (await response.json()) as Cubism3ModelJson
-      const expressionDef = modelJson.FileReferences.Expressions?.find(
+      // 使用缓存的 modelJson，避免每次都 fetch
+      if (!this.cachedModelJson) {
+        const response = await fetch(this.modelPath)
+        this.cachedModelJson = (await response.json()) as Cubism3ModelJson
+      }
+
+      const expressionDef = this.cachedModelJson.FileReferences.Expressions?.find(
         (e) => e.Name === expressionId
       )
 
@@ -473,7 +594,7 @@ class Cubism5Service {
 
   /**
    * 播放动作
-   * 从模型文件中加载对应动作文件并播放
+   * 使用缓存的 modelJson，避免重复 fetch
    */
   async playMotion(motionId: string): Promise<void> {
     if (!this.model || !this.motionManager) {
@@ -482,14 +603,16 @@ class Cubism5Service {
     }
 
     try {
-      // 从 model3.json 中查找动作文件
-      const response = await fetch(this.modelPath)
-      const modelJson = (await response.json()) as Cubism3ModelJson
+      // 使用缓存的 modelJson，避免每次都 fetch
+      if (!this.cachedModelJson) {
+        const response = await fetch(this.modelPath)
+        this.cachedModelJson = (await response.json()) as Cubism3ModelJson
+      }
 
       // 遍历所有动作组查找匹配的动作
       let motionPath: string | null = null
-      if (modelJson.FileReferences.Motions) {
-        for (const [, motionList] of Object.entries(modelJson.FileReferences.Motions)) {
+      if (this.cachedModelJson.FileReferences.Motions) {
+        for (const [, motionList] of Object.entries(this.cachedModelJson.FileReferences.Motions)) {
           for (const m of motionList) {
             const fileName = m.File.split('/').pop()?.replace('.motion3.json', '') ?? ''
             if (fileName === motionId) {
@@ -547,7 +670,6 @@ class Cubism5Service {
         const renderer = this.model.getRenderer()
         if (renderer) {
           renderer.release()
-          renderer.deleteRenderer()
         }
       } catch {
         // 忽略渲染器释放错误
@@ -586,10 +708,13 @@ class Cubism5Service {
     // 重置状态
     this.sdkLoaded = false
     this.framework = null
+    this.cachedModelJson = null
     this.expressions = []
     this.motions = []
     this.modelPath = ''
     this.lastUpdateTime = 0
+    this.contextLost = false
+    this._modelMatrix = null
     this.updateState('idle')
   }
 

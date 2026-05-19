@@ -1,7 +1,7 @@
 {
   "id": "live2d-5",
   "name": "Live2D Cubism 5",
-  "version": "1.2.0",
+  "version": "1.4.0",
   "description": "基于 Cubism 5 SDK 的 Live2D 模块，原生 WebGL 渲染，不依赖 pixi.js",
   "author": "小茜",
   "enabled": true,

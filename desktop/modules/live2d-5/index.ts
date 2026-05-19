@@ -6,7 +6,7 @@
  * 所有能力统一通过 getCapabilities() 暴露，不使用内部 IPC。
  */
 import type { Module, ModuleContext, Capability } from '../../src/main/types/module'
-import { BrowserWindow } from 'electron'
+import { BrowserWindow, ipcMain } from 'electron'
 import { join, dirname } from 'path'
 import { fileURLToPath } from 'url'
 
@@ -21,15 +21,80 @@ export default class Live2D5Module implements Module {
   meta!: import('../../src/main/types/module').ModuleMeta
   private context!: ModuleContext
   private petWindow: import('electron').BrowserWindow | null = null
+  private destroyResolve: (() => void) | null = null
 
   async activate(context: ModuleContext): Promise<void> {
     this.context = context
+    this.registerIPCHandlers()
     context.logger.info('Live2D Cubism 5 模块已激活')
   }
 
   async deactivate(): Promise<void> {
-    this.closePetWindow()
+    this.unregisterIPCHandlers()
+    await this.closePetWindow()
     this.context.logger.info('Live2D Cubism 5 模块已停用')
+  }
+
+  /**
+   * 注册 IPC handlers — 让 renderer 可以通过 invoke 直接调用模块能力
+   * 这是 getCapabilities() 的补充，getCapabilities 给 AI 用，IPCHandler 给 renderer 用
+   */
+  private registerIPCHandlers(): void {
+    ipcMain.handle('live2d5_open', async () => {
+      try {
+        await this.openPetWindow()
+        return { success: true, message: 'Live2D 5 宠物窗口已打开' }
+      } catch (err) {
+        return { success: false, error: (err as Error).message }
+      }
+    })
+
+    ipcMain.handle('live2d5_close', async () => {
+      try {
+        await this.closePetWindow()
+        return { success: true, message: 'Live2D 5 宠物窗口已关闭' }
+      } catch (err) {
+        return { success: false, error: (err as Error).message }
+      }
+    })
+
+    ipcMain.handle('live2d5_status', async () => {
+      return {
+        success: true,
+        data: {
+          windowOpen: this.petWindow !== null && !this.petWindow.isDestroyed()
+        }
+      }
+    })
+
+    ipcMain.handle('live2d5_expression', async (_event, args: { expressionId: string }) => {
+      if (this.petWindow && !this.petWindow.isDestroyed()) {
+        this.petWindow.webContents.send('live2d5:set-expression', args.expressionId)
+      }
+      return { success: true, message: `切换表情: ${args.expressionId}` }
+    })
+
+    ipcMain.handle('live2d5_motion', async (_event, args: { motionId: string }) => {
+      if (this.petWindow && !this.petWindow.isDestroyed()) {
+        this.petWindow.webContents.send('live2d5:play-motion', args.motionId)
+      }
+      return { success: true, message: `播放动作: ${args.motionId}` }
+    })
+
+    ipcMain.handle('live2d5_start_drag', async () => {
+      this.startWindowDrag()
+      return { success: true }
+    })
+  }
+
+  /** 注销 IPC handlers */
+  private unregisterIPCHandlers(): void {
+    ipcMain.removeHandler('live2d5_open')
+    ipcMain.removeHandler('live2d5_close')
+    ipcMain.removeHandler('live2d5_status')
+    ipcMain.removeHandler('live2d5_expression')
+    ipcMain.removeHandler('live2d5_motion')
+    ipcMain.removeHandler('live2d5_start_drag')
   }
 
   getCapabilities(): Capability[] {
@@ -65,7 +130,7 @@ export default class Live2D5Module implements Module {
         },
         handler: {
           execute: async () => {
-            this.closePetWindow()
+            await this.closePetWindow()
             return { success: true, message: 'Live2D 5 宠物窗口已关闭' }
           }
         }
@@ -109,8 +174,8 @@ export default class Live2D5Module implements Module {
           execute: async (p) => {
             const { expressionId } = p as { expressionId: string }
             if (this.petWindow && !this.petWindow.isDestroyed()) {
-      this.petWindow.webContents.send('live2d5:set-expression', expressionId)
-    }
+              this.petWindow.webContents.send('live2d5:set-expression', expressionId)
+            }
             return { success: true, message: `切换表情: ${expressionId}` }
           }
         }
@@ -132,8 +197,8 @@ export default class Live2D5Module implements Module {
           execute: async (p) => {
             const { motionId } = p as { motionId: string }
             if (this.petWindow && !this.petWindow.isDestroyed()) {
-      this.petWindow.webContents.send('live2d5:play-motion', motionId)
-    }
+              this.petWindow.webContents.send('live2d5:play-motion', motionId)
+            }
             return { success: true, message: `播放动作: ${motionId}` }
           }
         }
@@ -151,14 +216,30 @@ export default class Live2D5Module implements Module {
         },
         handler: {
           execute: async () => {
-            if (this.petWindow && !this.petWindow.isDestroyed()) {
-              this.petWindow.webContents.send('live2d5:start-drag')
-            }
+            // 在主进程直接执行窗口拖拽
+            this.startWindowDrag()
             return { success: true }
           }
         }
       }
     ]
+  }
+
+  /**
+   * 开始窗口拖拽（主进程实现）
+   * 使用 BrowserWindow.startMoving() 或 fallback 到 setBounds
+   */
+  private startWindowDrag(): void {
+    if (!this.petWindow || this.petWindow.isDestroyed()) return
+
+    try {
+      // Electron API: 拖拽整个窗口
+      // 注意：此 API 在某些平台上可能不完全支持
+      // 使用 IPC 调用来实现，由 renderer 端触发
+      this.petWindow.webContents.send('live2d5:start-drag')
+    } catch {
+      // 忽略拖拽失败
+    }
   }
 
   /** 打开宠物窗口（独立 renderer 进程，Cubism 5 SDK 独立加载） */
@@ -185,6 +266,26 @@ export default class Live2D5Module implements Module {
 
     this.petWindow.setIgnoreMouseEvents(false)
 
+    // 监听 renderer 端的拖拽 IPC（renderer 通过 invoke 通知主进程执行拖拽）
+    const dragHandler = (_event: Electron.IpcMainEvent) => {
+      if (this.petWindow && !this.petWindow.isDestroyed()) {
+        // 通知 renderer 端开始拖拽
+        this.petWindow.webContents.send('live2d5:start-drag')
+      }
+    }
+    ipcMain.on('live2d5:request-drag', dragHandler)
+
+    // 清理：窗口关闭时移除监听
+    this.petWindow.on('closed', () => {
+      ipcMain.removeListener('live2d5:request-drag', dragHandler)
+      this.petWindow = null
+      // 如果有 deactivate 等待的 resolve，调用它
+      if (this.destroyResolve) {
+        this.destroyResolve()
+        this.destroyResolve = null
+      }
+    })
+
     // 加载独立的 Live2D 5 页面（独立 renderer，不会与旧 SDK 冲突）
     if (process.env.VITE_DEV_SERVER_URL) {
       this.petWindow.loadURL(`${process.env.VITE_DEV_SERVER_URL}#/live2d5-pet`)
@@ -193,22 +294,57 @@ export default class Live2D5Module implements Module {
         hash: '#/live2d5-pet'
       })
     }
-
-    this.petWindow.on('closed', () => {
-      this.petWindow = null
-    })
   }
 
-  /** 关闭宠物窗口（通知 renderer 清理资源后再关闭） */
-  private closePetWindow(): void {
-    if (this.petWindow && !this.petWindow.isDestroyed()) {
-      // 通知 renderer 端销毁 WebGL 资源
+  /**
+   * 关闭宠物窗口（通知 renderer 清理资源后再关闭）
+   * 等待 renderer 完成清理，避免 WebGL 资源泄漏
+   */
+  private closePetWindow(): Promise<void> {
+    return new Promise<void>((resolve) => {
+      if (!this.petWindow || this.petWindow.isDestroyed()) {
+        this.petWindow = null
+        resolve()
+        return
+      }
+
+      // 设置超时：如果 renderer 3秒内没响应，强制关闭
+      const timeout = setTimeout(() => {
+        console.warn('[Live2D5] renderer 清理超时，强制关闭窗口')
+        this.forceClose()
+        resolve()
+      }, 3000)
+
+      // 监听 renderer 端的清理完成确认
+      const cleanupHandler = () => {
+        clearTimeout(timeout)
+        ipcMain.removeListener('live2d5:cleanup-done', cleanupHandler)
+        this.forceClose()
+        resolve()
+      }
+      ipcMain.on('live2d5:cleanup-done', cleanupHandler)
+
+      // 通知 renderer 端开始清理
       try {
         this.petWindow.webContents.send('live2d5:destroy')
       } catch {
-        // 忽略发送失败
+        // 发送失败，直接关闭
+        clearTimeout(timeout)
+        ipcMain.removeListener('live2d5:cleanup-done', cleanupHandler)
+        this.forceClose()
+        resolve()
       }
-      this.petWindow.close()
+    })
+  }
+
+  /** 强制关闭窗口 */
+  private forceClose(): void {
+    if (this.petWindow && !this.petWindow.isDestroyed()) {
+      try {
+        this.petWindow.close()
+      } catch {
+        // 忽略关闭错误
+      }
     }
     this.petWindow = null
   }

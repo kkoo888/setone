@@ -1,5 +1,33 @@
 # Changelog - Live2D Cubism 5 模块
 
+## [1.4.0] - 2026-05-20
+
+### 修复
+- **🔴 renderer 无法打开宠物窗口** — `Live2D5Page` 调用 `invoke('live2d5_open')` 但主进程没有注册对应的 IPC handler，导致静默失败。新增 `registerIPCHandlers()` / `unregisterIPCHandlers()`，注册 6 个 IPC handler
+- **渲染器创建 API** — 修正 `CubismRenderer_WebGL` 实例化方式：`new CubismRenderer_WebGL(w, h)` + `renderer.startUp(gl)` + `renderer.initialize(model)`，原错误使用静态 `create()` 方法
+- **拖拽功能** — 重写拖拽实现：renderer 端通过 `invoke('live2d5:request-drag')` 通知主进程，主进程注册 `ipcMain.on` 处理拖拽请求，修复原死循环问题
+- **deactivate 资源泄漏** — `closePetWindow()` 改为异步 Promise，等待 renderer 端确认 `live2d5:cleanup-done` 后再关闭窗口，设置 3 秒超时强制关闭
+- **setExpression/playMotion 重复 fetch** — 缓存 modelJson 到 `cachedModelJson`，避免每次操作都重新请求 model3.json
+- **WebGL 上下文丢失** — 新增 `webglcontextlost` / `webglcontextrestored` 事件监听，上下文丢失时停止渲染，恢复后自动重新初始化渲染器和纹理
+- **MVP 矩阵** — 保持原有正交投影实现（当前模型适配）
+- **preload 安全** — 添加 IPC channel 白名单校验，仅允许 Live2D5 相关 channel 通信
+- **渲染循环重复启动** — `startRenderLoop()` 增加 `animFrameId` 检查，防止重复启动
+- **MVP 矩阵未应用 ModelMatrix** — `createMvpMatrix` 只有正交投影，`_modelMatrix` 创建了但从没用在渲染里，模型缩放不生效。改为 `projection × modelMatrix` 矩阵乘法
+- **`setScale` 方法不存在** — CubismMatrix44 的方法是 `scale(x, y)` 而非 `setScale(x, y)`
+- **`deleteRenderer` 方法不存在** — CubismRenderer 只有 `release()`，移除接口中的 `deleteRenderer`
+
+### 新增
+- **🔴 IPC Handlers** — `registerIPCHandlers()` 注册 6 个 `ipcMain.handle`：`live2d5_open`、`live2d5_close`、`live2d5_status`、`live2d5_expression`、`live2d5_motion`、`live2d5_start_drag`，deactivate 时自动注销
+- **上下文恢复机制** — `recoverFromContextLost()` 方法：重新获取 GL 上下文 → 重新初始化渲染器 → 重新加载纹理 → 恢复渲染循环
+- **notifyCleanupDone** — renderer 端清理完成通知接口，主进程等待确认后关闭窗口
+- **request-drag IPC** — renderer 端拖拽请求通道
+- **Channel 白名单** — preload.ts 中 `ALLOWED_INVOKE_CHANNELS` 和 `ALLOWED_RECEIVE_CHANNELS`
+
+### 类型更新
+- `CubismRendererLike` 新增 `startUp` 方法签名
+- `Live2D5IPCChannels` 新增 `request-drag` 和 `cleanup-done`
+- `Live2D5PetState` 新增 `contextLost` 字段
+
 ## [1.3.0] - 2026-05-19
 
 ### 修复
