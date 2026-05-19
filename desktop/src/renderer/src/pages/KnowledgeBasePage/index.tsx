@@ -28,7 +28,8 @@ interface DownloadProgress {
 }
 
 /** 去掉类别名称中的编号前缀（如"一、""二、""1.""(1)"等） */
-function stripCategoryPrefix(name: string): string {
+function stripCategoryPrefix(name?: string): string {
+  if (!name) return ''
   return name
     .replace(/^[一二三四五六七八九十]+[、.．]\s*/u, '')
     .replace(/^\d+[、.．]\s*/, '')
@@ -49,7 +50,8 @@ const CATEGORY_COLORS: Record<string, { bg: string; text: string }> = {
 }
 
 /** 标准化分类名：去编号 + 聚合同义词 */
-function normalizeCategory(raw: string): string {
+function normalizeCategory(raw?: string): string {
+  if (!raw) return '通用语料'
   const stripped = stripCategoryPrefix(raw)
   // 聚合同义/近义分类
   const synonyms: Record<string, string[]> = {
@@ -517,7 +519,7 @@ export function KnowledgeBasePage() {
                         {ds.downloads && (
                           <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)' }}>⬇️ {ds.downloads}</span>
                         )}
-                        {ds.tags.slice(0, 3).map(tag => (
+                        {(ds.tags ?? []).slice(0, 3).map(tag => (
                           <span key={tag} style={{ fontSize: 10, padding: '1px 6px', borderRadius: 3, background: 'var(--color-bg-tertiary)', color: 'var(--color-text-tertiary)' }}>
                             {tag}
                           </span>
@@ -686,9 +688,9 @@ export function KnowledgeBasePage() {
               </div>
 
               {/* 标签 */}
-              {showDownloadConfirm.tags.length > 0 && (
+              {(showDownloadConfirm.tags ?? []).length > 0 && (
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 16 }}>
-                  {showDownloadConfirm.tags.map(tag => (
+                  {(showDownloadConfirm.tags ?? []).map(tag => (
                     <span key={tag} style={{ fontSize: 11, padding: '2px 8px', borderRadius: 4, background: 'var(--color-bg-tertiary)', color: 'var(--color-text-tertiary)' }}>
                       {tag}
                     </span>
