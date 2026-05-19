@@ -22,7 +22,10 @@ import type {
 const DEFAULT_MODEL_SCALE = 0.15
 
 /** Live2D Core SDK 路径（Vite public 目录，dev/打包通用） */
-const CUBISM_CORE_SDK_PATH = '/lib/live2dcubismcore.min.js'
+const CUBISM_CORE_SDK_PATH = '/lib/live2dcubismcore5.min.js'
+
+/** Cubism 5 Shader 路径（public 目录下的 Framework/Shaders/WebGL/） */
+const CUBISM5_SHADER_PATH = '/Framework/Shaders/WebGL/'
 
 // ============ Cubism 5 Core 全局声明 ============
 
@@ -424,6 +427,20 @@ class Cubism5Service {
     // 初始化渲染器（关联模型）
     renderer.initialize(this.model.getModel())
     renderer.isPremultipliedAlpha = true
+
+    // 设置 shader 路径（打包后 shader 在 public/Framework/Shaders/WebGL/）
+    try {
+      const shaderModule = await import('../lib/rendering/cubismshader_webgl')
+      const CubismShaderManager = shaderModule.CubismShaderManager_WebGL
+      if (CubismShaderManager) {
+        const shaderInstance = CubismShaderManager.getInstance().getShader(this.gl)
+        if (shaderInstance?.setShaderPath) {
+          shaderInstance.setShaderPath(CUBISM5_SHADER_PATH)
+        }
+      }
+    } catch (e) {
+      console.warn('[Cubism5] 设置 shader 路径失败:', e)
+    }
 
     this.model.setRenderer(renderer)
   }

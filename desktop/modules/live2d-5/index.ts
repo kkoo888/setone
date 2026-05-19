@@ -290,7 +290,9 @@ export default class Live2D5Module implements Module {
     if (process.env.VITE_DEV_SERVER_URL) {
       this.petWindow.loadURL(`${process.env.VITE_DEV_SERVER_URL}#/live2d5-pet`)
     } else {
-      this.petWindow.loadFile(join(__dirname, '../renderer/index.html'), {
+      // renderer 由 electron-vite 构建到 dist/renderer/，不在 modules-dist/
+      const rendererPath = join(__dirname, '../../dist/renderer/index.html')
+      this.petWindow.loadFile(rendererPath, {
         hash: '#/live2d5-pet'
       })
     }

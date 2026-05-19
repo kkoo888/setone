@@ -59,7 +59,8 @@ const Live2D5PetPage: React.FC = () => {
         await service.loadModel(
           {
             name: 'Hiyori',
-            modelPath: new URL('/live2d/Hiyori/Hiyori.model3.json', window.location.origin).href,
+            // 用 window.location.href 作为 base，兼容 file:// 协议（打包后）
+            modelPath: new URL('/live2d/Hiyori/Hiyori.model3.json', window.location.href).href,
             scale: 0.15,
           },
           containerRef.current
