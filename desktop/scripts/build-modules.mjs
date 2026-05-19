@@ -1,7 +1,7 @@
 /**
  * 模块编译脚本（轻量版）
  * 使用 esbuild 将 TypeScript 转译为 JavaScript（不打包依赖，节省磁盘）
- * 输出到 modules-dist/<module-id>/index.js + module.json
+ * 输出到 modules-dist/<module-id>/index.js + module.json + 非TS资源
  *
  * 用法: node scripts/build-modules.mjs
  */
@@ -15,6 +15,9 @@ const OUT_DIR = join(ROOT, 'modules-dist')
 
 /** 需要排除的目录 */
 const SKIP_DIRS = ['node_modules', 'dist', 'dist-packaged', '.git']
+
+/** 需要排除的非资源文件（已由 TS 编译处理，或不需要打包） */
+const SKIP_EXTENSIONS = ['.ts', '.tsx']
 
 /**
  * 递归获取目录下所有 .ts 文件（排除 .d.ts 和测试文件）
@@ -36,6 +39,37 @@ function getAllTsFiles(dir) {
     }
   }
   return files
+}
+
+/**
+ * 递归复制非 TS 资源文件（shader、min.js、配置文件等）
+ * 保留目录结构，跳过 TS/TSX 源码和排除目录
+ * @param {string} srcDir - 源目录
+ * @param {string} dstDir - 目标目录
+ */
+function copyNonTsAssets(srcDir, dstDir) {
+  const entries = readdirSync(srcDir, { withFileTypes: true })
+  for (const entry of entries) {
+    const srcPath = join(srcDir, entry.name)
+    const dstPath = join(dstDir, entry.name)
+
+    if (entry.isDirectory()) {
+      if (SKIP_DIRS.includes(entry.name)) continue
+      if (!existsSync(dstPath)) mkdirSync(dstPath, { recursive: true })
+      copyNonTsAssets(srcPath, dstPath)
+    } else if (entry.isFile()) {
+      const ext = extname(entry.name).toLowerCase()
+      // 跳过 TS/TSX 源码（已由 esbuild 编译）、.d.ts 声明文件、测试文件
+      if (SKIP_EXTENSIONS.includes(ext)) continue
+      if (entry.name.endsWith('.d.ts')) continue
+      if (entry.name.includes('.test.')) continue
+      // 跳过 module.json（已在编译步骤单独复制）
+      if (entry.name === 'module.json') continue
+
+      if (!existsSync(dstDir)) mkdirSync(dstDir, { recursive: true })
+      cpSync(srcPath, dstPath)
+    }
+  }
 }
 
 /**
@@ -112,6 +146,9 @@ function buildModule(moduleId) {
     if (existsSync(moduleJsonSrc)) {
       cpSync(moduleJsonSrc, moduleJsonDst)
     }
+
+    // 复制非 TS 资源（shader、min.js、配置文件等）
+    copyNonTsAssets(moduleDir, outDir)
 
     // 后处理：给 ESM 相对 import 补 .js 扩展名
     fixEsmImportExtensions(outDir)
