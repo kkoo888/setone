@@ -66,9 +66,9 @@ export function QuickPreviewPage() {
             {isImage ? (
               <img src={`file://${preview.path}`} alt={preview.path} />
             ) : isCode || isText ? (
-              <pre>><code>{preview.content}</code></pre>
+              <pre><code>{preview.content}</code></pre>
             ) : (
-              <pre>>{preview.content}</pre>
+              <pre>{preview.content}</pre>
             )}
           </div>
         </div>
