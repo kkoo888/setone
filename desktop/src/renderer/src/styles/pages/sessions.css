@@ -130,7 +130,7 @@
 
 .session-empty::before {
   content: '💬';
-  font-size: 48px;
+  font-size: var(--font-size-3xl);
   opacity: 0.4;
 }
 

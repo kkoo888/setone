@@ -394,7 +394,7 @@
   align-items: center;
   justify-content: center;
   background: #F0EEFF;
-  font-size: 28px;
+  font-size: var(--font-size-2xl);
   flex-shrink: 0;
 }
 
@@ -619,7 +619,7 @@
 }
 
 .modules-empty-icon {
-  font-size: 48px;
+  font-size: var(--font-size-3xl);
   opacity: 0.5;
 }
 

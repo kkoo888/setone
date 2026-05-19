@@ -167,7 +167,7 @@ export default function SkillChainPanel({ onClose }: SkillChainPanelProps) {
 
   return (
     <div className='skill-config-overlay' onClick={handleOverlayClick} role='dialog' aria-modal='true' aria-label='技能组合面板'>
-      <div className='skill-config-panel' style={{ width: '560px' }}>
+      <div className='skill-config-panel chain-panel'>
         {/* 头部 */}
         <div className='skill-config-header'>
           <div className='skill-config-header-left'>
@@ -181,13 +181,12 @@ export default function SkillChainPanel({ onClose }: SkillChainPanelProps) {
               </span>
             </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div className='chain-header-actions'>
             {view !== 'list' && (
               <button
-                className='skill-config-close'
+                className='skill-config-close chain-back-btn'
                 onClick={() => { setView('list'); setExecResult(null) }}
                 aria-label='返回列表'
-                style={{ fontSize: '14px', width: '32px', height: '32px' }}
               >
                 ←
               </button>
@@ -204,9 +203,8 @@ export default function SkillChainPanel({ onClose }: SkillChainPanelProps) {
           {view === 'list' && (
             <>
               <button
-                className='skill-config-btn skill-config-btn--save'
+                className='skill-config-btn skill-config-btn--save chain-create-btn'
                 onClick={() => setView('create')}
-                style={{ width: '100%', marginBottom: '16px' }}
               >
                 + 新建工作流
               </button>
@@ -217,22 +215,21 @@ export default function SkillChainPanel({ onClose }: SkillChainPanelProps) {
                   <span>暂无工作流，点击上方按钮创建</span>
                 </div>
               ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div className='chain-step-list'>
                   {workflows.map((wf) => (
                     <div
                       key={wf.id}
-                      className='skill-config-field'
-                      style={{ cursor: 'pointer', padding: '12px' }}
+                      className='skill-config-field chain-wf-item'
                       onClick={() => { setSelectedWorkflow(wf); setView('detail') }}
                     >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div className='chain-wf-row'>
                         <div>
-                          <div style={{ fontWeight: 600, fontSize: '14px' }}>{wf.name}</div>
-                          <div style={{ fontSize: '12px', color: 'var(--color-text-secondary, #888)', marginTop: '4px' }}>
+                          <div className='chain-wf-name'>{wf.name}</div>
+                          <div className='chain-wf-meta'>
                             {wf.steps.length} 个步骤 · {formatTime(wf.createdAt)}
                           </div>
                         </div>
-                        <span style={{ fontSize: '18px' }}>→</span>
+                        <span className='chain-wf-arrow'>→</span>
                       </div>
                     </div>
                   ))}
@@ -243,7 +240,7 @@ export default function SkillChainPanel({ onClose }: SkillChainPanelProps) {
 
           {/* 创建视图 */}
           {view === 'create' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div className='chain-section' style={{ gap: 'var(--spacing-md)' }}>
               <div className='skill-config-field'>
                 <label className='skill-config-field-label'>工作流名称</label>
                 <input
@@ -268,83 +265,50 @@ export default function SkillChainPanel({ onClose }: SkillChainPanelProps) {
 
               <div className='skill-config-field'>
                 <label className='skill-config-field-label'>执行步骤</label>
-                <div style={{ fontSize: '12px', color: 'var(--color-text-secondary, #888)', marginBottom: '8px' }}>
+                <div className='chain-steps-hint'>
                   按顺序执行，每步输出作为下一步输入
                 </div>
 
                 {wfSteps.length === 0 ? (
-                  <div style={{ padding: '16px', textAlign: 'center', color: 'var(--color-text-secondary, #888)', fontSize: '13px' }}>
+                  <div className='chain-steps-empty'>
                     暂无步骤，点击下方添加
                   </div>
                 ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <div className='chain-step-list'>
                     {wfSteps.map((step, index) => (
-                      <div
-                        key={index}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px',
-                          padding: '8px 10px',
-                          background: 'var(--color-bg-secondary, #f5f5f5)',
-                          borderRadius: '8px',
-                          fontSize: '13px'
-                        }}
-                      >
-                        <span style={{ color: 'var(--color-text-secondary, #888)', fontSize: '12px', minWidth: '20px' }}>
+                      <div key={index} className='chain-step-row'>
+                        <span className='chain-step-num'>
                           {index + 1}.
                         </span>
-                        <span style={{ fontSize: '16px' }}>{getSkillIcon(step.skillId)}</span>
+                        <span className='chain-step-icon'>{getSkillIcon(step.skillId)}</span>
                         <select
-                          className='skill-config-select'
+                          className='skill-config-select chain-step-select'
                           value={step.skillId}
                           onChange={(e) => updateStepSkill(index, e.target.value)}
-                          style={{ flex: 1, fontSize: '13px' }}
                         >
                           {activeSkills.map((s) => (
                             <option key={s.id} value={s.id}>{s.name}</option>
                           ))}
                         </select>
                         <button
+                          className='chain-step-btn'
                           onClick={() => moveStepUp(index)}
                           disabled={index === 0}
-                          style={{
-                            background: 'none',
-                            border: 'none',
-                            cursor: index === 0 ? 'default' : 'pointer',
-                            opacity: index === 0 ? 0.3 : 1,
-                            fontSize: '14px',
-                            padding: '2px 4px'
-                          }}
                           title='上移'
                         >
                           ↑
                         </button>
                         <button
+                          className='chain-step-btn'
                           onClick={() => moveStepDown(index)}
                           disabled={index === wfSteps.length - 1}
-                          style={{
-                            background: 'none',
-                            border: 'none',
-                            cursor: index === wfSteps.length - 1 ? 'default' : 'pointer',
-                            opacity: index === wfSteps.length - 1 ? 0.3 : 1,
-                            fontSize: '14px',
-                            padding: '2px 4px'
-                          }}
                           title='下移'
                         >
                           ↓
                         </button>
                         <button
+                          className='chain-step-btn danger'
                           onClick={() => removeStep(index)}
-                          style={{
-                            background: 'none',
-                            border: 'none',
-                            cursor: 'pointer',
-                            fontSize: '14px',
-                            padding: '2px 4px',
-                            color: '#e74c3c'
-                          }}
                           title='移除'
                         >
                           ✕
@@ -355,24 +319,14 @@ export default function SkillChainPanel({ onClose }: SkillChainPanelProps) {
                 )}
 
                 <button
+                  className='chain-add-step'
                   onClick={addStep}
                   disabled={activeSkills.length === 0}
-                  style={{
-                    marginTop: '8px',
-                    padding: '8px 16px',
-                    background: 'var(--color-bg-secondary, #f0f0f0)',
-                    border: '1px dashed var(--color-border, #ddd)',
-                    borderRadius: '8px',
-                    cursor: activeSkills.length > 0 ? 'pointer' : 'not-allowed',
-                    fontSize: '13px',
-                    width: '100%',
-                    opacity: activeSkills.length > 0 ? 1 : 0.5
-                  }}
                 >
                   + 添加步骤
                 </button>
                 {activeSkills.length === 0 && (
-                  <div style={{ fontSize: '12px', color: '#e74c3c', marginTop: '4px' }}>
+                  <div className='chain-add-error'>
                     没有已激活的技能，请先激活至少一个技能
                   </div>
                 )}
@@ -382,11 +336,11 @@ export default function SkillChainPanel({ onClose }: SkillChainPanelProps) {
 
           {/* 详情视图 */}
           {view === 'detail' && selectedWorkflow && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div className='chain-section' style={{ gap: 'var(--spacing-md)' }}>
               {selectedWorkflow.description && (
                 <div className='skill-config-field'>
                   <label className='skill-config-field-label'>描述</label>
-                  <div style={{ fontSize: '13px', color: 'var(--color-text-secondary, #888)' }}>
+                  <div className='chain-detail-desc'>
                     {selectedWorkflow.description}
                   </div>
                 </div>
@@ -394,37 +348,16 @@ export default function SkillChainPanel({ onClose }: SkillChainPanelProps) {
 
               <div className='skill-config-field'>
                 <label className='skill-config-field-label'>执行步骤</label>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <div className='chain-step-list'>
                   {selectedWorkflow.steps.map((step, index) => (
-                    <div
-                      key={index}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '10px',
-                        padding: '10px 12px',
-                        background: 'var(--color-bg-secondary, #f5f5f5)',
-                        borderRadius: '8px'
-                      }}
-                    >
-                      <span style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        width: '24px',
-                        height: '24px',
-                        borderRadius: '50%',
-                        background: 'var(--color-primary, #4a90d9)',
-                        color: '#fff',
-                        fontSize: '12px',
-                        fontWeight: 600
-                      }}>
+                    <div key={index} className='chain-detail-step'>
+                      <span className='chain-detail-badge'>
                         {index + 1}
                       </span>
-                      <span style={{ fontSize: '16px' }}>{getSkillIcon(step.skillId)}</span>
-                      <span style={{ fontSize: '13px', fontWeight: 500 }}>{getSkillName(step.skillId)}</span>
+                      <span className='chain-step-icon'>{getSkillIcon(step.skillId)}</span>
+                      <span className='chain-detail-name'>{getSkillName(step.skillId)}</span>
                       {step.condition && (
-                        <span style={{ fontSize: '11px', color: 'var(--color-text-secondary, #888)', marginLeft: 'auto' }}>
+                        <span className='chain-detail-condition'>
                           条件: {step.condition}
                         </span>
                       )}
@@ -437,23 +370,10 @@ export default function SkillChainPanel({ onClose }: SkillChainPanelProps) {
               {execResult && (
                 <div className='skill-config-field'>
                   <label className='skill-config-field-label'>执行结果</label>
-                  <div style={{
-                    padding: '12px',
-                    borderRadius: '8px',
-                    background: execResult.success ? 'rgba(46, 204, 113, 0.1)' : 'rgba(231, 76, 60, 0.1)',
-                    border: `1px solid ${execResult.success ? 'rgba(46, 204, 113, 0.3)' : 'rgba(231, 76, 60, 0.3)'}`,
-                    fontSize: '13px'
-                  }}>
+                  <div className={`chain-exec-result ${execResult.success ? 'success' : 'error'}`}>
                     {execResult.success ? '✅ 执行成功' : '❌ 执行失败'}
                     {execResult.results.length > 0 && (
-                      <pre style={{
-                        marginTop: '8px',
-                        fontSize: '12px',
-                        whiteSpace: 'pre-wrap',
-                        wordBreak: 'break-all',
-                        maxHeight: '200px',
-                        overflow: 'auto'
-                      }}>
+                      <pre className='chain-exec-json'>
                         {JSON.stringify(execResult.results, null, 2)}
                       </pre>
                     )}
@@ -461,7 +381,7 @@ export default function SkillChainPanel({ onClose }: SkillChainPanelProps) {
                 </div>
               )}
 
-              <div style={{ fontSize: '12px', color: 'var(--color-text-secondary, #888)' }}>
+              <div className='chain-created-at'>
                 创建于 {formatTime(selectedWorkflow.createdAt)}
               </div>
             </div>
@@ -490,7 +410,7 @@ export default function SkillChainPanel({ onClose }: SkillChainPanelProps) {
         {view === 'detail' && selectedWorkflow && (
           <div className='skill-config-footer'>
             <button
-              className='skill-config-btn skill-config-btn--cancel'
+              className='skill-config-btn skill-config-btn--cancel chain-delete-btn'
               onClick={async () => {
                 const ok = await useSkillStore.getState().deleteWorkflow(selectedWorkflow.id)
                 if (ok) {
@@ -498,7 +418,6 @@ export default function SkillChainPanel({ onClose }: SkillChainPanelProps) {
                   setSelectedWorkflow(null)
                 }
               }}
-              style={{ color: '#e74c3c' }}
             >
               删除
             </button>

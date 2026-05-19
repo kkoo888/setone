@@ -151,7 +151,7 @@
 }
 
 .changes-empty-icon {
-  font-size: 28px;
+  font-size: var(--font-size-2xl);
   margin-bottom: 8px;
   opacity: 0.5;
 }
@@ -494,7 +494,7 @@
 }
 
 .file-preview-too-large-icon {
-  font-size: 28px;
+  font-size: var(--font-size-2xl);
   margin-bottom: 8px;
   opacity: 0.5;
 }

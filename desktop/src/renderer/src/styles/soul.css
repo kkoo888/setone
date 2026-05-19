@@ -238,7 +238,7 @@
 }
 
 .soul-preview-avatar {
-  font-size: 48px;
+  font-size: var(--font-size-3xl);
   width: 72px;
   height: 72px;
   display: flex;

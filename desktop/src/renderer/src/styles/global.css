@@ -494,7 +494,7 @@ body { font-family: var(--font-family); font-size: var(--font-size-md); color: v
 }
 
 .error-boundary { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: var(--spacing-md); padding: var(--spacing-xl); text-align: center; }
-.error-boundary-icon { font-size: 48px; }
+.error-boundary-icon { font-size: var(--font-size-3xl); }
 .error-boundary-title { font-size: var(--font-size-xl); color: var(--color-text-primary); }
 .error-boundary-message { color: var(--color-text-secondary); max-width: 400px; }
 .error-boundary-actions { display: flex; gap: var(--spacing-sm); }

@@ -107,7 +107,7 @@ function Live2DPageContent() {
                 </span>
               </div>
               {isError && state.errorMessage && (
-                <p className="live2d-error-detail" style={{ color: '#ef4444', fontSize: 12, marginTop: 8 }}>
+                <p className="live2d-error-detail">
                   ❌ {state.errorMessage}
                 </p>
               )}
@@ -145,8 +145,7 @@ function Live2DPageContent() {
                 <li>重启应用后重试</li>
               </ol>
               <button
-                className="btn btn-primary"
-                style={{ marginTop: 12 }}
+                className="btn btn-primary live2d-section"
                 onClick={handleRetry}
               >
                 🔄 重新加载
@@ -220,16 +219,11 @@ function Live2DPageContent() {
 
               {/* 可用表情列表 */}
               {petState.expressions.length > 0 && (
-                <div style={{ marginTop: 12 }}>
-                  <span className="live2d-info-label" style={{ display: 'block', marginBottom: 6 }}>😊 可用表情</span>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                <div className="live2d-section">
+                  <span className="live2d-info-label live2d-label-block">😊 可用表情</span>
+                  <div className="live2d-expression-grid">
                     {petState.expressions.map((exp) => (
-                      <span key={exp} style={{
-                        padding: '2px 8px', borderRadius: 4, fontSize: 11,
-                        background: petState.currentExpression === exp ? 'rgba(99,102,241,0.15)' : 'var(--color-bg-tertiary)',
-                        color: petState.currentExpression === exp ? 'var(--color-accent)' : 'var(--color-text-secondary)',
-                        border: '1px solid var(--color-border)',
-                      }}>{exp || '默认'}</span>
+                      <span key={exp} className={`live2d-expression-tag ${petState.currentExpression === exp ? 'active' : ''}`}>{exp || '默认'}</span>
                     ))}
                   </div>
                 </div>
@@ -237,11 +231,11 @@ function Live2DPageContent() {
 
               {/* 可用动作列表 */}
               {petState.motions.length > 0 && (
-                <div style={{ marginTop: 12 }}>
-                  <span className="live2d-info-label" style={{ display: 'block', marginBottom: 6 }}>🏃 可用动作</span>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <div className="live2d-section">
+                  <span className="live2d-info-label live2d-label-block">🏃 可用动作</span>
+                  <div className="live2d-motion-list">
                     {petState.motions.map((m) => (
-                      <div key={m.group} style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>
+                      <div key={m.group} className="live2d-motion-item">
                         <strong>{m.group}</strong>: {m.names.join(', ')}
                       </div>
                     ))}

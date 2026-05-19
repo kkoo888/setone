@@ -276,7 +276,7 @@
 
 .kb-empty::before {
   content: '📚';
-  font-size: 48px;
+  font-size: var(--font-size-3xl);
   opacity: 0.4;
 }
 
@@ -336,4 +336,123 @@
   word-break: break-all;
   margin: 0;
   max-width: 100%;
+}
+
+/* ─── KnowledgeBasePage 通用工具 ─── */
+.kb-toolbar {
+  display: flex;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md) var(--spacing-md);
+  border-top: 1px solid var(--color-border);
+}
+
+.kb-toolbar-compact {
+  display: flex;
+  gap: var(--spacing-xs-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+.kb-search-expand {
+  max-width: none;
+  flex: 1;
+}
+
+.kb-empty-state {
+  text-align: center;
+  padding: 60px 0;
+  color: var(--color-text-tertiary);
+}
+
+.kb-empty-icon {
+  font-size: var(--font-size-3xl);
+  opacity: 0.3;
+  margin-bottom: var(--spacing-md);
+}
+
+.kb-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: var(--spacing-md);
+}
+
+.kb-card-title {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-xs);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kb-card-desc {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.kb-card-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs-sm);
+  flex-wrap: wrap;
+}
+
+.kb-badge {
+  font-size: var(--font-size-2xs);
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-tertiary);
+}
+
+.kb-badge.accent {
+  color: var(--color-accent);
+  background: rgba(99, 102, 241, 0.1);
+}
+
+.kb-detail-title {
+  font-size: var(--font-size-md-lg);
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-md);
+}
+
+.kb-detail-text {
+  font-size: var(--font-size-sm);
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+.kb-progress-bar {
+  height: 8px;
+  background: var(--color-bg-tertiary);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.kb-progress-fill {
+  height: 100%;
+  border-radius: var(--radius-sm);
+  background: var(--color-accent);
+  transition: width 0.3s ease;
+}
+
+.kb-progress-text {
+  text-align: right;
+  font-size: var(--font-size-2xs);
+  color: var(--color-accent);
+  font-weight: 600;
+  margin-top: var(--spacing-xs);
+}
+
+.kb-link {
+  font-size: var(--font-size-xs);
+  color: var(--color-accent);
+  text-decoration: none;
 }

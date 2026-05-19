@@ -389,7 +389,7 @@ export function KnowledgeBasePage() {
 
       {/* 消息提示 */}
       {message && (
-        <div style={{ padding: '0 24px', animation: 'scSlideDown 0.2s ease' }}>
+        <div style={{ padding: '0 12px', animation: 'scSlideDown 0.2s ease' }}>
           <div style={{ padding: '10px 16px', borderRadius: 8, fontSize: 13, background: message.includes('失败') || message.includes('错误') || message.includes('❌') ? 'rgba(239,68,68,0.1)' : 'rgba(34,197,94,0.1)', color: message.includes('失败') || message.includes('错误') || message.includes('❌') ? 'var(--color-error)' : 'var(--color-success)', border: `1px solid ${message.includes('失败') || message.includes('错误') || message.includes('❌') ? 'rgba(239,68,68,0.2)' : 'rgba(34,197,94,0.2)'}` }}>
             {message}
           </div>
@@ -400,7 +400,7 @@ export function KnowledgeBasePage() {
       {activeTab === 'datasets' && (
         <>
           {/* 远程导入栏 */}
-          <div style={{ padding: '12px 24px', display: 'flex', gap: 8, borderTop: '1px solid var(--color-border)' }}>
+          <div style={{ padding: '12px 12px', display: 'flex', gap: 8 }}>
             <input
               value={remoteUrl}
               onChange={e => setRemoteUrl(e.target.value)}
@@ -415,7 +415,7 @@ export function KnowledgeBasePage() {
           </div>
 
           {/* 分类筛选 */}
-          <div style={{ padding: '8px 24px', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+          <div style={{ padding: '8px 12px', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             {datasetCategories.map(cat => (
               <button
                 key={cat}
@@ -429,7 +429,7 @@ export function KnowledgeBasePage() {
           </div>
 
           {/* 数据集列表 */}
-          <div style={{ padding: '0 24px 24px', overflow: 'auto', flex: 1 }}>
+          <div style={{ padding: '0 12px 12px', overflow: 'auto', flex: 1 }}>
             {datasets.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--color-text-tertiary)' }}>
                 <div style={{ fontSize: 48, opacity: 0.3, marginBottom: 12 }}>🌐</div>
@@ -510,7 +510,7 @@ export function KnowledgeBasePage() {
       {/* ══════════ 文档管理 ══════════ */}
       {activeTab === 'docs' && (
         <>
-          <div style={{ padding: '12px 24px', display: 'flex', gap: 8, borderTop: '1px solid var(--color-border)' }}>
+          <div style={{ padding: '12px 12px', display: 'flex', gap: 8 }}>
             <input value={importPath} onChange={e => setImportPath(e.target.value)} placeholder="输入文件或目录路径，或点击浏览选择..." className="mod-search" style={{ maxWidth: 'none', flex: 1 }} />
             <button onClick={() => setShowImportDialog(true)} className="btn">📂 浏览</button>
             <button onClick={handleImport} disabled={loading || !importPath.trim()} className="btn btn-primary">
@@ -535,7 +535,7 @@ export function KnowledgeBasePage() {
       {/* ══════════ 语义搜索 ══════════ */}
       {activeTab === 'search' && (
         <>
-          <div style={{ padding: '12px 24px', display: 'flex', gap: 8, borderTop: '1px solid var(--color-border)' }}>
+          <div style={{ padding: '12px 12px', display: 'flex', gap: 8 }}>
             <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSearch()} placeholder="输入搜索内容..." className="mod-search" style={{ maxWidth: 'none', flex: 1 }} />
             <button onClick={handleSearch} disabled={loading} className="btn btn-primary">
               {loading ? '搜索中...' : '🔍 搜索'}
@@ -559,14 +559,14 @@ export function KnowledgeBasePage() {
       {/* ══════════ RAG 问答 ══════════ */}
       {activeTab === 'ask' && (
         <>
-          <div style={{ padding: '12px 24px', display: 'flex', gap: 8, borderTop: '1px solid var(--color-border)' }}>
+          <div style={{ padding: '12px 12px', display: 'flex', gap: 8 }}>
             <input value={askQuestion} onChange={e => setAskQuestion(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleAsk()} placeholder="输入问题..." className="mod-search" style={{ maxWidth: 'none', flex: 1 }} />
             <button onClick={handleAsk} disabled={loading} className="btn btn-primary">
               {loading ? '思考中...' : '💡 提问'}
             </button>
           </div>
           {askResult && (
-            <div style={{ padding: '0 24px 24px' }}>
+            <div style={{ padding: '0 12px 12px' }}>
               <div style={{ padding: 16, background: 'var(--color-bg-primary)', border: '1px solid var(--color-border)', borderRadius: 8, marginBottom: 12 }}>
                 <div style={{ fontSize: 14, lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{askResult.answer}</div>
               </div>

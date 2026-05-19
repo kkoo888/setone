@@ -16,7 +16,7 @@
 
 /* ─── 降级组件 ─── */
 .live2d-fallback { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: var(--spacing-xl); gap: var(--spacing-md); text-align: center; color: var(--color-text-secondary); }
-.fallback-icon { font-size: 48px; }
+.fallback-icon { font-size: var(--font-size-3xl); }
 .fallback-message { font-size: var(--font-size-md); }
 .fallback-error { font-size: var(--font-size-xs); color: var(--color-error); max-width: 300px; word-break: break-word; }
 .fallback-retry-btn { padding: 6px 16px; border: 1px solid var(--color-accent); border-radius: var(--radius-md); background: transparent; color: var(--color-accent); cursor: pointer; font-size: var(--font-size-sm); transition: all 0.15s; }
@@ -334,6 +334,210 @@
   font-size: var(--font-size-sm);
   font-weight: 500;
   color: var(--color-text-primary);
+}
+
+/* ─── Live2D 页面补充样式 ─── */
+.live2d-error-detail {
+  color: var(--color-error);
+  font-size: var(--font-size-xs);
+  margin-top: var(--spacing-sm);
+}
+
+.live2d-section {
+  margin-top: var(--spacing-md);
+}
+
+.live2d-label-block {
+  display: block;
+  margin-bottom: var(--spacing-xs-sm);
+}
+
+.live2d-expression-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
+}
+
+.live2d-expression-tag {
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-2xs);
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border);
+}
+
+.live2d-expression-tag.active {
+  background: rgba(99, 102, 241, 0.15);
+  color: var(--color-accent);
+}
+
+.live2d-motion-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.live2d-motion-item {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+}
+
+/* ─── Live2DPetPage 桌面宠物面板 ─── */
+.pet-container {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: transparent;
+  cursor: grab;
+  user-select: none;
+  position: relative;
+}
+
+.pet-overlay-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-sm);
+  pointer-events: none;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.8);
+}
+
+.pet-loading-text {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: var(--font-size-sm);
+}
+
+.pet-error-text {
+  color: rgba(239, 68, 68, 0.8);
+  font-size: var(--font-size-xs);
+  text-align: center;
+  max-width: 250px;
+}
+
+.pet-retry-btn {
+  padding: 4px 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  font-size: var(--font-size-xs);
+  cursor: pointer;
+}
+
+.pet-context-menu {
+  position: fixed;
+  bottom: 60px;
+  right: 10px;
+  background: rgba(30, 30, 40, 0.95);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-md) var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  z-index: 100;
+  min-width: 180px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.pet-section-title {
+  font-size: var(--font-size-2xs);
+  color: rgba(255, 255, 255, 0.5);
+  margin-top: var(--spacing-xs);
+  margin-bottom: 2px;
+}
+
+.pet-btn {
+  padding: 6px 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  font-size: var(--font-size-xs);
+  cursor: pointer;
+  text-align: left;
+}
+
+.pet-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.pet-btn.active {
+  background: rgba(99, 102, 241, 0.3);
+}
+
+.pet-btn.toggle-on {
+  background: rgba(34, 197, 94, 0.2);
+}
+
+.pet-tag-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
+}
+
+.pet-tag-btn {
+  padding: 4px 10px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  font-size: var(--font-size-xs);
+  cursor: pointer;
+}
+
+.pet-tag-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.pet-tag-btn.active {
+  background: rgba(99, 102, 241, 0.3);
+}
+
+.pet-size-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.pet-size-btn {
+  padding: 4px 10px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  font-size: var(--font-size-xs);
+  cursor: pointer;
+}
+
+.pet-version {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  font-size: var(--font-size-2xs);
+  color: rgba(255, 255, 255, 0.4);
+  pointer-events: none;
+}
+
+.pet-hint-bar {
+  position: fixed;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: var(--spacing-md);
+  font-size: var(--font-size-2xs);
+  color: rgba(255, 255, 255, 0.35);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
 }
 
 /* ─── 响应式 ─── */

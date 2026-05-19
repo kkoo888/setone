@@ -143,7 +143,7 @@
 
 .shortcut-empty::before {
   content: '⌨️';
-  font-size: 48px;
+  font-size: var(--font-size-3xl);
   opacity: 0.4;
 }
 
@@ -449,7 +449,7 @@
 
 .trans-empty::before {
   content: '🌐';
-  font-size: 48px;
+  font-size: var(--font-size-3xl);
   opacity: 0.4;
 }
 
@@ -744,4 +744,3 @@
 .trans-fav-icon {
   font-size: var(--font-size-sm);
 }
-CSS && echo "✅ 翻译面板 CSS 追加完成"

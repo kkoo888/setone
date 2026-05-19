@@ -109,7 +109,7 @@ export default function SkillStatsPanel({ onClose }: SkillStatsPanelProps) {
 
   return (
     <div className='skill-config-overlay' onClick={handleOverlayClick} role='dialog' aria-modal='true' aria-label='使用统计面板'>
-      <div className='skill-config-panel' style={{ width: '560px' }}>
+      <div className='skill-config-panel chain-panel'>
         {/* 头部 */}
         <div className='skill-config-header'>
           <div className='skill-config-header-left'>
@@ -134,63 +134,22 @@ export default function SkillStatsPanel({ onClose }: SkillStatsPanelProps) {
           ) : (
             <>
               {/* 概览卡片 */}
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(2, 1fr)',
-                gap: '10px',
-                marginBottom: '20px'
-              }}>
-                <div style={{
-                  padding: '14px',
-                  borderRadius: '10px',
-                  background: 'var(--color-bg-secondary, #f5f5f5)',
-                  textAlign: 'center'
-                }}>
-                  <div style={{ fontSize: '24px', fontWeight: 700, color: 'var(--color-primary, #4a90d9)' }}>
-                    {overview.totalCalls}
-                  </div>
-                  <div style={{ fontSize: '12px', color: 'var(--color-text-secondary, #888)', marginTop: '4px' }}>
-                    总调用次数
-                  </div>
+              <div className='stats-grid'>
+                <div className='stats-card'>
+                  <div className='stats-number'>{overview.totalCalls}</div>
+                  <div className='stats-label'>总调用次数</div>
                 </div>
-                <div style={{
-                  padding: '14px',
-                  borderRadius: '10px',
-                  background: 'var(--color-bg-secondary, #f5f5f5)',
-                  textAlign: 'center'
-                }}>
-                  <div style={{ fontSize: '24px', fontWeight: 700, color: '#2ecc71' }}>
-                    {overview.successRate}%
-                  </div>
-                  <div style={{ fontSize: '12px', color: 'var(--color-text-secondary, #888)', marginTop: '4px' }}>
-                    成功率
-                  </div>
+                <div className='stats-card'>
+                  <div className='stats-number success'>{overview.successRate}%</div>
+                  <div className='stats-label'>成功率</div>
                 </div>
-                <div style={{
-                  padding: '14px',
-                  borderRadius: '10px',
-                  background: 'var(--color-bg-secondary, #f5f5f5)',
-                  textAlign: 'center'
-                }}>
-                  <div style={{ fontSize: '24px', fontWeight: 700, color: '#f39c12' }}>
-                    {formatDuration(overview.avgDuration)}
-                  </div>
-                  <div style={{ fontSize: '12px', color: 'var(--color-text-secondary, #888)', marginTop: '4px' }}>
-                    平均耗时
-                  </div>
+                <div className='stats-card'>
+                  <div className='stats-number warning'>{formatDuration(overview.avgDuration)}</div>
+                  <div className='stats-label'>平均耗时</div>
                 </div>
-                <div style={{
-                  padding: '14px',
-                  borderRadius: '10px',
-                  background: 'var(--color-bg-secondary, #f5f5f5)',
-                  textAlign: 'center'
-                }}>
-                  <div style={{ fontSize: '24px', fontWeight: 700, color: '#9b59b6' }}>
-                    {overview.activeSkillCount}
-                  </div>
-                  <div style={{ fontSize: '12px', color: 'var(--color-text-secondary, #888)', marginTop: '4px' }}>
-                    使用过的技能
-                  </div>
+                <div className='stats-card'>
+                  <div className='stats-number accent'>{overview.activeSkillCount}</div>
+                  <div className='stats-label'>使用过的技能</div>
                 </div>
               </div>
 
@@ -201,10 +160,8 @@ export default function SkillStatsPanel({ onClose }: SkillStatsPanelProps) {
                   <span>暂无使用记录</span>
                 </div>
               ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  <div style={{ fontSize: '13px', fontWeight: 600, marginBottom: '4px' }}>
-                    技能排行（按使用次数）
-                  </div>
+                <div className='stats-rank-list'>
+                  <div className='stats-rank-header'>技能排行（按使用次数）</div>
                   {statsList.map((stat, index) => {
                     const isExpanded = expandedId === stat.skillId
                     const successRate = stat.totalCalls > 0
@@ -215,98 +172,58 @@ export default function SkillStatsPanel({ onClose }: SkillStatsPanelProps) {
                       <div key={stat.skillId}>
                         {/* 技能行 */}
                         <div
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '10px',
-                            padding: '10px 12px',
-                            background: 'var(--color-bg-secondary, #f5f5f5)',
-                            borderRadius: '8px',
-                            cursor: 'pointer'
-                          }}
+                          className='stats-rank-item'
                           onClick={() => setExpandedId(isExpanded ? null : stat.skillId)}
                         >
-                          <span style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            width: '22px',
-                            height: '22px',
-                            borderRadius: '50%',
-                            background: index < 3 ? 'var(--color-primary, #4a90d9)' : 'var(--color-border, #ddd)',
-                            color: index < 3 ? '#fff' : 'var(--color-text-secondary, #888)',
-                            fontSize: '11px',
-                            fontWeight: 600
-                          }}>
+                          <span className={`stats-rank-badge ${index < 3 ? 'top' : ''}`}>
                             {index + 1}
                           </span>
-                          <span style={{ fontSize: '16px' }}>{getSkillIcon(stat.skillId)}</span>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontSize: '13px', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                              {getSkillName(stat.skillId)}
-                            </div>
+                          <span className='stats-rank-icon'>{getSkillIcon(stat.skillId)}</span>
+                          <div className='stats-rank-name'>
+                            {getSkillName(stat.skillId)}
                           </div>
-                          <div style={{ display: 'flex', gap: '12px', fontSize: '12px', color: 'var(--color-text-secondary, #888)' }}>
+                          <div className='stats-rank-meta'>
                             <span>{stat.totalCalls} 次</span>
-                            <span style={{ color: successRate >= 80 ? '#2ecc71' : successRate >= 50 ? '#f39c12' : '#e74c3c' }}>
+                            <span className={`stats-rank-rate ${successRate >= 80 ? 'success' : successRate >= 50 ? 'warning' : 'error'}`}>
                               {successRate}%
                             </span>
                           </div>
-                          <span style={{ fontSize: '12px', transform: isExpanded ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s' }}>
-                            →
-                          </span>
+                          <span className={`stats-rank-arrow ${isExpanded ? 'expanded' : ''}`}>→</span>
                         </div>
 
                         {/* 展开详情 */}
                         {isExpanded && (
-                          <div style={{
-                            padding: '12px',
-                            marginTop: '4px',
-                            background: 'var(--color-bg-tertiary, #fafafa)',
-                            borderRadius: '8px',
-                            border: '1px solid var(--color-border, #eee)'
-                          }}>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginBottom: '12px' }}>
-                              <div style={{ textAlign: 'center' }}>
-                                <div style={{ fontSize: '18px', fontWeight: 600 }}>{stat.totalCalls}</div>
-                                <div style={{ fontSize: '11px', color: 'var(--color-text-secondary, #888)' }}>总调用</div>
+                          <div className='stats-detail'>
+                            <div className='stats-detail-grid'>
+                              <div className='stats-detail-item'>
+                                <div className='stats-detail-number'>{stat.totalCalls}</div>
+                                <div className='stats-detail-label'>总调用</div>
                               </div>
-                              <div style={{ textAlign: 'center' }}>
-                                <div style={{ fontSize: '18px', fontWeight: 600, color: '#2ecc71' }}>{stat.successCount}</div>
-                                <div style={{ fontSize: '11px', color: 'var(--color-text-secondary, #888)' }}>成功</div>
+                              <div className='stats-detail-item'>
+                                <div className='stats-detail-number success'>{stat.successCount}</div>
+                                <div className='stats-detail-label'>成功</div>
                               </div>
-                              <div style={{ textAlign: 'center' }}>
-                                <div style={{ fontSize: '18px', fontWeight: 600, color: '#e74c3c' }}>{stat.failureCount}</div>
-                                <div style={{ fontSize: '11px', color: 'var(--color-text-secondary, #888)' }}>失败</div>
+                              <div className='stats-detail-item'>
+                                <div className='stats-detail-number error'>{stat.failureCount}</div>
+                                <div className='stats-detail-label'>失败</div>
                               </div>
                             </div>
 
-                            <div style={{ fontSize: '12px', color: 'var(--color-text-secondary, #888)', marginBottom: '8px' }}>
+                            <div className='stats-label' style={{ marginBottom: 'var(--spacing-sm)' }}>
                               平均耗时: {formatDuration(stat.avgDuration)} · 最后使用: {formatTime(stat.lastUsedAt)}
                             </div>
 
                             {stat.recentRecords.length > 0 && (
                               <>
-                                <div style={{ fontSize: '12px', fontWeight: 600, marginBottom: '6px' }}>最近记录</div>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxHeight: '160px', overflow: 'auto' }}>
+                                <div className='stats-records-title'>最近记录</div>
+                                <div className='stats-records-list'>
                                   {stat.recentRecords.map((record, i) => (
-                                    <div
-                                      key={i}
-                                      style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '8px',
-                                        fontSize: '12px',
-                                        padding: '4px 6px',
-                                        borderRadius: '4px',
-                                        background: record.success ? 'rgba(46, 204, 113, 0.05)' : 'rgba(231, 76, 60, 0.05)'
-                                      }}
-                                    >
+                                    <div key={i} className='stats-record-row'>
                                       <span>{record.success ? '✅' : '❌'}</span>
-                                      <span style={{ color: 'var(--color-text-secondary, #888)' }}>
+                                      <span className='stats-record-time'>
                                         {formatTime(record.timestamp)}
                                       </span>
-                                      <span style={{ marginLeft: 'auto' }}>{formatDuration(record.duration)}</span>
+                                      <span className='stats-record-duration'>{formatDuration(record.duration)}</span>
                                     </div>
                                   ))}
                                 </div>
