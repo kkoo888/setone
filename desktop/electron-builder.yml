@@ -4,9 +4,9 @@ directories:
   output: dist-packaged
 files:
   - dist/**/*
+  - modules/**/*
   - modules-dist/**/*
   - skills/**/*
-  - "!modules/**/*"
 asar: true
 asarUnpack:
   - "node_modules/better-sqlite3/**/*"
