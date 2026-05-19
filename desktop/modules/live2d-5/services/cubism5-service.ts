@@ -19,8 +19,8 @@ import type {
 /** 默认模型缩放比例 */
 const DEFAULT_MODEL_SCALE = 0.15
 
-/** Live2D Core SDK 路径 */
-const CUBISM_CORE_SDK_PATH = '/modules/live2d-5/lib/live2dcubismcore.min.js'
+/** Live2D Core SDK 路径（Vite public 目录，dev/打包通用） */
+const CUBISM_CORE_SDK_PATH = '/lib/live2dcubismcore.min.js'
 
 // ============ Cubism 5 Core 全局声明 ============
 
