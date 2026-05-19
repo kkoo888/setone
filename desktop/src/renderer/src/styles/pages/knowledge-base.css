@@ -304,9 +304,9 @@
 }
 
 .import-mode-tabs .tab-btn.active {
-  background: var(--color-primary);
+  background: var(--color-accent);
   color: #fff;
-  border-color: var(--color-primary);
+  border-color: var(--color-accent);
 }
 
 .import-browse-area {
