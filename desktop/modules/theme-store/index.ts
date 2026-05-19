@@ -1,6 +1,7 @@
 import type { Module, ModuleContext, Capability } from '../../src/main/types/module'
-import type { ThemeIdParams } from './types'
+import type { ThemeIdParams, ThemeImportParams, ThemeChangedEvent } from './types'
 import { ThemeStore } from './services/theme-store'
+import { join } from 'path'
 
 export default class ThemeStoreModule implements Module {
   id = 'theme-store'
@@ -10,35 +11,47 @@ export default class ThemeStoreModule implements Module {
 
   async activate(context: ModuleContext): Promise<void> {
     this.context = context
-    this.store = new ThemeStore(context.db, context.config)
-    await this.store.loadInstalled()
-    // 加载并应用上次保存的主题
+    const themesDir = join(context.config.appDir, 'themes')
+    this.store = new ThemeStore(context.db, context.config, context.logger, themesDir)
+    await this.store.init()
+
+    // 应用上次保存的主题
     try {
       const activeId = await context.config.get<string>('activeTheme')
       if (activeId) {
-        const t = this.store.apply(activeId)
-        if (t) context.eventBus.emit('theme:changed', { themeId: activeId, colors: t.colors })
+        const result = this.store.apply(activeId)
+        if (result) {
+          await context.config.set('activeTheme', activeId)
+          context.eventBus.emit('theme:changed', {
+            themeId: activeId,
+            mode: result.mode,
+            colors: result.colors
+          } as ThemeChangedEvent)
+        }
       }
-    } catch { /* ignore */ }
+    } catch (err) {
+      context.logger.debug('恢复上次主题失败', { error: err })
+    }
+
     context.logger.info('主题商店模块已激活')
   }
 
   async deactivate(): Promise<void> {
-    // 无定时器需清理，eventBus 由框架统一管理
+    this.store = undefined as never
     this.context.logger.info('主题商店模块已停用')
   }
 
   getCapabilities(): Capability[] {
     return [
       {
-        type: 'tool', name: 'theme_list', description: '获取所有主题列表', priority: 10, moduleId: this.id,
+        type: 'tool', name: 'theme_list', description: '获取所有主题列表（内置 + 已导入 + 可下载）', priority: 10, moduleId: this.id,
         parameters: { type: 'object', properties: {}, required: [] },
         handler: {
           execute: async () => ({ success: true, data: this.store.getAll() })
         }
       },
       {
-        type: 'tool', name: 'theme_apply', description: '应用指定主题', priority: 10, moduleId: this.id,
+        type: 'tool', name: 'theme_apply', description: '应用指定主题（可下载的主题会自动导入）', priority: 10, moduleId: this.id,
         parameters: {
           type: 'object', properties: {
             id: { type: 'string', description: '主题 ID' }
@@ -47,17 +60,33 @@ export default class ThemeStoreModule implements Module {
         handler: {
           execute: async (p) => {
             const { id } = p as ThemeIdParams
-            const t = this.store.apply(id)
-            if (!t) return { success: false, error: '主题不存在或未安装' }
-            // 持久化到配置
+            const result = this.store.apply(id)
+            if (!result) return { success: false, error: '主题不存在' }
             try { await this.context.config.set('activeTheme', id) } catch { /* ignore */ }
-            this.context.eventBus.emit('theme:changed', { themeId: id, colors: t.colors })
-            return { success: true, data: t }
+            const event: ThemeChangedEvent = { themeId: id, mode: result.mode, colors: result.colors }
+            this.context.eventBus.emit('theme:changed', event)
+            return { success: true, data: result.theme }
           }
         }
       },
       {
-        type: 'tool', name: 'theme_install', description: '安装主题', priority: 10, moduleId: this.id,
+        type: 'tool', name: 'theme_import', description: '从 JSON 文件导入主题（不传路径则弹出文件选择框）', priority: 10, moduleId: this.id,
+        parameters: {
+          type: 'object', properties: {
+            path: { type: 'string', description: 'JSON 文件路径（可选）' }
+          }, required: []
+        },
+        handler: {
+          execute: async (p) => {
+            const { path } = (p ?? {}) as ThemeImportParams
+            const result = await this.store.importFromFile(path)
+            if (!result.theme) return { success: false, error: result.error }
+            return { success: true, data: result.theme }
+          }
+        }
+      },
+      {
+        type: 'tool', name: 'theme_delete', description: '删除已导入的自定义主题（内置主题不可删）', priority: 10, moduleId: this.id,
         parameters: {
           type: 'object', properties: {
             id: { type: 'string', description: '主题 ID' }
@@ -66,23 +95,7 @@ export default class ThemeStoreModule implements Module {
         handler: {
           execute: async (p) => {
             const { id } = p as ThemeIdParams
-            const t = await this.store.install(id)
-            if (!t) return { success: false, error: '主题不存在' }
-            return { success: true, data: t }
-          }
-        }
-      },
-      {
-        type: 'tool', name: 'theme_uninstall', description: '卸载主题（不能卸载当前使用的主题）', priority: 10, moduleId: this.id,
-        parameters: {
-          type: 'object', properties: {
-            id: { type: 'string', description: '主题 ID' }
-          }, required: ['id']
-        },
-        handler: {
-          execute: async (p) => {
-            const { id } = p as ThemeIdParams
-            const result = await this.store.uninstall(id)
+            const result = await this.store.delete(id)
             if (!result.ok) return { success: false, error: result.error }
             return { success: true }
           }

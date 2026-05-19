@@ -1,0 +1,21 @@
+{
+  "id": "nord",
+  "name": "Nord 极光",
+  "author": "setone",
+  "description": "经典 Nord 配色方案，灵感来自北极光",
+  "mode": "dark",
+  "colors": {
+    "accent": "#88c0d0",
+    "accent-hover": "#81a1c1",
+    "bg-primary": "#2e3440",
+    "bg-secondary": "#3b4252",
+    "bg-tertiary": "#434c5e",
+    "text-primary": "#eceff4",
+    "text-secondary": "#d8dee9",
+    "border": "#4c566a",
+    "success": "#a3be8c",
+    "warning": "#ebcb8b",
+    "error": "#bf616a",
+    "info": "#5e81ac"
+  }
+}

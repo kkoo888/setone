@@ -4,8 +4,8 @@
 .control-section h3 { font-size: var(--font-size-sm); color: var(--color-text-secondary); margin-bottom: var(--spacing-sm); }
 .expression-grid, .motion-grid { display: flex; flex-wrap: wrap; gap: var(--spacing-xs); }
 .expression-btn, .motion-btn { padding: 4px 10px; border: 1px solid var(--color-border); border-radius: var(--radius-full); background: var(--color-bg-secondary); color: var(--color-text-primary); font-size: var(--font-size-xs); cursor: pointer; transition: all 0.15s; }
-.expression-btn:hover, .motion-btn:hover { background: var(--color-accent); color: #fff; border-color: var(--color-accent); }
-.expression-btn.active { background: var(--color-accent); color: #fff; border-color: var(--color-accent); }
+.expression-btn:hover, .motion-btn:hover { background: var(--color-accent); color: var(--color-accent-text, #fff); border-color: var(--color-accent); }
+.expression-btn.active { background: var(--color-accent); color: var(--color-accent-text, #fff); border-color: var(--color-accent); }
 .toggle-label { display: flex; align-items: center; gap: var(--spacing-sm); font-size: var(--font-size-sm); color: var(--color-text-secondary); cursor: pointer; }
 .status-bar { display: flex; align-items: center; gap: var(--spacing-xs); font-size: var(--font-size-xs); color: var(--color-text-tertiary); }
 .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--color-text-tertiary); }
@@ -20,7 +20,7 @@
 .fallback-message { font-size: var(--font-size-md); }
 .fallback-error { font-size: var(--font-size-xs); color: var(--color-error); max-width: 300px; word-break: break-word; }
 .fallback-retry-btn { padding: 6px 16px; border: 1px solid var(--color-accent); border-radius: var(--radius-md); background: transparent; color: var(--color-accent); cursor: pointer; font-size: var(--font-size-sm); transition: all 0.15s; }
-.fallback-retry-btn:hover { background: var(--color-accent); color: #fff; }
+.fallback-retry-btn:hover { background: var(--color-accent); color: var(--color-accent-text, #fff); }
 
 /* ─── Live2D 管理页面 ─── */
 .live2d-page {

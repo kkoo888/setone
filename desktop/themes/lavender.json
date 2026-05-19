@@ -1,0 +1,17 @@
+{
+  "id": "lavender",
+  "name": "薰衣草紫",
+  "author": "setone",
+  "description": "温柔优雅的薰衣草配色",
+  "mode": "light",
+  "colors": {
+    "accent": "#7c3aed",
+    "accent-hover": "#6d28d9",
+    "bg-primary": "#faf5ff",
+    "bg-secondary": "#f3e8ff",
+    "bg-tertiary": "#ede9fe",
+    "text-primary": "#1e1b4b",
+    "text-secondary": "#5b21b6",
+    "border": "#ddd6fe"
+  }
+}

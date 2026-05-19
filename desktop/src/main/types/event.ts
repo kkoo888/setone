@@ -59,5 +59,5 @@ export interface EventMap {
   notify: { title: string; body: string; level?: 'info' | 'warn' | 'error' }
 
   // 主题事件（theme-store 使用）
-  'theme:changed': { themeId: string; colors: Record<string, string> }
+  'theme:changed': { themeId: string; mode?: string; colors: Record<string, string> }
 }

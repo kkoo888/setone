@@ -9,7 +9,7 @@ import { useAppStore } from '../stores/useAppStore'
 import { ModuleHeader } from '../components/common/module/ModuleHeader'
 import { SettingsSection } from '../components/settings/SettingsSection'
 import { OllamaConfig } from '../components/settings/OllamaConfig'
-import { ThemeSwitcher } from '../components/settings/ThemeSwitcher'
+
 import { LanguageSelector } from '../components/settings/LanguageSelector'
 import { PerformanceMonitorConfig } from '../components/settings/PerformanceMonitorConfig'
 import { AvatarUploader } from '../components/settings/AvatarUploader'
@@ -32,7 +32,7 @@ export function SettingsPage() {
     saveToMainProcess,
   } = useSettingsStore()
 
-  const { setTheme, setLanguage } = useAppStore()
+  const { setLanguage, setActivePanel } = useAppStore()
 
   /** 处理 Ollama 配置变更 */
   const handleOllamaChange = useCallback(
@@ -40,15 +40,6 @@ export function SettingsPage() {
       setOllamaConfig(updates)
     },
     [setOllamaConfig]
-  )
-
-  /** 处理主题变更（同时更新 appStore 和 settingsStore） */
-  const handleThemeChange = useCallback(
-    (theme: 'light' | 'dark' | 'system') => {
-      setTheme(theme)
-      setAppearance({ theme })
-    },
-    [setTheme, setAppearance]
   )
 
   /** 处理语言变更（同时更新 appStore 和 settingsStore） */
@@ -145,7 +136,7 @@ export function SettingsPage() {
         <AvatarUploader />
         <div className="settings-row">
           <label className="settings-label">主题</label>
-          <ThemeSwitcher theme={settings.appearance.theme} onChange={handleThemeChange} />
+          <button className="btn btn-primary btn-sm" onClick={() => setActivePanel('theme-store')}>🎨 打开主题商店</button>
         </div>
         <div className="settings-row">
           <label className="settings-label">语言</label>

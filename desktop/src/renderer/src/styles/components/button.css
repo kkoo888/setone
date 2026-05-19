@@ -8,7 +8,7 @@
 .btn:hover { background: var(--color-bg-tertiary); }
 .btn:active { transform: scale(0.98); }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-.btn-primary { background: var(--color-accent); color: #fff; border-color: var(--color-accent); }
+.btn-primary { background: var(--color-accent); color: var(--color-accent-text, #fff); border-color: var(--color-accent); }
 .btn-primary:hover { background: var(--color-accent-hover); border-color: var(--color-accent-hover); }
 .btn-danger { background: var(--color-error); color: #fff; border-color: var(--color-error); }
 .btn-danger:hover { background: #dc2626; border-color: #dc2626; }

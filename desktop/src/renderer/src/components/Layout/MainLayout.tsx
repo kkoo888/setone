@@ -67,6 +67,81 @@ const MODULE_PAGE_CONFIG: Record<string, { title: string; description: string; i
   'proactive': { title: '主动关怀', description: '定时提醒、天气查询、主动问候', icon: '💝' },
 }
 
+/** 所有可能被主题覆盖的 CSS 变量列表 */
+const THEME_CSS_VARS = [
+  '--color-accent', '--color-accent-hover',
+  '--color-bg-primary', '--color-bg-secondary', '--color-bg-tertiary',
+  '--color-text-primary', '--color-text-secondary', '--color-text-tertiary',
+  '--color-border', '--color-shadow',
+  '--color-success', '--color-warning', '--color-error', '--color-info',
+  '--color-accent-text', '--color-accent-text-hover',
+]
+
+/**
+ * 根据背景色自动选择对比度更高的前景色（深色 or 白色）
+ * 选择 dark/light 中对比度更高的那个
+ */
+function autoTextColor(bgHex: string): string {
+  const r = parseInt(bgHex.slice(1, 3), 16) / 255
+  const g = parseInt(bgHex.slice(3, 5), 16) / 255
+  const b = parseInt(bgHex.slice(5, 7), 16) / 255
+  const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b
+  // 计算深色和白色分别与背景的对比度，选更高的
+  const darkLum = 0.1 // #1a1a1a 近似亮度
+  const lightLum = 1.0 // #ffffff
+  const contrastDark = (lum + 0.05) / (darkLum + 0.05)
+  const contrastLight = (lightLum + 0.05) / (lum + 0.05)
+  return contrastDark >= contrastLight ? '#1a1a1a' : '#ffffff'
+}
+
+/** 将主题应用到 DOM：设置 data-theme + CSS 变量覆盖 */
+function applyThemeToDOM(mode?: string, colors?: Record<string, string>) {
+  const root = document.documentElement
+  // 1. 先清除上一个主题的所有 inline style 覆盖，避免残留
+  for (const cssVar of THEME_CSS_VARS) {
+    root.style.removeProperty(cssVar)
+  }
+  // 2. 设置明暗模式（让 variables.css 的 [data-theme] 选择器生效）
+  if (mode === 'light' || mode === 'dark') {
+    root.setAttribute('data-theme', mode)
+  } else if (mode === 'system') {
+    root.setAttribute('data-theme', window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+  }
+  // 3. 应用配色变量覆盖（仅对有值的变量设置 inline style）
+  if (colors) {
+    const mapping: Record<string, string> = {
+      accent: '--color-accent',
+      'accent-hover': '--color-accent-hover',
+      'bg-primary': '--color-bg-primary',
+      'bg-secondary': '--color-bg-secondary',
+      'bg-tertiary': '--color-bg-tertiary',
+      'text-primary': '--color-text-primary',
+      'text-secondary': '--color-text-secondary',
+      'text-tertiary': '--color-text-tertiary',
+      border: '--color-border',
+      shadow: '--color-shadow',
+      success: '--color-success',
+      warning: '--color-warning',
+      error: '--color-error',
+      info: '--color-info',
+    }
+    for (const [key, cssVar] of Object.entries(mapping)) {
+      if (colors[key]) root.style.setProperty(cssVar, colors[key])
+    }
+    // 4. 自动计算强调色按钮上的文字颜色（确保可读性）
+    const accentColor = colors.accent
+    if (accentColor && accentColor.startsWith('#')) {
+      root.style.setProperty('--color-accent-text', autoTextColor(accentColor))
+    }
+    const hoverColor = colors['accent-hover']
+    if (hoverColor && hoverColor.startsWith('#')) {
+      root.style.setProperty('--color-accent-text-hover', autoTextColor(hoverColor))
+    }
+  }
+  // 5. 持久化
+  try { localStorage.setItem('active-theme-id', colors ? 'custom' : (mode ?? 'light')) } catch { /* ignore */ }
+}
+
 export function MainLayout() {
   const activePanel = useAppStore((s) => s.activePanel)
   const showChangesPanel = useAppStore((s) => s.showChangesPanel)
@@ -97,22 +172,15 @@ export function MainLayout() {
     return unsub
   }, [])
 
-  // 监听主题变更事件，应用自定义主题颜色
+  // 监听主题变更事件，应用明暗模式 + 配色
   useEffect(() => {
-    const unsub = window.electronAPI.on('theme:changed', (data: { themeId: string; colors: Record<string, string> }) => {
-      if (!data?.colors) return
-      const root = document.documentElement
-      const c = data.colors
-      if (c.primary) root.style.setProperty('--color-accent', c.primary)
-      if (c.accent) root.style.setProperty('--color-accent-hover', c.accent)
-      if (c.bg) root.style.setProperty('--color-bg-primary', c.bg)
-      if (c.surface) root.style.setProperty('--color-bg-secondary', c.surface)
-      try { localStorage.setItem('active-theme-id', data.themeId) } catch { /* ignore */ }
+    const unsub = window.electronAPI.on('theme:changed', (data: { themeId: string; mode?: string; colors?: Record<string, string> }) => {
+      applyThemeToDOM(data.mode, data.colors)
     })
     return unsub
   }, [])
 
-  // 启动时加载已保存的主题颜色
+  // 启动时加载已保存的主题
   useEffect(() => {
     const loadSavedTheme = async () => {
       try {
@@ -120,14 +188,9 @@ export function MainLayout() {
         if (themeId && typeof themeId === 'string') {
           const res = await window.electronAPI.invoke('theme_list')
           if (res?.success) {
-            const theme = (res.data as Array<{ id: string; colors: Record<string, string> }>).find((t) => t.id === themeId)
-            if (theme?.colors) {
-              const root = document.documentElement
-              const c = theme.colors
-              if (c.primary) root.style.setProperty('--color-accent', c.primary)
-              if (c.accent) root.style.setProperty('--color-accent-hover', c.accent)
-              if (c.bg) root.style.setProperty('--color-bg-primary', c.bg)
-              if (c.surface) root.style.setProperty('--color-bg-secondary', c.surface)
+            const theme = (res.data as Array<{ id: string; mode?: string; colors: Record<string, string> }>).find((t) => t.id === themeId)
+            if (theme) {
+              applyThemeToDOM(theme.mode, theme.colors)
             }
           }
         }

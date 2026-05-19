@@ -1,5 +1,4 @@
 import React from 'react'
-import { useTheme } from '../../hooks/useTheme'
 import { useAppStore } from '../../stores/useAppStore'
 
 /** 页面自带标题的页面列表（Header 不再显示标题，避免重复） */
@@ -12,17 +11,19 @@ export function Header() {
   const setActivePanel = useAppStore((s) => s.setActivePanel)
   const showChangesPanel = useAppStore((s) => s.showChangesPanel)
   const setShowChangesPanel = useAppStore((s) => s.setShowChangesPanel)
-  const { theme, setTheme } = useTheme()
   const showTitle = !PAGES_WITH_OWN_TITLE.has(activePanel ?? 'chat')
   return (
     <header className="header">
       {showTitle && <h1 className="header-title">{panelTitles[activePanel ?? 'chat'] ?? '智能助手'}</h1>}
       <div className="header-actions">
-        <select className="theme-select" value={theme} onChange={(e) => setTheme(e.target.value as 'light' | 'dark' | 'system')} aria-label="主题切换">
-          <option value="system">跟随系统</option>
-          <option value="light">亮色</option>
-          <option value="dark">暗色</option>
-        </select>
+        <button
+          className="header-theme-btn"
+          onClick={() => setActivePanel('theme-store')}
+          title="主题商店"
+          aria-label="打开主题商店"
+        >
+          🎨
+        </button>
         <button
           className="header-changes-btn"
           onClick={() => setShowChangesPanel(!showChangesPanel)}

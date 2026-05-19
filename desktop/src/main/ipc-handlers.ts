@@ -390,11 +390,16 @@ export function registerIpcHandlers(
     setTimeout(() => registerModuleCapabilities(), 500)
   })
 
-  // 桥接主题变更事件到渲染进程
-  eventBus?.on('theme:changed', (data: { themeId: string; colors: Record<string, string> }) => {
+  // 桥接主题变更事件到渲染进程 + 同步窗口背景色
+  eventBus?.on('theme:changed', (data: { themeId: string; mode?: string; colors: Record<string, string> }) => {
     for (const win of BrowserWindow.getAllWindows()) {
       if (!win.isDestroyed()) {
         win.webContents.send('theme:changed', data)
+        // 同步原生窗口背景色（标题栏/窗口框架）
+        const bgColor = data.colors?.['bg-primary']
+        if (bgColor) {
+          try { win.setBackgroundColor(bgColor) } catch { /* ignore */ }
+        }
       }
     }
   })
