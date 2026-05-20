@@ -22,7 +22,7 @@
   max-width: 90vw;
   max-height: 85vh;
   background: var(--bg-primary, #1a1a2e);
-  border-radius: 20px;
+  border-radius: var(--radius-full);
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
   overflow: hidden;
   animation: soul-slide-up 0.4s ease;
@@ -65,7 +65,7 @@
 }
 
 .soul-step-title {
-  font-size: 22px;
+  font-size: var(--font-size-xl);
   font-weight: 600;
   margin: 0 0 20px;
   text-align: center;
@@ -79,7 +79,7 @@
 }
 
 .soul-welcome-text {
-  font-size: 15px;
+  font-size: var(--font-size-sm);
   line-height: 1.6;
   color: var(--text-secondary, #aaa);
   text-align: center;
@@ -87,14 +87,14 @@
 }
 
 .soul-welcome-sub {
-  font-size: 13px;
+  font-size: var(--font-size-xs);
   color: var(--text-tertiary, #666);
   text-align: center;
   margin: 0;
 }
 
 .soul-hint {
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   color: var(--text-secondary, #aaa);
   text-align: center;
   margin: 0;
@@ -103,12 +103,12 @@
 /* 输入框 */
 .soul-input {
   width: 100%;
-  padding: 14px 18px;
+  padding: var(--spacing-md) var(--spacing-md);
   border: 2px solid var(--border-color, #333);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   background: var(--bg-secondary, #16213e);
   color: var(--text-primary, #fff);
-  font-size: 16px;
+  font-size: var(--font-size-md);
   outline: none;
   transition: border-color 0.2s;
   box-sizing: border-box;
@@ -134,7 +134,7 @@
   width: 52px;
   height: 52px;
   border: 2px solid transparent;
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   background: var(--bg-secondary, #16213e);
   font-size: 26px;
   cursor: pointer;
@@ -164,12 +164,12 @@
 }
 
 .soul-trait-btn {
-  padding: 8px 18px;
+  padding: var(--spacing-sm) var(--spacing-md);
   border: 2px solid var(--border-color, #333);
-  border-radius: 20px;
+  border-radius: var(--radius-full);
   background: transparent;
   color: var(--text-secondary, #aaa);
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -196,9 +196,9 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 14px 18px;
+  padding: var(--spacing-md) var(--spacing-md);
   border: 2px solid var(--border-color, #333);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   background: transparent;
   color: var(--text-primary, #fff);
   cursor: pointer;
@@ -216,13 +216,13 @@
 }
 
 .soul-style-label {
-  font-size: 15px;
+  font-size: var(--font-size-sm);
   font-weight: 500;
   min-width: 80px;
 }
 
 .soul-style-desc {
-  font-size: 13px;
+  font-size: var(--font-size-xs);
   color: var(--text-tertiary, #666);
 }
 
@@ -231,7 +231,7 @@
   display: flex;
   align-items: center;
   gap: 20px;
-  padding: 20px;
+  padding: var(--spacing-lg);
   background: var(--bg-secondary, #16213e);
   border-radius: 16px;
   border: 1px solid var(--border-color, #333);
@@ -250,7 +250,7 @@
 
 .soul-preview-info h3 {
   margin: 0 0 8px;
-  font-size: 18px;
+  font-size: var(--font-size-lg);
   color: var(--text-primary, #fff);
 }
 
@@ -266,11 +266,11 @@
   background: rgba(108, 92, 231, 0.15);
   color: var(--accent-color, #6c5ce7);
   border-radius: 10px;
-  font-size: 12px;
+  font-size: var(--font-size-xs);
 }
 
 .soul-preview-style {
-  font-size: 13px;
+  font-size: var(--font-size-xs);
   color: var(--text-tertiary, #666);
   margin: 0;
 }
@@ -286,8 +286,8 @@
 .soul-btn {
   padding: 12px 28px;
   border: none;
-  border-radius: 12px;
-  font-size: 15px;
+  border-radius: var(--radius-lg);
+  font-size: var(--font-size-sm);
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
@@ -329,7 +329,7 @@
   padding: 6px 12px;
   background: var(--bg-secondary, #16213e);
   border: 1px solid var(--border-color, #333);
-  border-radius: 20px;
+  border-radius: var(--radius-full);
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -340,11 +340,11 @@
 }
 
 .soul-indicator-emoji {
-  font-size: 18px;
+  font-size: var(--font-size-lg);
 }
 
 .soul-indicator-name {
-  font-size: 13px;
+  font-size: var(--font-size-xs);
   color: var(--text-primary, #fff);
   font-weight: 500;
 }

@@ -1,6 +1,6 @@
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: var(--spacing-sm);
-  padding: 8px 16px; border: 1px solid var(--color-border); border-radius: var(--radius-md);
+  padding: var(--spacing-sm) var(--spacing-md); border: 1px solid var(--color-border); border-radius: var(--radius-md);
   background: var(--color-bg-secondary); color: var(--color-text-primary);
   font-size: var(--font-size-sm); font-weight: 500; cursor: pointer;
   transition: all 0.15s ease; white-space: nowrap; user-select: none;
@@ -19,3 +19,33 @@
 .btn-loading { pointer-events: none; opacity: 0.8; }
 .btn-spinner { width: 14px; height: 14px; border: 2px solid currentColor; border-top-color: transparent; border-radius: 50%; animation: spin 0.6s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* ══════════════════════════════════════════
+   按钮变体补充 - 统一全局按钮风格
+   ══════════════════════════════════════════ */
+
+/* 图标按钮 */
+.btn-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 36px; height: 36px; padding: 0;
+  border: none; border-radius: var(--radius-md);
+  background: transparent; color: var(--color-text-secondary);
+  font-size: var(--font-size-lg); cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.btn-icon:hover { background: var(--color-bg-tertiary); color: var(--color-text-primary); }
+
+/* 胶囊标签按钮 */
+.btn-pill {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 6px 16px; border: 1px solid var(--color-border);
+  border-radius: var(--radius-full); background: var(--color-bg-primary);
+  color: var(--color-text-secondary); font-size: var(--font-size-xs);
+  font-weight: 500; cursor: pointer; white-space: nowrap;
+  transition: all 0.15s; user-select: none;
+}
+.btn-pill:hover { border-color: var(--color-accent); color: var(--color-accent); }
+.btn-pill.active {
+  background: var(--color-accent-light); border-color: transparent;
+  color: var(--color-accent); font-weight: 600;
+}

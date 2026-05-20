@@ -7,6 +7,9 @@
   flex-direction: column;
   height: 100%;
   overflow: hidden;
+  background: var(--color-bg-primary);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
 }
 
 .shortcuts-header {
@@ -37,7 +40,7 @@
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 14px 20px;
+  padding: var(--spacing-md) var(--spacing-lg);
   background: var(--color-bg-primary);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
@@ -57,7 +60,7 @@
 
 /* 手风琴内联编辑表单 */
 .sc-inline-form {
-  padding: 12px 20px 16px;
+  padding: var(--spacing-md) var(--spacing-lg) 16px;
   background: var(--color-bg-secondary);
   border: 1px solid var(--color-accent);
   border-top: none;
@@ -94,7 +97,7 @@
   background: var(--color-bg-secondary);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   font-weight: 600;
   font-family: var(--font-mono);
   color: var(--color-text-primary);
@@ -115,7 +118,7 @@
 }
 
 .shortcut-desc {
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   color: var(--color-text-tertiary);
   margin-top: 2px;
 }
@@ -174,7 +177,7 @@
 }
 
 .trans-header-icon {
-  font-size: 22px;
+  font-size: var(--font-size-xl);
   flex-shrink: 0;
 }
 
@@ -194,7 +197,7 @@
 }
 
 .trans-tab {
-  padding: 8px 18px;
+  padding: var(--spacing-sm) var(--spacing-md);
   border: none;
   border-bottom: 2px solid transparent;
   background: transparent;
@@ -268,7 +271,7 @@
   border-radius: 50%;
   background: var(--color-bg-primary);
   color: var(--color-text-secondary);
-  font-size: 16px;
+  font-size: var(--font-size-md);
   cursor: pointer;
   transition: all var(--transition-fast);
   flex-shrink: 0;
@@ -362,7 +365,7 @@
 }
 
 .trans-record {
-  padding: 14px 18px;
+  padding: var(--spacing-md) var(--spacing-md);
   background: var(--color-bg-primary);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
@@ -382,7 +385,7 @@
 }
 
 .trans-lang-badge {
-  font-size: 11px;
+  font-size: var(--font-size-2xs);
   color: var(--color-accent);
   background: rgba(99, 102, 241, 0.1);
   padding: 2px 8px;
@@ -399,7 +402,7 @@
   border: none;
   background: transparent;
   cursor: pointer;
-  font-size: 20px;
+  font-size: var(--font-size-xl);
   padding: 6px 8px;
   border-radius: var(--radius-sm);
   transition: background var(--transition-fast);
@@ -492,7 +495,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 20px;
+  padding: var(--spacing-md) var(--spacing-lg);
   border-bottom: 1px solid var(--color-border);
   flex-shrink: 0;
 }
@@ -507,7 +510,7 @@
 .trans-modal-close {
   border: none;
   background: transparent;
-  font-size: 22px;
+  font-size: var(--font-size-xl);
   cursor: pointer;
   color: var(--color-text-tertiary);
   padding: 4px 8px;
@@ -525,7 +528,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
-  padding: 20px;
+  padding: var(--spacing-lg);
   flex: 1;
   overflow-y: auto;
 }
@@ -561,13 +564,13 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 20px;
+  padding: var(--spacing-md) var(--spacing-lg);
   border-top: 1px solid var(--color-border);
   flex-shrink: 0;
 }
 
 .trans-modal-lang {
-  font-size: 11px;
+  font-size: var(--font-size-2xs);
   color: var(--color-accent);
   background: rgba(99, 102, 241, 0.1);
   padding: 3px 10px;
@@ -581,7 +584,7 @@
 }
 
 .trans-modal-btn {
-  padding: 8px 16px;
+  padding: var(--spacing-sm) var(--spacing-md);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-bg-primary);
@@ -688,7 +691,7 @@
 }
 
 .sc-form-hint {
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   color: var(--color-text-tertiary);
   line-height: 1.5;
 }
@@ -710,7 +713,7 @@
 
 /* 快捷指令 - 按键分隔 */
 .sc-key-sep {
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   color: var(--color-text-tertiary);
   margin: 0 2px;
 }

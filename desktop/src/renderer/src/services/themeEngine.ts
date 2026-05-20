@@ -100,11 +100,17 @@ const SPACING_MULTIPLIERS = {
   lg: 3.0, xl: 4.0, '2xl': 6.0,
 } as const
 
-/** 字号派生：各级相对于基数的倍率 */
-const FONT_SIZE_MULTIPLIERS = {
-  '2xs': 0.625, xs: 0.75, sm: 0.875, md: 1.0,
-  lg: 1.125, xl: 1.25, '2xl': 1.5, '3xl': 2.0,
-} as const
+/** 字号梯度：固定整数像素值，比原始值小2px（借鉴 shadcn/ui + Ant Design） */
+const FONT_SIZE_SCALE: Record<string, number> = {
+  '2xs': 8,    // 极小：辅助标签、徽章
+  xs: 10,      // 次小：时间戳、说明文字
+  sm: 12,      // 正文小号
+  md: 14,      // 正文（桌面应用默认）
+  lg: 16,      // 中等：输入框、按钮、小标题
+  xl: 18,      // 大号：页面标题
+  '2xl': 22,   // 超大：模块标题
+  '3xl': 30,   // 巨大：数字展示
+}
 
 /** Alpha 透明度色板：10 级 */
 const ALPHA_STEPS = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900] as const
@@ -260,10 +266,10 @@ export function deriveSpacing(base: number): SpacingScale {
   ) as SpacingScale
 }
 
-/** 字号梯度 */
-export function deriveFontSize(base: number): FontSizeScale {
+/** 字号梯度（固定整数值，不依赖基数） */
+export function deriveFontSize(): FontSizeScale {
   return Object.fromEntries(
-    Object.entries(FONT_SIZE_MULTIPLIERS).map(([k, m]) => [k, `${base * m}px`])
+    Object.entries(FONT_SIZE_SCALE).map(([k, v]) => [k, `${v}px`])
   ) as FontSizeScale
 }
 
@@ -297,7 +303,7 @@ function buildDesignBaseVars(seed: SeedToken): ThemeVariables {
   const vars: ThemeVariables = {}
   const radius = deriveRadius(seed.radius)
   const spacing = deriveSpacing(seed.spacingBase)
-  const fontSize = deriveFontSize(seed.fontBase)
+  const fontSize = deriveFontSize()
 
   for (const [key, val] of Object.entries(radius)) vars[`--radius-${key}`] = val
   for (const [key, val] of Object.entries(spacing)) vars[`--spacing-${key}`] = val
@@ -427,7 +433,7 @@ export function migrateV1ToSeed(v1: ThemeConfigV1): SeedToken {
     bg: colors['bg-primary'] || (v1.mode === 'dark' ? '#0a0a0f' : '#ffffff'),
     fg: colors['text-primary'] || (v1.mode === 'dark' ? '#e8e8e8' : '#1a1a1a'),
     radius: 8,
-    fontBase: 16,
+    fontBase: 14,
     spacingBase: 8,
     mode: v1.mode as 'light' | 'dark',
   }

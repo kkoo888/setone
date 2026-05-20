@@ -53,7 +53,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 16px;
+  padding: var(--spacing-sm) var(--spacing-md);
   border: none;
   border-radius: var(--radius-md);
   background: var(--color-accent);
@@ -74,7 +74,7 @@
 }
 
 .btn-skill-primary span {
-  font-size: 15px;
+  font-size: var(--font-size-sm);
   font-weight: 600;
   line-height: 1;
 }
@@ -84,7 +84,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 14px;
+  padding: var(--spacing-sm) var(--spacing-md);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-bg-primary);
@@ -106,7 +106,7 @@
 }
 
 .btn-skill-action span {
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   line-height: 1;
 }
 
@@ -121,14 +121,14 @@
   left: 12px;
   top: 50%;
   transform: translateY(-50%);
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   color: var(--color-text-tertiary);
   pointer-events: none;
 }
 
 .skill-search-input {
   width: 100%;
-  padding: 8px 12px 8px 34px;
+  padding: var(--spacing-sm) var(--spacing-md) 8px 34px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-bg-secondary);
@@ -192,7 +192,7 @@
 .skill-tags {
   display: flex;
   gap: 8px;
-  padding: 12px 20px;
+  padding: var(--spacing-md) var(--spacing-lg);
   overflow-x: auto;
   flex-shrink: 0;
   scrollbar-width: thin;
@@ -204,7 +204,7 @@
 
 .skill-tag {
   padding: 6px 16px;
-  border-radius: 20px;
+  border-radius: var(--radius-full);
   border: 1px solid var(--color-border);
   background: var(--color-bg-primary);
   color: var(--color-text-primary);
@@ -232,7 +232,7 @@
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 16px;
-  padding: 16px 20px;
+  padding: var(--spacing-md) var(--spacing-lg);
   overflow-y: auto;
   flex: 1;
 }
@@ -240,7 +240,7 @@
 /* ── 技能卡片 ── */
 .skill-card {
   background: var(--color-bg-primary);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   padding: 16px;
   cursor: pointer;
   transition: box-shadow 0.2s, transform 0.15s;
@@ -269,7 +269,7 @@
   align-items: center;
   justify-content: center;
   background: var(--color-accent-light);
-  font-size: 24px;
+  font-size: var(--font-size-2xl);
   flex-shrink: 0;
 }
 
@@ -282,7 +282,7 @@
 }
 
 .skill-card-name {
-  font-size: 15px;
+  font-size: var(--font-size-sm);
   font-weight: 600;
   color: var(--color-text-primary);
   line-height: 1.3;
@@ -292,7 +292,7 @@
 }
 
 .skill-card-desc {
-  font-size: 13px;
+  font-size: var(--font-size-xs);
   color: var(--color-text-tertiary);
   line-height: 1.4;
   overflow: hidden;
@@ -318,10 +318,10 @@
 
 .skill-card-tag {
   padding: 2px 8px;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   background: var(--color-bg-secondary);
   color: var(--color-text-tertiary);
-  font-size: 11px;
+  font-size: var(--font-size-2xs);
   white-space: nowrap;
 }
 
@@ -430,7 +430,7 @@
 .skill-detail-icon {
   width: 56px;
   height: 56px;
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -446,7 +446,7 @@
 }
 
 .skill-detail-name {
-  font-size: 18px;
+  font-size: var(--font-size-lg);
   font-weight: 700;
   color: var(--color-text-primary);
   margin: 0;
@@ -467,7 +467,7 @@
   border-radius: var(--radius-md);
   background: transparent;
   color: var(--color-text-secondary);
-  font-size: 18px;
+  font-size: var(--font-size-lg);
   cursor: pointer;
   transition: background 0.15s;
 }
@@ -529,14 +529,14 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 12px;
+  padding: var(--spacing-sm) var(--spacing-md);
   background: var(--color-bg-secondary);
   border-radius: var(--radius-md);
   font-size: var(--font-size-xs);
 }
 
 .skill-detail-permission-icon {
-  font-size: 14px;
+  font-size: var(--font-size-sm);
 }
 
 .skill-detail-permission-name {
@@ -547,8 +547,8 @@
 
 .skill-detail-permission-risk {
   padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 11px;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-2xs);
   font-weight: 500;
 }
 
@@ -634,7 +634,7 @@
   border-radius: var(--radius-md);
   background: var(--color-bg-primary);
   color: var(--color-text-secondary);
-  font-size: 18px;
+  font-size: var(--font-size-lg);
   cursor: pointer;
   transition: border-color 0.2s, background 0.15s;
   flex-shrink: 0;
@@ -655,7 +655,7 @@
   border-radius: var(--radius-md);
   background: var(--color-bg-primary);
   color: var(--color-text-secondary);
-  font-size: 18px;
+  font-size: var(--font-size-lg);
   cursor: pointer;
   transition: border-color 0.2s, background 0.15s;
   flex-shrink: 0;
@@ -676,7 +676,7 @@
   border-radius: var(--radius-md);
   background: var(--color-bg-primary);
   color: var(--color-text-secondary);
-  font-size: 18px;
+  font-size: var(--font-size-lg);
   cursor: pointer;
   transition: border-color 0.2s, background 0.15s;
   flex-shrink: 0;
@@ -736,11 +736,11 @@
 }
 
 .skill-trash-icon {
-  font-size: 24px;
+  font-size: var(--font-size-2xl);
 }
 
 .skill-trash-title {
-  font-size: 18px;
+  font-size: var(--font-size-lg);
   font-weight: 700;
   color: var(--color-text-primary);
   margin: 0;
@@ -764,7 +764,7 @@
   border-radius: var(--radius-md);
   background: transparent;
   color: var(--color-text-secondary);
-  font-size: 16px;
+  font-size: var(--font-size-md);
   cursor: pointer;
   transition: background 0.15s;
 }
@@ -809,7 +809,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px;
+  padding: var(--spacing-md) var(--spacing-md);
   background: var(--color-bg-secondary);
   border-radius: var(--radius-md);
   transition: background 0.15s;
@@ -828,7 +828,7 @@
 }
 
 .skill-trash-item-id {
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   font-weight: 600;
   color: var(--color-text-primary);
   overflow: hidden;
@@ -837,7 +837,7 @@
 }
 
 .skill-trash-item-time {
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   color: var(--color-text-tertiary);
 }
 
@@ -855,7 +855,7 @@
   padding: 6px 12px;
   border: none;
   border-radius: var(--radius-md);
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   font-weight: 500;
   cursor: pointer;
   transition: background 0.15s, transform 0.1s;
@@ -895,7 +895,7 @@
   padding: 10px 16px;
   background: rgba(239, 68, 68, 0.1);
   color: var(--color-error);
-  font-size: 13px;
+  font-size: var(--font-size-xs);
 }
 
 .skill-trash-btn--empty:hover:not(:disabled) {
@@ -943,7 +943,7 @@
 
 .skill-trash-confirm {
   background: var(--color-bg-primary);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   padding: 12px;
   width: 360px;
   max-width: 90%;
@@ -952,7 +952,7 @@
 }
 
 .skill-trash-confirm-text {
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   color: var(--color-text-primary);
   line-height: 1.6;
   margin: 0 0 20px;
@@ -1009,11 +1009,11 @@
 }
 
 .skill-install-icon {
-  font-size: 24px;
+  font-size: var(--font-size-2xl);
 }
 
 .skill-install-title {
-  font-size: 18px;
+  font-size: var(--font-size-lg);
   font-weight: 700;
   color: var(--color-text-primary);
   margin: 0;
@@ -1029,7 +1029,7 @@
   border-radius: var(--radius-md);
   background: transparent;
   color: var(--color-text-secondary);
-  font-size: 16px;
+  font-size: var(--font-size-md);
   cursor: pointer;
   transition: background 0.15s;
 }
@@ -1048,11 +1048,11 @@
 
 .skill-install-tab {
   flex: 1;
-  padding: 12px 16px;
+  padding: var(--spacing-md) var(--spacing-md);
   border: none;
   background: transparent;
   color: var(--color-text-secondary);
-  font-size: 13px;
+  font-size: var(--font-size-xs);
   font-weight: 500;
   cursor: pointer;
   transition: all 0.15s;
@@ -1086,7 +1086,7 @@
 }
 
 .skill-install-search-icon {
-  font-size: 16px;
+  font-size: var(--font-size-md);
   flex-shrink: 0;
 }
 
@@ -1095,7 +1095,7 @@
   border: none;
   background: transparent;
   color: var(--color-text-primary);
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   outline: none;
 }
 
@@ -1162,34 +1162,34 @@
 }
 
 .skill-install-item-icon {
-  font-size: 20px;
+  font-size: var(--font-size-xl);
   flex-shrink: 0;
 }
 
 .skill-install-item-name {
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   font-weight: 600;
   color: var(--color-text-primary);
 }
 
 .skill-install-item-author {
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   color: var(--color-text-tertiary);
   margin-left: 4px;
 }
 
 .skill-install-item-version {
-  font-size: 11px;
+  font-size: var(--font-size-2xs);
   color: var(--color-text-tertiary);
   padding: 1px 6px;
   background: var(--color-bg-tertiary);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   margin-left: auto;
   flex-shrink: 0;
 }
 
 .skill-install-item-desc {
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   color: var(--color-text-secondary);
   line-height: 1.5;
   margin: 0 0 8px;
@@ -1203,7 +1203,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 11px;
+  font-size: var(--font-size-2xs);
   color: var(--color-text-tertiary);
   flex-wrap: wrap;
 }
@@ -1212,7 +1212,7 @@
   padding: 1px 6px;
   background: var(--color-bg-tertiary);
   border-radius: 6px;
-  font-size: 10px;
+  font-size: var(--font-size-2xs);
 }
 
 /* 按钮 */
@@ -1220,10 +1220,10 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 8px 16px;
+  padding: var(--spacing-sm) var(--spacing-md);
   border: none;
   border-radius: var(--radius-md);
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   font-weight: 500;
   cursor: pointer;
   transition: background 0.15s, transform 0.1s;
@@ -1256,7 +1256,7 @@
   padding: 10px 16px;
   background: var(--color-accent, #6c5ce7);
   color: var(--color-text-inverse);
-  font-size: 13px;
+  font-size: var(--font-size-xs);
   margin-top: 8px;
 }
 
@@ -1273,7 +1273,7 @@
 }
 
 .skill-install-url-label {
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   font-weight: 500;
   color: var(--color-text-primary);
   display: flex;
@@ -1282,7 +1282,7 @@
 }
 
 .skill-install-url-hint {
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   font-weight: 400;
   color: var(--color-text-tertiary);
 }
@@ -1293,7 +1293,7 @@
   border-radius: var(--radius-md);
   background: var(--color-bg-secondary);
   color: var(--color-text-primary);
-  font-size: 13px;
+  font-size: var(--font-size-xs);
   outline: none;
   transition: border-color 0.15s;
 }
@@ -1307,7 +1307,7 @@
 }
 
 .skill-install-url-error {
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   color: var(--color-error);
   margin: 0;
 }
@@ -1319,7 +1319,7 @@
   gap: 8px;
   padding: 12px 12px;
   border-top: 1px solid var(--color-border);
-  font-size: 13px;
+  font-size: var(--font-size-xs);
   color: var(--color-text-secondary);
   flex-shrink: 0;
 }
@@ -1366,11 +1366,11 @@
 }
 
 .skill-config-icon {
-  font-size: 24px;
+  font-size: var(--font-size-2xl);
 }
 
 .skill-config-title {
-  font-size: 18px;
+  font-size: var(--font-size-lg);
   font-weight: 700;
   color: var(--color-text-primary);
   margin: 0;
@@ -1391,7 +1391,7 @@
   border-radius: var(--radius-md);
   background: transparent;
   color: var(--color-text-secondary);
-  font-size: 18px;
+  font-size: var(--font-size-lg);
   cursor: pointer;
   transition: background 0.15s;
 }
@@ -1430,13 +1430,13 @@
 }
 
 .skill-config-field-label {
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   font-weight: 600;
   color: var(--color-text-primary);
 }
 
 .skill-config-field-desc {
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   color: var(--color-text-tertiary);
   margin: 0;
   line-height: 1.5;
@@ -1449,7 +1449,7 @@
   border-radius: var(--radius-md);
   background: var(--color-bg-secondary);
   color: var(--color-text-primary);
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   outline: none;
   transition: border-color 0.2s;
   box-sizing: border-box;
@@ -1471,7 +1471,7 @@
   border-radius: var(--radius-md);
   background: var(--color-bg-secondary);
   color: var(--color-text-primary);
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   outline: none;
   cursor: pointer;
   transition: border-color 0.2s;
@@ -1565,7 +1565,7 @@
 .skill-config-slider-value {
   min-width: 36px;
   text-align: right;
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   font-weight: 600;
   color: var(--color-text-primary);
 }
@@ -1581,7 +1581,7 @@
 }
 
 .skill-config-saved {
-  font-size: 13px;
+  font-size: var(--font-size-xs);
   color: var(--color-success);
   font-weight: 500;
   margin-right: auto;
@@ -1591,7 +1591,7 @@
   padding: 8px 20px;
   border: none;
   border-radius: var(--radius-md);
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   font-weight: 500;
   cursor: pointer;
   transition: background 0.15s, transform 0.1s;
@@ -1635,7 +1635,7 @@
   border-radius: var(--radius-md);
   background: transparent;
   color: var(--color-text-tertiary);
-  font-size: 16px;
+  font-size: var(--font-size-md);
   cursor: pointer;
   transition: color 0.15s, background 0.15s;
   flex-shrink: 0;
@@ -1697,7 +1697,7 @@
 }
 
 .dialog-title {
-  font-size: 18px;
+  font-size: var(--font-size-lg);
   font-weight: 700;
   color: var(--color-text-primary);
   margin: 0;
@@ -1716,7 +1716,7 @@
   border-radius: var(--radius-md);
   background: transparent;
   color: var(--color-text-secondary);
-  font-size: 16px;
+  font-size: var(--font-size-md);
   cursor: pointer;
   transition: background 0.15s;
 }
@@ -1772,11 +1772,11 @@
 }
 
 .skill-create-icon {
-  font-size: 24px;
+  font-size: var(--font-size-2xl);
 }
 
 .skill-create-title {
-  font-size: 18px;
+  font-size: var(--font-size-lg);
   font-weight: 700;
   color: var(--color-text-primary);
   margin: 0;
@@ -1792,7 +1792,7 @@
   border-radius: var(--radius-md);
   background: transparent;
   color: var(--color-text-secondary);
-  font-size: 16px;
+  font-size: var(--font-size-md);
   cursor: pointer;
   transition: background 0.15s;
 }
@@ -1814,7 +1814,7 @@
 }
 
 .skill-create-label {
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   font-weight: 600;
   color: var(--color-text-primary);
   display: flex;
@@ -1823,7 +1823,7 @@
 }
 
 .skill-create-hint {
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   font-weight: 400;
   color: var(--color-text-tertiary);
 }
@@ -1836,7 +1836,7 @@
   border-radius: var(--radius-md);
   background: var(--color-bg-secondary);
   color: var(--color-text-primary);
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   font-family: inherit;
   line-height: 1.6;
   outline: none;
@@ -1855,10 +1855,10 @@
 }
 
 .skill-create-error {
-  font-size: 13px;
+  font-size: var(--font-size-xs);
   color: var(--color-error);
   margin: 0;
-  padding: 8px 12px;
+  padding: var(--spacing-sm) var(--spacing-md);
   background: rgba(239, 68, 68, 0.06);
   border-radius: var(--radius-md);
   border: 1px solid rgba(239, 68, 68, 0.15);
@@ -1874,7 +1874,7 @@
 .skill-create-meta {
   display: flex;
   gap: 16px;
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   color: var(--color-text-tertiary);
   padding: 10px 14px;
   background: var(--color-bg-secondary);
@@ -1894,7 +1894,7 @@
   border-radius: var(--radius-md);
   background: var(--color-bg-secondary);
   color: var(--color-text-primary);
-  font-size: 13px;
+  font-size: var(--font-size-xs);
   font-family: var(--font-mono);
   line-height: 1.6;
   outline: none;
@@ -1921,7 +1921,7 @@
   padding: 10px 12px;
   border: none;
   border-radius: var(--radius-md);
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   font-weight: 600;
   cursor: pointer;
   transition: all 0.15s;
@@ -2030,14 +2030,14 @@
 }
 
 .skill-refine-name {
-  font-size: 18px;
+  font-size: var(--font-size-lg);
   font-weight: 700;
   color: var(--color-text-primary);
   margin: 0;
 }
 
 .skill-refine-version {
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   color: var(--color-text-tertiary);
 }
 
@@ -2051,7 +2051,7 @@
   border-radius: var(--radius-md);
   background: transparent;
   color: var(--color-text-secondary);
-  font-size: 16px;
+  font-size: var(--font-size-md);
   cursor: pointer;
   transition: background 0.15s;
 }
@@ -2070,11 +2070,11 @@
 
 .skill-refine-tab {
   flex: 1;
-  padding: 12px 16px;
+  padding: var(--spacing-md) var(--spacing-md);
   border: none;
   background: transparent;
   color: var(--color-text-secondary);
-  font-size: 13px;
+  font-size: var(--font-size-xs);
   font-weight: 500;
   cursor: pointer;
   transition: all 0.15s;
@@ -2115,7 +2115,7 @@
   gap: 8px;
   padding: 40px;
   color: var(--color-text-tertiary);
-  font-size: 14px;
+  font-size: var(--font-size-sm);
 }
 
 .skill-refine-content {
@@ -2124,7 +2124,7 @@
   border-radius: var(--radius-md);
   border: 1px solid var(--color-border);
   font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: var(--font-size-xs);
   line-height: 1.6;
   color: var(--color-text-primary);
   white-space: pre-wrap;
@@ -2147,7 +2147,7 @@
   gap: 12px;
   padding: 40px;
   color: var(--color-text-tertiary);
-  font-size: 14px;
+  font-size: var(--font-size-sm);
 }
 
 .skill-refine-analyze-empty-icon {
@@ -2176,17 +2176,17 @@
 }
 
 .skill-refine-score-text {
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   font-weight: 600;
   color: var(--color-text-primary);
 }
 
 .skill-refine-summary {
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
   line-height: 1.6;
   margin: 0 0 16px;
-  padding: 12px 16px;
+  padding: var(--spacing-md) var(--spacing-md);
   background: var(--color-bg-secondary);
   border-radius: var(--radius-md);
 }
@@ -2198,7 +2198,7 @@
 }
 
 .skill-refine-suggestions-title {
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   font-weight: 600;
   color: var(--color-text-primary);
   margin: 0;
@@ -2220,14 +2220,14 @@
   padding: 10px 14px;
   background: var(--color-bg-secondary);
   border-radius: var(--radius-md);
-  font-size: 13px;
+  font-size: var(--font-size-xs);
   color: var(--color-text-secondary);
   line-height: 1.5;
 }
 
 .skill-refine-suggestion-bullet {
   flex-shrink: 0;
-  font-size: 14px;
+  font-size: var(--font-size-sm);
 }
 
 /* Diff 对比 */
@@ -2240,7 +2240,7 @@
 }
 
 .skill-refine-changes-title {
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   font-weight: 600;
   color: var(--color-text-primary);
   margin: 0 0 8px;
@@ -2256,7 +2256,7 @@
 }
 
 .skill-refine-change-item {
-  font-size: 13px;
+  font-size: var(--font-size-xs);
   color: var(--color-text-secondary);
   padding: 6px 12px;
   background: var(--color-bg-secondary);
@@ -2276,7 +2276,7 @@
 .skill-refine-diff-line {
   display: flex;
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   line-height: 1.6;
   padding: 0 12px;
 }
@@ -2330,7 +2330,7 @@
   border-radius: var(--radius-md);
   background: var(--color-bg-secondary);
   color: var(--color-text-primary);
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   outline: none;
   transition: border-color 0.2s, box-shadow 0.2s;
 }
@@ -2349,7 +2349,7 @@
 }
 
 .skill-refine-error {
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   color: var(--color-error);
   margin: 6px 0 0;
 }
@@ -2373,7 +2373,7 @@
   padding: 8px 20px;
   border: none;
   border-radius: var(--radius-md);
-  font-size: 13px;
+  font-size: var(--font-size-xs);
   font-weight: 600;
   cursor: pointer;
   transition: all 0.15s;
@@ -2690,7 +2690,7 @@
 .network-toggle-label {
   line-height: 1;
   color: var(--color-text-secondary);
-  font-size: 12px;
+  font-size: var(--font-size-xs);
 }
 
 /* ── 更新弹窗 ── */
@@ -2721,13 +2721,13 @@
 }
 
 .update-empty-text {
-  font-size: 15px;
+  font-size: var(--font-size-sm);
   color: var(--color-text-primary, #fff);
   font-weight: 500;
 }
 
 .update-empty-hint {
-  font-size: 13px;
+  font-size: var(--font-size-xs);
   color: var(--color-text-secondary, #888);
   text-align: center;
   margin: 0;
@@ -2736,7 +2736,7 @@
 
 .update-summary {
   padding: 8px 0 12px;
-  font-size: 13px;
+  font-size: var(--font-size-xs);
   color: var(--color-text-secondary, #aaa);
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   margin-bottom: 8px;
@@ -2747,7 +2747,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 12px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: rgba(255, 255, 255, 0.04);
   margin-bottom: 8px;
   transition: background 0.15s;
@@ -2766,7 +2766,7 @@
 }
 
 .update-item-icon {
-  font-size: 24px;
+  font-size: var(--font-size-2xl);
   flex-shrink: 0;
 }
 
@@ -2776,14 +2776,14 @@
 
 .update-item-name {
   margin: 0;
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   font-weight: 600;
   color: var(--color-text-primary, #fff);
 }
 
 .update-item-version {
   margin: 4px 0 0;
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   color: var(--color-text-secondary, #aaa);
   display: flex;
   align-items: center;
@@ -2805,7 +2805,7 @@
 
 .update-item-changelog {
   margin: 4px 0 0;
-  font-size: 11px;
+  font-size: var(--font-size-2xs);
   color: var(--color-text-secondary, #777);
   line-height: 1.4;
   overflow: hidden;
@@ -2819,7 +2819,7 @@
   border: 1px solid rgba(255, 255, 255, 0.15);
   background: rgba(255, 255, 255, 0.06);
   color: var(--color-text-primary, #fff);
-  font-size: 13px;
+  font-size: var(--font-size-xs);
   cursor: pointer;
   flex-shrink: 0;
   transition: all 0.15s;
@@ -2837,19 +2837,19 @@
 }
 
 .update-actions {
-  padding: 12px 16px;
+  padding: var(--spacing-md) var(--spacing-md);
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   display: flex;
   justify-content: flex-end;
 }
 
 .btn-update-all {
-  padding: 8px 12px;
-  border-radius: 8px;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-md);
   border: none;
   background: var(--color-accent, #6c8);
   color: var(--color-text-inverse);
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   font-weight: 600;
   cursor: pointer;
   transition: all 0.15s;
@@ -2869,7 +2869,7 @@
   align-items: center;
   gap: 8px;
   padding: 10px 16px;
-  font-size: 13px;
+  font-size: var(--font-size-xs);
   color: var(--color-text-secondary, #aaa);
   background: rgba(255, 255, 255, 0.03);
   border-top: 1px solid rgba(255, 255, 255, 0.06);
@@ -2993,7 +2993,7 @@
 .stats-detail-item { text-align: center; }
 
 .stats-detail-number {
-  font-size: var(--font-size-md-lg);
+  font-size: var(--font-size-lg);
   font-weight: 600;
   color: var(--color-text-primary);
 }
@@ -3118,7 +3118,7 @@
 }
 
 .chain-wf-arrow {
-  font-size: var(--font-size-md-lg);
+  font-size: var(--font-size-lg);
 }
 
 .chain-steps-hint {

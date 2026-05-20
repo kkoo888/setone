@@ -8,6 +8,9 @@
   flex-direction: column;
   height: 100%;
   overflow: hidden;
+  background: var(--color-bg-primary);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
 }
 
 .kb-header {
@@ -71,7 +74,7 @@
 
 .kb-search-input {
   flex: 1;
-  padding: 12px 16px;
+  padding: var(--spacing-md) var(--spacing-md);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-bg-secondary);
@@ -109,7 +112,7 @@
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 14px 18px;
+  padding: var(--spacing-md) var(--spacing-md);
   background: var(--color-bg-primary);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
@@ -129,7 +132,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
+  font-size: var(--font-size-xl);
   flex-shrink: 0;
 }
 
@@ -148,7 +151,7 @@
 }
 
 .kb-doc-meta {
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   color: var(--color-text-tertiary);
   margin-top: 2px;
 }
@@ -164,7 +167,7 @@
   border-radius: var(--radius-md);
   background: var(--color-bg-secondary);
   color: var(--color-text-secondary);
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   cursor: pointer;
   transition: all var(--transition-fast);
 }
@@ -205,7 +208,7 @@
   border-radius: var(--radius-full);
   background: rgba(99, 102, 241, 0.1);
   color: var(--color-accent);
-  font-size: 11px;
+  font-size: var(--font-size-2xs);
   font-weight: 600;
   margin-left: 8px;
 }
@@ -218,7 +221,7 @@
 
 /* 问答结果 */
 .kb-ask-result {
-  padding: 20px;
+  padding: var(--spacing-lg);
   background: var(--color-bg-secondary);
   border-radius: var(--radius-lg);
   border: 1px solid var(--color-border);
@@ -238,7 +241,7 @@
 }
 
 .kb-ask-source {
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   color: var(--color-text-tertiary);
   padding: 6px 10px;
   background: var(--color-bg-primary);
@@ -295,7 +298,7 @@
   flex: 1;
   padding: 10px 16px;
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: var(--color-bg-secondary);
   color: var(--color-text-secondary);
   cursor: pointer;
@@ -316,7 +319,7 @@
   gap: 16px;
   padding: 32px;
   border: 2px dashed var(--color-border);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   background: var(--color-bg-secondary);
 }
 
@@ -331,7 +334,7 @@
   color: var(--color-text-primary);
   font-size: var(--font-size-sm);
   background: var(--color-bg-tertiary);
-  padding: 8px 16px;
+  padding: var(--spacing-sm) var(--spacing-md);
   border-radius: 6px;
   word-break: break-all;
   margin: 0;
@@ -417,7 +420,7 @@
 }
 
 .kb-detail-title {
-  font-size: var(--font-size-md-lg);
+  font-size: var(--font-size-lg);
   font-weight: 700;
   color: var(--color-text-primary);
   margin-bottom: var(--spacing-md);
