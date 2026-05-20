@@ -180,9 +180,9 @@ export function useTheme() {
       if (localId) {
         await loadAndApplyThemeById(localId, theme)
       } else {
-        // 无保存主题，加载默认主题
-        await loadAndApplyThemeById('default', theme)
-        persistThemeId('default')
+        // 无保存主题，加载默认主题（社会认证）
+        await loadAndApplyThemeById('social-proof', theme)
+        persistThemeId('social-proof')
       }
     }
     loadStartupTheme()
@@ -195,16 +195,16 @@ export function useTheme() {
     if (savedId) {
       loadAndApplyThemeById(savedId, theme)
     } else {
-      // 无保存主题，加载默认主题
-      loadAndApplyThemeById('default', theme)
-      persistThemeId('default')
+      // 无保存主题，加载默认主题（社会认证）
+      loadAndApplyThemeById('social-proof', theme)
+      persistThemeId('social-proof')
     }
 
     // system 模式：监听系统主题变化
     if (theme === 'system') {
       const mq = window.matchMedia('(prefers-color-scheme: dark)')
       const handler = () => {
-        const currentId = loadSavedThemeId() ?? 'default'
+        const currentId = loadSavedThemeId() ?? 'social-proof'
         loadAndApplyThemeById(currentId, theme)
       }
       mq.addEventListener('change', handler)

@@ -285,13 +285,45 @@ class Cubism5Service {
       // 缓存类引用供 createMvpMatrix 使用
       this._Matrix44Class = CubismModelMatrix
 
-      const modelMatrix = new CubismModelMatrix(
-        this.model.getCanvasWidth(),
-        this.model.getCanvasHeight()
-      )
-      modelMatrix.scale(scale, scale)
-      // 存储到 service 上供渲染时使用
+      const canvasWidth = this.model.getCanvasWidth()
+      const canvasHeight = this.model.getCanvasHeight()
+
+      // ===== 诊断：canvas 尺寸 =====
+      const rawModel = (this.model as any)._model
+      const pixelsPerUnit = rawModel?.canvasinfo?.PixelsPerUnit ?? 'N/A'
+      const rawCanvasW = rawModel?.canvasinfo?.CanvasWidth ?? 'N/A'
+      const rawCanvasH = rawModel?.canvasinfo?.CanvasHeight ?? 'N/A'
+      console.log('[Cubism5-DEBUG] ===== 模型缩放诊断 =====')
+      console.log('[Cubism5-DEBUG] PixelsPerUnit:', pixelsPerUnit)
+      console.log('[Cubism5-DEBUG] Raw CanvasWidth:', rawCanvasW, 'CanvasHeight:', rawCanvasH)
+      console.log('[Cubism5-DEBUG] getCanvasWidth():', canvasWidth, 'getCanvasHeight():', canvasHeight)
+      console.log('[Cubism5-DEBUG] 用户 scale:', scale)
+
+      // CubismModelMatrix 构造函数内部会调用 setHeight(2.0) 做一次归一化缩放
+      // 但 scale() 是覆写，会覆盖掉。所以用 scaleRelative 累乘
+      const modelMatrix = new CubismModelMatrix(canvasWidth, canvasHeight)
+
+      // 诊断：构造后的内部状态
+      const mmArr = modelMatrix.getArray()
+      console.log('[Cubism5-DEBUG] CubismModelMatrix 构造后 (setHeight(2.0) 后):')
+      console.log('[Cubism5-DEBUG]   scale:', mmArr[0], ',', mmArr[5])
+      console.log('[Cubism5-DEBUG]   translate:', mmArr[12], ',', mmArr[13])
+
+      // 用 scaleRelative 累乘，保留 setHeight(2.0) 的归一化
+      modelMatrix.scaleRelative(scale, scale)
+
+      // 居中模型（借鉴 pixi-live2d-display 的 anchor 0.5 + 居中定位）
+      modelMatrix.centerX(this.canvas.width / 2)
+      modelMatrix.centerY(this.canvas.height / 2)
+
       this._modelMatrix = modelMatrix
+
+      // 诊断：最终 model matrix
+      const finalArr = this._modelMatrix.getArray()
+      console.log('[Cubism5-DEBUG] 最终 modelMatrix (scaleRelative + center):')
+      console.log('[Cubism5-DEBUG]   scale:', finalArr[0], ',', finalArr[5])
+      console.log('[Cubism5-DEBUG]   translate:', finalArr[12], ',', finalArr[13])
+      console.log('[Cubism5-DEBUG] ===== 诊断结束 =====')
     } catch (err) {
       console.warn('[Cubism5] ModelMatrix 初始化失败:', err)
     }
@@ -523,23 +555,22 @@ class Cubism5Service {
       // shader 状态
       if (renderer) {
         try {
-          const shaderMgr = renderer._drawableClippingManager ? '有' : '无'
-          console.log('[Cubism5-DEBUG] clippingManager:', shaderMgr)
+          console.log('[Cubism5-DEBUG] clippingManager:', renderer._drawableClippingManager ? '有' : '无')
           console.log('[Cubism5-DEBUG] _modelRenderTargets 长度:', renderer._modelRenderTargets?.length)
           console.log('[Cubism5-DEBUG] _drawableMasks 长度:', renderer._drawableMasks?.length)
+          // ===== 诊断：shader 状态 =====
+          console.log('[Cubism5-DEBUG] isShadersReady:', typeof renderer.isShadersReady === 'function' ? renderer.isShadersReady() : 'N/A')
         } catch (e) { console.log('[Cubism5-DEBUG] renderer 属性读取失败:', e) }
       }
 
       // 模型状态
       const model = this.model as any
       try {
-        // CubismModel 包装类方法
         const drawCount = typeof model.getDrawableCount === 'function' ? model.getDrawableCount() : 'N/A'
         const paramCount = typeof model.getParameterCount === 'function' ? model.getParameterCount() : 'N/A'
         console.log('[Cubism5-DEBUG] drawableCount:', drawCount)
         console.log('[Cubism5-DEBUG] parameterCount:', paramCount)
 
-        // 检查每个 drawable 的可见性
         if (typeof model.getDrawableCount === 'function') {
           const dc = model.getDrawableCount()
           let visibleCount = 0
@@ -549,8 +580,13 @@ class Cubism5Service {
           console.log('[Cubism5-DEBUG] 可见 drawable 数:', visibleCount, '/', dc)
         }
 
-        // 检查纹理绑定
+        // ===== 诊断：纹理绑定 =====
         console.log('[Cubism5-DEBUG] _textures 长度:', renderer?._textures?.size)
+        if (renderer?._textures) {
+          for (const [idx, tex] of renderer._textures) {
+            console.log(`[Cubism5-DEBUG]   纹理[${idx}]:`, tex ? '有' : 'null')
+          }
+        }
       } catch (e) { console.log('[Cubism5-DEBUG] 模型属性读取失败:', e) }
 
       // MVP 矩阵
@@ -598,6 +634,19 @@ class Cubism5Service {
         const postErr = gl.getError()
         if (postErr !== 0) {
           console.warn(`[Cubism5-DEBUG] 第${this._debugFrameCount}帧 drawModel 后 gl.getError():`, postErr)
+        }
+        // ===== 诊断：首帧渲染后状态 =====
+        if (this._debugFrameCount === 1) {
+          console.log('[Cubism5-DEBUG] ===== 首帧渲染后 =====')
+          console.log('[Cubism5-DEBUG] framebuffer binding:', gl.getParameter(gl.FRAMEBUFFER_BINDING))
+          console.log('[Cubism5-DEBUG] viewport:', gl.getParameter(gl.VIEWPORT))
+          // 读取 canvas 像素检查是否有内容
+          try {
+            const pixels = new Uint8Array(4)
+            gl.readPixels(canvas.width / 2, canvas.height / 2, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixels)
+            console.log('[Cubism5-DEBUG] canvas 中心像素 RGBA:', Array.from(pixels))
+          } catch (e) { console.log('[Cubism5-DEBUG] readPixels 失败:', e) }
+          console.log('[Cubism5-DEBUG] ===== 首帧渲染后结束 =====')
         }
       }
     }

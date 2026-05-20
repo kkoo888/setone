@@ -14,6 +14,7 @@ import { readdir, readFile, writeFile, mkdir, unlink, copyFile } from 'fs/promis
 import { join, extname, basename } from 'path'
 import { existsSync } from 'fs'
 import { registeredModuleIpc } from './module.handlers'
+import type { HandlerDeps } from './types'
 
 /** 主题 JSON 结构（兼容 v1 和 v2） */
 interface ThemeFile {
@@ -121,7 +122,8 @@ function getRelativeLuminance(hex: string): number {
 /**
  * 注册主题相关的 IPC 处理器
  */
-export function registerThemeHandlers(): void {
+export function registerThemeHandlers(deps: HandlerDeps): void {
+  const { config } = deps
   // 标记这些通道已由主进程注册，防止模块系统重复注册
   registeredModuleIpc.add('theme_list')
   registeredModuleIpc.add('theme_get')
@@ -133,6 +135,9 @@ export function registerThemeHandlers(): void {
   // ── theme_list: 列出所有主题 ──
   ipcMain.handle('theme_list', async () => {
     try {
+      // 从 config 读取当前激活主题 ID（持久化，重启不丢）
+      const currentActiveId = await config.get<string>('activeTheme')
+
       const themes: Array<{
         id: string; name: string; author: string; description: string
         mode: string; colors: Record<string, string>; source: string; active: boolean
@@ -153,7 +158,7 @@ export function registerThemeHandlers(): void {
             mode: getThemeMode(theme),
             colors: extractPreviewColors(theme),
             source: 'builtin',
-            active: false,
+            active: theme.id === currentActiveId,
           })
         }
       }
@@ -174,7 +179,7 @@ export function registerThemeHandlers(): void {
             mode: getThemeMode(theme),
             colors: extractPreviewColors(theme),
             source: 'imported',
-            active: false,
+            active: theme.id === currentActiveId,
           })
         }
       }
@@ -211,6 +216,9 @@ export function registerThemeHandlers(): void {
   // ── theme_apply: 应用主题 ──
   ipcMain.handle('theme_apply', async (_event, params: { id: string }) => {
     try {
+      // 持久化到 config（重启不丢）
+      await config.set('activeTheme', params.id)
+
       // 获取主题数据
       const builtinPath = join(getBuiltinThemesDir(), `${params.id}.json`)
       let theme = await readThemeFile(builtinPath)
