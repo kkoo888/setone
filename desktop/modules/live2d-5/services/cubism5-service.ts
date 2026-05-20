@@ -538,7 +538,8 @@ class Cubism5Service {
     const renderer = new CubismRenderer_WebGL(this.canvas.width, this.canvas.height)
 
     // 官方顺序：先 initialize(model)，再 startUp(gl)
-    renderer.initialize(this.model.getModel())
+    // 注意：必须传 CubismModel 包装类（有 isUsingMasking 等方法），不能传 getModel() 返回的原始核心对象
+    renderer.initialize(this.model as unknown as import('../lib/model/cubismmodel').CubismModel)
     renderer.startUp(this.gl)
     renderer.setIsPremultipliedAlpha(true)
 
@@ -605,7 +606,8 @@ class Cubism5Service {
   private updateMotionAndExpression(deltaTimeSeconds: number): void {
     if (!this.model) return
 
-    const model = this.model.getModel() as unknown as import('../lib/model/cubismmodel').CubismModel
+    // 注意：必须传 CubismModel 包装类，不能传 getModel() 返回的原始核心对象
+    const model = this.model as unknown as import('../lib/model/cubismmodel').CubismModel
 
     // 更新表情
     if (this.expressionManager) {
