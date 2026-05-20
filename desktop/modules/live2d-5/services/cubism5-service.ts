@@ -103,6 +103,7 @@ class Cubism5Service {
       }
 
       // 动态加载 Cubism 5 Core SDK
+      console.log('[Cubism5] 📦 加载 SDK, 路径:', CUBISM_CORE_SDK_PATH)
       await new Promise<void>((resolve, reject) => {
         const script = document.createElement('script')
         script.src = CUBISM_CORE_SDK_PATH
@@ -112,6 +113,7 @@ class Cubism5Service {
           resolve()
         }
         script.onerror = () => {
+          console.error('[Cubism5] ❌ Core SDK 加载失败, 路径:', CUBISM_CORE_SDK_PATH)
           reject(new Error('Cubism 5 Core SDK 加载失败'))
         }
         document.head.appendChild(script)
@@ -182,19 +184,24 @@ class Cubism5Service {
       this.registerContextEvents()
 
       // 加载模型文件
+      console.log('[Cubism5] 📦 开始加载模型, window.location.href:', window.location.href)
+      console.log('[Cubism5] 📦 modelPath:', config.modelPath)
       const response = await fetch(config.modelPath)
       if (!response.ok) {
         throw new Error(`加载模型配置失败: ${response.status} ${response.statusText} (${config.modelPath})`)
       }
       this.cachedModelJson = (await response.json()) as Cubism3ModelJson
+      console.log('[Cubism5] ✅ model3.json 加载成功:', this.cachedModelJson)
 
       // 加载 moc 文件
       const mocPath = new URL(this.cachedModelJson.FileReferences.Moc, config.modelPath).href
+      console.log('[Cubism5] 📦 mocPath:', mocPath)
       const mocResponse = await fetch(mocPath)
       if (!mocResponse.ok) {
         throw new Error(`加载 Moc 文件失败: ${mocResponse.status} ${mocResponse.statusText} (${mocPath})`)
       }
       const mocBuffer = await mocResponse.arrayBuffer()
+      console.log('[Cubism5] ✅ Moc 文件加载成功, 大小:', mocBuffer.byteLength, 'bytes')
 
       // 创建 Moc — SDK API: CubismMoc.create(mocBytes, shouldCheckMocConsistency)
       this.moc = CubismMoc.create(mocBuffer, false) as unknown as CubismMocLike
@@ -233,7 +240,9 @@ class Cubism5Service {
       // 开始渲染循环
       this.startRenderLoop()
     } catch (err) {
-      console.error('[Cubism5] ❌ 模型加载失败:', err)
+      console.error('[Cubism5] ❌ 模型加载失败, 详细错误:', err)
+      console.error('[Cubism5] ❌ modelPath:', config.modelPath)
+      console.error('[Cubism5] ❌ window.location.href:', window.location.href)
       this.updateState('error')
       throw err
     }
@@ -346,15 +355,17 @@ class Cubism5Service {
 
     for (let i = 0; i < textures.length; i++) {
       const texturePath = new URL(textures[i], basePath).href
+      console.log(`[Cubism5] 🖼️ 加载纹理 ${i}/${textures.length}:`, texturePath)
       try {
         const texture = await this.loadTexture(texturePath)
         if (texture) {
           if (this.model?.setTexture) {
             this.model.setTexture(i, texture)
           }
+          console.log(`[Cubism5] ✅ 纹理 ${i} 加载成功`)
         }
       } catch (err) {
-        console.error(`[Cubism5] 纹理 ${i} 加载失败，跳过:`, err)
+        console.error(`[Cubism5] ❌ 纹理 ${i} 加载失败，跳过:`, err)
       }
     }
   }
@@ -607,11 +618,13 @@ class Cubism5Service {
 
       // 加载表情文件
       const expPath = new URL(expressionDef.File, this.modelPath).href
+      console.log('[Cubism5] 📦 加载表情:', expressionId, '→', expPath)
       const expResponse = await fetch(expPath)
       if (!expResponse.ok) {
         throw new Error(`加载表情文件失败: ${expResponse.status} ${expResponse.statusText} (${expPath})`)
       }
       const expBuffer = await expResponse.arrayBuffer()
+      console.log('[Cubism5] ✅ 表情文件加载成功, 大小:', expBuffer.byteLength, 'bytes')
 
       // 创建表情动作
       const { CubismExpressionMotion } = await import('../lib/motion/cubismexpressionmotion')
@@ -669,11 +682,13 @@ class Cubism5Service {
       }
 
       // 加载动作文件
+      console.log('[Cubism5] 📦 加载动作:', motionId, '→', motionPath)
       const motionResponse = await fetch(motionPath)
       if (!motionResponse.ok) {
         throw new Error(`加载动作文件失败: ${motionResponse.status} ${motionResponse.statusText} (${motionPath})`)
       }
       const motionBuffer = await motionResponse.arrayBuffer()
+      console.log('[Cubism5] ✅ 动作文件加载成功, 大小:', motionBuffer.byteLength, 'bytes')
 
       // 创建动作
       const { CubismMotion } = await import('../lib/motion/cubismmotion')

@@ -68,6 +68,7 @@ const Live2D5PetPage: React.FC = () => {
 
         if (!cancelled) setState('loaded')
       } catch (err) {
+        console.error('[Live2D5PetPage] ❌ 模型加载异常:', err)
         if (!cancelled) {
           setError(err instanceof Error ? err.message : '加载失败')
           setState('error')
