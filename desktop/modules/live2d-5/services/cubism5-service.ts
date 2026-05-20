@@ -490,6 +490,11 @@ class Cubism5Service {
     this.animFrameId = requestAnimationFrame(render)
   }
 
+  /** 首帧调试标记 */
+  private _debugged = false
+  /** 调试帧计数 */
+  private _debugFrameCount?: number
+
   /**
    * 渲染一帧
    */
@@ -504,6 +509,60 @@ class Cubism5Service {
       canvas.width = canvas.clientWidth
       canvas.height = canvas.clientHeight
       gl.viewport(0, 0, canvas.width, canvas.height)
+    }
+
+    // ===== 首帧调试信息 =====
+    if (!this._debugged) {
+      this._debugged = true
+      const renderer = this.renderer as any
+      console.log('[Cubism5-DEBUG] ========== 首帧渲染调试 ==========')
+      console.log('[Cubism5-DEBUG] canvas 尺寸:', canvas.width, 'x', canvas.height, 'clientWidth:', canvas.clientWidth, 'clientHeight:', canvas.clientHeight)
+      console.log('[Cubism5-DEBUG] gl context:', gl ? 'OK' : 'NULL', 'isContextLost:', gl.isContextLost())
+      console.log('[Cubism5-DEBUG] renderer:', renderer ? 'OK' : 'NULL')
+
+      // shader 状态
+      if (renderer) {
+        try {
+          const shaderMgr = renderer._drawableClippingManager ? '有' : '无'
+          console.log('[Cubism5-DEBUG] clippingManager:', shaderMgr)
+          console.log('[Cubism5-DEBUG] _modelRenderTargets 长度:', renderer._modelRenderTargets?.length)
+          console.log('[Cubism5-DEBUG] _drawableMasks 长度:', renderer._drawableMasks?.length)
+        } catch (e) { console.log('[Cubism5-DEBUG] renderer 属性读取失败:', e) }
+      }
+
+      // 模型状态
+      const model = this.model as any
+      try {
+        const internalModel = model.getModel ? model.getModel() : model
+        console.log('[Cubism5-DEBUG] drawableCount:', internalModel.getDrawableCount?.())
+        console.log('[Cubism5-DEBUG] parameterCount:', internalModel.getParameterCount?.())
+
+        // 检查每个 drawable 的可见性
+        const drawCount = internalModel.getDrawableCount?.() ?? 0
+        let visibleCount = 0
+        for (let i = 0; i < drawCount; i++) {
+          if (internalModel.getDrawableDynamicFlagIsVisible?.(i)) visibleCount++
+        }
+        console.log('[Cubism5-DEBUG] 可见 drawable 数:', visibleCount, '/', drawCount)
+
+        // 检查纹理绑定
+        console.log('[Cubism5-DEBUG] _textures 长度:', renderer?._textures?.size)
+      } catch (e) { console.log('[Cubism5-DEBUG] 模型属性读取失败:', e) }
+
+      // MVP 矩阵
+      try {
+        const mvp = this.createMvpMatrix(canvas.width, canvas.height)
+        const arr = mvp.getArray()
+        console.log('[Cubism5-DEBUG] MVP 矩阵:', Array.from(arr.slice(0, 4)), Array.from(arr.slice(4, 8)), Array.from(arr.slice(8, 12)), Array.from(arr.slice(12, 16)))
+      } catch (e) { console.log('[Cubism5-DEBUG] MVP 计算失败:', e) }
+
+      // 检查 WebGL 错误
+      const err = gl.getError()
+      console.log('[Cubism5-DEBUG] gl.getError():', err, err === 0 ? '(无错误)' : '(有错误!)')
+
+      // 检查 framebuffer 状态
+      console.log('[Cubism5-DEBUG] framebuffer binding:', gl.getParameter(gl.FRAMEBUFFER_BINDING))
+      console.log('[Cubism5-DEBUG] ========== 调试结束 ==========')
     }
 
     // 清除画布
@@ -527,6 +586,16 @@ class Cubism5Service {
     if (this.renderer) {
       this.renderer.setMvpMatrix(this.createMvpMatrix(canvas.width, canvas.height))
       this.renderer.drawModel()
+
+      // 每帧检查 gl 错误（仅前 5 帧）
+      if (this._debugFrameCount === undefined) this._debugFrameCount = 0
+      if (this._debugFrameCount < 5) {
+        this._debugFrameCount++
+        const postErr = gl.getError()
+        if (postErr !== 0) {
+          console.warn(`[Cubism5-DEBUG] 第${this._debugFrameCount}帧 drawModel 后 gl.getError():`, postErr)
+        }
+      }
     }
   }
 
