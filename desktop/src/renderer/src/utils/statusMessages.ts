@@ -8,7 +8,6 @@ import {
   Message,
   Lightning,
   Refresh,
-  Read,
   Globe,
   Keyboard,
   Clipboard,
@@ -79,7 +78,7 @@ export const SIDEBAR_ICONS: Record<string, React.ReactNode> = {
   chat: icon(Message),
   skills: icon(Lightning),
   workflow: icon(Refresh),
-  'knowledge-base': icon(Read),
+  'knowledge-base': icon(BookOpen),
   translator: icon(Globe),
   shortcuts: icon(Keyboard),
   'clipboard-history': icon(Clipboard),
@@ -196,7 +195,7 @@ export const PAGE_ICONS = {
   folderOpen: React.createElement(FolderOpen, md),
 
   /** 工作流 */
-  read: React.createElement(Read, md),
+  read: React.createElement(BookOpen, md),
   refresh: React.createElement(Refresh, md),
   clipboard: React.createElement(Clipboard, md),
   folder: React.createElement(FolderOpen, md),
@@ -324,7 +323,7 @@ export const Msg = {
 // ============================================================
 export {
   // 侧边栏
-  Message, Lightning, Refresh, Read, Globe, Keyboard, Clipboard,
+  Message, Lightning, Refresh, Globe, Keyboard, Clipboard,
   Notice, MessageOne, Calendar, PreviewOpen, ChartLine, Theme,
   Scissor, AllApplication, SettingOne, Cat, Drama,
   // 模块

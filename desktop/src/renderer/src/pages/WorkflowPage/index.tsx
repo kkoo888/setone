@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { EMPTY_ICONS, STATUS_ICONS, ACTION_ICONS, Msg, Search, Read, Refresh, Clipboard, FolderOpen, Magic, PlayOne, PauseOne, CheckOne, CloseOne, LoadingFour, DeleteOne, Monitor } from '../../utils/statusMessages'
+import { EMPTY_ICONS, STATUS_ICONS, ACTION_ICONS, Msg, Search, BookOpen, Refresh, Clipboard, FolderOpen, Magic, PlayOne, PauseOne, CheckOne, CloseOne, LoadingFour, DeleteOne, Monitor } from '../../utils/statusMessages'
 const searchI = React.createElement(Search, { size: 16, fill: 'currentColor', theme: 'outline' })
-const readI = React.createElement(Read, { size: 16, fill: 'currentColor', theme: 'outline' })
+const readI = React.createElement(BookOpen, { size: 16, fill: 'currentColor', theme: 'outline' })
 const refreshI = React.createElement(Refresh, { size: 16, fill: 'currentColor', theme: 'outline' })
 const clipI = React.createElement(Clipboard, { size: 16, fill: 'currentColor', theme: 'outline' })
 const folderI = React.createElement(FolderOpen, { size: 16, fill: 'currentColor', theme: 'outline' })
