@@ -168,6 +168,7 @@
   justify-content: center;
   background: var(--color-accent-light);
   font-size: var(--font-size-3xl);
+}
 .mod-card-body {
   flex: 1;
   min-width: 0;
