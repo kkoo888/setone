@@ -103,11 +103,16 @@ class Cubism5Service {
 
     try {
       const win = window as WindowWithCubism
-      if (win.Live2DCubismCore) {
-        console.log('[Cubism5] Core SDK 已存在')
+      // 检测是否已有 Cubism 5 SDK（Cubism 4 没有 Memory 属性）
+      if (win.Live2DCubismCore && (win.Live2DCubismCore as Record<string, unknown>).Memory) {
+        console.log('[Cubism5] Core SDK 已存在 (Cubism 5)')
         this.sdkLoaded = true
         this.updateState('idle')
         return
+      }
+
+      if (win.Live2DCubismCore && !(win.Live2DCubismCore as Record<string, unknown>).Memory) {
+        console.log('[Cubism5] ⚠️ 检测到 Cubism 4 SDK，需要加载 Cubism 5 SDK 覆盖')
       }
 
       // 动态加载 Cubism 5 Core SDK
