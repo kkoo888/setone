@@ -527,26 +527,50 @@ class Cubism5Service {
           console.log('[Cubism5-DEBUG] clippingManager:', shaderMgr)
           console.log('[Cubism5-DEBUG] _modelRenderTargets 长度:', renderer._modelRenderTargets?.length)
           console.log('[Cubism5-DEBUG] _drawableMasks 长度:', renderer._drawableMasks?.length)
+
+          // shader 加载状态
+          const shaderReady = typeof renderer.isShadersReady === 'function' ? renderer.isShadersReady() : '方法不存在'
+          console.log('[Cubism5-DEBUG] isShadersReady:', shaderReady)
         } catch (e) { console.log('[Cubism5-DEBUG] renderer 属性读取失败:', e) }
       }
 
-      // 模型状态
-      const model = this.model as any
+      // 模型状态 — 注意: this.model 是 CubismModel 包装类，getModel() 返回底层 Core Model
+      const cubismModel = this.model as any
       try {
-        const internalModel = model.getModel ? model.getModel() : model
-        console.log('[Cubism5-DEBUG] drawableCount:', internalModel.getDrawableCount?.())
-        console.log('[Cubism5-DEBUG] parameterCount:', internalModel.getParameterCount?.())
+        console.log('[Cubism5-DEBUG] model 类型:', cubismModel.constructor?.name)
+        console.log('[Cubism5-DEBUG] model.getModel 存在:', typeof cubismModel.getModel)
+        console.log('[Cubism5-DEBUG] model.getDrawableCount 存在:', typeof cubismModel.getDrawableCount)
+        console.log('[Cubism5-DEBUG] model.getParameterCount 存在:', typeof cubismModel.getParameterCount)
 
-        // 检查每个 drawable 的可见性
-        const drawCount = internalModel.getDrawableCount?.() ?? 0
-        let visibleCount = 0
-        for (let i = 0; i < drawCount; i++) {
-          if (internalModel.getDrawableDynamicFlagIsVisible?.(i)) visibleCount++
+        // CubismModel 包装类的方法
+        const drawCount = typeof cubismModel.getDrawableCount === 'function' ? cubismModel.getDrawableCount() : '方法不存在'
+        const paramCount = typeof cubismModel.getParameterCount === 'function' ? cubismModel.getParameterCount() : '方法不存在'
+        console.log('[Cubism5-DEBUG] drawableCount:', drawCount)
+        console.log('[Cubism5-DEBUG] parameterCount:', paramCount)
+
+        // 可见 drawable 数
+        if (typeof cubismModel.getDrawableCount === 'function') {
+          const dc = cubismModel.getDrawableCount()
+          let visibleCount = 0
+          for (let i = 0; i < dc; i++) {
+            if (cubismModel.getDrawableDynamicFlagIsVisible?.(i)) visibleCount++
+          }
+          console.log('[Cubism5-DEBUG] 可见 drawable 数:', visibleCount, '/', dc)
         }
-        console.log('[Cubism5-DEBUG] 可见 drawable 数:', visibleCount, '/', drawCount)
+
+        // 检查底层 Core Model
+        if (typeof cubismModel.getModel === 'function') {
+          const coreModel = cubismModel.getModel()
+          console.log('[Cubism5-DEBUG] Core Model 存在:', !!coreModel)
+          if (coreModel) {
+            console.log('[Cubism5-DEBUG] Core.drawables:', coreModel.drawables?.count)
+            console.log('[Cubism5-DEBUG] Core.parameters:', coreModel.parameters?.count)
+            console.log('[Cubism5-DEBUG] Core.parts:', coreModel.parts?.count)
+          }
+        }
 
         // 检查纹理绑定
-        console.log('[Cubism5-DEBUG] _textures 长度:', renderer?._textures?.size)
+        console.log('[Cubism5-DEBUG] renderer._textures:', renderer?._textures?.size ?? renderer?._textures?.length ?? '无')
       } catch (e) { console.log('[Cubism5-DEBUG] 模型属性读取失败:', e) }
 
       // MVP 矩阵
