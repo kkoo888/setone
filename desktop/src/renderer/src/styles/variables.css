@@ -1,4 +1,7 @@
 :root {
+  /* ── 全局主题过渡 ── */
+  transition: background-color 0.3s ease, color 0.2s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+
   /* ── 颜色 ── */
   --color-bg-primary: #ffffff;
   --color-bg-secondary: #f5f5f5;
@@ -100,4 +103,18 @@
     --color-info: #60a5fa;
     --color-overlay: rgba(0, 0, 0, 0.6);
   }
+}
+
+/* ── Compact 紧凑主题 ── */
+[data-theme='compact'] {
+  --spacing-sm: 4px;
+  --spacing-md: 8px;
+  --spacing-lg: 12px;
+  --spacing-xl: 16px;
+  --font-size-sm: 12px;
+  --font-size-md: 14px;
+  --font-size-lg: 16px;
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 8px;
 }

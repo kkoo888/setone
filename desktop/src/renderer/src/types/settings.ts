@@ -4,7 +4,7 @@
  */
 
 /** 主题模式 */
-export type ThemeMode = 'light' | 'dark' | 'system'
+export type ThemeMode = 'light' | 'dark' | 'system' | 'compact'
 
 /** 支持的语言 */
 export type Language = 'zh-CN' | 'en-US' | 'ja-JP'

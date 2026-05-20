@@ -246,7 +246,7 @@
   padding: 10px 14px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  background: #fff;
+  background: var(--color-bg-primary);
   color: var(--color-text-primary);
   font-size: var(--font-size-sm);
   outline: none;
@@ -276,7 +276,7 @@
 
 .trans-swap-btn:hover {
   background: var(--color-accent);
-  color: #fff;
+  color: var(--color-text-inverse);
   border-color: var(--color-accent);
 }
 
@@ -305,7 +305,7 @@
   padding: 14px 16px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  background: #fff;
+  background: var(--color-bg-primary);
   color: var(--color-text-primary);
   font-size: var(--font-size-sm);
   font-family: inherit;
@@ -338,7 +338,7 @@
   border: none;
   border-radius: var(--radius-md);
   background: var(--color-accent);
-  color: #fff;
+  color: var(--color-text-inverse);
   font-size: var(--font-size-sm);
   font-weight: 600;
   cursor: pointer;
@@ -546,7 +546,7 @@
   padding: 14px 16px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  background: #fff;
+  background: var(--color-bg-primary);
   color: var(--color-text-primary);
   font-size: var(--font-size-sm);
   line-height: 1.7;
@@ -607,7 +607,7 @@
 
 .trans-modal-btn-accent {
   background: var(--color-accent);
-  color: #fff;
+  color: var(--color-text-inverse);
   border-color: var(--color-accent);
 }
 

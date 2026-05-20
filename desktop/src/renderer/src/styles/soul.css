@@ -295,7 +295,7 @@
 
 .soul-btn-primary {
   background: var(--accent-color, #6c5ce7);
-  color: #fff;
+  color: var(--color-text-inverse);
 }
 
 .soul-btn-primary:hover {

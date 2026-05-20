@@ -12,7 +12,7 @@
   border: none;
   border-radius: var(--radius-md);
   background: var(--color-accent);
-  color: #fff;
+  color: var(--color-text-inverse);
   font-size: var(--font-size-sm);
   font-weight: 600;
   cursor: pointer;
@@ -443,7 +443,7 @@
 
 .wf-template-use-btn:hover {
   background: var(--color-accent);
-  color: #fff;
+  color: var(--color-text-inverse);
 }
 
 /* ── 模板详情弹窗 ── */

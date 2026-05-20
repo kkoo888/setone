@@ -1,8 +1,8 @@
 /**
- * 主题切换组件
- * 支持 light / dark / system 三种模式
+ * 主题切换组件 - Segmented 滑动样式
+ * 支持 light / dark / system / compact 四种模式
  */
-import React from 'react'
+import React, { useRef, useEffect, useState } from 'react'
 import type { ThemeMode } from '../../types/settings'
 
 interface ThemeSwitcherProps {
@@ -16,22 +16,44 @@ interface ThemeSwitcherProps {
 const THEME_OPTIONS: ReadonlyArray<{ value: ThemeMode; label: string; icon: string }> = [
   { value: 'light', label: '浅色', icon: '☀️' },
   { value: 'dark', label: '深色', icon: '🌙' },
-  { value: 'system', label: '跟随系统', icon: '💻' },
+  { value: 'system', label: '系统', icon: '💻' },
+  { value: 'compact', label: '紧凑', icon: '📐' },
 ]
 
 export function ThemeSwitcher({ theme, onChange }: ThemeSwitcherProps) {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [sliderStyle, setSliderStyle] = useState({ left: 0, width: 0 })
+
+  useEffect(() => {
+    const container = containerRef.current
+    if (!container) return
+    const activeIdx = THEME_OPTIONS.findIndex((o) => o.value === theme)
+    const btn = container.children[activeIdx] as HTMLElement | undefined
+    if (!btn) return
+    const containerRect = container.getBoundingClientRect()
+    const btnRect = btn.getBoundingClientRect()
+    setSliderStyle({
+      left: btnRect.left - containerRect.left,
+      width: btnRect.width,
+    })
+  }, [theme])
+
   return (
-    <div className="theme-switcher">
+    <div className="theme-switcher" ref={containerRef}>
+      <div
+        className="theme-switcher-slider"
+        style={{ left: sliderStyle.left, width: sliderStyle.width }}
+      />
       {THEME_OPTIONS.map((opt) => (
         <button
           key={opt.value}
           type="button"
-          className={`theme-option ${theme === opt.value ? 'theme-option-active' : ''}`}
+          className={`theme-switcher-option ${theme === opt.value ? 'theme-switcher-option--active' : ''}`}
           onClick={() => onChange(opt.value)}
           aria-pressed={theme === opt.value}
         >
-          <span className="theme-option-icon">{opt.icon}</span>
-          <span className="theme-option-label">{opt.label}</span>
+          <span className="theme-switcher-icon">{opt.icon}</span>
+          <span className="theme-switcher-label">{opt.label}</span>
         </button>
       ))}
     </div>

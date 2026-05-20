@@ -87,7 +87,7 @@
 .mod-tab-count {
   font-size: 11px;
   background: var(--color-accent);
-  color: #fff;
+  color: var(--color-text-inverse);
   padding: 1px 6px;
   border-radius: var(--radius-full);
   font-weight: 600;
@@ -124,7 +124,7 @@
   padding: 8px 14px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  background: #fff;
+  background: var(--color-bg-primary);
   color: var(--color-text-primary);
   font-size: var(--font-size-sm);
   outline: none;
@@ -167,7 +167,7 @@
 
 .mod-filter-btn.active {
   background: var(--color-accent);
-  color: #fff;
+  color: var(--color-text-inverse);
   border-color: var(--color-accent);
 }
 

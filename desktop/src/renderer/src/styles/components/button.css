@@ -10,8 +10,8 @@
 .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .btn-primary { background: var(--color-accent); color: var(--color-accent-text, #fff); border-color: var(--color-accent); }
 .btn-primary:hover { background: var(--color-accent-hover); border-color: var(--color-accent-hover); }
-.btn-danger { background: var(--color-error); color: #fff; border-color: var(--color-error); }
-.btn-danger:hover { background: #dc2626; border-color: #dc2626; }
+.btn-danger { background: var(--color-error); color: var(--color-text-inverse); border-color: var(--color-error); }
+.btn-danger:hover { background: var(--color-error); border-color: var(--color-error); opacity: 0.9; }
 .btn-ghost { background: transparent; border-color: transparent; }
 .btn-ghost:hover { background: var(--color-bg-secondary); }
 .btn-sm { padding: 4px 10px; font-size: var(--font-size-xs); }

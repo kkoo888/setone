@@ -55,7 +55,7 @@
 .notif-filter-btn.active {
   background: var(--color-accent);
   border-color: transparent;
-  color: #fff;
+  color: var(--color-text-inverse);
   font-weight: 600;
 }
 
