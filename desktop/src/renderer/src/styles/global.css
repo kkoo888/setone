@@ -43,8 +43,8 @@ body { font-family: var(--font-family); font-size: var(--font-size-md); color: v
 
 .sidebar { width: 200px; min-width: 200px; height: 100vh; display: flex; flex-direction: column; background: var(--color-bg-secondary); border-right: 1px solid var(--color-border); transition: width 0.25s ease, min-width 0.25s ease; overflow: hidden; user-select: none; }
 .sidebar--collapsed { width: 60px; min-width: 60px; }
-.sidebar-top { flex: 0 0 auto; height: 220px; display: flex; flex-direction: column; }
-.sidebar-logo { display: flex; align-items: center; justify-content: center; flex-shrink: 0; padding: 16px 2px 6px; }
+.sidebar-top { flex: 0 0 auto; height: 200px; display: flex; flex-direction: column; }
+.sidebar-logo { display: flex; align-items: center; justify-content: center; flex-shrink: 0; padding: var(--spacing-lg, 16px) var(--spacing-2xs, 2px) var(--spacing-sm, 6px); }
 .sidebar-middle { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
 .sidebar-nav { list-style: none; padding: var(--spacing-sm); margin: 0; }
 .sidebar-nav--scrollable { flex: 1; overflow-y: auto; min-height: 0; }
@@ -52,7 +52,7 @@ body { font-family: var(--font-family); font-size: var(--font-size-md); color: v
 .sidebar-item { display: flex; align-items: center; gap: var(--spacing-sm); width: 100%; padding: 10px 12px; border: none; border-radius: var(--radius-md); background: transparent; color: var(--color-text-secondary); font-size: var(--font-size-sm); cursor: pointer; transition: background 0.15s, color 0.15s; white-space: nowrap; overflow: hidden; }
 .sidebar-item:hover { background: var(--color-bg-tertiary); color: var(--color-text-primary); }
 .sidebar-item.active { background: var(--color-accent); color: var(--color-accent-text, #fff); }
-.sidebar-icon { font-size: 18px; flex-shrink: 0; text-align: center; width: 24px; }
+.sidebar-icon { font-size: var(--font-size-lg); flex-shrink: 0; text-align: center; width: var(--spacing-xl, 24px); }
 .sidebar-label { overflow: hidden; text-overflow: ellipsis; }
 .sidebar--collapsed .sidebar-label { display: none; }
 .sidebar-footer { padding: var(--spacing-sm); border-top: 1px solid var(--color-border); flex-shrink: 0; }
@@ -89,7 +89,7 @@ body { font-family: var(--font-family); font-size: var(--font-size-md); color: v
 
 /* 设置区块 */
 .settings-section {
-  margin-bottom: 40px;
+  margin-bottom: var(--spacing-2xl, 40px);
   padding: var(--spacing-lg);
   background: var(--color-bg-secondary);
   border-radius: var(--radius-lg);
@@ -111,8 +111,8 @@ body { font-family: var(--font-family); font-size: var(--font-size-md); color: v
   gap: var(--spacing-sm);
   margin-bottom: var(--spacing-lg);
 }
-.settings-section-icon { font-size: 22px; flex-shrink: 0; }
-.settings-section-title-group { display: flex; flex-direction: column; gap: 2px; }
+.settings-section-icon { font-size: var(--font-size-2xl); flex-shrink: 0; }
+.settings-section-title-group { display: flex; flex-direction: column; gap: var(--spacing-2xs, 2px); }
 .settings-section-title { font-size: var(--font-size-lg); font-weight: 600; color: var(--color-text-primary); margin: 0; }
 .settings-section-desc { font-size: var(--font-size-sm); color: var(--color-text-secondary); margin: 0; }
 .settings-section-body { display: flex; flex-direction: column; gap: var(--spacing-md); }
@@ -207,8 +207,8 @@ body { font-family: var(--font-family); font-size: var(--font-size-md); color: v
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-bg-secondary);
@@ -329,7 +329,7 @@ body { font-family: var(--font-family); font-size: var(--font-size-md); color: v
   font-size: var(--font-size-sm);
 }
 .mp-empty-icon {
-  font-size: 32px;
+  font-size: var(--font-size-3xl);
 }
 
 /* ══════════════════════════════════════════
@@ -340,7 +340,7 @@ body { font-family: var(--font-family); font-size: var(--font-size-md); color: v
   display: flex;
   align-items: center;
   gap: var(--spacing-md);
-  padding: 14px var(--spacing-lg);
+  padding: var(--spacing-md) var(--spacing-lg);
   cursor: pointer;
   transition: background var(--transition-fast);
   position: relative;
@@ -364,15 +364,15 @@ body { font-family: var(--font-family); font-size: var(--font-size-md); color: v
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 42px;
-  height: 42px;
+  width: 40px;
+  height: 40px;
   border-radius: var(--radius-md);
   background: var(--color-bg-primary);
   flex-shrink: 0;
   box-shadow: 0 1px 3px var(--color-shadow);
 }
 .mc-icon {
-  font-size: 22px;
+  font-size: var(--font-size-2xl);
 }
 
 /* 中间文字区域 */
@@ -470,7 +470,7 @@ body { font-family: var(--font-family); font-size: var(--font-size-md); color: v
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
-  height: 28px;
+  height: 24px;
   padding: 0 var(--spacing-md);
   background: var(--color-bg-secondary);
   border-top: 1px solid var(--color-border);
@@ -555,4 +555,49 @@ body { font-family: var(--font-family); font-size: var(--font-size-md); color: v
 }
 .sidebar-item--module.active::before {
   opacity: 1;
+}
+
+/* ══════════════════════════════════════════
+   Focus-visible 统一焦点样式
+   键盘导航时显示清晰焦点指示器
+   ══════════════════════════════════════════ */
+
+*:focus-visible {
+  outline: 2px solid var(--color-accent, #4338ca);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm, 4px);
+}
+
+/* 已有自定义 focus 的元素不叠加 */
+.btn:focus-visible,
+.sidebar-item:focus-visible,
+.toggle-track:focus-visible,
+.mc-switch input:focus-visible,
+.modal-close:focus-visible,
+.chat-input:focus-visible,
+.settings-input:focus-visible,
+.settings-select:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3);
+}
+
+/* 鼠标点击时不显示焦点框 */
+*:focus:not(:focus-visible) {
+  outline: none;
+  box-shadow: none;
+}
+
+/* ══════════════════════════════════════════
+   减少动画偏好支持
+   ══════════════════════════════════════════ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
