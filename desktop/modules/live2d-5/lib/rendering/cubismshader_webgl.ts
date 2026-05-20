@@ -148,6 +148,7 @@ export class CubismShader_WebGL {
     this._shaderSets = new Array<CubismShaderSet>();
     this._isShaderLoading = false;
     this._isShaderLoaded = false;
+    this._shaderLoadPromise = null;
 
     // カラーブレンド用のマップ
     this._colorBlendMap = new Map<CubismColorBlend, string>();
@@ -1078,15 +1079,20 @@ export class CubismShader_WebGL {
   }
 
   /**
-   * シェーダープログラムを初期化する
-   *
-   * @param vertShaderSrc 頂点シェーダのソース
-   * @param fragShaderSrc フラグメントシェーダのソース
+   * シェーダープログラムを初期化する（Promise 版，带超时）
+   * @param timeoutMs 超时时间（毫秒），默认 10 秒
+   * @returns Promise，shader 加载完成或超时后 resolve
    */
-  public generateShaders(): void {
-    if (this._isShaderLoading) {
-      return;
+  public generateShadersAsync(timeoutMs: number = 10000): Promise<boolean> {
+    // 已加载完成，直接返回
+    if (this._isShaderLoaded) {
+      return Promise.resolve(true);
     }
+    // 正在加载中，等待完成
+    if (this._isShaderLoading && this._shaderLoadPromise) {
+      return this._shaderLoadPromise;
+    }
+    // 开始加载
     this._isShaderLoading = true;
     this._isShaderLoaded = false;
     this._shaderSets.length = this._shaderCount;
@@ -1094,19 +1100,40 @@ export class CubismShader_WebGL {
       this._shaderSets[i] = new CubismShaderSet();
     }
 
-    // シェーダーのソースの読み込み
-    this.loadShaders()
+    const loadPromise = this.loadShaders()
       .then(() => {
-        // NOTE: ファイルの読み込みを待つ必要があるためこのようにする
-        this.registerShader(); // 通常シェーダーの登録
-        this.registerBlendShader(); // ブレンドモードシェーダーの登録
+        this.registerShader();
+        this.registerBlendShader();
         this._isShaderLoading = false;
         this._isShaderLoaded = true;
+        return true;
       })
       .catch(error => {
         this._isShaderLoading = false;
-        console.error('Failed to load shaders:', error);
+        console.error('[CubismShader] ❌ shader 加载失败:', error);
+        return false;
       });
+
+    // 带超时的 Promise
+    const timeoutPromise = new Promise<boolean>((resolve) => {
+      setTimeout(() => {
+        if (!this._isShaderLoaded) {
+          console.warn(`[CubismShader] ⚠️ shader 加载超时 (${timeoutMs}ms)`);
+          this._isShaderLoading = false;
+          resolve(false);
+        }
+      }, timeoutMs);
+    });
+
+    this._shaderLoadPromise = Promise.race([loadPromise, timeoutPromise]);
+    return this._shaderLoadPromise;
+  }
+
+  /**
+   * 同步版 generateShaders（保留向后兼容）
+   */
+  public generateShaders(): void {
+    this.generateShadersAsync();
   }
 
   /**
@@ -1922,6 +1949,7 @@ export class CubismShader_WebGL {
   _fragShaderSrcBlend: string; // フラグメントシェーダーのソース
   _isShaderLoading: boolean; // シェーダーの読み込み中かどうか
   _isShaderLoaded: boolean; // シェーダーの読み込みが完了したかどうか
+  _shaderLoadPromise: Promise<boolean> | null; // shader 加载 Promise（防重复）
   _defaultShaderPath: string; // デフォルトのシェーダーパス
   _shaderPath: string; // シェーダーパス
 }

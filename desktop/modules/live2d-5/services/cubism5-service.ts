@@ -111,14 +111,11 @@ class Cubism5Service {
       }
 
       // 动态加载 Cubism 5 Core SDK
-      console.log('[Cubism5] 📦 加载 SDK, 路径:', CUBISM_CORE_SDK_PATH)
       await new Promise<void>((resolve, reject) => {
         const script = document.createElement('script')
         script.src = CUBISM_CORE_SDK_PATH
         script.onload = () => {
-          console.log('[Cubism5] ✅ Core SDK onload 触发')
           const win = window as WindowWithCubism
-          console.log('[Cubism5] Live2DCubismCore 存在:', !!win.Live2DCubismCore)
           if (win.Live2DCubismCore) {
             console.log('[Cubism5] Live2DCubismCore keys:', Object.keys(win.Live2DCubismCore))
           }
@@ -173,7 +170,6 @@ class Cubism5Service {
     console.log('[Cubism5] 🚀 sdkLoaded:', this.sdkLoaded, 'container:', !!container)
 
     if (!this.sdkLoaded) {
-      console.log('[Cubism5] 📦 SDK 未加载, 开始加载...')
       await this.loadSDK()
     }
 
@@ -203,112 +199,37 @@ class Cubism5Service {
       this.registerContextEvents()
 
       // 加载模型文件
-      console.log('[Cubism5] 📦 开始加载模型, window.location.href:', window.location.href)
-      console.log('[Cubism5] 📦 modelPath:', config.modelPath)
       const response = await fetch(config.modelPath)
       if (!response.ok) {
         throw new Error(`加载模型配置失败: ${response.status} ${response.statusText} (${config.modelPath})`)
       }
       this.cachedModelJson = (await response.json()) as Cubism3ModelJson
-      console.log('[Cubism5] ✅ model3.json 加载成功:', this.cachedModelJson)
 
       // 加载 moc 文件
       const mocPath = new URL(this.cachedModelJson.FileReferences.Moc, config.modelPath).href
-      console.log('[Cubism5] 📦 mocPath:', mocPath)
       const mocResponse = await fetch(mocPath)
       if (!mocResponse.ok) {
         throw new Error(`加载 Moc 文件失败: ${mocResponse.status} ${mocResponse.statusText} (${mocPath})`)
       }
       const mocBuffer = await mocResponse.arrayBuffer()
-      console.log('[Cubism5] ✅ Moc 文件加载成功, 大小:', mocBuffer.byteLength, 'bytes')
 
-      // 创建 Moc — SDK API: CubismMoc.create(mocBytes, shouldCheckMocConsistency)
-      console.log('[Cubism5] 📦 创建 Moc, buffer 大小:', mocBuffer.byteLength)
-
-      // 检查 Live2DCubismCore 完整性
-      const win = window as WindowWithCubism
-      const core = win.Live2DCubismCore
-      console.log('[Cubism5] 🔍 Live2DCubismCore 存在:', !!core)
-      if (core) {
-        console.log('[Cubism5] 🔍 core.Moc 存在:', !!(core as any).Moc)
-        console.log('[Cubism5] 🔍 core.Moc.fromArrayBuffer 存在:', typeof (core as any).Moc?.fromArrayBuffer)
-        console.log('[Cubism5] 🔍 core.Model 存在:', !!(core as any).Model)
-        console.log('[Cubism5] 🔍 core.Model.fromMoc 存在:', typeof (core as any).Model?.fromMoc)
-        console.log('[Cubism5] 🔍 core.Version 存在:', !!(core as any).Version)
-        console.log('[Cubism5] 🔍 core keys:', Object.keys(core as any).join(', '))
-        // 额外检查：尝试直接用 Core 创建 Moc
-        try {
-          const testMoc = (core as any).Moc.fromArrayBuffer(mocBuffer)
-          console.log('[Cubism5] 🔍 Core Moc.fromArrayBuffer 结果:', !!testMoc)
-          if (testMoc) {
-            const testModel = (core as any).Model.fromMoc(testMoc)
-            console.log('[Cubism5] 🔍 Core 直接 Model.fromMoc 结果:', !!testModel)
-            if (testModel) {
-              console.log('[Cubism5] 🔍 直接 drawables:', !!(testModel as any).drawables)
-              console.log('[Cubism5] 🔍 直接 parameters:', !!(testModel as any).parameters)
-            }
-          }
-        } catch (e) {
-          console.error('[Cubism5] ❌ Core 直接测试失败:', e)
-        }
-      }
-
+      // 创建 Moc
       const CubismMocModule = await import('../lib/model/cubismmoc')
       const CubismMoc = CubismMocModule.CubismMoc
-      console.log('[Cubism5] 📦 CubismMoc 类加载成功, create 方法:', typeof CubismMoc?.create)
 
       this.moc = CubismMoc.create(mocBuffer, false) as unknown as CubismMocLike
       if (!this.moc) {
         throw new Error('Moc 创建失败（CubismMoc.create 返回 null）')
       }
-      console.log('[Cubism5] ✅ Moc 创建成功, 类型:', typeof this.moc)
 
       // 创建模型
-      console.log('[Cubism5] 📦 创建模型...')
-      const mocInternal = this.moc as unknown as { _moc: any; createModel: () => any }
-      console.log('[Cubism5] 🔍 moc._moc 存在:', !!mocInternal._moc)
-      console.log('[Cubism5] 🔍 moc._moc 类型:', typeof mocInternal._moc)
-
-      // 预检查：直接用 Core SDK 的 Model.fromMoc 验证
-      if (core?.Model?.fromMoc) {
-        const testModel = core.Model.fromMoc(mocInternal._moc)
-        console.log('[Cubism5] 🔍 Core Model.fromMoc 结果:', !!testModel)
-        if (testModel) {
-          console.log('[Cubism5] 🔍 testModel.drawables 存在:', !!(testModel as any).drawables)
-          console.log('[Cubism5] 🔍 testModel.parameters 存在:', !!(testModel as any).parameters)
-          console.log('[Cubism5] 🔍 testModel.parts 存在:', !!(testModel as any).parts)
-          if ((testModel as any).drawables) {
-            console.log('[Cubism5] 🔍 testModel.drawables.count:', (testModel as any).drawables.count)
-          }
-          // 释放测试模型
-          try { testModel.release?.() } catch {}
-        }
-      }
-
       this.model = (this.moc as unknown as { createModel: () => CubismModelLike | null }).createModel()
       if (!this.model) {
         throw new Error('模型创建失败（createModel 返回 null）')
       }
-      console.log('[Cubism5] ✅ 模型创建成功')
 
-      // 官方 API：保存初始参数状态（CubismUserModel.loadModel 中调用）
+      // 官方 API：保存初始参数状态
       this.model.saveParameters()
-
-      // 检查模型内部结构
-      const internalModel = this.model.getModel()
-      console.log('[Cubism5] 🔍 internalModel 存在:', !!internalModel)
-      if (internalModel) {
-        const im = internalModel as any
-        console.log('[Cubism5] 🔍 internalModel 类型:', typeof im)
-        console.log('[Cubism5] 🔍 internalModel.drawables 存在:', !!im.drawables)
-        console.log('[Cubism5] 🔍 internalModel.parameters 存在:', !!im.parameters)
-        console.log('[Cubism5] 🔍 internalModel.parts 存在:', !!im.parts)
-        if (im.drawables) {
-          console.log('[Cubism5] 🔍 drawables.count:', im.drawables.count)
-        }
-        console.log('[Cubism5] 🔍 getCanvasWidth:', im.getCanvasWidth?.())
-        console.log('[Cubism5] 🔍 getCanvasHeight:', im.getCanvasHeight?.())
-      }
 
       // 加载纹理
       await this.loadTextures(this.cachedModelJson, config.modelPath)
@@ -318,6 +239,15 @@ class Cubism5Service {
 
       // 初始化渲染器（使用 SDK 正确 API）
       await this.initRenderer()
+
+      // 预加载 shader（等待完成再启动渲染，避免空跑循环）
+      console.log('[Cubism5] 🔄 预加载 shader...')
+      const shaderReady = await this.renderer.waitForShaders(10000)
+      if (shaderReady) {
+        console.log('[Cubism5] ✅ shader 加载完成')
+      } else {
+        console.warn('[Cubism5] ⚠️ shader 加载超时，渲染可能异常')
+      }
 
       // 通过 ModelMatrix 应用缩放
       const scale = config.scale ?? DEFAULT_MODEL_SCALE
@@ -332,7 +262,7 @@ class Cubism5Service {
       this.updateState('loaded')
       console.log('[Cubism5] ✅ 模型加载完成:', config.name)
 
-      // 开始渲染循环
+      // 开始渲染循环（shader 已就绪，不会空跑）
       this.startRenderLoop()
     } catch (err) {
       console.error('[Cubism5] ❌ 模型加载失败, 详细错误:', err)
@@ -699,7 +629,6 @@ class Cubism5Service {
 
       // 加载表情文件
       const expPath = new URL(expressionDef.File, this.modelPath).href
-      console.log('[Cubism5] 📦 加载表情:', expressionId, '→', expPath)
       const expResponse = await fetch(expPath)
       if (!expResponse.ok) {
         throw new Error(`加载表情文件失败: ${expResponse.status} ${expResponse.statusText} (${expPath})`)
@@ -763,7 +692,6 @@ class Cubism5Service {
       }
 
       // 加载动作文件
-      console.log('[Cubism5] 📦 加载动作:', motionId, '→', motionPath)
       const motionResponse = await fetch(motionPath)
       if (!motionResponse.ok) {
         throw new Error(`加载动作文件失败: ${motionResponse.status} ${motionResponse.statusText} (${motionPath})`)

@@ -764,6 +764,26 @@ export class CubismRenderer_WebGL extends CubismRenderer {
    * Shaderの読み込みを行う
    * @param shaderPath シェーダのパス
    */
+  /**
+   * 等待 shader 加载完成（异步）
+   * @param timeoutMs 超时时间，默认 10 秒
+   * @returns 是否加载成功
+   */
+  public async waitForShaders(timeoutMs: number = 10000): Promise<boolean> {
+    if (this.gl == null) return false;
+    const shader = CubismShaderManager_WebGL.getInstance().getShader(this.gl);
+    if (shader._isShaderLoaded) return true;
+    return shader.generateShadersAsync(timeoutMs);
+  }
+
+  /**
+   * shader 是否已加载完成
+   */
+  public isShadersReady(): boolean {
+    if (this.gl == null) return false;
+    return CubismShaderManager_WebGL.getInstance().getShader(this.gl)._isShaderLoaded;
+  }
+
   public loadShaders(shaderPath: string = null): void {
     if (this.gl == null) {
       CubismLogError(
