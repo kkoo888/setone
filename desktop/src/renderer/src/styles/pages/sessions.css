@@ -16,7 +16,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px 12px 12px;
+  padding: var(--spacing-xl, 20px) var(--spacing-md, 12px) var(--spacing-md, 12px);
   flex-shrink: 0;
 }
 
@@ -30,8 +30,8 @@
 .session-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 0 12px 12px;
+  gap: var(--spacing-sm, 8px);
+  padding: 0 var(--spacing-md, 12px) var(--spacing-md, 12px);
   overflow-y: auto;
   flex: 1;
 }
@@ -39,7 +39,7 @@
 .session-item {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: var(--spacing-md, 14px);
   padding: var(--spacing-md) var(--spacing-lg);
   background: var(--color-bg-primary);
   border: 1px solid var(--color-border);
@@ -87,12 +87,12 @@
   color: var(--color-text-tertiary);
   margin-top: 3px;
   display: flex;
-  gap: 12px;
+  gap: var(--spacing-md, 12px);
 }
 
 .session-actions {
   display: flex;
-  gap: 6px;
+  gap: var(--spacing-xs, 6px);
   opacity: 0;
   transition: opacity var(--transition-fast);
 }
@@ -102,7 +102,7 @@
 }
 
 .session-actions .btn {
-  padding: 6px 12px;
+  padding: var(--spacing-xs, 6px) var(--spacing-md, 12px);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-bg-secondary);
@@ -125,7 +125,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: var(--spacing-md, 12px);
   padding: 60px;
   color: var(--color-text-tertiary);
   font-size: var(--font-size-sm);
@@ -141,9 +141,9 @@
 .session-create-form {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 20px 12px;
-  margin: 0 12px 12px;
+  gap: var(--spacing-md, 12px);
+  padding: var(--spacing-xl, 20px) var(--spacing-md, 12px);
+  margin: 0 var(--spacing-md, 12px) var(--spacing-md, 12px);
   background: var(--color-bg-secondary);
   border-radius: var(--radius-lg);
   border: 1px solid var(--color-border);
@@ -156,7 +156,7 @@
 }
 
 .session-create-form input {
-  padding: 10px 14px;
+  padding: var(--spacing-sm-md, 10px) var(--spacing-md, 14px);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-bg-primary);
@@ -172,7 +172,7 @@
 
 .session-form-actions {
   display: flex;
-  gap: 8px;
+  gap: var(--spacing-sm, 8px);
   justify-content: flex-end;
 }
 

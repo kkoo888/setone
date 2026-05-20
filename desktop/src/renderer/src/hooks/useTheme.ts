@@ -180,9 +180,9 @@ export function useTheme() {
       if (localId) {
         await loadAndApplyThemeById(localId, theme)
       } else {
-        // 无保存主题，设置 data-theme 即可（CSS fallback 处理）
-        const resolved = resolveMode(theme)
-        document.documentElement.setAttribute('data-theme', resolved)
+        // 无保存主题，加载默认主题
+        await loadAndApplyThemeById('default', theme)
+        persistThemeId('default')
       }
     }
     loadStartupTheme()
@@ -195,20 +195,17 @@ export function useTheme() {
     if (savedId) {
       loadAndApplyThemeById(savedId, theme)
     } else {
-      const resolved = resolveMode(theme)
-      document.documentElement.setAttribute('data-theme', resolved)
+      // 无保存主题，加载默认主题
+      loadAndApplyThemeById('default', theme)
+      persistThemeId('default')
     }
 
     // system 模式：监听系统主题变化
     if (theme === 'system') {
       const mq = window.matchMedia('(prefers-color-scheme: dark)')
       const handler = () => {
-        const currentId = loadSavedThemeId()
-        if (currentId) {
-          loadAndApplyThemeById(currentId, theme)
-        } else {
-          document.documentElement.setAttribute('data-theme', getSystemPrefersDark() ? 'dark' : 'light')
-        }
+        const currentId = loadSavedThemeId() ?? 'default'
+        loadAndApplyThemeById(currentId, theme)
       }
       mq.addEventListener('change', handler)
       return () => mq.removeEventListener('change', handler)

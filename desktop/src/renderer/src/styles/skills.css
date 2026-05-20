@@ -16,15 +16,15 @@
 .skills-header {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 20px 20px 16px;
+  gap: var(--spacing-lg, 16px);
+  padding: var(--spacing-xl, 20px) var(--spacing-xl, 20px) var(--spacing-lg, 16px);
   flex-shrink: 0;
 }
 
 .skills-title-group {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--spacing-2xs, 4px);
 }
 
 .skills-title {
@@ -44,7 +44,7 @@
 .skills-actions {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--spacing-sm-md, 10px);
   flex-wrap: wrap;
 }
 
@@ -52,7 +52,7 @@
 .btn-skill-primary {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--spacing-xs, 6px);
   padding: var(--spacing-sm) var(--spacing-md);
   border: none;
   border-radius: var(--radius-md);
@@ -83,7 +83,7 @@
 .btn-skill-action {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--spacing-xs, 6px);
   padding: var(--spacing-sm) var(--spacing-md);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
@@ -128,7 +128,7 @@
 
 .skill-search-input {
   width: 100%;
-  padding: var(--spacing-sm) var(--spacing-md) 8px 34px;
+  padding: var(--spacing-sm) var(--spacing-md) var(--spacing-sm, 8px) 34px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-bg-secondary);
@@ -150,14 +150,14 @@
 /* ── 二级导航 ── */
 .skills-nav {
   display: flex;
-  gap: 4px;
-  padding: 0 20px;
+  gap: var(--spacing-2xs, 4px);
+  padding: 0 var(--spacing-xl, 20px);
   flex-shrink: 0;
   /* 移除 border-bottom，ModuleHeader 已有统一分割线 */
 }
 
 .skills-nav-tab {
-  padding: 10px 16px;
+  padding: var(--spacing-sm-md, 10px) var(--spacing-lg, 16px);
   border: none;
   background: transparent;
   color: var(--color-text-secondary);
@@ -191,7 +191,7 @@
 /* ── 分类标签栏 ── */
 .skill-tags {
   display: flex;
-  gap: 8px;
+  gap: var(--spacing-sm, 8px);
   padding: var(--spacing-md) var(--spacing-lg);
   overflow-x: auto;
   flex-shrink: 0;
@@ -203,7 +203,7 @@
 }
 
 .skill-tag {
-  padding: 6px 16px;
+  padding: var(--spacing-xs, 6px) var(--spacing-lg, 16px);
   border-radius: var(--radius-full);
   border: 1px solid var(--color-border);
   background: var(--color-bg-primary);
@@ -231,7 +231,7 @@
 .skills-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
+  gap: var(--spacing-lg, 16px);
   padding: var(--spacing-md) var(--spacing-lg);
   overflow-y: auto;
   flex: 1;
@@ -241,12 +241,12 @@
 .skill-card {
   background: var(--color-bg-primary);
   border-radius: var(--radius-lg);
-  padding: 16px;
+  padding: var(--spacing-lg, 16px);
   cursor: pointer;
   transition: box-shadow 0.2s, transform 0.15s;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--spacing-md, 12px);
   border: 1px solid var(--color-border);
 }
 
@@ -258,13 +258,13 @@
 .skill-card-header {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--spacing-md, 12px);
 }
 
 .skill-card-icon {
   width: 48px;
   height: 48px;
-  border-radius: 10px;
+  border-radius: var(--radius-lg, 10px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -278,7 +278,7 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--spacing-2xs, 4px);
 }
 
 .skill-card-name {
@@ -310,14 +310,14 @@
 
 .skill-card-tags {
   display: flex;
-  gap: 4px;
+  gap: var(--spacing-2xs, 4px);
   flex-wrap: wrap;
   flex: 1;
   min-width: 0;
 }
 
 .skill-card-tag {
-  padding: 2px 8px;
+  padding: var(--spacing-2xs, 2px) var(--spacing-sm, 8px);
   border-radius: var(--radius-sm);
   background: var(--color-bg-secondary);
   color: var(--color-text-tertiary);
@@ -346,10 +346,10 @@
   align-items: center;
   width: 48px;
   height: 28px;
-  border-radius: 14px;
+  border-radius: var(--radius-xl, 14px);
   background: var(--color-border);
   transition: background 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  padding: 2px;
+  padding: var(--spacing-2xs, 2px);
   border: none;
 }
 
@@ -416,7 +416,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px 12px;
+  padding: var(--spacing-xl, 20px) var(--spacing-md, 12px);
   border-bottom: 1px solid var(--color-border);
   flex-shrink: 0;
 }
@@ -424,7 +424,7 @@
 .skill-detail-header-left {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--spacing-md, 12px);
 }
 
 .skill-detail-icon {
@@ -442,7 +442,7 @@
 .skill-detail-title-group {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--spacing-2xs, 4px);
 }
 
 .skill-detail-name {
@@ -479,16 +479,16 @@
 .skill-detail-body {
   flex: 1;
   overflow-y: auto;
-  padding: 12px;
+  padding: var(--spacing-md, 12px);
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: var(--spacing-xl, 24px);
 }
 
 .skill-detail-section {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--spacing-sm, 8px);
 }
 
 .skill-detail-section-title {
@@ -506,13 +506,13 @@
 
 .skill-detail-tags {
   display: flex;
-  gap: 8px;
+  gap: var(--spacing-sm, 8px);
   flex-wrap: wrap;
 }
 
 .skill-detail-tag {
-  padding: 4px 12px;
-  border-radius: 16px;
+  padding: var(--spacing-2xs, 4px) var(--spacing-md, 12px);
+  border-radius: var(--radius-xl, 16px);
   background: var(--color-accent-light);
   color: var(--color-accent);
   font-size: var(--font-size-xs);
@@ -522,13 +522,13 @@
 .skill-detail-permissions {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--spacing-sm, 8px);
 }
 
 .skill-detail-permission {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--spacing-sm, 8px);
   padding: var(--spacing-sm) var(--spacing-md);
   background: var(--color-bg-secondary);
   border-radius: var(--radius-md);
@@ -546,7 +546,7 @@
 }
 
 .skill-detail-permission-risk {
-  padding: 2px 8px;
+  padding: var(--spacing-2xs, 2px) var(--spacing-sm, 8px);
   border-radius: var(--radius-sm);
   font-size: var(--font-size-2xs);
   font-weight: 500;
@@ -570,7 +570,7 @@
 .skill-detail-meta {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--spacing-sm, 8px);
 }
 
 .skill-detail-meta-row {
@@ -593,7 +593,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 12px;
+  padding: var(--spacing-lg, 16px) var(--spacing-md, 12px);
   border-top: 1px solid var(--color-border);
   flex-shrink: 0;
 }
@@ -609,8 +609,8 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  padding: 60px 20px;
+  gap: var(--spacing-md, 12px);
+  padding: 60px var(--spacing-xl, 20px);
   color: var(--color-text-tertiary);
 }
 
@@ -707,7 +707,7 @@
   max-width: 90vw;
   max-height: 80vh;
   background: var(--color-bg-primary);
-  border-radius: 16px;
+  border-radius: var(--radius-xl, 16px);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
   display: flex;
   flex-direction: column;
@@ -724,7 +724,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px 12px;
+  padding: var(--spacing-xl, 20px) var(--spacing-md, 12px);
   border-bottom: 1px solid var(--color-border);
   flex-shrink: 0;
 }
@@ -732,7 +732,7 @@
 .skill-trash-header-left {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--spacing-sm-md, 10px);
 }
 
 .skill-trash-icon {
@@ -749,9 +749,9 @@
 .skill-trash-count {
   font-size: var(--font-size-xs);
   color: var(--color-text-tertiary);
-  padding: 2px 8px;
+  padding: var(--spacing-2xs, 2px) var(--spacing-sm, 8px);
   background: var(--color-bg-secondary);
-  border-radius: 10px;
+  border-radius: var(--radius-lg, 10px);
 }
 
 .skill-trash-close {
@@ -776,7 +776,7 @@
 .skill-trash-body {
   flex: 1;
   overflow-y: auto;
-  padding: 16px 12px;
+  padding: var(--spacing-lg, 16px) var(--spacing-md, 12px);
   min-height: 200px;
 }
 
@@ -785,8 +785,8 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  padding: 48px 20px;
+  gap: var(--spacing-md, 12px);
+  padding: 48px var(--spacing-xl, 20px);
   color: var(--color-text-tertiary);
 }
 
@@ -802,7 +802,7 @@
 .skill-trash-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--spacing-sm, 8px);
 }
 
 .skill-trash-item {
@@ -822,7 +822,7 @@
 .skill-trash-item-info {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--spacing-2xs, 2px);
   min-width: 0;
   flex: 1;
 }
@@ -843,16 +843,16 @@
 
 .skill-trash-item-actions {
   display: flex;
-  gap: 8px;
+  gap: var(--spacing-sm, 8px);
   flex-shrink: 0;
-  margin-left: 12px;
+  margin-left: var(--spacing-md, 12px);
 }
 
 .skill-trash-btn {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 6px 12px;
+  gap: var(--spacing-2xs, 4px);
+  padding: var(--spacing-xs, 6px) var(--spacing-md, 12px);
   border: none;
   border-radius: var(--radius-md);
   font-size: var(--font-size-xs);
@@ -892,7 +892,7 @@
 .skill-trash-btn--empty {
   width: 100%;
   justify-content: center;
-  padding: 10px 16px;
+  padding: var(--spacing-sm-md, 10px) var(--spacing-lg, 16px);
   background: rgba(239, 68, 68, 0.1);
   color: var(--color-error);
   font-size: var(--font-size-xs);
@@ -921,7 +921,7 @@
 }
 
 .skill-trash-footer {
-  padding: 16px 12px;
+  padding: var(--spacing-lg, 16px) var(--spacing-md, 12px);
   border-top: 1px solid var(--color-border);
   flex-shrink: 0;
 }
@@ -937,14 +937,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 16px;
+  border-radius: var(--radius-xl, 16px);
   z-index: 1;
 }
 
 .skill-trash-confirm {
   background: var(--color-bg-primary);
   border-radius: var(--radius-lg);
-  padding: 12px;
+  padding: var(--spacing-md, 12px);
   width: 360px;
   max-width: 90%;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
@@ -955,13 +955,13 @@
   font-size: var(--font-size-sm);
   color: var(--color-text-primary);
   line-height: 1.6;
-  margin: 0 0 20px;
+  margin: 0 0 var(--spacing-xl, 20px);
   text-align: center;
 }
 
 .skill-trash-confirm-actions {
   display: flex;
-  gap: 12px;
+  gap: var(--spacing-md, 12px);
   justify-content: center;
 }
 
@@ -985,7 +985,7 @@
   max-width: 90vw;
   max-height: 80vh;
   background: var(--color-bg-primary);
-  border-radius: 16px;
+  border-radius: var(--radius-xl, 16px);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
   display: flex;
   flex-direction: column;
@@ -997,7 +997,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px 12px;
+  padding: var(--spacing-xl, 20px) var(--spacing-md, 12px);
   border-bottom: 1px solid var(--color-border);
   flex-shrink: 0;
 }
@@ -1005,7 +1005,7 @@
 .skill-install-header-left {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--spacing-sm-md, 10px);
 }
 
 .skill-install-icon {
@@ -1080,8 +1080,8 @@
 .skill-install-search {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 12px 12px;
+  gap: var(--spacing-sm-md, 10px);
+  padding: var(--spacing-md, 12px) var(--spacing-md, 12px);
   border-bottom: 1px solid var(--color-border);
 }
 
@@ -1105,10 +1105,10 @@
 
 /* 搜索结果 */
 .skill-install-results {
-  padding: 12px 12px;
+  padding: var(--spacing-md, 12px) var(--spacing-md, 12px);
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--spacing-sm, 8px);
 }
 
 /* 空状态 */
@@ -1117,8 +1117,8 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  padding: 48px 20px;
+  gap: var(--spacing-md, 12px);
+  padding: 48px var(--spacing-xl, 20px);
   color: var(--color-text-tertiary);
 }
 
@@ -1138,11 +1138,11 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  padding: 14px 16px;
+  padding: var(--spacing-md, 14px) var(--spacing-lg, 16px);
   background: var(--color-bg-secondary);
   border-radius: var(--radius-md);
   transition: background 0.15s;
-  gap: 12px;
+  gap: var(--spacing-md, 12px);
 }
 
 .skill-install-item:hover {
@@ -1157,8 +1157,8 @@
 .skill-install-item-header {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 6px;
+  gap: var(--spacing-sm, 8px);
+  margin-bottom: var(--spacing-xs, 6px);
 }
 
 .skill-install-item-icon {
@@ -1175,13 +1175,13 @@
 .skill-install-item-author {
   font-size: var(--font-size-xs);
   color: var(--color-text-tertiary);
-  margin-left: 4px;
+  margin-left: var(--spacing-2xs, 4px);
 }
 
 .skill-install-item-version {
   font-size: var(--font-size-2xs);
   color: var(--color-text-tertiary);
-  padding: 1px 6px;
+  padding: 1px var(--spacing-xs, 6px);
   background: var(--color-bg-tertiary);
   border-radius: var(--radius-md);
   margin-left: auto;
@@ -1192,7 +1192,7 @@
   font-size: var(--font-size-xs);
   color: var(--color-text-secondary);
   line-height: 1.5;
-  margin: 0 0 8px;
+  margin: 0 0 var(--spacing-sm, 8px);
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -1202,14 +1202,14 @@
 .skill-install-item-meta {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--spacing-sm-md, 10px);
   font-size: var(--font-size-2xs);
   color: var(--color-text-tertiary);
   flex-wrap: wrap;
 }
 
 .skill-install-tag {
-  padding: 1px 6px;
+  padding: 1px var(--spacing-xs, 6px);
   background: var(--color-bg-tertiary);
   border-radius: 6px;
   font-size: var(--font-size-2xs);
@@ -1219,7 +1219,7 @@
 .skill-install-btn {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--spacing-2xs, 4px);
   padding: var(--spacing-sm) var(--spacing-md);
   border: none;
   border-radius: var(--radius-md);
@@ -1253,11 +1253,11 @@
 .skill-install-btn--url {
   width: 100%;
   justify-content: center;
-  padding: 10px 16px;
+  padding: var(--spacing-sm-md, 10px) var(--spacing-lg, 16px);
   background: var(--color-accent, #6c5ce7);
   color: var(--color-text-inverse);
   font-size: var(--font-size-xs);
-  margin-top: 8px;
+  margin-top: var(--spacing-sm, 8px);
 }
 
 .skill-install-btn--url:hover:not(:disabled) {
@@ -1266,10 +1266,10 @@
 
 /* URL 安装表单 */
 .skill-install-url-form {
-  padding: 12px;
+  padding: var(--spacing-md, 12px);
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--spacing-md, 12px);
 }
 
 .skill-install-url-label {
@@ -1278,7 +1278,7 @@
   color: var(--color-text-primary);
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--spacing-2xs, 4px);
 }
 
 .skill-install-url-hint {
@@ -1288,7 +1288,7 @@
 }
 
 .skill-install-url-input {
-  padding: 10px 14px;
+  padding: var(--spacing-sm-md, 10px) var(--spacing-md, 14px);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-bg-secondary);
@@ -1316,8 +1316,8 @@
 .skill-install-progress {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px 12px;
+  gap: var(--spacing-sm, 8px);
+  padding: var(--spacing-md, 12px) var(--spacing-md, 12px);
   border-top: 1px solid var(--color-border);
   font-size: var(--font-size-xs);
   color: var(--color-text-secondary);
@@ -1354,7 +1354,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px 12px;
+  padding: var(--spacing-xl, 20px) var(--spacing-md, 12px);
   border-bottom: 1px solid var(--color-border);
   flex-shrink: 0;
 }
@@ -1362,7 +1362,7 @@
 .skill-config-header-left {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--spacing-md, 12px);
 }
 
 .skill-config-icon {
@@ -1403,7 +1403,7 @@
 .skill-config-body {
   flex: 1;
   overflow-y: auto;
-  padding: 12px;
+  padding: var(--spacing-md, 12px);
 }
 
 .skill-config-empty {
@@ -1411,8 +1411,8 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  padding: 60px 20px;
+  gap: var(--spacing-md, 12px);
+  padding: 60px var(--spacing-xl, 20px);
   color: var(--color-text-tertiary);
   font-size: var(--font-size-sm);
 }
@@ -1420,13 +1420,13 @@
 .skill-config-fields {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: var(--spacing-xl, 24px);
 }
 
 .skill-config-field {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--spacing-sm, 8px);
 }
 
 .skill-config-field-label {
@@ -1444,7 +1444,7 @@
 
 .skill-config-input {
   width: 100%;
-  padding: 10px 14px;
+  padding: var(--spacing-sm-md, 10px) var(--spacing-md, 14px);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-bg-secondary);
@@ -1466,7 +1466,7 @@
 
 .skill-config-select {
   width: 100%;
-  padding: 10px 14px;
+  padding: var(--spacing-sm-md, 10px) var(--spacing-md, 14px);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-bg-secondary);
@@ -1502,10 +1502,10 @@
   align-items: center;
   width: 48px;
   height: 28px;
-  border-radius: 14px;
+  border-radius: var(--radius-xl, 14px);
   background: var(--color-border);
   transition: background 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  padding: 2px;
+  padding: var(--spacing-2xs, 2px);
 }
 
 .skill-config-toggle-thumb {
@@ -1528,7 +1528,7 @@
 .skill-config-slider-group {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--spacing-md, 12px);
 }
 
 .skill-config-slider {
@@ -1574,8 +1574,8 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 12px;
-  padding: 16px 12px;
+  gap: var(--spacing-md, 12px);
+  padding: var(--spacing-lg, 16px) var(--spacing-md, 12px);
   border-top: 1px solid var(--color-border);
   flex-shrink: 0;
 }
@@ -1588,7 +1588,7 @@
 }
 
 .skill-config-btn {
-  padding: 8px 20px;
+  padding: var(--spacing-sm, 8px) var(--spacing-xl, 20px);
   border: none;
   border-radius: var(--radius-md);
   font-size: var(--font-size-sm);
@@ -1674,7 +1674,7 @@
   max-width: 90vw;
   max-height: 80vh;
   background: var(--color-bg-primary);
-  border-radius: 16px;
+  border-radius: var(--radius-xl, 16px);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
   display: flex;
   flex-direction: column;
@@ -1691,7 +1691,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px 12px;
+  padding: var(--spacing-xl, 20px) var(--spacing-md, 12px);
   border-bottom: 1px solid var(--color-border);
   flex-shrink: 0;
 }
@@ -1703,7 +1703,7 @@
   margin: 0;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--spacing-sm-md, 10px);
 }
 
 .dialog-close {
@@ -1748,7 +1748,7 @@
   max-width: 90vw;
   max-height: 85vh;
   background: var(--color-bg-primary);
-  border-radius: 16px;
+  border-radius: var(--radius-xl, 16px);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
   display: flex;
   flex-direction: column;
@@ -1760,7 +1760,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px 12px;
+  padding: var(--spacing-xl, 20px) var(--spacing-md, 12px);
   border-bottom: 1px solid var(--color-border);
   flex-shrink: 0;
 }
@@ -1768,7 +1768,7 @@
 .skill-create-header-left {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--spacing-sm-md, 10px);
 }
 
 .skill-create-icon {
@@ -1804,13 +1804,13 @@
 .skill-create-body {
   flex: 1;
   overflow-y: auto;
-  padding: 12px;
+  padding: var(--spacing-md, 12px);
 }
 
 .skill-create-input-section {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--spacing-md, 12px);
 }
 
 .skill-create-label {
@@ -1819,7 +1819,7 @@
   color: var(--color-text-primary);
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--spacing-2xs, 4px);
 }
 
 .skill-create-hint {
@@ -1831,7 +1831,7 @@
 .skill-create-textarea {
   width: 100%;
   min-height: 140px;
-  padding: 14px 16px;
+  padding: var(--spacing-md, 14px) var(--spacing-lg, 16px);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-bg-secondary);
@@ -1868,15 +1868,15 @@
 .skill-create-preview-section {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--spacing-md, 12px);
 }
 
 .skill-create-meta {
   display: flex;
-  gap: 16px;
+  gap: var(--spacing-lg, 16px);
   font-size: var(--font-size-xs);
   color: var(--color-text-tertiary);
-  padding: 10px 14px;
+  padding: var(--spacing-sm-md, 10px) var(--spacing-md, 14px);
   background: var(--color-bg-secondary);
   border-radius: var(--radius-md);
 }
@@ -1889,7 +1889,7 @@
 .skill-create-preview-editor {
   width: 100%;
   min-height: 320px;
-  padding: 14px 16px;
+  padding: var(--spacing-md, 14px) var(--spacing-lg, 16px);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-bg-secondary);
@@ -1911,14 +1911,14 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 10px;
-  padding: 16px 12px;
+  gap: var(--spacing-sm-md, 10px);
+  padding: var(--spacing-lg, 16px) var(--spacing-md, 12px);
   border-top: 1px solid var(--color-border);
   flex-shrink: 0;
 }
 
 .skill-create-btn {
-  padding: 10px 12px;
+  padding: var(--spacing-sm-md, 10px) var(--spacing-md, 12px);
   border: none;
   border-radius: var(--radius-md);
   font-size: var(--font-size-sm);
@@ -1996,7 +1996,7 @@
   max-width: 90vw;
   max-height: 85vh;
   background: var(--color-bg-primary);
-  border-radius: 16px;
+  border-radius: var(--radius-xl, 16px);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
   display: flex;
   flex-direction: column;
@@ -2008,7 +2008,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px 12px;
+  padding: var(--spacing-xl, 20px) var(--spacing-md, 12px);
   border-bottom: 1px solid var(--color-border);
   flex-shrink: 0;
 }
@@ -2016,7 +2016,7 @@
 .skill-refine-header-left {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--spacing-md, 12px);
 }
 
 .skill-refine-icon {
@@ -2026,7 +2026,7 @@
 .skill-refine-title-group {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--spacing-2xs, 2px);
 }
 
 .skill-refine-name {
@@ -2105,21 +2105,21 @@
 }
 
 .skill-refine-preview {
-  padding: 16px 12px;
+  padding: var(--spacing-lg, 16px) var(--spacing-md, 12px);
 }
 
 .skill-refine-loading {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: var(--spacing-sm, 8px);
   padding: 40px;
   color: var(--color-text-tertiary);
   font-size: var(--font-size-sm);
 }
 
 .skill-refine-content {
-  padding: 16px;
+  padding: var(--spacing-lg, 16px);
   background: var(--color-bg-secondary);
   border-radius: var(--radius-md);
   border: 1px solid var(--color-border);
@@ -2136,7 +2136,7 @@
 
 /* 分析结果 */
 .skill-refine-analyze {
-  padding: 20px 12px;
+  padding: var(--spacing-xl, 20px) var(--spacing-md, 12px);
 }
 
 .skill-refine-analyze-empty {
@@ -2144,7 +2144,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: var(--spacing-md, 12px);
   padding: 40px;
   color: var(--color-text-tertiary);
   font-size: var(--font-size-sm);
@@ -2156,7 +2156,7 @@
 }
 
 .skill-refine-score {
-  margin-bottom: 16px;
+  margin-bottom: var(--spacing-lg, 16px);
 }
 
 .skill-refine-score-bar {
@@ -2165,7 +2165,7 @@
   background: var(--color-bg-tertiary);
   border-radius: var(--radius-full);
   overflow: hidden;
-  margin-bottom: 8px;
+  margin-bottom: var(--spacing-sm, 8px);
 }
 
 .skill-refine-score-fill {
@@ -2185,7 +2185,7 @@
   font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
   line-height: 1.6;
-  margin: 0 0 16px;
+  margin: 0 0 var(--spacing-lg, 16px);
   padding: var(--spacing-md) var(--spacing-md);
   background: var(--color-bg-secondary);
   border-radius: var(--radius-md);
@@ -2194,7 +2194,7 @@
 .skill-refine-suggestions {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--spacing-sm-md, 10px);
 }
 
 .skill-refine-suggestions-title {
@@ -2210,14 +2210,14 @@
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--spacing-sm, 8px);
 }
 
 .skill-refine-suggestion-item {
   display: flex;
   align-items: flex-start;
-  gap: 8px;
-  padding: 10px 14px;
+  gap: var(--spacing-sm, 8px);
+  padding: var(--spacing-sm-md, 10px) var(--spacing-md, 14px);
   background: var(--color-bg-secondary);
   border-radius: var(--radius-md);
   font-size: var(--font-size-xs);
@@ -2232,18 +2232,18 @@
 
 /* Diff 对比 */
 .skill-refine-diff {
-  padding: 16px 12px;
+  padding: var(--spacing-lg, 16px) var(--spacing-md, 12px);
 }
 
 .skill-refine-changes {
-  margin-bottom: 16px;
+  margin-bottom: var(--spacing-lg, 16px);
 }
 
 .skill-refine-changes-title {
   font-size: var(--font-size-sm);
   font-weight: 600;
   color: var(--color-text-primary);
-  margin: 0 0 8px;
+  margin: 0 0 var(--spacing-sm, 8px);
 }
 
 .skill-refine-changes-list {
@@ -2252,13 +2252,13 @@
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--spacing-2xs, 4px);
 }
 
 .skill-refine-change-item {
   font-size: var(--font-size-xs);
   color: var(--color-text-secondary);
-  padding: 6px 12px;
+  padding: var(--spacing-xs, 6px) var(--spacing-md, 12px);
   background: var(--color-bg-secondary);
   border-radius: var(--radius-sm);
   border-left: 3px solid var(--color-accent);
@@ -2278,7 +2278,7 @@
   font-family: var(--font-mono);
   font-size: var(--font-size-xs);
   line-height: 1.6;
-  padding: 0 12px;
+  padding: 0 var(--spacing-md, 12px);
 }
 
 .skill-refine-diff-line--removed {
@@ -2313,19 +2313,19 @@
 
 /* 炼化输入区 */
 .skill-refine-input {
-  padding: 12px 12px;
+  padding: var(--spacing-md, 12px) var(--spacing-md, 12px);
   border-top: 1px solid var(--color-border);
   flex-shrink: 0;
 }
 
 .skill-refine-input-row {
   display: flex;
-  gap: 10px;
+  gap: var(--spacing-sm-md, 10px);
 }
 
 .skill-refine-input-field {
   flex: 1;
-  padding: 10px 14px;
+  padding: var(--spacing-sm-md, 10px) var(--spacing-md, 14px);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-bg-secondary);
@@ -2351,7 +2351,7 @@
 .skill-refine-error {
   font-size: var(--font-size-xs);
   color: var(--color-error);
-  margin: 6px 0 0;
+  margin: var(--spacing-xs, 6px) 0 0;
 }
 
 /* 底部操作栏 */
@@ -2359,18 +2359,18 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 12px;
+  padding: var(--spacing-lg, 16px) var(--spacing-md, 12px);
   border-top: 1px solid var(--color-border);
   flex-shrink: 0;
 }
 
 .skill-refine-footer-right {
   display: flex;
-  gap: 10px;
+  gap: var(--spacing-sm-md, 10px);
 }
 
 .skill-refine-btn {
-  padding: 8px 20px;
+  padding: var(--spacing-sm, 8px) var(--spacing-xl, 20px);
   border: none;
   border-radius: var(--radius-md);
   font-size: var(--font-size-xs);
@@ -2380,7 +2380,7 @@
   white-space: nowrap;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--spacing-xs, 6px);
 }
 
 .skill-refine-btn:disabled {
@@ -2641,8 +2641,8 @@
 .network-toggle {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 12px;
+  gap: var(--spacing-sm, 8px);
+  padding: var(--spacing-xs, 6px) var(--spacing-md, 12px);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-full);
   background: var(--color-bg-primary);
@@ -2704,7 +2704,7 @@
 .update-list {
   flex: 1;
   overflow-y: auto;
-  padding: 16px;
+  padding: var(--spacing-lg, 16px);
 }
 
 .update-empty {
@@ -2712,8 +2712,8 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 40px 20px;
-  gap: 12px;
+  padding: 40px var(--spacing-xl, 20px);
+  gap: var(--spacing-md, 12px);
 }
 
 .update-empty-icon {
@@ -2735,18 +2735,18 @@
 }
 
 .update-summary {
-  padding: 8px 0 12px;
+  padding: var(--spacing-sm, 8px) 0 var(--spacing-md, 12px);
   font-size: var(--font-size-xs);
   color: var(--color-text-secondary, #aaa);
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  margin-bottom: 8px;
+  margin-bottom: var(--spacing-sm, 8px);
 }
 
 .update-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px;
+  padding: var(--spacing-md, 12px);
   border-radius: var(--radius-md);
   background: rgba(255, 255, 255, 0.04);
   margin-bottom: 8px;
@@ -2760,7 +2760,7 @@
 .update-item-info {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--spacing-md, 12px);
   flex: 1;
   min-width: 0;
 }
@@ -2782,12 +2782,12 @@
 }
 
 .update-item-version {
-  margin: 4px 0 0;
+  margin: var(--spacing-2xs, 4px) 0 0;
   font-size: var(--font-size-xs);
   color: var(--color-text-secondary, #aaa);
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--spacing-xs, 6px);
 }
 
 .version-current {
@@ -2804,7 +2804,7 @@
 }
 
 .update-item-changelog {
-  margin: 4px 0 0;
+  margin: var(--spacing-2xs, 4px) 0 0;
   font-size: var(--font-size-2xs);
   color: var(--color-text-secondary, #777);
   line-height: 1.4;
@@ -2814,8 +2814,8 @@
 }
 
 .btn-update-single {
-  padding: 6px 16px;
-  border-radius: 6px;
+  padding: var(--spacing-xs, 6px) var(--spacing-lg, 16px);
+  border-radius: var(--radius-xs, 6px);
   border: 1px solid rgba(255, 255, 255, 0.15);
   background: rgba(255, 255, 255, 0.06);
   color: var(--color-text-primary, #fff);
@@ -2867,8 +2867,8 @@
 .install-progress {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
+  gap: var(--spacing-sm, 8px);
+  padding: var(--spacing-sm-md, 10px) var(--spacing-lg, 16px);
   font-size: var(--font-size-xs);
   color: var(--color-text-secondary, #aaa);
   background: rgba(255, 255, 255, 0.03);
@@ -2884,7 +2884,7 @@
 }
 
 .stats-card {
-  padding: 14px;
+  padding: var(--spacing-md, 14px);
   border-radius: var(--radius-lg);
   background: var(--color-bg-secondary);
   text-align: center;
@@ -3170,7 +3170,7 @@
   border: none;
   cursor: pointer;
   font-size: var(--font-size-sm);
-  padding: 2px 4px;
+  padding: var(--spacing-2xs, 2px) var(--spacing-2xs, 4px);
   color: var(--color-text-secondary);
 }
 

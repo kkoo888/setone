@@ -17,7 +17,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px 12px 12px;
+  padding: var(--spacing-xl, 20px) var(--spacing-md, 12px) var(--spacing-md, 12px);
   flex-shrink: 0;
 }
 
@@ -30,14 +30,14 @@
 
 .kb-tabs {
   display: flex;
-  gap: 4px;
-  padding: 0 12px 12px;
+  gap: var(--spacing-2xs, 4px);
+  padding: 0 var(--spacing-md, 12px) var(--spacing-md, 12px);
   flex-shrink: 0;
   border-bottom: 1px solid var(--color-border);
 }
 
 .kb-tab {
-  padding: 10px 20px;
+  padding: var(--spacing-sm-md, 10px) var(--spacing-xl, 20px);
   border: none;
   border-bottom: 2px solid transparent;
   background: transparent;
@@ -62,14 +62,14 @@
 .kb-content {
   flex: 1;
   overflow-y: auto;
-  padding: 20px 12px;
+  padding: var(--spacing-xl, 20px) var(--spacing-md, 12px);
 }
 
 /* 搜索栏 */
 .kb-search-bar {
   display: flex;
-  gap: 10px;
-  margin-bottom: 20px;
+  gap: var(--spacing-sm-md, 10px);
+  margin-bottom: var(--spacing-xl, 20px);
 }
 
 .kb-search-input {
@@ -97,21 +97,21 @@
 /* 导入栏 */
 .kb-import-bar {
   display: flex;
-  gap: 10px;
-  margin-bottom: 20px;
+  gap: var(--spacing-sm-md, 10px);
+  margin-bottom: var(--spacing-xl, 20px);
 }
 
 /* 文档列表 */
 .kb-doc-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--spacing-sm, 8px);
 }
 
 .kb-doc-item {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: var(--spacing-md, 14px);
   padding: var(--spacing-md) var(--spacing-md);
   background: var(--color-bg-primary);
   border: 1px solid var(--color-border);
@@ -153,16 +153,16 @@
 .kb-doc-meta {
   font-size: var(--font-size-xs);
   color: var(--color-text-tertiary);
-  margin-top: 2px;
+  margin-top: var(--spacing-2xs, 2px);
 }
 
 .kb-doc-actions {
   display: flex;
-  gap: 6px;
+  gap: var(--spacing-xs, 6px);
 }
 
 .kb-doc-actions .btn {
-  padding: 6px 14px;
+  padding: var(--spacing-xs, 6px) var(--spacing-md, 14px);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-bg-secondary);
@@ -183,11 +183,11 @@
 
 /* 搜索结果 */
 .kb-result-item {
-  padding: 16px 18px;
+  padding: var(--spacing-lg, 16px) var(--spacing-lg, 18px);
   background: var(--color-bg-primary);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  margin-bottom: 10px;
+  margin-bottom: var(--spacing-sm-md, 10px);
   transition: all var(--transition-fast);
 }
 
@@ -199,18 +199,18 @@
   font-size: var(--font-size-sm);
   font-weight: 600;
   color: var(--color-text-primary);
-  margin-bottom: 6px;
+  margin-bottom: var(--spacing-xs, 6px);
 }
 
 .kb-result-score {
   display: inline-block;
-  padding: 2px 8px;
+  padding: var(--spacing-2xs, 2px) var(--spacing-sm, 8px);
   border-radius: var(--radius-full);
   background: rgba(99, 102, 241, 0.1);
   color: var(--color-accent);
   font-size: var(--font-size-2xs);
   font-weight: 600;
-  margin-left: 8px;
+  margin-left: var(--spacing-sm, 8px);
 }
 
 .kb-result-text {
@@ -231,28 +231,28 @@
   font-size: var(--font-size-sm);
   color: var(--color-text-primary);
   line-height: 1.7;
-  margin-bottom: 16px;
+  margin-bottom: var(--spacing-lg, 16px);
 }
 
 .kb-ask-sources {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--spacing-xs, 6px);
 }
 
 .kb-ask-source {
   font-size: var(--font-size-xs);
   color: var(--color-text-tertiary);
-  padding: 6px 10px;
+  padding: var(--spacing-xs, 6px) var(--spacing-sm-md, 10px);
   background: var(--color-bg-primary);
   border-radius: var(--radius-sm);
 }
 
 .kb-message {
-  padding: 10px 16px;
+  padding: var(--spacing-sm-md, 10px) var(--spacing-lg, 16px);
   border-radius: var(--radius-md);
   font-size: var(--font-size-xs);
-  margin-bottom: 16px;
+  margin-bottom: var(--spacing-lg, 16px);
 }
 
 .kb-message-success {
@@ -271,7 +271,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: var(--spacing-md, 12px);
   padding: 60px;
   color: var(--color-text-tertiary);
   font-size: var(--font-size-sm);
@@ -290,13 +290,13 @@
 /* 导入弹窗 */
 .import-mode-tabs {
   display: flex;
-  gap: 8px;
-  margin-bottom: 20px;
+  gap: var(--spacing-sm, 8px);
+  margin-bottom: var(--spacing-xl, 20px);
 }
 
 .import-mode-tabs .tab-btn {
   flex: 1;
-  padding: 10px 16px;
+  padding: var(--spacing-sm-md, 10px) var(--spacing-lg, 16px);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-bg-secondary);
@@ -316,7 +316,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
+  gap: var(--spacing-lg, 16px);
   padding: 32px;
   border: 2px dashed var(--color-border);
   border-radius: var(--radius-lg);
@@ -335,7 +335,7 @@
   font-size: var(--font-size-sm);
   background: var(--color-bg-tertiary);
   padding: var(--spacing-sm) var(--spacing-md);
-  border-radius: 6px;
+  border-radius: var(--radius-md, 6px);
   word-break: break-all;
   margin: 0;
   max-width: 100%;
@@ -408,7 +408,7 @@
 
 .kb-badge {
   font-size: var(--font-size-2xs);
-  padding: 1px 6px;
+  padding: 1px var(--spacing-xs, 6px);
   border-radius: var(--radius-sm);
   background: var(--color-bg-tertiary);
   color: var(--color-text-tertiary);

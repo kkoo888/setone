@@ -7,7 +7,7 @@
 .wf-create-btn {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--spacing-xs, 6px);
   padding: var(--spacing-sm) var(--spacing-md);
   border: none;
   border-radius: var(--radius-md);
@@ -33,7 +33,7 @@
 .wf-card-subtitle {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--spacing-xs, 6px);
   flex-wrap: wrap;
 }
 
@@ -46,8 +46,8 @@
 .wf-trigger-badge {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 3px 10px;
+  gap: var(--spacing-2xs, 4px);
+  padding: 3px var(--spacing-sm-md, 10px);
   border-radius: var(--radius-full);
   font-size: var(--font-size-2xs);
   font-weight: 600;
@@ -95,7 +95,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px 12px;
+  padding: var(--spacing-xl, 20px) var(--spacing-md, 12px);
   border-bottom: 1px solid var(--color-border);
 }
 
@@ -127,18 +127,18 @@
 }
 
 .wf-modal-body {
-  padding: 12px;
+  padding: var(--spacing-md, 12px);
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: var(--spacing-xl, 20px);
 }
 
 .wf-modal-footer {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 10px;
-  padding: 16px 12px;
+  gap: var(--spacing-sm-md, 10px);
+  padding: var(--spacing-lg, 16px) var(--spacing-md, 12px);
   border-top: 1px solid var(--color-border);
 }
 
@@ -146,7 +146,7 @@
 .wf-form-group {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--spacing-sm, 8px);
 }
 
 .wf-form-group label {
@@ -157,7 +157,7 @@
 }
 
 .wf-input {
-  padding: 10px 14px;
+  padding: var(--spacing-sm-md, 10px) var(--spacing-md, 14px);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md, 8px);
   background: var(--color-bg-primary);
@@ -186,15 +186,15 @@
 .wf-trigger-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
+  gap: var(--spacing-sm, 8px);
 }
 
 .wf-trigger-option {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  padding: 14px 8px;
+  gap: var(--spacing-xs, 6px);
+  padding: var(--spacing-md, 14px) var(--spacing-sm, 8px);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md, 8px);
   background: var(--color-bg-primary);
@@ -230,7 +230,7 @@
 
 /* ── 执行日志 ── */
 .wf-logs-container {
-  padding: 20px 12px;
+  padding: var(--spacing-xl, 20px) var(--spacing-md, 12px);
   overflow-y: auto;
   flex: 1;
 }
@@ -238,13 +238,13 @@
 .wf-log-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--spacing-sm, 8px);
 }
 
 .wf-log-item {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: var(--spacing-md, 14px);
   padding: var(--spacing-md) var(--spacing-md);
   background: var(--color-bg-primary);
   border: 1px solid var(--color-border);
@@ -290,7 +290,7 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--spacing-2xs, 2px);
 }
 
 .wf-log-name {
@@ -308,14 +308,14 @@
 .wf-log-error {
   font-size: var(--font-size-xs);
   color: var(--color-error);
-  margin-top: 2px;
+  margin-top: var(--spacing-2xs, 2px);
 }
 
 .wf-log-badge {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 10px;
+  gap: var(--spacing-2xs, 4px);
+  padding: var(--spacing-2xs, 4px) var(--spacing-sm-md, 10px);
   border-radius: var(--radius-full);
   font-size: var(--font-size-2xs);
   font-weight: 600;
@@ -341,8 +341,8 @@
 .wf-templates-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 14px;
-  padding: 20px 12px;
+  gap: var(--spacing-md, 14px);
+  padding: var(--spacing-xl, 20px) var(--spacing-md, 12px);
   overflow-y: auto;
   flex: 1;
 }
@@ -350,8 +350,8 @@
 .wf-template-card {
   display: flex;
   align-items: flex-start;
-  gap: 14px;
-  padding: 18px 20px;
+  gap: var(--spacing-md, 14px);
+  padding: var(--spacing-lg, 18px) var(--spacing-xl, 20px);
   background: var(--color-bg-primary);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg, 12px);
@@ -391,20 +391,20 @@
   font-size: var(--font-size-sm);
   font-weight: 700;
   color: var(--color-text-primary);
-  margin: 0 0 4px;
+  margin: 0 0 var(--spacing-2xs, 4px);
 }
 
 .wf-template-desc {
   font-size: var(--font-size-xs);
   color: var(--color-text-secondary);
-  margin: 0 0 8px;
+  margin: 0 0 var(--spacing-sm, 8px);
   line-height: 1.5;
 }
 
 .wf-template-trigger {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--spacing-2xs, 4px);
   font-size: var(--font-size-2xs);
   color: var(--color-text-tertiary);
 }
@@ -449,9 +449,9 @@
 /* ── 模板详情弹窗 ── */
 .wf-template-detail {
   display: flex;
-  gap: 16px;
+  gap: var(--spacing-lg, 16px);
   align-items: flex-start;
-  padding: 16px;
+  padding: var(--spacing-lg, 16px);
   background: var(--color-bg-secondary);
   border-radius: var(--radius-md, 8px);
   border: 1px solid var(--color-border);
@@ -477,23 +477,23 @@
   font-size: var(--font-size-md);
   font-weight: 700;
   color: var(--color-text-primary);
-  margin: 0 0 6px;
+  margin: 0 0 var(--spacing-xs, 6px);
 }
 
 .wf-template-detail-info p {
   font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
-  margin: 0 0 10px;
+  margin: 0 0 var(--spacing-sm-md, 10px);
   line-height: 1.5;
 }
 
 .wf-template-detail-meta {
   display: flex;
-  gap: 8px;
+  gap: var(--spacing-sm, 8px);
 }
 
 .wf-template-detail-steps {
-  margin-top: 16px;
+  margin-top: var(--spacing-lg, 16px);
 }
 
 .wf-template-detail-steps label {
@@ -501,20 +501,20 @@
   font-size: var(--font-size-xs);
   font-weight: 600;
   color: var(--color-text-secondary);
-  margin-bottom: 8px;
+  margin-bottom: var(--spacing-sm, 8px);
 }
 
 .wf-template-step-list {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--spacing-xs, 6px);
 }
 
 .wf-template-step {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 14px;
+  gap: var(--spacing-sm-md, 10px);
+  padding: var(--spacing-sm-md, 10px) var(--spacing-md, 14px);
   background: var(--color-bg-primary);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm, 6px);
@@ -541,7 +541,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: var(--spacing-md, 12px);
   padding: 80px 40px;
   color: var(--color-text-tertiary);
   font-size: var(--font-size-sm);

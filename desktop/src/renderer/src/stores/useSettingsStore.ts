@@ -84,7 +84,7 @@ const defaultSettings: AppSettings = {
     autoStart: false,
   },
   appearance: {
-    theme: 'system',
+    theme: 'light',
     language: 'zh-CN',
     fontSize: 14,
     sidebarCollapsed: false,

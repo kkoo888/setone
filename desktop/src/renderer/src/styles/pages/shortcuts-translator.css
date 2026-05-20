@@ -16,7 +16,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px 12px 12px;
+  padding: var(--spacing-xl, 20px) var(--spacing-md, 12px) var(--spacing-md, 12px);
   flex-shrink: 0;
 }
 
@@ -30,8 +30,8 @@
 .shortcuts-list {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 0 12px 12px;
+  gap: var(--spacing-xs, 6px);
+  padding: 0 var(--spacing-md, 12px) var(--spacing-md, 12px);
   overflow-y: auto;
   flex: 1;
 }
@@ -39,7 +39,7 @@
 .shortcut-item {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: var(--spacing-lg, 16px);
   padding: var(--spacing-md) var(--spacing-lg);
   background: var(--color-bg-primary);
   border: 1px solid var(--color-border);
@@ -60,7 +60,7 @@
 
 /* 手风琴内联编辑表单 */
 .sc-inline-form {
-  padding: var(--spacing-md) var(--spacing-lg) 16px;
+  padding: var(--spacing-md) var(--spacing-lg) var(--spacing-lg, 16px);
   background: var(--color-bg-secondary);
   border: 1px solid var(--color-accent);
   border-top: none;
@@ -68,7 +68,7 @@
   border-bottom-right-radius: var(--radius-md);
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--spacing-sm-md, 10px);
   animation: scAccordionOpen 0.2s ease;
 }
 
@@ -79,7 +79,7 @@
 
 .sc-inline-form-row {
   display: flex;
-  gap: 10px;
+  gap: var(--spacing-sm-md, 10px);
 }
 
 .sc-inline-form-row .sc-input {
@@ -88,12 +88,12 @@
 
 .shortcut-keys {
   display: flex;
-  gap: 6px;
+  gap: var(--spacing-xs, 6px);
   flex-shrink: 0;
 }
 
 .shortcut-key {
-  padding: 4px 10px;
+  padding: var(--spacing-2xs, 4px) var(--spacing-sm-md, 10px);
   background: var(--color-bg-secondary);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
@@ -120,12 +120,12 @@
 .shortcut-desc {
   font-size: var(--font-size-xs);
   color: var(--color-text-tertiary);
-  margin-top: 2px;
+  margin-top: var(--spacing-2xs, 2px);
 }
 
 .shortcut-actions {
   display: flex;
-  gap: 6px;
+  gap: var(--spacing-xs, 6px);
   opacity: 0;
   transition: opacity var(--transition-fast);
 }
@@ -138,7 +138,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: var(--spacing-md, 12px);
   padding: 60px;
   color: var(--color-text-tertiary);
   font-size: var(--font-size-sm);
@@ -166,14 +166,14 @@
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  padding: 15px 12px 10px;
+  padding: 15px var(--spacing-md, 12px) var(--spacing-sm-md, 10px);
   flex-shrink: 0;
 }
 
 .trans-header-left {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--spacing-sm, 8px);
 }
 
 .trans-header-icon {
@@ -192,7 +192,7 @@
 /* tabs 和标题底边对齐 */
 .trans-tabs {
   display: flex;
-  gap: 4px;
+  gap: var(--spacing-2xs, 4px);
   align-items: flex-end;
 }
 
@@ -231,22 +231,22 @@
 .trans-content {
   flex: 1;
   overflow-y: auto;
-  padding: 20px 12px;
+  padding: var(--spacing-xl, 20px) var(--spacing-md, 12px);
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--spacing-lg, 16px);
 }
 
 /* 语言选择栏 */
 .trans-lang-bar {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--spacing-md, 12px);
 }
 
 .trans-select {
   flex: 1;
-  padding: 10px 14px;
+  padding: var(--spacing-sm-md, 10px) var(--spacing-md, 14px);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-bg-primary);
@@ -287,13 +287,13 @@
 .trans-panels {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  gap: var(--spacing-lg, 16px);
 }
 
 .trans-panel {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--spacing-sm, 8px);
 }
 
 .trans-panel label {
@@ -305,7 +305,7 @@
 .trans-textarea {
   width: 100%;
   min-height: 180px;
-  padding: 14px 16px;
+  padding: var(--spacing-md, 14px) var(--spacing-lg, 16px);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-bg-primary);
@@ -337,7 +337,7 @@
 }
 
 .trans-translate-btn {
-  padding: 12px 40px;
+  padding: var(--spacing-md, 12px) 40px;
   border: none;
   border-radius: var(--radius-md);
   background: var(--color-accent);
@@ -361,7 +361,7 @@
 .trans-history-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--spacing-sm, 8px);
 }
 
 .trans-record {
@@ -381,21 +381,21 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 8px;
+  margin-bottom: var(--spacing-sm, 8px);
 }
 
 .trans-lang-badge {
   font-size: var(--font-size-2xs);
   color: var(--color-accent);
   background: rgba(99, 102, 241, 0.1);
-  padding: 2px 8px;
+  padding: var(--spacing-2xs, 2px) var(--spacing-sm, 8px);
   border-radius: var(--radius-sm);
   font-weight: 500;
 }
 
 .trans-record-actions {
   display: flex;
-  gap: 4px;
+  gap: var(--spacing-2xs, 4px);
 }
 
 .btn-icon {
@@ -403,7 +403,7 @@
   background: transparent;
   cursor: pointer;
   font-size: var(--font-size-xl);
-  padding: 6px 8px;
+  padding: var(--spacing-xs, 6px) var(--spacing-sm, 8px);
   border-radius: var(--radius-sm);
   transition: background var(--transition-fast);
   line-height: 1;
@@ -415,7 +415,7 @@
 
 .trans-record-pair {
   display: flex;
-  gap: 12px;
+  gap: var(--spacing-md, 12px);
   align-items: flex-start;
 }
 
@@ -429,7 +429,7 @@
 .trans-arrow {
   color: var(--color-text-tertiary);
   flex-shrink: 0;
-  padding-top: 2px;
+  padding-top: var(--spacing-2xs, 2px);
 }
 
 .trans-tgt {
@@ -444,7 +444,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: var(--spacing-md, 12px);
   padding: 60px;
   color: var(--color-text-tertiary);
   font-size: var(--font-size-sm);
@@ -513,7 +513,7 @@
   font-size: var(--font-size-xl);
   cursor: pointer;
   color: var(--color-text-tertiary);
-  padding: 4px 8px;
+  padding: var(--spacing-2xs, 4px) var(--spacing-sm, 8px);
   border-radius: var(--radius-sm);
   transition: all var(--transition-fast);
   line-height: 1;
@@ -527,7 +527,7 @@
 .trans-modal-body {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  gap: var(--spacing-lg, 16px);
   padding: var(--spacing-lg);
   flex: 1;
   overflow-y: auto;
@@ -536,7 +536,7 @@
 .trans-modal-panel {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--spacing-sm, 8px);
 }
 
 .trans-modal-panel label {
@@ -546,7 +546,7 @@
 }
 
 .trans-modal-text {
-  padding: 14px 16px;
+  padding: var(--spacing-md, 14px) var(--spacing-lg, 16px);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-bg-primary);
@@ -573,14 +573,14 @@
   font-size: var(--font-size-2xs);
   color: var(--color-accent);
   background: rgba(99, 102, 241, 0.1);
-  padding: 3px 10px;
+  padding: 3px var(--spacing-sm-md, 10px);
   border-radius: var(--radius-sm);
   font-weight: 500;
 }
 
 .trans-modal-actions {
   display: flex;
-  gap: 8px;
+  gap: var(--spacing-sm, 8px);
 }
 
 .trans-modal-btn {
@@ -626,8 +626,8 @@
 
 /* 快捷指令 - 消息提示 */
 .sc-message {
-  padding: 10px 20px;
-  margin: 0 24px 12px;
+  padding: var(--spacing-sm-md, 10px) var(--spacing-xl, 20px);
+  margin: 0 24px var(--spacing-md, 12px);
   border-radius: var(--radius-md);
   font-size: var(--font-size-sm);
   font-weight: 500;
@@ -661,9 +661,9 @@
 .sc-add-form {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 20px 12px;
-  margin: 0 12px 12px;
+  gap: var(--spacing-md, 12px);
+  padding: var(--spacing-xl, 20px) var(--spacing-md, 12px);
+  margin: 0 var(--spacing-md, 12px) var(--spacing-md, 12px);
   background: var(--color-bg-secondary);
   border-radius: var(--radius-lg);
   border: 1px solid var(--color-border);
@@ -671,7 +671,7 @@
 }
 
 .sc-input {
-  padding: 10px 14px;
+  padding: var(--spacing-sm-md, 10px) var(--spacing-md, 14px);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-bg-primary);
@@ -698,7 +698,7 @@
 
 .sc-form-actions {
   display: flex;
-  gap: 8px;
+  gap: var(--spacing-sm, 8px);
   justify-content: flex-end;
 }
 
@@ -715,7 +715,7 @@
 .sc-key-sep {
   font-size: var(--font-size-xs);
   color: var(--color-text-tertiary);
-  margin: 0 2px;
+  margin: 0 var(--spacing-2xs, 2px);
 }
 
 @media (max-width: 768px) {

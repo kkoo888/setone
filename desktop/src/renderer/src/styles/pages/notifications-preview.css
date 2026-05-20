@@ -16,7 +16,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px 12px 12px;
+  padding: var(--spacing-xl, 20px) var(--spacing-md, 12px) var(--spacing-md, 12px);
   flex-shrink: 0;
 }
 
@@ -29,18 +29,18 @@
 
 .notif-header-actions {
   display: flex;
-  gap: 8px;
+  gap: var(--spacing-sm, 8px);
 }
 
 .notif-filters {
   display: flex;
-  gap: 6px;
-  padding: 0 12px 12px;
+  gap: var(--spacing-xs, 6px);
+  padding: 0 var(--spacing-md, 12px) var(--spacing-md, 12px);
   flex-shrink: 0;
 }
 
 .notif-filter-btn {
-  padding: 7px 16px;
+  padding: 7px var(--spacing-lg, 16px);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-full);
   background: var(--color-bg-primary);
@@ -65,8 +65,8 @@
 .notif-list {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 0 12px 12px;
+  gap: var(--spacing-xs, 6px);
+  padding: 0 var(--spacing-md, 12px) var(--spacing-md, 12px);
   overflow-y: auto;
   flex: 1;
 }
@@ -74,7 +74,7 @@
 .notif-item {
   display: flex;
   align-items: flex-start;
-  gap: 14px;
+  gap: var(--spacing-md, 14px);
   padding: var(--spacing-md) var(--spacing-md);
   background: var(--color-bg-primary);
   border: 1px solid var(--color-border);
@@ -116,7 +116,7 @@
   font-size: var(--font-size-sm);
   font-weight: 600;
   color: var(--color-text-primary);
-  margin-bottom: 4px;
+  margin-bottom: var(--spacing-2xs, 4px);
 }
 
 .notif-text {
@@ -128,12 +128,12 @@
 .notif-time {
   font-size: var(--font-size-2xs);
   color: var(--color-text-tertiary);
-  margin-top: 6px;
+  margin-top: var(--spacing-xs, 6px);
 }
 
 .notif-actions {
   display: flex;
-  gap: 6px;
+  gap: var(--spacing-xs, 6px);
   opacity: 0;
   transition: opacity var(--transition-fast);
   flex-shrink: 0;
@@ -144,7 +144,7 @@
 }
 
 .notif-actions .btn {
-  padding: 5px 10px;
+  padding: 5px var(--spacing-sm-md, 10px);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-bg-secondary);
@@ -167,7 +167,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: var(--spacing-md, 12px);
   padding: 60px;
   color: var(--color-text-tertiary);
   font-size: var(--font-size-sm);
@@ -193,8 +193,8 @@
 .preview-header {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 20px 12px 12px;
+  gap: var(--spacing-md, 12px);
+  padding: var(--spacing-xl, 20px) var(--spacing-md, 12px) var(--spacing-md, 12px);
   flex-shrink: 0;
 }
 
@@ -207,7 +207,7 @@
 
 .preview-input {
   flex: 1;
-  padding: 10px 14px;
+  padding: var(--spacing-sm-md, 10px) var(--spacing-md, 14px);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-bg-secondary);
@@ -226,7 +226,7 @@
 .preview-content {
   flex: 1;
   overflow-y: auto;
-  padding: 0 12px 12px;
+  padding: 0 var(--spacing-md, 12px) var(--spacing-md, 12px);
 }
 
 .preview-result {
@@ -239,7 +239,7 @@
 .preview-file-info {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: var(--spacing-lg, 16px);
   padding: var(--spacing-md) var(--spacing-md);
   border-bottom: 1px solid var(--color-border);
   font-size: var(--font-size-xs);
@@ -249,11 +249,11 @@
 .preview-file-info span {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--spacing-2xs, 4px);
 }
 
 .preview-code {
-  padding: 16px 18px;
+  padding: var(--spacing-lg, 16px) var(--spacing-lg, 18px);
   font-family: var(--font-mono);
   font-size: var(--font-size-xs);
   line-height: 1.6;
@@ -265,20 +265,20 @@
 }
 
 .preview-recent {
-  margin-top: 20px;
+  margin-top: var(--spacing-xl, 20px);
 }
 
 .preview-recent h3 {
   font-size: var(--font-size-sm);
   font-weight: 600;
   color: var(--color-text-secondary);
-  margin-bottom: 10px;
+  margin-bottom: var(--spacing-sm-md, 10px);
 }
 
 .preview-recent-list {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--spacing-2xs, 4px);
 }
 
 .preview-recent-item {
@@ -307,7 +307,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: var(--spacing-md, 12px);
   padding: 60px;
   color: var(--color-text-tertiary);
   font-size: var(--font-size-sm);
@@ -328,7 +328,7 @@
   font-size: var(--font-size-2xs);
   background: var(--color-accent);
   color: var(--color-text-inverse);
-  padding: 1px 6px;
+  padding: 1px var(--spacing-xs, 6px);
   border-radius: var(--radius-full);
 }
 

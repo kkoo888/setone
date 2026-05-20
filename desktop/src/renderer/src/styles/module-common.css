@@ -17,20 +17,20 @@
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  padding: 15px 12px 12px;
+  padding: var(--spacing-md, 15px) var(--spacing-md, 12px) var(--spacing-md, 12px);
   flex-shrink: 0;
-  margin-bottom: 10px;
+  margin-bottom: var(--spacing-sm-md, 10px);
   border-bottom: 1px solid var(--color-border);
 }
 
 .mod-header-left {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--spacing-sm, 8px);
 }
 
 .mod-header-icon {
-  font-size: 22px;
+  font-size: var(--font-size-2xl);
   flex-shrink: 0;
 }
 
@@ -45,24 +45,24 @@
 .mod-header-right {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--spacing-md, 12px);
 }
 
 .mod-header-actions {
   display: flex;
-  gap: 8px;
+  gap: var(--spacing-sm, 8px);
   align-items: center;
 }
 
 /* ─── 标签切换 ─── */
 .mod-tabs {
   display: flex;
-  gap: 4px;
+  gap: var(--spacing-2xs, 4px);
   align-items: flex-end;
 }
 
 .mod-tab {
-  padding: 8px 18px;
+  padding: var(--spacing-sm, 8px) var(--spacing-lg, 18px);
   border: none;
   border-bottom: 2px solid transparent;
   background: transparent;
@@ -74,7 +74,7 @@
   line-height: 1;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--spacing-xs, 6px);
 }
 
 .mod-tab:hover {
@@ -91,7 +91,7 @@
   font-size: var(--font-size-2xs);
   background: var(--color-accent);
   color: var(--color-text-inverse);
-  padding: 1px 6px;
+  padding: 1px var(--spacing-xs, 6px);
   border-radius: var(--radius-full);
   font-weight: 600;
   min-width: 18px;
@@ -103,22 +103,22 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px;
-  gap: 12px;
+  padding: var(--spacing-md, 12px);
+  gap: var(--spacing-md, 12px);
   flex-shrink: 0;
 }
 
 .mod-toolbar-left {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--spacing-md, 12px);
   flex: 1;
 }
 
 .mod-toolbar-right {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--spacing-sm, 8px);
 }
 
 .mod-search {
@@ -145,11 +145,11 @@
 /* ─── 筛选按钮组 ─── */
 .mod-filters {
   display: flex;
-  gap: 4px;
+  gap: var(--spacing-2xs, 4px);
 }
 
 .mod-filter-btn {
-  padding: 6px 14px;
+  padding: var(--spacing-xs, 6px) var(--spacing-md, 14px);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-bg-primary);
@@ -160,7 +160,7 @@
   transition: all var(--transition-fast);
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--spacing-2xs, 4px);
 }
 
 .mod-filter-btn:hover {
@@ -182,15 +182,15 @@
 .mod-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 0 12px 12px;
+  gap: var(--spacing-sm, 8px);
+  padding: 0 var(--spacing-md, 12px) var(--spacing-md, 12px);
   overflow-y: auto;
   flex: 1;
 }
 
 /* ─── 列表项 ─── */
 .mod-item {
-  padding: 14px 18px;
+  padding: var(--spacing-md, 14px) var(--spacing-lg, 18px);
   background: var(--color-bg-primary);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
@@ -214,7 +214,7 @@
 .mod-item-main {
   display: flex;
   align-items: flex-start;
-  gap: 12px;
+  gap: var(--spacing-md, 12px);
 }
 
 .mod-item-icon {
@@ -231,8 +231,8 @@
 .mod-item-header {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 4px;
+  gap: var(--spacing-sm, 8px);
+  margin-bottom: var(--spacing-2xs, 4px);
 }
 
 .mod-item-title {
@@ -257,7 +257,7 @@
 
 .mod-item-actions {
   display: flex;
-  gap: 4px;
+  gap: var(--spacing-2xs, 4px);
   flex-shrink: 0;
   opacity: 0;
   transition: opacity var(--transition-fast);
@@ -278,7 +278,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: var(--spacing-md, 12px);
   padding: 60px;
   color: var(--color-text-tertiary);
   font-size: var(--font-size-sm);
@@ -346,7 +346,7 @@
   font-size: var(--font-size-xl);
   cursor: pointer;
   color: var(--color-text-tertiary);
-  padding: 4px 8px;
+  padding: var(--spacing-2xs, 4px) var(--spacing-sm, 8px);
   border-radius: var(--radius-sm);
   transition: all var(--transition-fast);
   line-height: 1;
@@ -367,7 +367,7 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 8px;
+  gap: var(--spacing-sm, 8px);
   padding: var(--spacing-md) var(--spacing-lg);
   border-top: 1px solid var(--color-border);
   flex-shrink: 0;
@@ -379,7 +379,7 @@
   background: transparent;
   cursor: pointer;
   font-size: var(--font-size-xl);
-  padding: 6px 8px;
+  padding: var(--spacing-xs, 6px) var(--spacing-sm, 8px);
   border-radius: var(--radius-sm);
   transition: background var(--transition-fast);
   line-height: 1;
@@ -397,7 +397,7 @@
 .mod-scroll {
   flex: 1;
   overflow-y: auto;
-  padding: 0 12px 12px;
+  padding: 0 var(--spacing-md, 12px) var(--spacing-md, 12px);
   min-height: 0;
 }
 
@@ -435,7 +435,7 @@
 
 .badge-sm {
   font-size: var(--font-size-2xs);
-  padding: 1px 6px;
+  padding: 1px var(--spacing-xs, 6px);
   border-radius: var(--radius-sm);
   font-weight: 500;
   white-space: nowrap;
@@ -445,7 +445,7 @@
   font-size: var(--font-size-2xs);
   color: var(--color-accent);
   background: rgba(99, 102, 241, 0.1);
-  padding: 1px 6px;
+  padding: 1px var(--spacing-xs, 6px);
   border-radius: var(--radius-sm);
   font-weight: 500;
 }
@@ -454,7 +454,7 @@
   font-size: var(--font-size-2xs);
   background: var(--color-accent);
   color: var(--color-text-inverse);
-  padding: 1px 6px;
+  padding: 1px var(--spacing-xs, 6px);
   border-radius: var(--radius-full);
   font-weight: 600;
 }

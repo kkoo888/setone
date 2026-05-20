@@ -20,14 +20,14 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  padding: 20px 20px 16px;
+  padding: var(--spacing-xl, 20px) var(--spacing-xl, 20px) var(--spacing-lg, 16px);
   flex-shrink: 0;
 }
 
 .modules-title-group {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--spacing-2xs, 4px);
 }
 
 .modules-title {
@@ -47,7 +47,7 @@
 .modules-actions {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--spacing-md, 12px);
 }
 
 /* ── 搜索栏 ── */
@@ -68,7 +68,7 @@
 
 .module-search-input {
   width: 100%;
-  padding: var(--spacing-sm) var(--spacing-md) 8px 34px;
+  padding: var(--spacing-sm) var(--spacing-md) var(--spacing-sm, 8px) 34px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-bg-secondary);
@@ -90,8 +90,8 @@
 /* ── 状态筛选标签 ── */
 .modules-filter-tags {
   display: flex;
-  gap: 8px;
-  padding: 0 20px 12px;
+  gap: var(--spacing-sm, 8px);
+  padding: 0 var(--spacing-xl, 20px) var(--spacing-md, 12px);
   flex-shrink: 0;
 }
 
@@ -124,8 +124,8 @@
 .modules-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 0 20px 20px;
+  gap: var(--spacing-sm, 8px);
+  padding: 0 var(--spacing-xl, 20px) var(--spacing-xl, 20px);
   overflow-y: auto;
   flex: 1;
 }
@@ -134,7 +134,7 @@
 .mod-card {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: var(--spacing-lg, 16px);
   padding: var(--spacing-md) var(--spacing-lg);
   background: var(--color-bg-primary);
   border: 1px solid var(--color-border);
@@ -167,23 +167,19 @@
   align-items: center;
   justify-content: center;
   background: var(--color-accent-light);
-  font-size: 24px;
-  flex-shrink: 0;
-}
-
-/* 主体信息 */
+  font-size: var(--font-size-3xl);
 .mod-card-body {
   flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--spacing-2xs, 4px);
 }
 
 .mod-card-top {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--spacing-sm-md, 10px);
 }
 
 .mod-card-name {
@@ -199,7 +195,7 @@
 .mod-card-version {
   font-size: var(--font-size-2xs);
   color: var(--color-text-tertiary);
-  padding: 1px 8px;
+  padding: 1px var(--spacing-sm, 8px);
   background: var(--color-bg-secondary);
   border-radius: var(--radius-md);
   flex-shrink: 0;
@@ -217,12 +213,12 @@
 .mod-card-meta {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-top: 4px;
+  gap: var(--spacing-sm, 8px);
+  margin-top: var(--spacing-2xs, 4px);
 }
 
 .mod-card-cap-tag {
-  padding: 2px 8px;
+  padding: var(--spacing-2xs, 2px) var(--spacing-sm, 8px);
   border-radius: var(--radius-sm);
   background: var(--color-bg-secondary);
   color: var(--color-text-tertiary);
@@ -239,8 +235,8 @@
 .mod-status-badge {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 10px;
+  gap: var(--spacing-2xs, 4px);
+  padding: var(--spacing-2xs, 4px) var(--spacing-sm-md, 10px);
   border-radius: var(--radius-lg);
   font-size: var(--font-size-2xs);
   font-weight: 500;
@@ -310,10 +306,10 @@
   align-items: center;
   width: 48px;
   height: 28px;
-  border-radius: 14px;
+  border-radius: var(--radius-xl, 14px);
   background: var(--color-border);
   transition: background 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  padding: 2px;
+  padding: var(--spacing-2xs, 2px);
   border: none;
 }
 
@@ -378,7 +374,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px 12px;
+  padding: var(--spacing-xl, 20px) var(--spacing-md, 12px);
   border-bottom: 1px solid var(--color-border);
   flex-shrink: 0;
 }
@@ -386,25 +382,25 @@
 .mod-detail-header-left {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: var(--spacing-md, 14px);
 }
 
 .mod-detail-icon {
   width: 56px;
   height: 56px;
-  border-radius: 14px;
+  border-radius: var(--radius-xl, 14px);
   display: flex;
   align-items: center;
   justify-content: center;
   background: var(--color-accent-light);
-  font-size: 24px;
+  font-size: var(--font-size-3xl);
   flex-shrink: 0;
 }
 
 .mod-detail-title-group {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--spacing-2xs, 4px);
 }
 
 .mod-detail-name {
@@ -417,7 +413,7 @@
 .mod-detail-meta-line {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--spacing-sm-md, 10px);
   font-size: var(--font-size-xs);
   color: var(--color-text-tertiary);
 }
@@ -444,16 +440,16 @@
 .mod-detail-body {
   flex: 1;
   overflow-y: auto;
-  padding: 12px;
+  padding: var(--spacing-md, 12px);
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: var(--spacing-xl, 24px);
 }
 
 .mod-detail-section {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--spacing-sm-md, 10px);
 }
 
 .mod-detail-section-title {
@@ -473,12 +469,12 @@
 .mod-detail-capabilities {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: var(--spacing-sm, 8px);
 }
 
 .mod-detail-cap-tag {
-  padding: 4px 12px;
-  border-radius: 16px;
+  padding: var(--spacing-2xs, 4px) var(--spacing-md, 12px);
+  border-radius: var(--radius-xl, 16px);
   background: var(--color-accent-light);
   color: var(--color-accent);
   font-size: var(--font-size-xs);
@@ -489,14 +485,14 @@
 .mod-detail-permissions {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--spacing-sm, 8px);
 }
 
 .mod-detail-permission {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 14px;
+  gap: var(--spacing-sm-md, 10px);
+  padding: var(--spacing-sm-md, 10px) var(--spacing-md, 14px);
   background: var(--color-bg-secondary);
   border-radius: var(--radius-md);
   font-size: var(--font-size-xs);
@@ -522,13 +518,13 @@
 .mod-detail-deps {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--spacing-xs, 6px);
 }
 
 .mod-detail-dep {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--spacing-sm, 8px);
   padding: var(--spacing-sm) var(--spacing-md);
   background: var(--color-bg-secondary);
   border-radius: var(--radius-md);
@@ -544,8 +540,8 @@
 .mod-detail-error {
   display: flex;
   align-items: flex-start;
-  gap: 10px;
-  padding: 12px 14px;
+  gap: var(--spacing-sm-md, 10px);
+  padding: var(--spacing-md, 12px) var(--spacing-md, 14px);
   background: rgba(239, 68, 68, 0.06);
   border: 1px solid rgba(239, 68, 68, 0.15);
   border-radius: var(--radius-md);
@@ -565,10 +561,10 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 12px;
+  padding: var(--spacing-lg, 16px) var(--spacing-md, 12px);
   border-top: 1px solid var(--color-border);
   flex-shrink: 0;
-  gap: 12px;
+  gap: var(--spacing-md, 12px);
 }
 
 .mod-detail-toggle-label {
@@ -616,8 +612,8 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  padding: 60px 20px;
+  gap: var(--spacing-md, 12px);
+  padding: 60px var(--spacing-xl, 20px);
   color: var(--color-text-tertiary);
 }
 
@@ -677,7 +673,7 @@
 
   .modules-header {
     flex-direction: column;
-    gap: 12px;
+    gap: var(--spacing-md, 12px);
   }
 
   .modules-actions {
