@@ -26,7 +26,8 @@ export function registerAllIpcHandlers(deps: HandlerDeps): void {
   registerConfigHandlers(deps)
   registerPerformanceHandlers(deps)
   registerAiHandlers(deps)
-  registerModuleHandlers(deps)
+  registerThemeHandlers()        // ← 移到 registerModuleHandlers 之前，先标记通道
+  registerModuleHandlers(deps)   // ← 模块系统会跳过已标记的通道
   registerFileHandlers(deps)
   registerPaletteHandlers(deps)
   registerSkillHandlers(deps)
@@ -35,5 +36,4 @@ export function registerAllIpcHandlers(deps: HandlerDeps): void {
   registerHotkeyHandlers(deps)
   registerSoulHandlers(deps)
   registerPollingHandlers(deps)
-  registerThemeHandlers()
 }
