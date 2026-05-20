@@ -8,7 +8,7 @@
     "bg": "#ffffff",
     "fg": "#1a1a1a",
     "radius": 8,
-    "fontBase": 14,
+    "fontBase": 16,
     "spacingBase": 8,
     "mode": "light"
   }

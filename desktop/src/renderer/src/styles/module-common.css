@@ -7,9 +7,6 @@
   flex-direction: column;
   min-height: 100%;
   overflow: hidden;
-  background: var(--color-bg-primary);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--color-border);
 }
 
 /* ─── 头部 ─── */
@@ -88,7 +85,7 @@
 }
 
 .mod-tab-count {
-  font-size: var(--font-size-2xs);
+  font-size: 11px;
   background: var(--color-accent);
   color: var(--color-text-inverse);
   padding: 1px 6px;
@@ -124,7 +121,7 @@
 .mod-search {
   flex: 1;
   max-width: 280px;
-  padding: var(--spacing-sm) var(--spacing-md);
+  padding: 8px 14px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-bg-primary);
@@ -175,7 +172,7 @@
 }
 
 .mod-filter-icon {
-  font-size: var(--font-size-xs);
+  font-size: 13px;
 }
 
 /* ─── 内容列表 ─── */
@@ -218,7 +215,7 @@
 }
 
 .mod-item-icon {
-  font-size: var(--font-size-lg);
+  font-size: 18px;
   flex-shrink: 0;
   padding-top: 2px;
 }
@@ -328,7 +325,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--spacing-md) var(--spacing-lg);
+  padding: 16px 20px;
   border-bottom: 1px solid var(--color-border);
   flex-shrink: 0;
 }
@@ -343,7 +340,7 @@
 .mod-modal-close {
   border: none;
   background: transparent;
-  font-size: var(--font-size-xl);
+  font-size: 22px;
   cursor: pointer;
   color: var(--color-text-tertiary);
   padding: 4px 8px;
@@ -358,7 +355,7 @@
 }
 
 .mod-modal-body {
-  padding: var(--spacing-lg);
+  padding: 20px;
   flex: 1;
   overflow-y: auto;
 }
@@ -368,7 +365,7 @@
   align-items: center;
   justify-content: flex-end;
   gap: 8px;
-  padding: var(--spacing-md) var(--spacing-lg);
+  padding: 12px 20px;
   border-top: 1px solid var(--color-border);
   flex-shrink: 0;
 }
@@ -378,7 +375,7 @@
   border: none;
   background: transparent;
   cursor: pointer;
-  font-size: var(--font-size-xl);
+  font-size: 20px;
   padding: 6px 8px;
   border-radius: var(--radius-sm);
   transition: background var(--transition-fast);

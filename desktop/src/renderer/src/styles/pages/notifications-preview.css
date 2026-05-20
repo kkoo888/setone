@@ -7,9 +7,6 @@
   flex-direction: column;
   height: 100%;
   overflow: hidden;
-  background: var(--color-bg-primary);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--color-border);
 }
 
 .notif-header {
@@ -75,7 +72,7 @@
   display: flex;
   align-items: flex-start;
   gap: 14px;
-  padding: var(--spacing-md) var(--spacing-md);
+  padding: 14px 18px;
   background: var(--color-bg-primary);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
@@ -98,7 +95,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: var(--font-size-lg);
+  font-size: 18px;
   flex-shrink: 0;
 }
 
@@ -126,7 +123,7 @@
 }
 
 .notif-time {
-  font-size: var(--font-size-2xs);
+  font-size: 11px;
   color: var(--color-text-tertiary);
   margin-top: 6px;
 }
@@ -149,7 +146,7 @@
   border-radius: var(--radius-md);
   background: var(--color-bg-secondary);
   color: var(--color-text-secondary);
-  font-size: var(--font-size-xs);
+  font-size: 12px;
   cursor: pointer;
   transition: all var(--transition-fast);
 }
@@ -240,7 +237,7 @@
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: var(--spacing-md) var(--spacing-md);
+  padding: 14px 18px;
   border-bottom: 1px solid var(--color-border);
   font-size: var(--font-size-xs);
   color: var(--color-text-secondary);
@@ -255,7 +252,7 @@
 .preview-code {
   padding: 16px 18px;
   font-family: var(--font-mono);
-  font-size: var(--font-size-xs);
+  font-size: 13px;
   line-height: 1.6;
   color: var(--color-text-primary);
   white-space: pre-wrap;
@@ -282,7 +279,7 @@
 }
 
 .preview-recent-item {
-  padding: var(--spacing-sm) var(--spacing-md);
+  padding: 8px 12px;
   border-radius: var(--radius-md);
   font-size: var(--font-size-xs);
   font-family: var(--font-mono);
@@ -297,7 +294,7 @@
 }
 
 .preview-error {
-  padding: var(--spacing-lg);
+  padding: 20px;
   text-align: center;
   color: var(--color-error);
   font-size: var(--font-size-sm);

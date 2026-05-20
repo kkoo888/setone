@@ -10,9 +10,6 @@
   height: 100%;
   gap: 0;
   overflow: hidden;
-  background: var(--color-bg-primary);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--color-border);
 }
 
 /* ── 顶部标题区 ── */
@@ -61,14 +58,14 @@
   left: 12px;
   top: 50%;
   transform: translateY(-50%);
-  font-size: var(--font-size-sm);
+  font-size: 14px;
   color: var(--color-text-tertiary);
   pointer-events: none;
 }
 
 .module-search-input {
   width: 100%;
-  padding: var(--spacing-sm) var(--spacing-md) 8px 34px;
+  padding: 8px 12px 8px 34px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-bg-secondary);
@@ -96,8 +93,8 @@
 }
 
 .modules-filter-tag {
-  padding: var(--spacing-xs) var(--spacing-md);
-  border-radius: var(--radius-full);
+  padding: 6px 16px;
+  border-radius: 20px;
   border: 1px solid var(--color-border);
   background: var(--color-bg-primary);
   color: var(--color-text-primary);
@@ -135,7 +132,7 @@
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: var(--spacing-md) var(--spacing-lg);
+  padding: 16px 20px;
   background: var(--color-bg-primary);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
@@ -162,7 +159,7 @@
 .mod-card-icon {
   width: 48px;
   height: 48px;
-  border-radius: var(--radius-lg);
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -187,7 +184,7 @@
 }
 
 .mod-card-name {
-  font-size: var(--font-size-sm);
+  font-size: 15px;
   font-weight: 600;
   color: var(--color-text-primary);
   line-height: 1.3;
@@ -197,16 +194,16 @@
 }
 
 .mod-card-version {
-  font-size: var(--font-size-2xs);
+  font-size: 11px;
   color: var(--color-text-tertiary);
   padding: 1px 8px;
   background: var(--color-bg-secondary);
-  border-radius: var(--radius-md);
+  border-radius: 8px;
   flex-shrink: 0;
 }
 
 .mod-card-desc {
-  font-size: var(--font-size-xs);
+  font-size: 13px;
   color: var(--color-text-tertiary);
   line-height: 1.4;
   overflow: hidden;
@@ -223,15 +220,15 @@
 
 .mod-card-cap-tag {
   padding: 2px 8px;
-  border-radius: var(--radius-sm);
+  border-radius: 4px;
   background: var(--color-bg-secondary);
   color: var(--color-text-tertiary);
-  font-size: var(--font-size-2xs);
+  font-size: 11px;
   white-space: nowrap;
 }
 
 .mod-card-cap-more {
-  font-size: var(--font-size-2xs);
+  font-size: 11px;
   color: var(--color-text-tertiary);
 }
 
@@ -241,8 +238,8 @@
   align-items: center;
   gap: 4px;
   padding: 4px 10px;
-  border-radius: var(--radius-lg);
-  font-size: var(--font-size-2xs);
+  border-radius: 12px;
+  font-size: 11px;
   font-weight: 500;
   flex-shrink: 0;
   white-space: nowrap;
@@ -397,7 +394,7 @@
   align-items: center;
   justify-content: center;
   background: var(--color-accent-light);
-  font-size: 24px;
+  font-size: var(--font-size-2xl);
   flex-shrink: 0;
 }
 
@@ -408,7 +405,7 @@
 }
 
 .mod-detail-name {
-  font-size: var(--font-size-lg);
+  font-size: 18px;
   font-weight: 700;
   color: var(--color-text-primary);
   margin: 0;
@@ -432,7 +429,7 @@
   border-radius: var(--radius-md);
   background: transparent;
   color: var(--color-text-secondary);
-  font-size: var(--font-size-lg);
+  font-size: 18px;
   cursor: pointer;
   transition: background 0.15s;
 }
@@ -503,7 +500,7 @@
 }
 
 .mod-detail-permission-icon {
-  font-size: var(--font-size-md);
+  font-size: 16px;
   flex-shrink: 0;
 }
 
@@ -515,7 +512,7 @@
 
 .mod-detail-permission-desc {
   color: var(--color-text-tertiary);
-  font-size: var(--font-size-2xs);
+  font-size: 11px;
 }
 
 /* 依赖列表 */
@@ -529,7 +526,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: var(--spacing-sm) var(--spacing-md);
+  padding: 8px 12px;
   background: var(--color-bg-secondary);
   border-radius: var(--radius-md);
   font-size: var(--font-size-xs);
@@ -537,7 +534,7 @@
 }
 
 .mod-detail-dep-icon {
-  font-size: var(--font-size-sm);
+  font-size: 14px;
 }
 
 /* 错误信息 */
@@ -555,7 +552,7 @@
 }
 
 .mod-detail-error-icon {
-  font-size: var(--font-size-md);
+  font-size: 16px;
   flex-shrink: 0;
   margin-top: 1px;
 }
@@ -577,7 +574,7 @@
 }
 
 .mod-detail-toggle-btn {
-  padding: var(--spacing-sm) var(--spacing-md);
+  padding: 8px 12px;
   border: none;
   border-radius: var(--radius-md);
   font-size: var(--font-size-sm);
