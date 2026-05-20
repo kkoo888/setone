@@ -17,7 +17,7 @@ if (process.platform === 'win32') {
 }
 
 import { createAppMenu } from './menu'
-import { registerIpcHandlers } from './ipc-handlers'
+import { registerAllIpcHandlers } from './ipc-handlers'
 import { ConfigManagerImpl } from './core/config-manager'
 import { AppLogger } from './core/logger'
 import { GlobalEventBus } from './core/event-bus'
@@ -161,7 +161,7 @@ app.whenReady().then(async () => {
 
     performanceMonitor.start()
 
-    registerIpcHandlers(config, logger, eventBus, aiService, db!, moduleManager, performanceMonitor)
+    registerAllIpcHandlers({ config, logger, eventBus, aiService, db: db!, moduleManager, performanceMonitor })
     createAppMenu()
     createTray(() => mainWindow, config!)
 
