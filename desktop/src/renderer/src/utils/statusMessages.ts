@@ -11,17 +11,17 @@ import {
   Globe,
   Keyboard,
   Clipboard,
-  Notice,
+  Remind,
   MessageOne,
   Calendar,
   PreviewOpen,
   ChartLine,
   Theme,
-  Scissor,
+  Scissors,
   AllApplication,
   SettingOne,
   Cat,
-  Drama,
+  Theater,
   BookOpen,
   Brain,
   ListOne,
@@ -35,14 +35,14 @@ import {
   Time,
   Inbox,
   Star,
-  Document,
+  FileText,
   FolderOpen,
   LoadingFour,
   CheckOne,
   CloseOne,
   Help,
   Tips,
-  Warning,
+  Attention,
   Plug,
   ChartHistogram,
   Data,
@@ -60,8 +60,8 @@ import {
   Fire,
   Recycle,
   Pushpin,
-  Location,
-  Database,
+  LocalPin,
+  DataServer,
 } from '@icon-park/react'
 
 // ============================================================
@@ -82,17 +82,17 @@ export const SIDEBAR_ICONS: Record<string, React.ReactNode> = {
   translator: icon(Globe),
   shortcuts: icon(Keyboard),
   'clipboard-history': icon(Clipboard),
-  notifications: icon(Notice),
+  notifications: icon(Remind),
   'multi-session': icon(MessageOne),
   calendar: icon(Calendar),
   'quick-preview': icon(PreviewOpen),
   'system-dashboard': icon(ChartLine),
   'theme-store': icon(Theme),
-  'code-snippets': icon(Scissor),
+  'code-snippets': icon(Scissors),
   modules: icon(AllApplication),
   settings: icon(SettingOne),
   live2d: icon(Cat),
-  live2d5: icon(Drama),
+  live2d5: icon(Theater),
 }
 
 // ============================================================
@@ -119,7 +119,7 @@ export const STATUS_ICONS = {
   loading: React.createElement(LoadingFour, { ...sm, fill: '#6b7280' }),
   success: React.createElement(CheckOne, { ...sm, fill: '#10b981' }),
   error: React.createElement(CloseOne, { ...sm, fill: '#ef4444' }),
-  warning: React.createElement(Warning, { ...sm, fill: '#f59e0b' }),
+  warning: React.createElement(Attention, { ...sm, fill: '#f59e0b' }),
   info: React.createElement(Tips, { ...sm, fill: '#3b82f6' }),
 } as const
 
@@ -145,7 +145,7 @@ export const ACTION_ICONS = {
   inbox: icon(Inbox),
   star: icon(Star),
   starFilled: React.createElement(Star, { ...iconProps, fill: '#f59e0b', theme: 'filled' }),
-  document: icon(Document),
+  document: icon(FileText),
   folder: icon(FolderOpen),
   chart: icon(ChartHistogram),
   data: icon(Data),
@@ -167,14 +167,14 @@ export const EMPTY_ICONS: Record<string, React.ReactNode> = {
   default: React.createElement(Inbox, lg),
   inbox: React.createElement(Inbox, lg),
   chat: React.createElement(Message, lg),
-  bell: React.createElement(Notice, lg),
+  bell: React.createElement(Remind, lg),
   star: React.createElement(Star, lg),
   search: React.createElement(Search, lg),
-  document: React.createElement(Document, lg),
+  document: React.createElement(FileText, lg),
   clipboard: React.createElement(Clipboard, lg),
   globe: React.createElement(Globe, lg),
   refresh: React.createElement(Refresh, lg),
-  scissors: React.createElement(Scissor, lg),
+  scissors: React.createElement(Scissors, lg),
   book: React.createElement(BookOpen, lg),
   plug: React.createElement(Plug, lg),
   chart: React.createElement(ChartHistogram, lg),
@@ -216,16 +216,16 @@ export const PAGE_ICONS = {
 
   /** Live2D */
   cat: React.createElement(Cat, md),
-  drama: React.createElement(Drama, md),
+  drama: React.createElement(Theater, md),
   help: React.createElement(Help, md),
   close: React.createElement(CloseOne, md),
   magicSm: React.createElement(Magic, sm),
 
   /** 代码片段 */
-  scissors: React.createElement(Scissor, md),
+  scissors: React.createElement(Scissors, md),
 
   /** 通知 */
-  notice: React.createElement(Notice, md),
+  notice: React.createElement(Remind, md),
   check: React.createElement(CheckOne, md),
 
   /** 快捷预览 */
@@ -252,7 +252,7 @@ export const ACTION_ICONS_SM = {
   folder: React.createElement(FolderOpen, sm),
   refresh: React.createElement(Refresh, sm),
   pushpin: React.createElement(Pushpin, sm),
-  location: React.createElement(Location, sm),
+  location: React.createElement(LocalPin, sm),
   fire: React.createElement(Fire, sm),
   recycle: React.createElement(Recycle, sm),
   magic: React.createElement(Magic, sm),
@@ -324,16 +324,16 @@ export const Msg = {
 export {
   // 侧边栏
   Message, Lightning, Refresh, Globe, Keyboard, Clipboard,
-  Notice, MessageOne, Calendar, PreviewOpen, ChartLine, Theme,
-  Scissor, AllApplication, SettingOne, Cat, Drama,
+  Remind, MessageOne, Calendar, PreviewOpen, ChartLine, Theme,
+  Scissors, AllApplication, SettingOne, Cat, Theater,
   // 模块
   BookOpen, Brain, ListOne, Eyes, Monitor, Heart,
   // 操作
   Search, LinkFour, PlayOne, PauseOne, Time, Inbox, Star,
-  Document, FolderOpen, LoadingFour, CheckOne, CloseOne,
-  Help, Tips, Warning, Plug, ChartHistogram, Data, Pic,
+  FileText, FolderOpen, LoadingFour, CheckOne, CloseOne,
+  Help, Tips, Attention, Plug, ChartHistogram, Data, Pic,
   Computer, Sun, Moon, Square, FullScreenPlay,
   // 扩展
   Robot, Magic, DeleteOne, DownloadOne, EditOne,
-  Fire, Recycle, Pushpin, Location, Database,
+  Fire, Recycle, Pushpin, LocalPin, DataServer,
 }

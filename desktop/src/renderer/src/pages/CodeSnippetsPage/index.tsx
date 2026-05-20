@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { EMPTY_ICONS, STATUS_ICONS, ACTION_ICONS, Scissor, Clipboard, DeleteOne } from '../../utils/statusMessages'
-const scissorI = React.createElement(Scissor, { size: 16, fill: 'currentColor', theme: 'outline' })
+import { EMPTY_ICONS, STATUS_ICONS, ACTION_ICONS, Scissors, Clipboard, DeleteOne } from '../../utils/statusMessages'
+const scissorI = React.createElement(Scissors, { size: 16, fill: 'currentColor', theme: 'outline' })
 const clipI = React.createElement(Clipboard, { size: 14, fill: 'currentColor', theme: 'outline' })
 const delI = React.createElement(DeleteOne, { size: 14, fill: 'currentColor', theme: 'outline' })
 import { ModuleHeader } from '../../components/common/module/ModuleHeader'

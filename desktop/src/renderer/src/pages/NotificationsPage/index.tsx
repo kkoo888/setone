@@ -2,9 +2,9 @@ import React, { useState, useEffect, useCallback } from 'react'
 import { ModuleHeader } from '../../components/common/module/ModuleHeader'
 import { ModuleToolbar, FilterButtons } from '../../components/common/module/ModuleToolbar'
 import { ModuleList, ModuleListItem } from '../../components/common/module/ModuleList'
-import { EMPTY_ICONS, STATUS_ICONS, ACTION_ICONS, Notice, Tips, CheckOne, Help, CloseOne } from '../../utils/statusMessages'
+import { EMPTY_ICONS, STATUS_ICONS, ACTION_ICONS, Remind, Tips, CheckOne, Help, CloseOne } from '../../utils/statusMessages'
 
-const noticeIcon = React.createElement(Notice, { size: 16, fill: 'currentColor', theme: 'outline' })
+const noticeIcon = React.createElement(Remind, { size: 16, fill: 'currentColor', theme: 'outline' })
 const typeIcons: Record<string, React.ReactNode> = {
   info: React.createElement(Tips, { size: 14, fill: 'currentColor', theme: 'outline' }),
   success: React.createElement(CheckOne, { size: 14, fill: '#10b981', theme: 'outline' }),

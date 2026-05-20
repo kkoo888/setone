@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { EMPTY_ICONS, STATUS_ICONS, ACTION_ICONS, Clipboard, Pushpin, DeleteOne, Location } from '../../utils/statusMessages'
+import { EMPTY_ICONS, STATUS_ICONS, ACTION_ICONS, Clipboard, Pushpin, DeleteOne, LocalPin } from '../../utils/statusMessages'
 const clipI = React.createElement(Clipboard, { size: 16, fill: 'currentColor', theme: 'outline' })
 const pinI = React.createElement(Pushpin, { size: 14, fill: 'currentColor', theme: 'outline' })
-const locI = React.createElement(Location, { size: 14, fill: 'currentColor', theme: 'outline' })
+const locI = React.createElement(LocalPin, { size: 14, fill: 'currentColor', theme: 'outline' })
 const delI = React.createElement(DeleteOne, { size: 14, fill: 'currentColor', theme: 'outline' })
 import { ModuleHeader } from '../../components/common/module/ModuleHeader'
 import { ModuleToolbar, FilterButtons } from '../../components/common/module/ModuleToolbar'
