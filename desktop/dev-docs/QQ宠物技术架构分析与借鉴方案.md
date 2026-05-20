@@ -234,8 +234,124 @@ const TRIGGERS = {
 | Phase 5 | 装扮系统 | Cubism 参数控制 | 3天 |
 | Phase 6 | 社交互动 | 网络通信 + 多实例 | 5天 |
 
-## 九、总结
+## 九、技术架构逐层对比与优化
+
+### 9.1 渲染层
+
+| 维度 | QQ宠物 | Live2D5 | 差距 |
+|------|--------|---------|------|
+| 渲染引擎 | Flash Player OCX | Cubism 5 SDK + WebGL | 我们强很多 |
+| 窗口透明 | `WS_EX_LAYERED` + `SetLayeredWindowAttributes` | Electron `transparent: true` | 持平 |
+| 动画驱动 | 精灵图帧序列（预渲染） | 实时骨骼动画（参数驱动） | 我们强很多 |
+| 性能 | Flash 单线程，CPU 渲染 | WebGL GPU 加速 | 我们强 |
+| 帧率管理 | Flash 自带 | 缺少帧率自适应 | **待优化** |
+
+**优化方向**：窗口不可见时降到低帧率或暂停渲染，节省 GPU。
+```typescript
+this.petWindow.on('show', () => this.resumeRenderLoop())
+this.petWindow.on('hide', () => this.pauseRenderLoop())
+this.petWindow.webContents.on('occluded', (occluded) => {
+  occluded ? this.setFps(5) : this.setFps(60)
+})
+```
+
+### 9.2 状态管理
+
+| 维度 | QQ宠物 | Live2D5 | 差距 |
+|------|--------|---------|------|
+| 状态存储 | 服务端 MySQL | 无（内存，关了就没了） | **我们缺这个** |
+| 状态同步 | HTTP 轮询 30-60s | IPC 实时 | 我们强 |
+| 离线支持 | 服务端计算差值 | 无 | **我们缺这个** |
+| 状态权威 | 服务端 | 无 | **我们缺这个** |
+
+**最大差距**：QQ宠物关了再开属性还在，我们关了窗口什么都没了。需要持久化层。
+```typescript
+interface PetSaveData {
+  version: number
+  attributes: PetAttributes
+  state: PetState
+  lastUpdateTime: number
+}
+// 保存到 SQLite / localStorage，启动时加载 + 离线差值结算
+```
+
+### 9.3 事件/行为系统
+
+| 维度 | QQ宠物 | Live2D5 | 差距 |
+|------|--------|---------|------|
+| 事件触发 | 硬编码 if-else | 无 | **我们缺这个** |
+| 状态机 | 无正式状态机 | 无 | **我们缺这个** |
+| 行为队列 | 无（单行为） | 无 | 可以做得更好 |
+| 动画管理 | 帧序列切换 | motion group 切换 | 持平 |
+
+**优化方向**：声明式事件规则引擎 + 正式状态机。
+```typescript
+const rules: PetRule[] = [
+  {
+    id: 'hunger-warning',
+    condition: (attrs) => attrs.hunger < 20,
+    actions: [
+      { type: 'animation', motion: 'hungry' },
+      { type: 'bubble', text: (attrs) => `我好饿...` },
+      { type: 'ai-dialog', prompt: 'express hunger cutely' },
+    ],
+    cooldown: 1800,
+    priority: 10,
+  },
+]
+```
+
+### 9.4 通信层
+
+| 维度 | QQ宠物 | Live2D5 | 差距 |
+|------|--------|---------|------|
+| 协议 | HTTP + AMF（轮询） | Electron IPC（实时） | 我们强 |
+| 延迟 | 30-60s 轮询间隔 | 毫秒级 | 我们强 |
+| 可靠性 | 网络异常会断 | 本地 IPC 稳定 | 我们强 |
+
+### 9.5 模块生命周期
+
+| 维度 | QQ宠物 | Live2D5 | 差距 |
+|------|--------|---------|------|
+| 模块化 | 单体应用 | Module 接口 + activate/deactivate | 我们强 |
+| 热插拔 | 不支持 | 支持 | 我们强 |
+| 依赖管理 | 硬编码 | ModuleContext 注入 | 我们强 |
+| 模块间通信 | 无 | 缺少事件总线 | **待优化** |
+
+### 9.6 动画系统
+
+| 维度 | QQ宠物 | Live2D5 | 差距 |
+|------|--------|---------|------|
+| 动画格式 | SWF 帧序列 | .moc3 骨骼 + 物理 | 我们强 |
+| 动画切换 | 硬切 | 可做平滑过渡 | 待优化 |
+| 动画队列 | 无 | 无 | **可加** |
+| 表情系统 | 帧切换 | Cubism 5 参数驱动 | 我们强 |
+
+### 9.7 我们的架构优势
+
+| 优势 | 说明 |
+|------|------|
+| AI 对话 | QQ宠物只能说固定台词，我们能生成自然语言 |
+| 实时骨骼动画 | Cubism 5 物理引擎，头发衣服随动作飘动 |
+| 本地优先 | 不依赖服务器，离线也能用 |
+| 模块热插拔 | 可动态加载/卸载功能模块 |
+| WebGL GPU | 比 Flash CPU 渲染强 10 倍 |
+
+### 9.8 优化优先级
+
+| 优先级 | 优化项 | 原因 |
+|--------|--------|------|
+| P0 | 持久化（属性+状态存盘） | 没这个，宠物关了就"死了" |
+| P0 | 状态机 | 行为逻辑的基础 |
+| P1 | 事件规则引擎 | 比硬编码灵活 |
+| P1 | 帧率自适应 | 省 GPU |
+| P2 | 动画队列+过渡 | 体验更流畅 |
+| P2 | 模块间事件总线 | 解耦模块依赖 |
+
+## 十、总结
 
 QQ宠物的"灵魂"是 **属性衰减 + 事件触发 + 情感表达** 这套循环。技术过时了但设计思路不过时。
 
 我们用 Cubism 5 的实时骨骼动画替代精灵图、用 AI 对话替代固定台词、用本地状态机替代服务端轮询，就是 **2026 版的 QQ 宠物**。
+
+**核心结论**：渲染层我们远超 QQ宠物，但**状态管理和持久化**是最大短板，是最先要补的。

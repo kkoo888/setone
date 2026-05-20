@@ -223,17 +223,71 @@ class Cubism5Service {
 
       // 创建 Moc — SDK API: CubismMoc.create(mocBytes, shouldCheckMocConsistency)
       console.log('[Cubism5] 📦 创建 Moc, buffer 大小:', mocBuffer.byteLength)
+
+      // 检查 Live2DCubismCore 完整性
+      const win = window as WindowWithCubism
+      const core = win.Live2DCubismCore
+      console.log('[Cubism5] 🔍 Live2DCubismCore 存在:', !!core)
+      if (core) {
+        console.log('[Cubism5] 🔍 core.Moc 存在:', !!(core as any).Moc)
+        console.log('[Cubism5] 🔍 core.Moc.fromArrayBuffer 存在:', typeof (core as any).Moc?.fromArrayBuffer)
+        console.log('[Cubism5] 🔍 core.Model 存在:', !!(core as any).Model)
+        console.log('[Cubism5] 🔍 core.Model.fromMoc 存在:', typeof (core as any).Model?.fromMoc)
+        console.log('[Cubism5] 🔍 core.Version 存在:', !!(core as any).Version)
+        console.log('[Cubism5] 🔍 core keys:', Object.keys(core as any).join(', '))
+        // 额外检查：尝试直接用 Core 创建 Moc
+        try {
+          const testMoc = (core as any).Moc.fromArrayBuffer(mocBuffer)
+          console.log('[Cubism5] 🔍 Core Moc.fromArrayBuffer 结果:', !!testMoc)
+          if (testMoc) {
+            const testModel = (core as any).Model.fromMoc(testMoc)
+            console.log('[Cubism5] 🔍 Core 直接 Model.fromMoc 结果:', !!testModel)
+            if (testModel) {
+              console.log('[Cubism5] 🔍 直接 drawables:', !!(testModel as any).drawables)
+              console.log('[Cubism5] 🔍 直接 parameters:', !!(testModel as any).parameters)
+            }
+          }
+        } catch (e) {
+          console.error('[Cubism5] ❌ Core 直接测试失败:', e)
+        }
+      }
+
+      const CubismMocModule = await import('../lib/model/cubismmoc')
+      const CubismMoc = CubismMocModule.CubismMoc
+      console.log('[Cubism5] 📦 CubismMoc 类加载成功, create 方法:', typeof CubismMoc?.create)
+
       this.moc = CubismMoc.create(mocBuffer, false) as unknown as CubismMocLike
       if (!this.moc) {
-        throw new Error('Moc 创建失败')
+        throw new Error('Moc 创建失败（CubismMoc.create 返回 null）')
       }
-      console.log('[Cubism5] ✅ Moc 创建成功')
+      console.log('[Cubism5] ✅ Moc 创建成功, 类型:', typeof this.moc)
 
       // 创建模型
       console.log('[Cubism5] 📦 创建模型...')
+      const mocInternal = this.moc as unknown as { _moc: any; createModel: () => any }
+      console.log('[Cubism5] 🔍 moc._moc 存在:', !!mocInternal._moc)
+      console.log('[Cubism5] 🔍 moc._moc 类型:', typeof mocInternal._moc)
+
+      // 预检查：直接用 Core SDK 的 Model.fromMoc 验证
+      const core = (window as WindowWithCubism).Live2DCubismCore
+      if (core?.Model?.fromMoc) {
+        const testModel = core.Model.fromMoc(mocInternal._moc)
+        console.log('[Cubism5] 🔍 Core Model.fromMoc 结果:', !!testModel)
+        if (testModel) {
+          console.log('[Cubism5] 🔍 testModel.drawables 存在:', !!(testModel as any).drawables)
+          console.log('[Cubism5] 🔍 testModel.parameters 存在:', !!(testModel as any).parameters)
+          console.log('[Cubism5] 🔍 testModel.parts 存在:', !!(testModel as any).parts)
+          if ((testModel as any).drawables) {
+            console.log('[Cubism5] 🔍 testModel.drawables.count:', (testModel as any).drawables.count)
+          }
+          // 释放测试模型
+          try { testModel.release?.() } catch {}
+        }
+      }
+
       this.model = (this.moc as unknown as { createModel: () => CubismModelLike | null }).createModel()
       if (!this.model) {
-        throw new Error('模型创建失败')
+        throw new Error('模型创建失败（createModel 返回 null）')
       }
       console.log('[Cubism5] ✅ 模型创建成功')
 
@@ -241,8 +295,16 @@ class Cubism5Service {
       const internalModel = this.model.getModel()
       console.log('[Cubism5] 🔍 internalModel 存在:', !!internalModel)
       if (internalModel) {
-        console.log('[Cubism5] 🔍 getCanvasWidth:', internalModel.getCanvasWidth?.())
-        console.log('[Cubism5] 🔍 getCanvasHeight:', internalModel.getCanvasHeight?.())
+        const im = internalModel as any
+        console.log('[Cubism5] 🔍 internalModel 类型:', typeof im)
+        console.log('[Cubism5] 🔍 internalModel.drawables 存在:', !!im.drawables)
+        console.log('[Cubism5] 🔍 internalModel.parameters 存在:', !!im.parameters)
+        console.log('[Cubism5] 🔍 internalModel.parts 存在:', !!im.parts)
+        if (im.drawables) {
+          console.log('[Cubism5] 🔍 drawables.count:', im.drawables.count)
+        }
+        console.log('[Cubism5] 🔍 getCanvasWidth:', im.getCanvasWidth?.())
+        console.log('[Cubism5] 🔍 getCanvasHeight:', im.getCanvasHeight?.())
       }
 
       // 加载纹理
