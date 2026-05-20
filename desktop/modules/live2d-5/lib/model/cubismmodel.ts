@@ -22,25 +22,25 @@ export const NoOffscreenIndex = -1; // オフスクリーンが取得できな�
  */
 export enum CubismColorBlend {
   ColorBlend_None = -1,
+  // 以下值必须与 Live2DCubismCore.ColorBlendType_* 一致（R5 Core SDK 实际值）
   ColorBlend_Normal = 0,
-  ColorBlend_AddGlow = 1,
-  ColorBlend_Add = 2,
-  ColorBlend_Darken = 3,
-  ColorBlend_Multiply = 4,
-  ColorBlend_ColorBurn = 5,
-  ColorBlend_LinearBurn = 6,
-  ColorBlend_Lighten = 7,
-  ColorBlend_Screen = 8,
-  ColorBlend_ColorDodge = 9,
-  ColorBlend_Overlay = 10,
-  ColorBlend_SoftLight = 11,
-  ColorBlend_HardLight = 12,
-  ColorBlend_LinearLight = 13,
-  ColorBlend_Hue = 14,
-  ColorBlend_Color = 15,
-  // Cubism 5.2以前
-  ColorBlend_AddCompatible = 16,
-  ColorBlend_MultiplyCompatible = 17
+  ColorBlend_AddCompatible = 1,
+  ColorBlend_MultiplyCompatible = 2,
+  ColorBlend_Add = 3,
+  ColorBlend_AddGlow = 4,
+  ColorBlend_Darken = 5,
+  ColorBlend_Multiply = 6,
+  ColorBlend_ColorBurn = 7,
+  ColorBlend_LinearBurn = 8,
+  ColorBlend_Lighten = 9,
+  ColorBlend_Screen = 10,
+  ColorBlend_ColorDodge = 11,
+  ColorBlend_Overlay = 12,
+  ColorBlend_SoftLight = 13,
+  ColorBlend_HardLight = 14,
+  ColorBlend_LinearLight = 15,
+  ColorBlend_Hue = 16,
+  ColorBlend_Color = 17
 }
 
 /**
