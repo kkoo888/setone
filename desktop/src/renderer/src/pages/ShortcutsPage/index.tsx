@@ -6,6 +6,12 @@ import React, { useState, useEffect, useCallback } from 'react'
 import { Tips, CheckOne, CloseOne, PauseOne, PlayOne, EditOne, DeleteOne } from '../../utils/statusMessages'
 import { ModuleHeader } from '../../components/common/module/ModuleHeader'
 
+const tipsI = React.createElement(Tips, { size: 14, fill: 'currentColor', theme: 'outline' })
+const delI = React.createElement(DeleteOne, { size: 14, fill: 'currentColor', theme: 'outline' })
+const editI = React.createElement(EditOne, { size: 14, fill: 'currentColor', theme: 'outline' })
+const playI = React.createElement(PlayOne, { size: 14, fill: 'currentColor', theme: 'outline' })
+const pauseI = React.createElement(PauseOne, { size: 14, fill: 'currentColor', theme: 'outline' })
+
 interface Shortcut {
   id: string
   name: string

@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { ModuleHeader } from '../../components/common/module/ModuleHeader'
 import { ModuleList, ModuleListItem, ModuleModal } from '../../components/common/module/ModuleList'
-import { EMPTY_ICONS, ACTION_ICONS, Globe, Star, DeleteOne } from '../../utils/statusMessages'
+import { EMPTY_ICONS, ACTION_ICONS, Globe, Star, DeleteOne, Clipboard } from '../../utils/statusMessages'
 
 const starIcon = React.createElement(Star, { size: 14, fill: '#f59e0b', theme: 'filled' })
 const starOutlineIcon = React.createElement(Star, { size: 14, fill: 'currentColor', theme: 'outline' })
 const deleteIcon = React.createElement(DeleteOne, { size: 14, fill: 'currentColor', theme: 'outline' })
 const globeIcon = React.createElement(Globe, { size: 16, fill: 'currentColor', theme: 'outline' })
+const clipI = React.createElement(Clipboard, { size: 14, fill: 'currentColor', theme: 'outline' })
 
 interface TranslationRecord {
   id: string; sourceText: string; translatedText: string

@@ -19,6 +19,14 @@ import SkillCreateDialog from './components/SkillCreateDialog'
 import { Magic, Search, DeleteOne, Refresh, Fire, LoadingFour, Inbox } from '../../utils/statusMessages'
 import SkillRefinePanel from './components/SkillRefinePanel'
 
+const magicI = React.createElement(Magic, { size: 16, fill: 'currentColor', theme: 'outline' })
+const searchI = React.createElement(Search, { size: 16, fill: 'currentColor', theme: 'outline' })
+const delI = React.createElement(DeleteOne, { size: 16, fill: 'currentColor', theme: 'outline' })
+const refreshI = React.createElement(Refresh, { size: 16, fill: 'currentColor', theme: 'outline' })
+const fireI = React.createElement(Fire, { size: 16, fill: 'currentColor', theme: 'outline' })
+const loadingI = React.createElement(LoadingFour, { size: 32, fill: '#9ca3af', theme: 'outline' })
+const inboxI = React.createElement(Inbox, { size: 32, fill: '#9ca3af', theme: 'outline' })
+
 /** 二级导航标签 */
 const NAV_TABS = ['推荐', 'SkillHub', '套件']
 

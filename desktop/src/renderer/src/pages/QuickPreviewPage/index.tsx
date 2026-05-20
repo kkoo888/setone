@@ -1,7 +1,10 @@
 import React, { useState, useCallback } from 'react'
 import { ModuleHeader } from '../../components/common/module/ModuleHeader'
+import { PreviewOpen } from '../../utils/statusMessages'
 
 import { ModuleList, ModuleListItem } from '../../components/common/module/ModuleList'
+
+const previewI = React.createElement(PreviewOpen, { size: 16, fill: 'currentColor', theme: 'outline' })
 
 interface PreviewResult { path: string; content: string; type: string; size: number; modified: number }
 

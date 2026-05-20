@@ -8,8 +8,13 @@ import { useModulesStore, type ModuleStatus } from '../stores/useModulesStore'
 import { ModuleHeader } from '../components/common/module/ModuleHeader'
 import { ModuleCard } from './ModulesPage/components/ModuleCard'
 import { ModuleDetail } from './ModulesPage/components/ModuleDetail'
+import { Search, LoadingFour, Inbox } from '../utils/statusMessages'
 
 import '../styles/modules.css'
+
+const searchI = React.createElement(Search, { size: 16, fill: 'currentColor', theme: 'outline' })
+const loadingI = React.createElement(LoadingFour, { size: 32, fill: '#9ca3af', theme: 'outline' })
+const inboxI = React.createElement(Inbox, { size: 32, fill: '#9ca3af', theme: 'outline' })
 
 /** 状态筛选选项 */
 const STATUS_FILTERS: { key: string; label: string; value: ModuleStatus | 'all' }[] = [

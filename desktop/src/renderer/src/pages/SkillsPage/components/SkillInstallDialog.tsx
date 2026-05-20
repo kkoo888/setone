@@ -8,6 +8,14 @@ import { useSettingsStore } from '../../../stores/useSettingsStore'
 import { FolderOpen, Star, LoadingFour, DownloadOne, Plug, Search, Tips } from '../../../utils/statusMessages'
 import type { MarketSkill } from '../../../stores/useSkillStore'
 
+const folderI = React.createElement(FolderOpen, { size: 16, fill: 'currentColor', theme: 'outline' })
+const starI = React.createElement(Star, { size: 16, fill: 'currentColor', theme: 'outline' })
+const loadingI = React.createElement(LoadingFour, { size: 16, fill: '#9ca3af', theme: 'outline' })
+const downloadI = React.createElement(DownloadOne, { size: 16, fill: 'currentColor', theme: 'outline' })
+const plugI = React.createElement(Plug, { size: 32, fill: '#9ca3af', theme: 'outline' })
+const searchI = React.createElement(Search, { size: 16, fill: 'currentColor', theme: 'outline' })
+const loadingBigI = React.createElement(LoadingFour, { size: 32, fill: '#9ca3af', theme: 'outline' })
+
 /** 安装来源 Tab */
 type InstallTab = 'market' | 'url'
 

@@ -9,6 +9,11 @@ import React, { useState, useCallback, useEffect } from 'react'
 import { FolderOpen, SettingOne } from '../../utils/statusMessages'
 import { ModuleHeader } from '../../components/common/module/ModuleHeader'
 
+const folderI = React.createElement(FolderOpen, { size: 14, fill: 'currentColor', theme: 'outline' })
+const settingI = React.createElement(SettingOne, { size: 14, fill: 'currentColor', theme: 'outline' })
+const folderBigI = React.createElement(FolderOpen, { size: 32, fill: '#9ca3af', theme: 'outline' })
+const settingBigI = React.createElement(SettingOne, { size: 32, fill: '#9ca3af', theme: 'outline' })
+
 interface Live2D5Status {
   windowOpen: boolean
 }

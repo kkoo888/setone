@@ -6,6 +6,8 @@ import React, { useMemo } from 'react'
 import { FolderOpen } from '../../../utils/statusMessages'
 import type { ModuleInfo, ModuleStatus } from '../../../stores/useModulesStore'
 
+const folderI = React.createElement(FolderOpen, { size: 16, fill: 'currentColor', theme: 'outline' })
+
 interface ModuleCardProps {
   /** 模块信息 */
   readonly module: ModuleInfo

@@ -86,6 +86,7 @@ export function ThemeStorePage() {
   const moonI = React.createElement(Moon, iconSm)
   const folderI = React.createElement(FolderOpen, iconSm)
   const deleteI = React.createElement(DeleteOne, iconSm)
+  const delI = deleteI
 
   const modeLabel = (mode: string) => mode === 'light' ? <>{sunI} 亮色</> : <>{moonI} 暗色</>
   const sourceLabel = (source: string) => source === 'builtin' ? '内置' : source === 'imported' ? '已导入' : '可下载'

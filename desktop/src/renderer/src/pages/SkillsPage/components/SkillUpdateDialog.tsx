@@ -9,6 +9,13 @@ import { useSettingsStore } from '../../../stores/useSettingsStore'
 import { FolderOpen, Refresh, Plug, LoadingFour, CheckOne } from '../../../utils/statusMessages'
 import type { UpdateInfo } from '../../../stores/useSkillStore'
 
+const folderI = React.createElement(FolderOpen, { size: 16, fill: 'currentColor', theme: 'outline' })
+const refreshI = React.createElement(Refresh, { size: 16, fill: 'currentColor', theme: 'outline' })
+const plugI = React.createElement(Plug, { size: 32, fill: '#9ca3af', theme: 'outline' })
+const loadingI = React.createElement(LoadingFour, { size: 32, fill: '#9ca3af', theme: 'outline' })
+const checkI = React.createElement(CheckOne, { size: 32, fill: '#10b981', theme: 'outline' })
+const loadingSmI = React.createElement(LoadingFour, { size: 14, fill: '#9ca3af', theme: 'outline' })
+
 /** 更新项属性 */
 interface UpdateItemProps {
   info: UpdateInfo

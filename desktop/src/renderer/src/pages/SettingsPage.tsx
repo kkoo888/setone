@@ -17,8 +17,14 @@ import { ModelSelector } from '../components/settings/ModelSelector'
 import { Toggle } from '../components/common/Toggle'
 import { Slider } from '../components/common/Slider'
 import { Button } from '../components/common/Button'
+import { SettingOne, Robot, Brain, ChartHistogram } from '../utils/statusMessages'
 
 import type { OllamaConfig as OllamaConfigType, PerformanceMonitorSettings, Language } from '../types/settings'
+
+const settingI = React.createElement(SettingOne, { size: 16, fill: 'currentColor', theme: 'outline' })
+const robotI = React.createElement(Robot, { size: 16, fill: 'currentColor', theme: 'outline' })
+const brainI = React.createElement(Brain, { size: 16, fill: 'currentColor', theme: 'outline' })
+const chartI = React.createElement(ChartHistogram, { size: 16, fill: 'currentColor', theme: 'outline' })
 
 export function SettingsPage() {
   const {

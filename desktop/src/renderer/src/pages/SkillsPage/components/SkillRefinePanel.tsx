@@ -7,6 +7,15 @@ import { useSkillStore } from '../../../stores/useSkillStore'
 import { Fire, Search, ChartHistogram, LoadingFour, Tips, CheckOne } from '../../../utils/statusMessages'
 import type { SkillMeta } from '../../../stores/useSkillStore'
 
+const fireBigI = React.createElement(Fire, { size: 32, fill: 'currentColor', theme: 'outline' })
+const searchI = React.createElement(Search, { size: 16, fill: 'currentColor', theme: 'outline' })
+const searchBigI = React.createElement(Search, { size: 32, fill: '#9ca3af', theme: 'outline' })
+const chartI = React.createElement(ChartHistogram, { size: 16, fill: 'currentColor', theme: 'outline' })
+const chartBigI = React.createElement(ChartHistogram, { size: 32, fill: '#9ca3af', theme: 'outline' })
+const loadingI = React.createElement(LoadingFour, { size: 16, fill: '#9ca3af', theme: 'outline' })
+const tipsI = React.createElement(Tips, { size: 16, fill: 'currentColor', theme: 'outline' })
+const checkI = React.createElement(CheckOne, { size: 16, fill: 'currentColor', theme: 'outline' })
+
 /** 分析结果 */
 interface AnalyzeResult {
   suggestions: string[]

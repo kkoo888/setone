@@ -1,7 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { ModuleHeader } from '../../components/common/module/ModuleHeader'
-import { ChartHistogram, Refresh, Brain, Tips, Help } from '../../utils/statusMessages'
+import { ChartHistogram, Refresh, Brain, Tips, Help, Attention } from '../../utils/statusMessages'
 import { registerPolling, unregisterPolling, tickPolling, onPollingUpdate } from '../../utils/polling-helper'
+
+const chartI = React.createElement(ChartHistogram, { size: 16, fill: 'currentColor', theme: 'outline' })
+const refreshI = React.createElement(Refresh, { size: 16, fill: 'currentColor', theme: 'outline' })
+const brainI = React.createElement(Brain, { size: 16, fill: 'currentColor', theme: 'outline' })
+const tipsI = React.createElement(Tips, { size: 16, fill: 'currentColor', theme: 'outline' })
+const warnI = React.createElement(Attention, { size: 16, fill: '#ef4444', theme: 'outline' })
 
 interface SystemInfo { cpu: number; memory: { used: number; total: number; percent: number }; disk: { used: number; total: number; percent: number }; uptime: number; platform: string; hostname: string }
 interface ModuleStatus { id: string; name: string; status: string; enabled: boolean }

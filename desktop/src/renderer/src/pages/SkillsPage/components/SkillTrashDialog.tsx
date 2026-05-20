@@ -7,6 +7,10 @@ import { useSkillStore } from '../../../stores/useSkillStore'
 import { DeleteOne, LoadingFour, Magic, RecycleBin } from '../../../utils/statusMessages'
 import type { TrashItem } from '../../../stores/useSkillStore'
 
+const delI = React.createElement(DeleteOne, { size: 16, fill: 'currentColor', theme: 'outline' })
+const loadingI = React.createElement(LoadingFour, { size: 32, fill: '#9ca3af', theme: 'outline' })
+const magicI = React.createElement(Magic, { size: 16, fill: 'currentColor', theme: 'outline' })
+
 interface SkillTrashDialogProps {
   /** 关闭弹窗 */
   onClose: () => void
