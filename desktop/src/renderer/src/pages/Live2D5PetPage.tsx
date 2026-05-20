@@ -43,32 +43,47 @@ const Live2D5PetPage: React.FC = () => {
     let cancelled = false
 
     const load = async () => {
-      if (!containerRef.current) return
+      console.log('[Live2D5PetPage] 🚀 组件挂载, 开始加载流程...')
+      console.log('[Live2D5PetPage] containerRef.current:', !!containerRef.current)
+      console.log('[Live2D5PetPage] window.location.href:', window.location.href)
+      console.log('[Live2D5PetPage] window.electronAPI:', !!window.electronAPI)
+
+      if (!containerRef.current) {
+        console.error('[Live2D5PetPage] ❌ containerRef.current 为空, 无法加载')
+        return
+      }
 
       try {
+        console.log('[Live2D5PetPage] 📦 开始动态导入 cubism5-service...')
         setState('loading')
         const service = await loadCubism5Service()
         serviceRef.current = service
+        console.log('[Live2D5PetPage] ✅ cubism5-service 导入成功')
 
         service.setStateCallback((s) => {
+          console.log('[Live2D5PetPage] 🔄 状态变更:', s)
           if (!cancelled) {
             setState(s === 'idle' ? 'idle' : s === 'loading' ? 'loading' : s === 'loaded' ? 'loaded' : 'error')
           }
         })
 
+        const modelPath = new URL('/live2d/Hiyori/Hiyori.model3.json', window.location.href).href
+        console.log('[Live2D5PetPage] 📦 开始加载模型, modelPath:', modelPath)
+
         await service.loadModel(
           {
             name: 'Hiyori',
-            // 用 window.location.href 作为 base，兼容 file:// 协议（打包后）
-            modelPath: new URL('/live2d/Hiyori/Hiyori.model3.json', window.location.href).href,
+            modelPath,
             scale: 0.15,
           },
           containerRef.current
         )
 
+        console.log('[Live2D5PetPage] ✅ 模型加载完成')
         if (!cancelled) setState('loaded')
       } catch (err) {
         console.error('[Live2D5PetPage] ❌ 模型加载异常:', err)
+        console.error('[Live2D5PetPage] ❌ 错误堆栈:', err instanceof Error ? err.stack : '无堆栈')
         if (!cancelled) {
           setError(err instanceof Error ? err.message : '加载失败')
           setState('error')

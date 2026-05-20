@@ -10,6 +10,16 @@ const Live2D5PetPage = lazy(() => import('./pages/Live2D5PetPage'))
 const root = createRoot(document.getElementById('root')!)
 
 console.log('[Main] 🚀 应用启动, hash:', window.location.hash, 'href:', window.location.href)
+console.log('[Main] 🚀 electronAPI 可用:', !!window.electronAPI)
+console.log('[Main] 🚀 userAgent:', navigator.userAgent)
+
+// 全局错误捕获（方便调试）
+window.addEventListener('error', (e) => {
+  console.error('[Main] 💥 全局错误:', e.message, 'at', e.filename, ':', e.lineno, ':', e.colno, 'error:', e.error)
+})
+window.addEventListener('unhandledrejection', (e) => {
+  console.error('[Main] 💥 未处理的 Promise rejection:', e.reason)
+})
 
 /** 根据 hash 路由决定渲染内容，支持 hashchange 动态切换 */
 function RootComponent() {

@@ -278,6 +278,31 @@ export default class Live2D5Module implements Module {
       console.log('[Live2D5] ✅ renderer 页面 did-finish-load')
     })
 
+    // 捕获 renderer 端的 console 输出（关键！renderer 的 console.log 不会自动输出到主进程终端）
+    this.petWindow.webContents.on('console-message', (_event, level, message, line, sourceId) => {
+      const prefix = ['verbose', 'info', 'warning', 'error'][level] ?? 'log'
+      console.log(`[Live2D5:renderer:${prefix}] ${message} (${sourceId}:${line})`)
+    })
+
+    // 监听 renderer 崩溃
+    this.petWindow.webContents.on('render-process-gone', (_event, details) => {
+      console.error(`[Live2D5] 💥 renderer 进程崩溃! reason=${details.reason}, exitCode=${details.exitCode}`)
+    })
+
+    // 监听 renderer 无响应
+    this.petWindow.webContents.on('unresponsive', () => {
+      console.error('[Live2D5] ⚠️ renderer 进程无响应!')
+    })
+
+    this.petWindow.webContents.on('responsive', () => {
+      console.log('[Live2D5] ✅ renderer 进程恢复响应')
+    })
+
+    // 监听页面崩溃
+    this.petWindow.on('crashed', () => {
+      console.error('[Live2D5] 💥 宠物窗口崩溃!')
+    })
+
     // 监听 renderer 端的拖拽 IPC（renderer 通过 invoke 通知主进程执行拖拽）
     const dragHandler = (_event: Electron.IpcMainEvent) => {
       if (this.petWindow && !this.petWindow.isDestroyed()) {

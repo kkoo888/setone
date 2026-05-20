@@ -89,8 +89,12 @@ class Cubism5Service {
    * 加载 Cubism 5 Core SDK
    */
   async loadSDK(): Promise<void> {
-    if (this.sdkLoaded) return
+    if (this.sdkLoaded) {
+      console.log('[Cubism5] ⏭️ SDK 已加载, 跳过')
+      return
+    }
 
+    console.log('[Cubism5] 🔄 开始加载 SDK...')
     this.updateState('loading')
 
     try {
@@ -136,7 +140,12 @@ class Cubism5Service {
    * 初始化 Cubism 5 Framework
    */
   private async initFramework(): Promise<CubismFrameworkLike> {
-    if (this.framework) return this.framework
+    if (this.framework) {
+      console.log('[Cubism5] ⏭️ Framework 已初始化, 跳过')
+      return this.framework
+    }
+
+    console.log('[Cubism5] 🔄 初始化 Cubism Framework...')
 
     const frameworkModule = await import('../lib/live2dcubismframework')
     const CubismFramework = (frameworkModule.CubismFramework ?? frameworkModule.default) as CubismFrameworkLike
@@ -156,7 +165,11 @@ class Cubism5Service {
    * 加载模型（原生 Cubism 5 渲染）
    */
   async loadModel(config: Cubism5ModelConfig, container: HTMLElement): Promise<void> {
+    console.log('[Cubism5] 🚀 loadModel 开始, config:', JSON.stringify({ name: config.name, modelPath: config.modelPath, scale: config.scale }))
+    console.log('[Cubism5] 🚀 sdkLoaded:', this.sdkLoaded, 'container:', !!container)
+
     if (!this.sdkLoaded) {
+      console.log('[Cubism5] 📦 SDK 未加载, 开始加载...')
       await this.loadSDK()
     }
 
