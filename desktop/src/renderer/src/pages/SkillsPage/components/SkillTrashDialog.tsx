@@ -4,7 +4,7 @@
  */
 import React, { useEffect, useCallback, useState } from 'react'
 import { useSkillStore } from '../../../stores/useSkillStore'
-import { DeleteOne, LoadingFour, Magic, Recycle } from '../../../utils/statusMessages'
+import { DeleteOne, LoadingFour, Magic, RecycleBin } from '../../../utils/statusMessages'
 import type { TrashItem } from '../../../stores/useSkillStore'
 
 interface SkillTrashDialogProps {

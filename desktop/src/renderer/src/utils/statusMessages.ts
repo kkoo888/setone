@@ -58,7 +58,7 @@ import {
   DownloadOne,
   EditOne,
   Fire,
-  Recycle,
+  RecycleBin,
   Pushpin,
   LocalPin,
   DataServer,
@@ -254,7 +254,7 @@ export const ACTION_ICONS_SM = {
   pushpin: React.createElement(Pushpin, sm),
   location: React.createElement(LocalPin, sm),
   fire: React.createElement(Fire, sm),
-  recycle: React.createElement(Recycle, sm),
+  recycle: React.createElement(RecycleBin, sm),
   magic: React.createElement(Magic, sm),
   download: React.createElement(DownloadOne, sm),
 }
@@ -335,5 +335,5 @@ export {
   Computer, Sun, Moon, Square, FullScreenPlay,
   // 扩展
   Robot, Magic, DeleteOne, DownloadOne, EditOne,
-  Fire, Recycle, Pushpin, LocalPin, DataServer,
+  Fire, RecycleBin, Pushpin, LocalPin, DataServer,
 }
