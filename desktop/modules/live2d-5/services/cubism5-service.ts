@@ -102,20 +102,22 @@ class Cubism5Service {
     this.updateState('loading')
 
     try {
-      // 注意：不要检查 window.Live2DCubismCore 是否已存在！
-      // 因为 index.html 全局加载了 Cubism 4 Core，它会先设置这个全局变量。
-      // Cubism 5 Core 必须强制加载，覆盖 Cubism 4 的版本。
-      console.log('[Cubism5] 🔄 强制加载 Cubism 5 Core SDK（覆盖 Cubism 4 Core）...')
+      const win = window as WindowWithCubism
+      if (win.Live2DCubismCore) {
+        console.log('[Cubism5] Core SDK 已存在')
+        this.sdkLoaded = true
+        this.updateState('idle')
+        return
+      }
 
+      // 动态加载 Cubism 5 Core SDK
       await new Promise<void>((resolve, reject) => {
         const script = document.createElement('script')
         script.src = CUBISM_CORE_SDK_PATH
         script.onload = () => {
           const win = window as WindowWithCubism
           if (win.Live2DCubismCore) {
-            console.log('[Cubism5] ✅ Cubism 5 Core SDK 加载成功, keys:', Object.keys(win.Live2DCubismCore))
-          } else {
-            console.warn('[Cubism5] ⚠️ script onload 但 Live2DCubismCore 未定义')
+            console.log('[Cubism5] Live2DCubismCore keys:', Object.keys(win.Live2DCubismCore))
           }
           this.sdkLoaded = true
           resolve()
