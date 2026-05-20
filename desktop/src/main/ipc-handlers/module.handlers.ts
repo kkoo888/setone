@@ -31,6 +31,8 @@ function registerModuleCapabilities(deps: HandlerDeps): void {
         if (cap.type !== 'tool' || !cap.handler) continue
         const channel = cap.name
         if (registeredModuleIpc.has(channel)) continue
+        // 移除可能存在的兜底 handler（模块禁用期间由 fallback 注册）
+        try { ipcMain.removeHandler(channel) } catch { /* 无已有 handler，忽略 */ }
         registeredModuleIpc.add(channel)
         channels.push(channel)
         // 记录模块ID和handler的引用，用于动态检查
