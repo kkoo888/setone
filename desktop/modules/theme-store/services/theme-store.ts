@@ -9,9 +9,6 @@ import { join, basename } from 'path'
 
 /** 内置主题列表（始终可用，不可删除） */
 const BUILTIN_THEMES: Theme[] = [
-
-/** 内置主题列表（始终可用，不可删除） */
-const BUILTIN_THEMES: Theme[] = [
   {
     id: 'light', name: '亮色模式', author: 'setone', description: '明亮清爽的默认亮色主题', preview: '',
     mode: 'light',
