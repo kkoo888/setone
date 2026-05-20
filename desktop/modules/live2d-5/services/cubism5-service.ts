@@ -183,11 +183,17 @@ class Cubism5Service {
 
       // 加载模型文件
       const response = await fetch(config.modelPath)
+      if (!response.ok) {
+        throw new Error(`加载模型配置失败: ${response.status} ${response.statusText} (${config.modelPath})`)
+      }
       this.cachedModelJson = (await response.json()) as Cubism3ModelJson
 
       // 加载 moc 文件
       const mocPath = new URL(this.cachedModelJson.FileReferences.Moc, config.modelPath).href
       const mocResponse = await fetch(mocPath)
+      if (!mocResponse.ok) {
+        throw new Error(`加载 Moc 文件失败: ${mocResponse.status} ${mocResponse.statusText} (${mocPath})`)
+      }
       const mocBuffer = await mocResponse.arrayBuffer()
 
       // 创建 Moc — SDK API: CubismMoc.create(mocBytes, shouldCheckMocConsistency)
@@ -340,11 +346,15 @@ class Cubism5Service {
 
     for (let i = 0; i < textures.length; i++) {
       const texturePath = new URL(textures[i], basePath).href
-      const texture = await this.loadTexture(texturePath)
-      if (texture) {
-        if (this.model?.setTexture) {
-          this.model.setTexture(i, texture)
+      try {
+        const texture = await this.loadTexture(texturePath)
+        if (texture) {
+          if (this.model?.setTexture) {
+            this.model.setTexture(i, texture)
+          }
         }
+      } catch (err) {
+        console.error(`[Cubism5] 纹理 ${i} 加载失败，跳过:`, err)
       }
     }
   }
@@ -353,7 +363,7 @@ class Cubism5Service {
    * 加载单个纹理
    */
   private loadTexture(url: string): Promise<WebGLTexture | null> {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       const img = new Image()
       img.crossOrigin = 'anonymous'
       img.onload = () => {
@@ -372,7 +382,10 @@ class Cubism5Service {
         gl.generateMipmap(gl.TEXTURE_2D)
         resolve(texture)
       }
-      img.onerror = () => resolve(null)
+      img.onerror = () => {
+        console.error(`[Cubism5] ❌ 纹理加载失败: ${url}`)
+        reject(new Error(`纹理加载失败: ${url}`))
+      }
       img.src = url
     })
   }
@@ -577,6 +590,9 @@ class Cubism5Service {
       // 使用缓存的 modelJson，避免每次都 fetch
       if (!this.cachedModelJson) {
         const response = await fetch(this.modelPath)
+        if (!response.ok) {
+          throw new Error(`加载模型配置失败: ${response.status} ${response.statusText}`)
+        }
         this.cachedModelJson = (await response.json()) as Cubism3ModelJson
       }
 
@@ -592,6 +608,9 @@ class Cubism5Service {
       // 加载表情文件
       const expPath = new URL(expressionDef.File, this.modelPath).href
       const expResponse = await fetch(expPath)
+      if (!expResponse.ok) {
+        throw new Error(`加载表情文件失败: ${expResponse.status} ${expResponse.statusText} (${expPath})`)
+      }
       const expBuffer = await expResponse.arrayBuffer()
 
       // 创建表情动作
@@ -623,6 +642,9 @@ class Cubism5Service {
       // 使用缓存的 modelJson，避免每次都 fetch
       if (!this.cachedModelJson) {
         const response = await fetch(this.modelPath)
+        if (!response.ok) {
+          throw new Error(`加载模型配置失败: ${response.status} ${response.statusText}`)
+        }
         this.cachedModelJson = (await response.json()) as Cubism3ModelJson
       }
 
@@ -648,6 +670,9 @@ class Cubism5Service {
 
       // 加载动作文件
       const motionResponse = await fetch(motionPath)
+      if (!motionResponse.ok) {
+        throw new Error(`加载动作文件失败: ${motionResponse.status} ${motionResponse.statusText} (${motionPath})`)
+      }
       const motionBuffer = await motionResponse.arrayBuffer()
 
       // 创建动作
