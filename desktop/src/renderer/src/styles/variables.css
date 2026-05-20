@@ -31,9 +31,9 @@
   --color-text-inverse: var(--fg, #1a1a1a);
 
   /* 强调色 */
-  --color-accent: var(--primary, #4338ca);
-  --color-accent-hover: var(--accent-700, #3730a3);
-  --color-accent-light: var(--accent-300, #a78bfa);
+  --color-accent: var(--primary, #6C5CE7);
+  --color-accent-hover: var(--accent-700, #5A4BD1);
+  --color-accent-light: var(--accent-300, #A29BFE);
 
   /* 边框 */
   --color-border: var(--border, #e0e0e0);
@@ -74,9 +74,9 @@
   --color-text-secondary: #999999;
   --color-text-tertiary: #777777;
   --color-text-inverse: #0a0a0a;
-  --color-accent: #818cf8;
-  --color-accent-hover: #6366f1;
-  --color-accent-light: #c4b5fd;
+  --color-accent: #A29BFE;
+  --color-accent-hover: #6C5CE7;
+  --color-accent-light: #C4B5FD;
   --color-border: #222222;
   --color-border-light: rgba(255, 255, 255, 0.1);
   --color-shadow: rgba(0, 0, 0, 0.3);
@@ -96,9 +96,9 @@
     --color-text-secondary: #999999;
     --color-text-tertiary: #777777;
     --color-text-inverse: #0a0a0a;
-    --color-accent: #818cf8;
-    --color-accent-hover: #6366f1;
-    --color-accent-light: #c4b5fd;
+    --color-accent: #A29BFE;
+    --color-accent-hover: #6C5CE7;
+    --color-accent-light: #C4B5FD;
     --color-border: #222222;
     --color-border-light: rgba(255, 255, 255, 0.1);
     --color-shadow: rgba(0, 0, 0, 0.3);

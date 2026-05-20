@@ -429,7 +429,7 @@ export function deriveThemeVariables(seed: SeedToken): ThemeVariables {
 export function migrateV1ToSeed(v1: ThemeConfigV1): SeedToken {
   const colors = v1.colors
   return {
-    accent: colors.accent || '#4338ca',
+    accent: colors.accent || '#6C5CE7',
     bg: colors['bg-primary'] || (v1.mode === 'dark' ? '#0a0a0f' : '#ffffff'),
     fg: colors['text-primary'] || (v1.mode === 'dark' ? '#e8e8e8' : '#1a1a1a'),
     radius: 8,

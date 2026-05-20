@@ -2,14 +2,40 @@
   "id": "default",
   "name": "默认主题",
   "author": "setone",
-  "description": "简洁优雅的默认配色方案",
+  "description": "Vibrant & Block-based — 大胆活力的积木式配色方案",
   "seed": {
-    "accent": "#4338ca",
-    "bg": "#ffffff",
-    "fg": "#1a1a1a",
-    "radius": 8,
+    "accent": "#6C5CE7",
+    "bg": "#FAFAFA",
+    "fg": "#1A1A2E",
+    "radius": 12,
     "fontBase": 14,
     "spacingBase": 8,
     "mode": "light"
+  },
+  "overrides": {
+    "alias": {
+      "--primary": "#6C5CE7",
+      "--primary-fg": "#FFFFFF",
+      "--secondary": "#FF6B6B",
+      "--secondary-fg": "#FFFFFF",
+      "--accent-bg": "#F0EDFF",
+      "--accent-fg": "#6C5CE7",
+      "--destructive": "#FF4757",
+      "--destructive-fg": "#FFFFFF",
+      "--success": "#2ED573",
+      "--success-fg": "#FFFFFF",
+      "--warning": "#FFA502",
+      "--warning-fg": "#1A1A2E",
+      "--info": "#1E90FF",
+      "--info-fg": "#FFFFFF",
+      "--border": "#E8E8E8",
+      "--ring": "#6C5CE7",
+      "--sidebar-bg": "#F5F3FF",
+      "--sidebar-accent": "#E8E2FF",
+      "--sidebar-accent-fg": "#6C5CE7",
+      "--shadow-sm": "0 2px 4px rgba(108, 92, 231, 0.08)",
+      "--shadow-md": "0 4px 12px rgba(108, 92, 231, 0.12)",
+      "--shadow-lg": "0 8px 24px rgba(108, 92, 231, 0.16)"
+    }
   }
 }

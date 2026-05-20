@@ -145,7 +145,7 @@ export function useTheme() {
   const applySeed = useCallback((seed: Partial<SeedToken>) => {
     const resolvedMode = resolveMode(theme)
     const fullSeed: SeedToken = {
-      accent: seed.accent ?? '#4338ca',
+      accent: seed.accent ?? '#6C5CE7',
       bg: seed.bg ?? (resolvedMode === 'dark' ? '#0a0a0f' : '#ffffff'),
       fg: seed.fg ?? (resolvedMode === 'dark' ? '#e8e8e8' : '#1a1a1a'),
       radius: seed.radius ?? 8,
