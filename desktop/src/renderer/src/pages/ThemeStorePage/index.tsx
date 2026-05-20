@@ -80,6 +80,13 @@ export function ThemeStorePage() {
     return true
   })
 
+  const iconSm = { size: 14, fill: 'currentColor', theme: 'outline' as const }
+  const downloadI = React.createElement(DownloadOne, iconSm)
+  const sunI = React.createElement(Sun, iconSm)
+  const moonI = React.createElement(Moon, iconSm)
+  const folderI = React.createElement(FolderOpen, iconSm)
+  const deleteI = React.createElement(DeleteOne, iconSm)
+
   const modeLabel = (mode: string) => mode === 'light' ? <>{sunI} 亮色</> : <>{moonI} 暗色</>
   const sourceLabel = (source: string) => source === 'builtin' ? '内置' : source === 'imported' ? '已导入' : '可下载'
 
