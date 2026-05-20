@@ -86,6 +86,11 @@ export default class Live2D5Module implements Module {
       this.startWindowDrag()
       return { success: true }
     })
+
+    // live2d5:request-drag: renderer 通过 invoke 调用，主进程处理窗口拖拽
+    ipcMain.handle('live2d5:request-drag', async () => {
+      this.startWindowDrag()
+    })
   }
 
   /** 注销 IPC handlers */
@@ -96,6 +101,7 @@ export default class Live2D5Module implements Module {
     ipcMain.removeHandler('live2d5_expression')
     ipcMain.removeHandler('live2d5_motion')
     ipcMain.removeHandler('live2d5_start_drag')
+    ipcMain.removeHandler('live2d5:request-drag')
   }
 
   getCapabilities(): Capability[] {
@@ -303,19 +309,16 @@ export default class Live2D5Module implements Module {
       console.error('[Live2D5] 💥 宠物窗口崩溃!')
     })
 
-    // 监听 renderer 端的拖拽 IPC（renderer 通过 invoke 通知主进程执行拖拽）
-    const dragHandler = (_event: Electron.IpcMainEvent) => {
-      if (this.petWindow && !this.petWindow.isDestroyed()) {
-        // 通知 renderer 端开始拖拽
-        this.petWindow.webContents.send('live2d5:start-drag')
-      }
+    // 监听 renderer 端的清理完成确认（用于 closePetWindow）
+    const cleanupHandler = () => {
+      // 由 closePetWindow 处理
     }
-    ipcMain.on('live2d5:request-drag', dragHandler)
+    ipcMain.on('live2d5:cleanup-done', cleanupHandler)
 
     // 清理：窗口关闭时移除监听
     this.petWindow.on('closed', () => {
       console.log('[Live2D5] 🪟 宠物窗口已关闭')
-      ipcMain.removeListener('live2d5:request-drag', dragHandler)
+      ipcMain.removeListener('live2d5:cleanup-done', cleanupHandler)
       this.petWindow = null
       // 如果有 deactivate 等待的 resolve，调用它
       if (this.destroyResolve) {
