@@ -3,6 +3,9 @@ import { ModuleHeader } from '../../components/common/module/ModuleHeader'
 import { MessageOne, Message, Pushpin, DeleteOne, LocalPin } from '../../utils/statusMessages'
 import { ModuleList, ModuleListItem } from '../../components/common/module/ModuleList'
 
+const msgOneIcon = React.createElement(MessageOne, { size: 16, fill: 'currentColor', theme: 'outline' })
+const delIcon = React.createElement(DeleteOne, { size: 14, fill: 'currentColor', theme: 'outline' })
+
 interface Session { id: string; name: string; model: string; messageCount: number; createdAt: number; lastActiveAt: number; pinned: boolean }
 
 export function MultiSessionPage() {
