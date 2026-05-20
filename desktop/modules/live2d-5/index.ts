@@ -5,6 +5,7 @@
  *
  * 所有能力统一通过 getCapabilities() 暴露，不使用内部 IPC。
  */
+console.log('[Live2D5] 🔵 模块 index.ts 文件已加载')
 import type { Module, ModuleContext, Capability } from '../../src/main/types/module'
 import { BrowserWindow, ipcMain } from 'electron'
 import { join, dirname } from 'path'
