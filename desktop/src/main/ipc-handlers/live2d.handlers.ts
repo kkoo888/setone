@@ -3,6 +3,10 @@
  * live2d:create-window / live2d:close-window / live2d:toggle-visibility
  * live2d:set-ignore-mouse / live2d:start-drag / live2d:get-bounds
  * live2d:set-size / live2d:set-position
+ *
+ * Live2D5 宠物窗口 IPC 处理器
+ * live2d5_open / live2d5_close / live2d5_status
+ * live2d5:request-drag / live2d5:destroy / live2d5:set-expression / live2d5:play-motion
  */
 import { ipcMain, BrowserWindow } from 'electron'
 import { join } from 'node:path'
@@ -11,6 +15,9 @@ import type { HandlerDeps } from './types'
 
 /** Live2D 宠物窗口引用 */
 let live2dWindow: BrowserWindow | null = null
+
+/** Live2D5 宠物窗口引用 */
+let live2d5Window: BrowserWindow | null = null
 
 /**
  * 注册 Live2D 相关 IPC 处理器
@@ -150,5 +157,100 @@ export function registerLive2dHandlers(deps: HandlerDeps): void {
     if (!live2dWindow || live2dWindow.isDestroyed()) return
     live2dWindow.setPosition(args.x, args.y)
     return true
+  })
+
+  // ============ Live2D5 宠物窗口 IPC ============
+
+  registeredModuleIpc.add('live2d5_open')
+  registeredModuleIpc.add('live2d5_close')
+  registeredModuleIpc.add('live2d5_status')
+  registeredModuleIpc.add('live2d5:request-drag')
+  registeredModuleIpc.add('live2d5:destroy')
+
+  /** 打开 Live2D5 宠物窗口 */
+  ipcMain.handle('live2d5_open', async () => {
+    if (live2d5Window && !live2d5Window.isDestroyed()) {
+      live2d5Window.focus()
+      return { success: true }
+    }
+
+    live2d5Window = new BrowserWindow({
+      width: 400,
+      height: 500,
+      transparent: true,
+      frame: false,
+      alwaysOnTop: true,
+      resizable: true,
+      skipTaskbar: true,
+      hasShadow: false,
+      backgroundColor: '#00000000',
+      webPreferences: {
+        preload: join(__dirname, '../preload/index.mjs'),
+        nodeIntegration: false,
+        contextIsolation: true,
+        sandbox: false,
+      },
+    })
+
+    live2d5Window.setIgnoreMouseEvents(false)
+
+    if (process.env.VITE_DEV_SERVER_URL) {
+      live2d5Window.loadURL(`${process.env.VITE_DEV_SERVER_URL}#/live2d5-pet`)
+    } else {
+      live2d5Window.loadFile(join(__dirname, '../renderer/index.html'), {
+        hash: '#/live2d5-pet',
+      })
+    }
+
+    live2d5Window.webContents.on('did-fail-load', (_event, errorCode, errorDescription) => {
+      logger.error(`[Live2D5] 页面加载失败: ${errorCode} - ${errorDescription}`)
+    })
+
+    live2d5Window.on('closed', () => {
+      live2d5Window = null
+    })
+
+    return { success: true }
+  })
+
+  /** 关闭 Live2D5 宠物窗口 */
+  ipcMain.handle('live2d5_close', async () => {
+    if (live2d5Window && !live2d5Window.isDestroyed()) {
+      live2d5Window.close()
+      live2d5Window = null
+    }
+    return { success: true }
+  })
+
+  /** 获取 Live2D5 窗口状态 */
+  ipcMain.handle('live2d5_status', async () => {
+    return {
+      success: true,
+      data: { windowOpen: live2d5Window && !live2d5Window.isDestroyed() }
+    }
+  })
+
+  /** Live2D5 窗口拖拽 */
+  ipcMain.handle('live2d5:request-drag', async () => {
+    if (!live2d5Window || live2d5Window.isDestroyed()) return
+    // 使用 Electron 内置的窗口拖拽移动
+    const [x, y] = live2d5Window.getPosition()
+    live2d5Window.setPosition(x, y) // 触发一次位置更新
+    // 通过 webContents 发送鼠标事件实现拖拽
+    live2d5Window.webContents.sendInputEvent({
+      type: 'mouseDown',
+      x: 0,
+      y: 0,
+      button: 'left',
+      clickCount: 1,
+    })
+  })
+
+  /** Live2D5 窗口销毁通知 */
+  ipcMain.handle('live2d5:destroy', async () => {
+    if (live2d5Window && !live2d5Window.isDestroyed()) {
+      live2d5Window.close()
+      live2d5Window = null
+    }
   })
 }
