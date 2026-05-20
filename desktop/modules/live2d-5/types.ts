@@ -55,6 +55,7 @@ export interface CubismMocLike {
 export interface CubismModelLike {
   getModel: () => CubismModelInternalLike
   update: () => void
+  saveParameters: () => void
   setTexture: (index: number, texture: WebGLTexture) => void
   getRenderer: () => CubismRendererLike | null
   setRenderer: (renderer: CubismRendererLike) => void

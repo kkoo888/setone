@@ -70,6 +70,9 @@ class Cubism5Service {
   // ModelMatrix（用于缩放和定位）
   private _modelMatrix: import('../lib/math/cubismmodelmatrix').CubismModelMatrix | null = null
 
+  // CubismMatrix44 类引用（缓存，避免每次 import）
+  private _Matrix44Class: (new () => { getArray(): Float32Array; setMatrix(tr: Float32Array): void }) | null = null
+
   setStateCallback(cb: StateCallback | null): void {
     this.onStateChange = cb
   }
@@ -288,6 +291,9 @@ class Cubism5Service {
       }
       console.log('[Cubism5] ✅ 模型创建成功')
 
+      // 官方 API：保存初始参数状态（CubismUserModel.loadModel 中调用）
+      this.model.saveParameters()
+
       // 检查模型内部结构
       const internalModel = this.model.getModel()
       console.log('[Cubism5] 🔍 internalModel 存在:', !!internalModel)
@@ -346,6 +352,8 @@ class Cubism5Service {
 
     try {
       const { CubismModelMatrix } = await import('../lib/math/cubismmodelmatrix')
+      // 缓存类引用供 createMvpMatrix 使用
+      this._Matrix44Class = CubismModelMatrix
       const internalModel = this.model.getModel()
       if (!internalModel) return
 
@@ -517,48 +525,27 @@ class Cubism5Service {
   /**
    * 初始化渲染器（SDK 正确 API）
    *
-   * Cubism SDK 正确用法：
+   * Cubism SDK 官方用法（参考 CubismUserModel.createRenderer）：
    * 1. new CubismRenderer_WebGL(width, height)
-   * 2. renderer.startUp(gl)
-   * 3. renderer.initialize(model)
+   * 2. renderer.initialize(model, maskBufferCount)
+   * 3. renderer.startUp(gl)  ← 渲染前调用
    */
   private async initRenderer(): Promise<void> {
     if (!this.gl || !this.model || !this.canvas) return
 
     const rendererModule = await import('../lib/rendering/cubismrenderer_webgl')
-    const CubismRenderer_WebGL = rendererModule.CubismRenderer_WebGL as {
-      new (width: number, height: number): CubismRendererLike & {
-        startUp: (gl: WebGLRenderingContext) => void
-      }
-    }
+    const CubismRenderer_WebGL = rendererModule.CubismRenderer_WebGL
 
     // SDK 正确 API：new CubismRenderer_WebGL(width, height)
     const renderer = new CubismRenderer_WebGL(this.canvas.width, this.canvas.height)
 
-    // 设置 GL 上下文
-    renderer.startUp(this.gl)
-
-    // 初始化渲染器（关联模型）
+    // 官方顺序：先 initialize(model)，再 startUp(gl)
     renderer.initialize(this.model.getModel())
-    // 注意：isPremultipliedAlpha 是 getter，用 setIsPremultipliedAlpha 设置
+    renderer.startUp(this.gl)
     renderer.setIsPremultipliedAlpha(true)
 
-    // 设置 shader 路径（打包后 shader 在 public/Framework/Shaders/WebGL/）
-    try {
-      const shaderModule = await import('../lib/rendering/cubismshader_webgl')
-      const CubismShaderManager = shaderModule.CubismShaderManager_WebGL
-      if (CubismShaderManager) {
-        const shaderInstance = CubismShaderManager.getInstance().getShader(this.gl)
-        if (shaderInstance?.setShaderPath) {
-          shaderInstance.setShaderPath(CUBISM5_SHADER_PATH)
-        }
-      }
-    } catch (e) {
-      console.warn('[Cubism5] 设置 shader 路径失败:', e)
-    }
-
     // 存储 renderer 引用（纹理绑定和渲染都需要）
-    this.renderer = renderer as unknown as CubismRendererLike
+    this.renderer = renderer
   }
 
   /**
@@ -645,37 +632,40 @@ class Cubism5Service {
 
   /**
    * 创建 MVP 矩阵（正交投影 × 模型矩阵）
-   * 返回带 getArray() 的对象以匹配 SDK 的 setMvpMatrix 签名
+   * 返回 CubismMatrix44 兼容对象以匹配 SDK 的 setMvpMatrix 签名
    * @see https://docs.live2d.com/4.2/zh-CHS/cubism-sdk-manual/model-web/
    */
-  private createMvpMatrix(width: number, height: number): { getArray(): Float32Array } {
-    // 如果有 ModelMatrix，直接用它（已经包含了模型变换）
-    if (this._modelMatrix) {
-      // ModelMatrix 本身就是 CubismMatrix44，直接用
-      // 但需要叠加正交投影
-      const mm = this._modelMatrix.getArray()
-      const mvp = new Float32Array(16)
-      // 正交投影 × 模型矩阵
-      const sx = 2 / width
-      const sy = -2 / height
-      for (let col = 0; col < 4; col++) {
-        mvp[0 * 4 + col] = sx * mm[0 * 4 + col]
-        mvp[1 * 4 + col] = sy * mm[1 * 4 + col]
-        mvp[2 * 4 + col] = mm[2 * 4 + col]
-        mvp[3 * 4 + col] = -mm[0 * 4 + col] + mm[1 * 4 + col] + mm[3 * 4 + col]
-      }
-      return { getArray: () => mvp }
+  private createMvpMatrix(width: number, height: number): { getArray(): Float32Array; setMatrix(tr: Float32Array): void } {
+    // _Matrix44Class 在 applyModelScale 中已缓存
+    const MatrixClass = this._Matrix44Class
+    if (!MatrixClass) {
+      // fallback：如果还没缓存，返回简单包装
+      const projection = new Float32Array(16)
+      projection[0] = 2 / width
+      projection[5] = -2 / height
+      projection[10] = 1
+      projection[12] = -1
+      projection[13] = 1
+      projection[15] = 1
+      return { getArray: () => projection, setMatrix: () => {} }
     }
 
-    // 纯正交投影
-    const projection = new Float32Array(16)
-    projection[0] = 2 / width
-    projection[5] = -2 / height
-    projection[10] = 1
-    projection[12] = -1
-    projection[13] = 1
-    projection[15] = 1
-    return { getArray: () => projection }
+    const mvp = new (MatrixClass as any)()
+
+    if (this._modelMatrix) {
+      mvp.setMatrix(this._modelMatrix.getArray())
+    }
+
+    // 叠加正交投影
+    const tr = mvp.getArray()
+    const sx = 2 / width
+    const sy = -2 / height
+    for (let col = 0; col < 4; col++) {
+      tr[0 * 4 + col] *= sx
+      tr[1 * 4 + col] *= sy
+    }
+
+    return mvp
   }
 
   /**
@@ -867,6 +857,7 @@ class Cubism5Service {
     this.lastUpdateTime = 0
     this.contextLost = false
     this._modelMatrix = null
+    this._Matrix44Class = null
     this.updateState('idle')
   }
 
