@@ -209,7 +209,14 @@ export class CubismShader_WebGL {
     // + 1（コピー用のシェーダー）
     // + カラーブレンドの数（後方互換とNone除く） * アルファブレンドの数（None除く） * （通常 + マスク + 反転マスク）
 
-    this._defaultShaderPath = '../../Framework/Shaders/WebGL/';
+    // 使用 import.meta.url 解析 shader 目录，兼容 file:// 协议和 http 协议
+    // 打包后 JS 在 assets/ 目录，shader 在 Framework/Shaders/WebGL/ 目录
+    try {
+      this._defaultShaderPath = new URL('../../Framework/Shaders/WebGL/', import.meta.url).href;
+    } catch {
+      // fallback：如果 import.meta.url 不可用，使用相对路径
+      this._defaultShaderPath = '../../Framework/Shaders/WebGL/';
+    }
     this._shaderPath = this._defaultShaderPath;
   }
 

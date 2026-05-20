@@ -1008,8 +1008,8 @@ export class CubismModel {
    * @return Drawableの描画順リスト
    */
   public getRenderOrders(): Int32Array {
-    const renderOrders: Int32Array = this._model.getRenderOrders();
-    return renderOrders;
+    // Cubism 5 Core SDK: renderOrders 在 drawables 子对象上，不在 Model 根对象
+    return this._model.drawables.renderOrders;
   }
 
   /**
