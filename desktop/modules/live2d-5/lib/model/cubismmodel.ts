@@ -1541,7 +1541,7 @@ export class CubismModel {
 
     this._parameterValues = this._model.parameters.values;
     this._partOpacities = this._model.parts.opacities;
-    this._offscreenOpacities = this._model.offscreens.opacities;
+    this._offscreenOpacities = this._model.offscreens?.opacities ?? null;
 
     this._parameterMaximumValues = this._model.parameters.maximumValues;
     this._parameterMinimumValues = this._model.parameters.minimumValues;
@@ -1582,7 +1582,7 @@ export class CubismModel {
       const userCulling: CullingData = new CullingData(false, false);
 
       // Offscreenカリング設定
-      this._userOffscreenCullings.length = this._model.offscreens.count;
+      this._userOffscreenCullings.length = this._model.offscreens?.count ?? 0;
       const userOffscreenCulling: CullingData = new CullingData(false, false);
 
       // Drawables
@@ -1598,7 +1598,7 @@ export class CubismModel {
 
       // Offscreens
       {
-        for (let i = 0; i < this._model.offscreens.count; ++i) {
+        for (let i = 0; i < (this._model.offscreens?.count ?? 0); ++i) {
           this._userOffscreenCullings[i] = userOffscreenCulling;
         }
       }
@@ -1796,6 +1796,25 @@ export class CubismModel {
    */
   public constructor(model: Live2DCubismCore.Model) {
     this._model = model;
+
+    // 兼容性垫片：offscreens 是 Cubism 5.2+ 新增的，旧 Core SDK 没有
+    if (!model.offscreens) {
+      const emptyInt32 = new Int32Array(0)
+      const emptyUint8 = new Uint8Array(0)
+      const emptyFloat32 = new Float32Array(0)
+      ;(model as any).offscreens = {
+        count: 0,
+        opacities: emptyFloat32,
+        constantFlags: emptyUint8,
+        multiplyColors: emptyFloat32,
+        screenColors: emptyFloat32,
+        blendModes: emptyInt32,
+        ownerIndices: emptyInt32,
+        masks: emptyInt32,
+        maskCounts: emptyInt32
+      }
+    }
+
     this._parameterValues = null;
     this._parameterMaximumValues = null;
     this._parameterMinimumValues = null;
@@ -1842,11 +1861,13 @@ export class CubismModel {
     ).fill(CubismAlphaBlend.AlphaBlend_None);
 
     // Offscreenのカラーブレンドとアルファブレンドの初期化
+    // offscreens は Cubism 5.2+ で追加、旧 Core SDK には存在しない場合がある
+    const offscreenCount = model.offscreens?.count ?? 0;
     this._offscreenColorBlends = new Array<CubismColorBlend>(
-      model.offscreens.count
+      offscreenCount
     ).fill(CubismColorBlend.ColorBlend_None);
     this._offscreenAlphaBlends = new Array<CubismAlphaBlend>(
-      model.offscreens.count
+      offscreenCount
     ).fill(CubismAlphaBlend.AlphaBlend_None);
   }
 

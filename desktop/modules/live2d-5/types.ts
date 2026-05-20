@@ -54,6 +54,7 @@ export interface CubismMocLike {
 /** Model 对象接口 */
 export interface CubismModelLike {
   getModel: () => CubismModelInternalLike
+  update: () => void
   setTexture: (index: number, texture: WebGLTexture) => void
   getRenderer: () => CubismRendererLike | null
   setRenderer: (renderer: CubismRendererLike) => void

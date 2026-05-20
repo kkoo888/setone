@@ -49,6 +49,7 @@ class Cubism5Service {
   // WebGL 相关
   private gl: WebGLRenderingContext | null = null
   private canvas: HTMLCanvasElement | null = null
+  private renderer: CubismRendererLike | null = null
 
   // 模型配置
   private expressions: string[] = []
@@ -447,8 +448,9 @@ class Cubism5Service {
       try {
         const texture = await this.loadTexture(texturePath)
         if (texture) {
-          if (this.model?.setTexture) {
-            this.model.setTexture(i, texture)
+          // Cubism SDK: 纹理绑定在 renderer 上，不是 model
+          if (this.renderer) {
+            (this.renderer as any).bindTexture(i, texture)
           }
           console.log(`[Cubism5] ✅ 纹理 ${i} 加载成功`)
         }
@@ -538,7 +540,8 @@ class Cubism5Service {
 
     // 初始化渲染器（关联模型）
     renderer.initialize(this.model.getModel())
-    renderer.isPremultipliedAlpha = true
+    // 注意：isPremultipliedAlpha 是 getter，用 setIsPremultipliedAlpha 设置
+    renderer.setIsPremultipliedAlpha(true)
 
     // 设置 shader 路径（打包后 shader 在 public/Framework/Shaders/WebGL/）
     try {
@@ -554,7 +557,8 @@ class Cubism5Service {
       console.warn('[Cubism5] 设置 shader 路径失败:', e)
     }
 
-    this.model.setRenderer(renderer)
+    // 存储 renderer 引用（纹理绑定和渲染都需要）
+    this.renderer = renderer as unknown as CubismRendererLike
   }
 
   /**
@@ -600,15 +604,13 @@ class Cubism5Service {
     // 更新动作和表情
     this.updateMotionAndExpression(deltaTime)
 
-    // 更新模型
-    const model = this.model.getModel()
-    model.update()
+    // 更新模型（调用 CubismModel 包装器的 update，包含 resetDynamicFlags）
+    this.model.update()
 
     // 渲染
-    const renderer = this.model.getRenderer()
-    if (renderer) {
-      renderer.setMvpMatrix(this.createMvpMatrix(canvas.width, canvas.height))
-      renderer.drawModel()
+    if (this.renderer) {
+      this.renderer.setMvpMatrix(this.createMvpMatrix(canvas.width, canvas.height))
+      this.renderer.drawModel()
     }
   }
 
@@ -643,10 +645,29 @@ class Cubism5Service {
 
   /**
    * 创建 MVP 矩阵（正交投影 × 模型矩阵）
+   * 返回带 getArray() 的对象以匹配 SDK 的 setMvpMatrix 签名
    * @see https://docs.live2d.com/4.2/zh-CHS/cubism-sdk-manual/model-web/
    */
-  private createMvpMatrix(width: number, height: number): Float32Array {
-    // 投影矩阵：正交投影
+  private createMvpMatrix(width: number, height: number): { getArray(): Float32Array } {
+    // 如果有 ModelMatrix，直接用它（已经包含了模型变换）
+    if (this._modelMatrix) {
+      // ModelMatrix 本身就是 CubismMatrix44，直接用
+      // 但需要叠加正交投影
+      const mm = this._modelMatrix.getArray()
+      const mvp = new Float32Array(16)
+      // 正交投影 × 模型矩阵
+      const sx = 2 / width
+      const sy = -2 / height
+      for (let col = 0; col < 4; col++) {
+        mvp[0 * 4 + col] = sx * mm[0 * 4 + col]
+        mvp[1 * 4 + col] = sy * mm[1 * 4 + col]
+        mvp[2 * 4 + col] = mm[2 * 4 + col]
+        mvp[3 * 4 + col] = -mm[0 * 4 + col] + mm[1 * 4 + col] + mm[3 * 4 + col]
+      }
+      return { getArray: () => mvp }
+    }
+
+    // 纯正交投影
     const projection = new Float32Array(16)
     projection[0] = 2 / width
     projection[5] = -2 / height
@@ -654,25 +675,7 @@ class Cubism5Service {
     projection[12] = -1
     projection[13] = 1
     projection[15] = 1
-
-    // 如果有 ModelMatrix，将投影矩阵与模型矩阵相乘
-    if (this._modelMatrix) {
-      const mm = this._modelMatrix.getArray()
-      // 矩阵乘法 projection × modelMatrix（4x4）
-      const mvp = new Float32Array(16)
-      for (let row = 0; row < 4; row++) {
-        for (let col = 0; col < 4; col++) {
-          mvp[row * 4 + col] =
-            projection[row * 4 + 0] * mm[0 * 4 + col] +
-            projection[row * 4 + 1] * mm[1 * 4 + col] +
-            projection[row * 4 + 2] * mm[2 * 4 + col] +
-            projection[row * 4 + 3] * mm[3 * 4 + col]
-        }
-      }
-      return mvp
-    }
-
-    return projection
+    return { getArray: () => projection }
   }
 
   /**
@@ -810,16 +813,20 @@ class Cubism5Service {
     this.motionManager = null
 
     // 释放渲染器
-    if (this.model) {
+    if (this.renderer) {
       try {
-        const renderer = this.model.getRenderer()
-        if (renderer) {
-          renderer.release()
-        }
+        this.renderer.release()
       } catch {
         // 忽略渲染器释放错误
       }
-      this.model.release()
+      this.renderer = null
+    }
+    if (this.model) {
+      try {
+        this.model.release()
+      } catch {
+        // 忽略模型释放错误
+      }
       this.model = null
     }
 
