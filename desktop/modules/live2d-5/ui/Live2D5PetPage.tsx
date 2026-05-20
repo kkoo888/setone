@@ -26,7 +26,7 @@ const Live2D5PetPage: React.FC = () => {
         await cubism5Service.loadModel(
           {
             name: 'Hiyori',
-            modelPath: new URL('./live2d/Hiyori/Hiyori.model3.json', window.location.href).href,
+            modelPath: new URL('/live2d/Hiyori/Hiyori.model3.json', window.location.href).href,
             scale: 0.15,
           },
           containerRef.current

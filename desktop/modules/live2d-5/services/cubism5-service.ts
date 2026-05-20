@@ -21,11 +21,11 @@ import type {
 /** 默认模型缩放比例 */
 const DEFAULT_MODEL_SCALE = 0.15
 
-/** Live2D Core SDK 路径（相对路径，兼容 dev HTTP 和打包 file://） */
-const CUBISM_CORE_SDK_PATH = './lib/live2dcubismcore5.min.js'
+/** Live2D Core SDK 路径（Vite public 目录，dev/打包通用） */
+const CUBISM_CORE_SDK_PATH = '/lib/live2dcubismcore5.min.js'
 
-/** Cubism 5 Shader 路径（相对路径，兼容 dev HTTP 和打包 file://） */
-const CUBISM5_SHADER_PATH = './Framework/Shaders/WebGL/'
+/** Cubism 5 Shader 路径（public 目录下的 Framework/Shaders/WebGL/） */
+const CUBISM5_SHADER_PATH = '/Framework/Shaders/WebGL/'
 
 // ============ Cubism 5 Core 全局声明 ============
 
@@ -108,12 +108,17 @@ class Cubism5Service {
         const script = document.createElement('script')
         script.src = CUBISM_CORE_SDK_PATH
         script.onload = () => {
-          console.log('[Cubism5] ✅ Core SDK 加载成功')
+          console.log('[Cubism5] ✅ Core SDK onload 触发')
+          const win = window as WindowWithCubism
+          console.log('[Cubism5] Live2DCubismCore 存在:', !!win.Live2DCubismCore)
+          if (win.Live2DCubismCore) {
+            console.log('[Cubism5] Live2DCubismCore keys:', Object.keys(win.Live2DCubismCore))
+          }
           this.sdkLoaded = true
           resolve()
         }
-        script.onerror = () => {
-          console.error('[Cubism5] ❌ Core SDK 加载失败, 路径:', CUBISM_CORE_SDK_PATH)
+        script.onerror = (e) => {
+          console.error('[Cubism5] ❌ Core SDK onerror 触发, 路径:', CUBISM_CORE_SDK_PATH, e)
           reject(new Error('Cubism 5 Core SDK 加载失败'))
         }
         document.head.appendChild(script)
@@ -204,15 +209,27 @@ class Cubism5Service {
       console.log('[Cubism5] ✅ Moc 文件加载成功, 大小:', mocBuffer.byteLength, 'bytes')
 
       // 创建 Moc — SDK API: CubismMoc.create(mocBytes, shouldCheckMocConsistency)
+      console.log('[Cubism5] 📦 创建 Moc, buffer 大小:', mocBuffer.byteLength)
       this.moc = CubismMoc.create(mocBuffer, false) as unknown as CubismMocLike
       if (!this.moc) {
         throw new Error('Moc 创建失败')
       }
+      console.log('[Cubism5] ✅ Moc 创建成功')
 
       // 创建模型
+      console.log('[Cubism5] 📦 创建模型...')
       this.model = (this.moc as unknown as { createModel: () => CubismModelLike | null }).createModel()
       if (!this.model) {
         throw new Error('模型创建失败')
+      }
+      console.log('[Cubism5] ✅ 模型创建成功')
+
+      // 检查模型内部结构
+      const internalModel = this.model.getModel()
+      console.log('[Cubism5] 🔍 internalModel 存在:', !!internalModel)
+      if (internalModel) {
+        console.log('[Cubism5] 🔍 getCanvasWidth:', internalModel.getCanvasWidth?.())
+        console.log('[Cubism5] 🔍 getCanvasHeight:', internalModel.getCanvasHeight?.())
       }
 
       // 加载纹理
