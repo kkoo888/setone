@@ -1,65 +1,71 @@
+/* ══════════════════════════════════════════
+   SetOne 主题变量 v2.0 — 向后兼容层
+   ──
+   所有变量由 themeEngine.ts 动态注入到 :root
+   本文件仅定义：
+   1. themeEngine 尚未覆盖的旧变量名
+   2. data-theme 结构性选择器（让组件 CSS 生效）
+   3. 不可被 JS 覆盖的纯 CSS 规则
+   ══════════════════════════════════════════ */
+
 :root {
-  /* ── 全局主题过渡 ── */
+  /* ── 主题过渡（仅对背景/文字/边框生效）── */
   transition: background-color 0.3s ease, color 0.2s ease, border-color 0.3s ease, box-shadow 0.3s ease;
 
-  /* ── 颜色 ── */
-  --color-bg-primary: #ffffff;
-  --color-bg-secondary: #f5f5f5;
-  --color-bg-tertiary: #e8e8e8;
-  --color-text-primary: #1a1a1a;
-  --color-text-secondary: #525252;
-  --color-text-tertiary: #737373;
-  --color-text-inverse: #ffffff;
-  --color-accent: #4338ca;
-  --color-accent-hover: #3730a3;
-  --color-accent-light: #a78bfa;
-  --color-border: #e0e0e0;
-  --color-border-light: rgba(255, 255, 255, 0.1);
-  --color-shadow: rgba(0, 0, 0, 0.1);
-  --color-success: #22c55e;
-  --color-warning: #f59e0b;
-  --color-error: #ef4444;
-  --color-info: #60a5fa;
-  --color-overlay: rgba(0, 0, 0, 0.4);
+  /* ══════════════════════════════════════════
+     旧变量名 → 新变量名 映射
+     
+     注意：不能 var(--x, fallback) 当 --x 和这里同名！
+     用不同前缀或直接写 fallback 值
+     ══════════════════════════════════════════ */
 
-  /* ── 间距 ── */
-  --spacing-2xs: 2px;
-  --spacing-xs: 4px;
+  /* 背景色 */
+  --color-bg-primary: var(--bg, #ffffff);
+  --color-bg-secondary: var(--gray-2, #f9f9f9);
+  --color-bg-tertiary: var(--gray-3, #f0f0f0);
+
+  /* 文字色 */
+  --color-text-primary: var(--fg, #1a1a1a);
+  --color-text-secondary: var(--gray-8, #6a6a6a);
+  --color-text-tertiary: var(--gray-7, #8a8a8a);
+  --color-text-inverse: var(--fg, #1a1a1a);
+
+  /* 强调色 */
+  --color-accent: var(--primary, #4338ca);
+  --color-accent-hover: var(--accent-700, #3730a3);
+  --color-accent-light: var(--accent-300, #a78bfa);
+
+  /* 边框 */
+  --color-border: var(--border, #e0e0e0);
+  --color-border-light: var(--alpha-white-100, rgba(255, 255, 255, 0.1));
+
+  /* 阴影 */
+  --color-shadow: var(--alpha-black-100, rgba(0, 0, 0, 0.1));
+
+  /* 状态色 */
+  --color-success: var(--success, #22c55e);
+  --color-warning: var(--warning, #f59e0b);
+  --color-error: var(--error, #ef4444);
+  --color-info: var(--info, #60a5fa);
+
+  /* 遮罩 */
+  --color-overlay: var(--overlay, rgba(0, 0, 0, 0.4));
+
+  /* ── 间距中间值（themeEngine 不派生这些）── */
   --spacing-xs-sm: 6px;
-  --spacing-sm: 8px;
   --spacing-sm-md: 10px;
-  --spacing-md: 16px;
   --spacing-md-lg: 20px;
-  --spacing-lg: 24px;
-  --spacing-xl: 32px;
-  --spacing-2xl: 36px;
 
-  /* ── 圆角 ── */
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-full: 9999px;
-
-  /* ── 字体 ── */
-  --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
-  --font-mono: 'Fira Code', 'Consolas', monospace;
-
-  /* ── 字号 ── */
-  --font-size-2xs: 10px;
-  --font-size-xs: 12px;
-  --font-size-sm: 14px;
+  /* ── 字号中间值（themeEngine 不派生这些）── */
   --font-size-md: 18px;
   --font-size-md-lg: 20px;
-  --font-size-lg: 20px;
-  --font-size-xl: 24px;
-  --font-size-2xl: 28px;
-  --font-size-3xl: 48px;
-
-  /* ── 过渡 ── */
-  --transition-fast: 150ms ease;
-  --transition-normal: 250ms ease;
-  --transition-slow: 350ms ease;
 }
+
+/* ══════════════════════════════════════════
+   暗色模式 CSS fallback
+   JS 加载前保证暗色主题不闪白屏
+   JS 加载后会用 inline style 覆盖这些值
+   ══════════════════════════════════════════ */
 
 [data-theme='dark'] {
   --color-bg-primary: #1a1a2e;
@@ -105,7 +111,10 @@
   }
 }
 
-/* ── Compact 紧凑主题 ── */
+/* ══════════════════════════════════════════
+   Compact 紧凑主题覆盖
+   ══════════════════════════════════════════ */
+
 [data-theme='compact'] {
   --spacing-sm: 4px;
   --spacing-md: 8px;

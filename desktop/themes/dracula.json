@@ -3,19 +3,22 @@
   "name": "Dracula",
   "author": "setone",
   "description": "经典 Dracula 暗色配色方案",
-  "mode": "dark",
-  "colors": {
+  "seed": {
     "accent": "#bd93f9",
-    "accent-hover": "#9b59b6",
-    "bg-primary": "#282a36",
-    "bg-secondary": "#343746",
-    "bg-tertiary": "#44475a",
-    "text-primary": "#f8f8f2",
-    "text-secondary": "#bfbfbf",
-    "border": "#44475a",
-    "success": "#50fa7b",
-    "warning": "#f1fa8c",
-    "error": "#ff5555",
-    "info": "#8be9fd"
+    "bg": "#282a36",
+    "fg": "#f8f8f2",
+    "radius": 8,
+    "fontBase": 16,
+    "spacingBase": 8,
+    "mode": "dark"
+  },
+  "overrides": {
+    "alias": {
+      "--border": "#44475a",
+      "--success": "#50fa7b",
+      "--warning": "#f1fa8c",
+      "--error": "#ff5555",
+      "--info": "#8be9fd"
+    }
   }
 }

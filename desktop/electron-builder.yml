@@ -6,6 +6,7 @@ files:
   - dist/**/*
   - modules-dist/**/*
   - skills/**/*
+  - themes/**/*
   - "!modules/**/*"
 asar: true
 asarUnpack:

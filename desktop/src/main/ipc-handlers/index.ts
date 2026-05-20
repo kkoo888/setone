@@ -16,6 +16,7 @@ import { registerLive2dHandlers } from './live2d.handlers'
 import { registerHotkeyHandlers } from './hotkey.handlers'
 import { registerSoulHandlers } from './soul.handlers'
 import { registerPollingHandlers } from './polling.handlers'
+import { registerThemeHandlers } from './theme.handlers'
 
 /**
  * 注册所有 IPC 处理器
@@ -34,4 +35,5 @@ export function registerAllIpcHandlers(deps: HandlerDeps): void {
   registerHotkeyHandlers(deps)
   registerSoulHandlers(deps)
   registerPollingHandlers(deps)
+  registerThemeHandlers()
 }

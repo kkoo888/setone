@@ -1,0 +1,15 @@
+{
+  "id": "default",
+  "name": "默认主题",
+  "author": "setone",
+  "description": "简洁优雅的默认配色方案",
+  "seed": {
+    "accent": "#4338ca",
+    "bg": "#ffffff",
+    "fg": "#1a1a1a",
+    "radius": 8,
+    "fontBase": 16,
+    "spacingBase": 8,
+    "mode": "light"
+  }
+}

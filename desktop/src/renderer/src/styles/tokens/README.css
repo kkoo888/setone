@@ -1,0 +1,126 @@
+/**
+ * SetOne Design Token 体系 v2.0 参考文档
+ * 
+ * 所有 Token 由 themeEngine.ts 动态生成并注入到 :root
+ * 本文件仅作为开发参考，不参与编译
+ * 
+ * ─────────────────────────────────────────
+ * 架构：Seed Token → Map Token → Alias Token → Component Token
+ * ─────────────────────────────────────────
+ */
+
+/* ══════════════════════════════════════════
+   Seed Token（种子变量）
+   用户只需定义这 7 个核心值
+   ══════════════════════════════════════════ */
+
+/*
+  --seed-accent:      主色 hex（如 #4338ca）
+  --seed-bg:          背景色 hex
+  --seed-fg:          前景色 hex
+  --seed-radius:      圆角基数 px
+  --seed-font-base:   字号基数 px
+  --seed-spacing-base: 间距基数 px
+  --seed-mode:        light | dark
+*/
+
+
+/* ══════════════════════════════════════════
+   Map Token（梯度变量）— 自动派生
+   ══════════════════════════════════════════ */
+
+/*
+  色阶（借鉴 Chakra UI 50-900）:
+    --accent-50 ~ --accent-900    主色色阶
+    --gray-1 ~ --gray-12          灰度色阶（借鉴 Radix 12 级）
+
+  圆角（借鉴 shadcn/ui 派生）:
+    --radius-xs ~ --radius-full   从 --radius 基数自动缩放
+
+  间距:
+    --spacing-2xs ~ --spacing-2xl
+
+  字号:
+    --font-size-2xs ~ --font-size-3xl
+
+  Alpha 透明度（借鉴 Chakra UI）:
+    --alpha-black-50 ~ --alpha-black-900
+    --alpha-white-50 ~ --alpha-white-900
+*/
+
+
+/* ══════════════════════════════════════════
+   Alias Token（语义变量）— bg/fg 配对
+   借鉴 shadcn/ui 的配对机制
+   ══════════════════════════════════════════ */
+
+/*
+  页面基础:
+    --bg / --fg                     默认背景/前景
+
+  卡片/面板:
+    --card / --card-fg              卡片表面/文字
+
+  弹出层:
+    --popover / --popover-fg        浮层表面/文字
+
+  主色（高强调）:
+    --primary / --primary-fg        主按钮、选中态
+
+  次要色（低强调）:
+    --secondary / --secondary-fg    次要按钮
+
+  柔和面:
+    --muted / --muted-fg            描述、占位符
+
+  交互高亮:
+    --accent-bg / --accent-fg       hover、选中行
+
+  危险操作:
+    --destructive / --destructive-fg
+
+  边框/输入:
+    --border / --input / --ring
+
+  状态色:
+    --success / --success-fg
+    --warning / --warning-fg
+    --error / --error-fg
+    --info / --info-fg
+
+  遮罩:
+    --overlay
+
+  阴影:
+    --shadow-sm / --shadow-md / --shadow-lg / --shadow-xl
+
+  图表色板:
+    --chart-1 ~ --chart-5
+*/
+
+
+/* ══════════════════════════════════════════
+   侧边栏独立 Token（借鉴 shadcn/ui）
+   ══════════════════════════════════════════ */
+
+/*
+  --sidebar-bg / --sidebar-fg
+  --sidebar-primary / --sidebar-primary-fg
+  --sidebar-accent / --sidebar-accent-fg
+  --sidebar-border / --sidebar-ring
+*/
+
+
+/* ══════════════════════════════════════════
+   Component Token（组件变量）
+   主题 JSON 中通过 overrides.component 定义
+   ══════════════════════════════════════════ */
+
+/*
+  示例（赛博朋克主题）:
+    --sidebar-bg: #08080c
+    --sidebar-accent: rgba(240, 171, 252, 0.15)
+    --chat-bubble-bg: #1a1a2e
+    --chat-input-bg: #12121a
+    --calendar-event-bg: rgba(240, 171, 252, 0.2)
+*/

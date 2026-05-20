@@ -3,18 +3,31 @@
   "name": "赛博朋克",
   "author": "setone",
   "description": "霓虹灯风格的赛博朋克配色",
-  "mode": "dark",
-  "colors": {
+  "seed": {
     "accent": "#f0abfc",
-    "accent-hover": "#e879f9",
-    "bg-primary": "#0a0a0f",
-    "bg-secondary": "#12121a",
-    "bg-tertiary": "#1a1a2e",
-    "text-primary": "#e0e0ff",
-    "text-secondary": "#a0a0cc",
-    "border": "#2a1a3e",
-    "success": "#00ffaa",
-    "warning": "#ffdd00",
-    "error": "#ff0055"
+    "bg": "#0a0a0f",
+    "fg": "#e0e0ff",
+    "radius": 6,
+    "fontBase": 15,
+    "spacingBase": 8,
+    "mode": "dark"
+  },
+  "overrides": {
+    "alias": {
+      "--border": "#2a1a3e",
+      "--success": "#00ffaa",
+      "--warning": "#ffdd00",
+      "--error": "#ff0055"
+    },
+    "component": {
+      "sidebar": {
+        "--sidebar-bg": "#08080c",
+        "--sidebar-accent": "rgba(240, 171, 252, 0.15)"
+      },
+      "chat": {
+        "--chat-bubble-bg": "#1a1a2e",
+        "--chat-input-bg": "#12121a"
+      }
+    }
   }
 }

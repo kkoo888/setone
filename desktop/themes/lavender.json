@@ -3,15 +3,18 @@
   "name": "薰衣草紫",
   "author": "setone",
   "description": "温柔优雅的薰衣草配色",
-  "mode": "light",
-  "colors": {
+  "seed": {
     "accent": "#7c3aed",
-    "accent-hover": "#6d28d9",
-    "bg-primary": "#faf5ff",
-    "bg-secondary": "#f3e8ff",
-    "bg-tertiary": "#ede9fe",
-    "text-primary": "#1e1b4b",
-    "text-secondary": "#5b21b6",
-    "border": "#ddd6fe"
+    "bg": "#faf5ff",
+    "fg": "#1e1b4b",
+    "radius": 10,
+    "fontBase": 16,
+    "spacingBase": 8,
+    "mode": "light"
+  },
+  "overrides": {
+    "alias": {
+      "--border": "#ddd6fe"
+    }
   }
 }
