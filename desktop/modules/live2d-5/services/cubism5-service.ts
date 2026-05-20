@@ -234,11 +234,25 @@ class Cubism5Service {
       // 加载动作和表情配置
       this.loadMotionAndExpressionConfig(this.cachedModelJson)
 
-      // 初始化渲染器（使用 SDK 正确 API）— 必须在加载纹理之前，否则 this.renderer 为 null
-      await this.initRenderer()
+      // 初始化渲染器（使用 SDK 正确 API）
+      console.log('[Cubism5] 🔄 initRenderer...')
+      try {
+        await this.initRenderer()
+        console.log('[Cubism5] ✅ initRenderer 完成, renderer:', !!this.renderer)
+      } catch (e) {
+        console.error('[Cubism5] ❌ initRenderer 失败:', e)
+        throw e
+      }
 
       // 加载纹理（需要 renderer 已初始化才能 bindTexture）
-      await this.loadTextures(this.cachedModelJson, config.modelPath)
+      console.log('[Cubism5] 🔄 loadTextures...')
+      try {
+        await this.loadTextures(this.cachedModelJson, config.modelPath)
+        console.log('[Cubism5] ✅ loadTextures 完成, _textures:', (this.renderer as any)?._textures?.size)
+      } catch (e) {
+        console.error('[Cubism5] ❌ loadTextures 失败:', e)
+        throw e
+      }
 
       // 预加载 shader（等待完成再启动渲染，避免空跑循环）
       console.log('[Cubism5] 🔄 预加载 shader...')
@@ -387,8 +401,10 @@ class Cubism5Service {
           // Cubism SDK: 纹理绑定在 renderer 上，不是 model
           if (this.renderer) {
             (this.renderer as any).bindTexture(i, texture)
+            console.log(`[Cubism5] ✅ 纹理 ${i} 绑定成功`)
+          } else {
+            console.warn(`[Cubism5] ⚠️ 纹理 ${i} 加载成功但 renderer 为 null，未绑定!`)
           }
-          console.log(`[Cubism5] ✅ 纹理 ${i} 加载成功`)
         }
       } catch (err) {
         console.error(`[Cubism5] ❌ 纹理 ${i} 加载失败，跳过:`, err)
@@ -459,18 +475,26 @@ class Cubism5Service {
    * 3. renderer.startUp(gl)  ← 渲染前调用
    */
   private async initRenderer(): Promise<void> {
-    if (!this.gl || !this.model || !this.canvas) return
+    if (!this.gl || !this.model || !this.canvas) {
+      console.warn('[Cubism5] initRenderer 跳过: gl=', !!this.gl, 'model=', !!this.model, 'canvas=', !!this.canvas)
+      return
+    }
 
+    console.log('[Cubism5] initRenderer: canvas=', this.canvas.width, 'x', this.canvas.height)
     const rendererModule = await import('../lib/rendering/cubismrenderer_webgl')
     const CubismRenderer_WebGL = rendererModule.CubismRenderer_WebGL
+    console.log('[Cubism5] initRenderer: CubismRenderer_WebGL loaded')
 
     // SDK 正确 API：new CubismRenderer_WebGL(width, height)
     const renderer = new CubismRenderer_WebGL(this.canvas.width, this.canvas.height)
+    console.log('[Cubism5] initRenderer: renderer created')
 
     // 官方顺序：先 initialize(model)，再 startUp(gl)
-    // 注意：必须传 CubismModel 包装类（有 isUsingMasking 等方法），不能传 getModel() 返回的原始核心对象
+    console.log('[Cubism5] initRenderer: calling initialize...')
     renderer.initialize(this.model as unknown as import('../lib/model/cubismmodel').CubismModel)
+    console.log('[Cubism5] initRenderer: initialize done, calling startUp...')
     renderer.startUp(this.gl)
+    console.log('[Cubism5] initRenderer: startUp done')
     renderer.setIsPremultipliedAlpha(true)
 
     // 存储 renderer 引用（纹理绑定和渲染都需要）
