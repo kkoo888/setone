@@ -1,5 +1,4 @@
 import type { ClipItem } from '../types'
-import type { Logger } from '../../src/main/types/module'
 import type { ClipboardRepository } from '../repositories/clipboard-repository'
 import { randomUUID } from 'crypto'
 
@@ -9,8 +8,7 @@ import { randomUUID } from 'crypto'
  */
 export class ClipboardService {
   constructor(
-    private readonly repository: ClipboardRepository,
-    private readonly logger: Logger
+    private readonly repository: ClipboardRepository
   ) {}
 
   /**

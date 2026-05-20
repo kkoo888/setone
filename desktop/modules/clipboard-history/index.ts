@@ -19,7 +19,7 @@ export default class ClipboardHistoryModule implements Module {
     // Repository → init → Service
     this.repository = new ClipboardRepository(context.db, context.logger)
     await this.repository.init()
-    this.service = new ClipboardService(this.repository, context.logger)
+    this.service = new ClipboardService(this.repository)
 
     // 缓存 electron clipboard 引用
     try {

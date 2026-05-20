@@ -37,13 +37,6 @@ export class ClipboardRepository {
   }
 
   /**
-   * 从缓存中按内容查找（用于去重）
-   */
-  async findByContent(content: string): Promise<ClipItem | undefined> {
-    return this.cache.find(c => c.content === content)
-  }
-
-  /**
    * 持久化 + 更新缓存
    */
   async save(item: ClipItem): Promise<void> {
@@ -78,14 +71,6 @@ export class ClipboardRepository {
   async clearUnpinned(): Promise<void> {
     this.cache = this.cache.filter(c => c.pinned)
     await this.db.run('DELETE FROM clipboard_history WHERE pinned = 0')
-  }
-
-  /**
-   * 统计总条数
-   */
-  async count(): Promise<number> {
-    const rows = await this.db.all('SELECT COUNT(*) as cnt FROM clipboard_history') as { cnt: number }[]
-    return rows[0]?.cnt ?? 0
   }
 
   /**
