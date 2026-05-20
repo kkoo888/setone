@@ -21,11 +21,11 @@ import type {
 /** 默认模型缩放比例 */
 const DEFAULT_MODEL_SCALE = 0.15
 
-/** Live2D Core SDK 路径（Vite public 目录，dev/打包通用） */
-const CUBISM_CORE_SDK_PATH = '/lib/live2dcubismcore5.min.js'
+/** Live2D Core SDK 路径（相对路径，兼容 file:// 协议和 http） */
+const CUBISM_CORE_SDK_PATH = './lib/live2dcubismcore5.min.js'
 
-/** Cubism 5 Shader 路径（public 目录下的 Framework/Shaders/WebGL/） */
-const CUBISM5_SHADER_PATH = '/Framework/Shaders/WebGL/'
+/** Cubism 5 Shader 路径（相对路径，兼容 file:// 协议） */
+const CUBISM5_SHADER_PATH = './Framework/Shaders/WebGL/'
 
 // ============ Cubism 5 Core 全局声明 ============
 
