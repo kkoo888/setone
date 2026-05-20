@@ -225,20 +225,12 @@ export class CubismShader_WebGL {
     // + 1（コピー用のシェーダー）
     // + カラーブレンドの数（後方互換とNone除く） * アルファブレンドの数（None除く） * （通常 + マスク + 反転マスク）
 
-    // 使用 import.meta.url 解析 shader 目录
-    // import.meta.url 指向 dist/renderer/assets/xxx.js
-    // shader 文件在 dist/renderer/Framework/Shaders/WebGL/
-    try {
-      const jsDir = new URL('./', import.meta.url).href;
-      // jsDir = .../dist/renderer/assets/
-      // 需要回退到 .../dist/renderer/ 再进入 Framework/...
-      this._defaultShaderPath = new URL('../../Framework/Shaders/WebGL/', jsDir).href;
-    } catch {
-      this._defaultShaderPath = '../../Framework/Shaders/WebGL/';
-    }
-    console.log('[CubismShader] 🔍 import.meta.url:', import.meta.url)
-    console.log('[CubismShader] 🔍 jsDir:', new URL('./', import.meta.url).href)
-    console.log('[CubismShader] 🔍 解析后的 _defaultShaderPath:', this._defaultShaderPath)
+    // shader 文件在 src/renderer/public/Framework/Shaders/WebGL/
+    // Vite build 后复制到 dist/renderer/Framework/Shaders/WebGL/
+    // 页面 URL 是 dist/renderer/index.html
+    // fetch() 相对路径是相对页面解析的，所以用 ./Framework/Shaders/WebGL/
+    this._defaultShaderPath = './Framework/Shaders/WebGL/';
+    console.log('[CubismShader] 🔍 _defaultShaderPath:', this._defaultShaderPath)
     this._shaderPath = this._defaultShaderPath;
   }
 
