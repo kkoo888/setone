@@ -31,9 +31,18 @@ export default class KnowledgeBaseModule implements Module {
   async activate(context: ModuleContext): Promise<void> {
     this.context = context
 
-    const settings = context.config as unknown as KBSettings
-    // 注入临时目录路径（用于 ZIP 解压等）
-    settings.tempDir = context.dataDir ?? '.'
+    // 从 module.json settings 读取默认值
+    const defaults = this.meta.settings
+    const settings: KBSettings = {
+      chunkSize: (defaults.chunkSize as number) ?? 512,
+      chunkOverlap: (defaults.chunkOverlap as number) ?? 64,
+      embeddingModel: (defaults.embeddingModel as string) ?? 'nomic-embed-text',
+      maxDocuments: (defaults.maxDocuments as number) ?? 1000,
+      supportedFormats: (defaults.supportedFormats as string[]) ?? ['.md', '.txt', '.pdf'],
+      autoReindex: (defaults.autoReindex as boolean) ?? true,
+      networkEnabled: (defaults.networkEnabled as boolean) ?? true,
+      tempDir: context.dataDir ?? '.',
+    }
 
     // 读取联网开关设置（默认开启）
     this.networkEnabled = settings.networkEnabled ?? true
