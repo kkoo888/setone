@@ -6,11 +6,11 @@ import React, { useCallback, useEffect } from 'react'
 import { SkillToggle } from './SkillToggle'
 import type { SkillMeta, Permission } from '../../../stores/useSkillStore'
 import {
-  Document, EditOne, Globe, SettingOne, Camera, Clipboard, Notice, FolderOpen
+  FileText, EditOne, Globe, SettingOne, Camera, Clipboard, Remind, FolderOpen
 } from '../../../utils/statusMessages'
 
 const permIcon = (p: string) =>
-  React.createElement({ 'file.read': Document, 'file.write': EditOne, 'network': Globe, 'exec': SettingOne, 'screen': Camera, 'clipboard': Clipboard, 'notification': Notice }[p] ?? SettingOne, { size: 16, fill: 'currentColor', theme: 'outline' })
+  React.createElement({ 'file.read': FileText, 'file.write': EditOne, 'network': Globe, 'exec': SettingOne, 'screen': Camera, 'clipboard': Clipboard, 'notification': Remind }[p] ?? SettingOne, { size: 16, fill: 'currentColor', theme: 'outline' })
 
 interface SkillDetailProps {
   /** 技能元数据 */

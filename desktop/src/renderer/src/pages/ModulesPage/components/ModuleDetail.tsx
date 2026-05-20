@@ -5,11 +5,11 @@
 import React, { useMemo } from 'react'
 import type { ModuleInfo, ModuleStatus } from '../../../stores/useModulesStore'
 import { FolderOpen, Help, 
-  Document, EditOne, Globe, SettingOne, Clipboard, Notice, Computer, Database
+  FileText, EditOne, Globe, SettingOne, Clipboard, Remind, Computer, DataServer
 } from '../../../utils/statusMessages'
 
 const permIcon = (name: string) =>
-  React.createElement({ 'file.read': Document, 'file.write': EditOne, 'network': Globe, 'system': SettingOne, 'clipboard': Clipboard, 'notification': Notice, 'shell': Computer, 'database': Database }[name] ?? SettingOne, { size: 16, fill: 'currentColor', theme: 'outline' })
+  React.createElement({ 'file.read': FileText, 'file.write': EditOne, 'network': Globe, 'system': SettingOne, 'clipboard': Clipboard, 'notification': Remind, 'shell': Computer, 'database': DataServer }[name] ?? SettingOne, { size: 16, fill: 'currentColor', theme: 'outline' })
 
 interface ModuleDetailProps {
   /** 模块信息 */
