@@ -1,9 +1,14 @@
+/**
+ * @deprecated 请使用 ClipboardRepository + ClipboardService 分层架构替代。
+ * 本文件保留仅作迁移参考，后续版本将移除。
+ */
 import type { ClipItem } from '../types'
 import { randomUUID } from 'crypto'
 
 /**
  * 剪贴板存储服务
  * 负责 clipboard_history 表的 CRUD 操作及内存缓存
+ * @deprecated 使用 ClipboardRepository + ClipboardService 替代
  */
 export class ClipboardStore {
   private clips: ClipItem[] = []

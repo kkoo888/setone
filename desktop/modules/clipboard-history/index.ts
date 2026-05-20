@@ -1,6 +1,6 @@
 import type { Module, ModuleContext, Capability } from '../../src/main/types/module'
-import type { ClipItem } from './types'
-import { ClipboardStore } from './services/clipboard-store'
+import { ClipboardRepository } from './repositories/clipboard-repository'
+import { ClipboardService } from './services/clipboard-service'
 import { clipboard } from 'electron'
 
 export default class ClipboardHistoryModule implements Module {
@@ -8,14 +8,19 @@ export default class ClipboardHistoryModule implements Module {
   meta!: import('../../src/main/types/module').ModuleMeta
   private context!: ModuleContext
   private pollTimer?: NodeJS.Timeout
-  private store!: ClipboardStore
+  private repository!: ClipboardRepository
+  private service!: ClipboardService
   /** 缓存 electron clipboard 引用，避免每次 require */
   private clipboardRef: { readText: () => string; writeText: (text: string) => void } | null = null
 
   async activate(context: ModuleContext): Promise<void> {
     this.context = context
-    this.store = new ClipboardStore(context.db)
-    await this.store.loadAll()
+
+    // Repository → init → Service
+    this.repository = new ClipboardRepository(context.db, context.logger)
+    await this.repository.init()
+    this.service = new ClipboardService(this.repository, context.logger)
+
     // 缓存 electron clipboard 引用
     try {
       this.clipboardRef = clipboard
@@ -38,7 +43,7 @@ export default class ClipboardHistoryModule implements Module {
     try {
       if (!this.clipboardRef) return
       const text = this.clipboardRef.readText()
-      await this.store.addFromText(text)
+      await this.service.addFromText(text)
     } catch { /* ignore */ }
   }
 
@@ -54,7 +59,7 @@ export default class ClipboardHistoryModule implements Module {
         handler: {
           execute: async (p) => {
             const { limit } = (p ?? {}) as { limit?: number }
-            return { success: true, data: this.store.getRecent(limit ?? 200) }
+            return { success: true, data: this.service.getRecent(limit ?? 200) }
           }
         }
       },
@@ -68,10 +73,10 @@ export default class ClipboardHistoryModule implements Module {
         handler: {
           execute: async (p) => {
             const { id } = p as { id: string }
-            const item = this.store.findById(id)
+            const item = await this.service.findById(id)
             if (!item) return { success: false, error: '记录不存在' }
             if (this.clipboardRef) {
-              this.clipboardRef.writeText(item.content)
+              this.service.writeToClipboard(item.content, this.clipboardRef)
             }
             return { success: true }
           }
@@ -87,7 +92,7 @@ export default class ClipboardHistoryModule implements Module {
         handler: {
           execute: async (p) => {
             const { id } = p as { id: string }
-            const pinned = await this.store.togglePin(id)
+            const pinned = await this.service.togglePin(id)
             if (pinned === null) return { success: false, error: '记录不存在' }
             return { success: true, data: { pinned } }
           }
@@ -103,7 +108,7 @@ export default class ClipboardHistoryModule implements Module {
         handler: {
           execute: async (p) => {
             const { id } = p as { id: string }
-            const ok = await this.store.remove(id)
+            const ok = await this.service.remove(id)
             if (!ok) return { success: false, error: '记录不存在' }
             return { success: true }
           }
@@ -114,7 +119,7 @@ export default class ClipboardHistoryModule implements Module {
         parameters: { type: 'object', properties: {}, required: [] },
         handler: {
           execute: async () => {
-            await this.store.clearUnpinned()
+            await this.service.clearUnpinned()
             return { success: true }
           }
         }
@@ -130,7 +135,7 @@ export default class ClipboardHistoryModule implements Module {
           execute: async (p) => {
             const { content } = p as { content: string }
             if (this.clipboardRef) {
-              this.clipboardRef.writeText(content)
+              this.service.writeToClipboard(content, this.clipboardRef)
             }
             return { success: true }
           }
