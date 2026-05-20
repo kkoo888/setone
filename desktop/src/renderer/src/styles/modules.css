@@ -10,6 +10,9 @@
   height: 100%;
   gap: 0;
   overflow: hidden;
+  background: var(--color-bg-primary);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
 }
 
 /* ── 顶部标题区 ── */
