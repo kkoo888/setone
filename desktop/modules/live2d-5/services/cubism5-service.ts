@@ -180,9 +180,6 @@ class Cubism5Service {
       // 初始化 Framework
       await this.initFramework()
 
-      // 动态导入模型相关模块
-      const { CubismMoc } = await import('../lib/model/cubismmoc')
-
       // 获取 canvas 或创建
       this.canvas = container.querySelector('canvas') as HTMLCanvasElement
       if (!this.canvas) {
@@ -269,7 +266,6 @@ class Cubism5Service {
       console.log('[Cubism5] 🔍 moc._moc 类型:', typeof mocInternal._moc)
 
       // 预检查：直接用 Core SDK 的 Model.fromMoc 验证
-      const core = (window as WindowWithCubism).Live2DCubismCore
       if (core?.Model?.fromMoc) {
         const testModel = core.Model.fromMoc(mocInternal._moc)
         console.log('[Cubism5] 🔍 Core Model.fromMoc 结果:', !!testModel)
