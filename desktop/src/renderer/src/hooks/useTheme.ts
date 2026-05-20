@@ -1,13 +1,13 @@
 /**
  * useTheme - 主题管理 Hook v2.0
  * 
- * 升级内容：
- * 1. 支持 mode + theme 解耦（布局模式 × 主题配色）
- * 2. 集成 themeEngine 自动派生
- * 3. 支持 v1/v2 格式主题 JSON
- * 4. 保留向后兼容
+ * 统一主题入口，替代 MainLayout.tsx 中的旧主题逻辑：
+ * 1. 监听 theme:changed IPC 事件
+ * 2. 启动时从 config 加载已保存主题
+ * 3. mode + theme 解耦
+ * 4. 支持 v1/v2 格式主题 JSON
  */
-import { useEffect, useCallback } from 'react'
+import { useEffect, useCallback, useRef } from 'react'
 import { useSettingsStore } from '../stores/useSettingsStore'
 import type { ThemeMode } from '../types/settings'
 import type { SeedToken, ThemeConfigV2, ThemeConfigV1 } from '../services/themeEngine'
@@ -91,7 +91,7 @@ function applyThemeConfig(config: ThemeConfigV2 | ThemeConfigV1, mode: ThemeMode
     }
   }
 
-  // 设置 data-theme 属性（向后兼容）
+  // 设置 data-theme 属性
   const resolved = mode === 'compact' ? 'compact' : resolveMode(mode)
   document.documentElement.setAttribute('data-theme', resolved)
 }
@@ -115,6 +115,7 @@ async function loadAndApplyThemeById(id: string, mode: ThemeMode): Promise<void>
 export function useTheme() {
   const theme = useSettingsStore((s) => s.settings.appearance.theme) as ThemeMode
   const setAppearance = useSettingsStore((s) => s.setAppearance)
+  const initialized = useRef(false)
 
   const storeSetTheme = useCallback((t: ThemeMode) => {
     setAppearance({ theme: t })
@@ -131,7 +132,7 @@ export function useTheme() {
   }, [storeSetTheme])
 
   /**
-   * 应用 v2 主题（核心新功能）
+   * 应用 v2 主题
    */
   const applyTheme = useCallback((config: ThemeConfigV2 | ThemeConfigV1) => {
     applyThemeConfig(config, theme)
@@ -158,8 +159,38 @@ export function useTheme() {
     document.documentElement.setAttribute('data-theme', resolvedMode)
   }, [theme])
 
-  // 初始化 / mode 变化时重新应用主题
+  // 启动时：从 config 加载已保存的主题（统一存储源）
   useEffect(() => {
+    if (initialized.current) return
+    initialized.current = true
+
+    const loadStartupTheme = async () => {
+      try {
+        // 优先从 config 读取（与主进程同步）
+        const themeId = await window.electronAPI.invoke('config:get', { key: 'activeTheme' })
+        if (themeId && typeof themeId === 'string') {
+          await loadAndApplyThemeById(themeId, theme)
+          persistThemeId(themeId)
+          return
+        }
+      } catch { /* ignore */ }
+
+      // fallback：从 localStorage 读取
+      const localId = loadSavedThemeId()
+      if (localId) {
+        await loadAndApplyThemeById(localId, theme)
+      } else {
+        // 无保存主题，设置 data-theme 即可（CSS fallback 处理）
+        const resolved = resolveMode(theme)
+        document.documentElement.setAttribute('data-theme', resolved)
+      }
+    }
+    loadStartupTheme()
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // mode 变化时重新应用当前主题
+  useEffect(() => {
+    if (!initialized.current) return
     const savedId = loadSavedThemeId()
     if (savedId) {
       loadAndApplyThemeById(savedId, theme)
@@ -168,7 +199,7 @@ export function useTheme() {
       document.documentElement.setAttribute('data-theme', resolved)
     }
 
-    // system 模式监听系统主题变化
+    // system 模式：监听系统主题变化
     if (theme === 'system') {
       const mq = window.matchMedia('(prefers-color-scheme: dark)')
       const handler = () => {
@@ -182,6 +213,32 @@ export function useTheme() {
       mq.addEventListener('change', handler)
       return () => mq.removeEventListener('change', handler)
     }
+  }, [theme])
+
+  // 监听主进程 theme:changed 事件（替代 MainLayout 中的旧监听）
+  useEffect(() => {
+    const unsub = window.electronAPI.on('theme:changed', (data: {
+      themeId: string; mode?: string; colors?: Record<string, string>; themeData?: unknown
+    }) => {
+      if (data.themeData) {
+        // v2 格式：完整主题数据
+        applyThemeConfig(data.themeData as ThemeConfigV2, theme)
+        persistThemeId(data.themeId)
+      } else if (data.colors) {
+        // v1 格式：仅颜色，构造临时配置
+        const v1Config: ThemeConfigV1 = {
+          id: data.themeId,
+          name: '',
+          author: '',
+          description: '',
+          mode: (data.mode as 'light' | 'dark') || 'light',
+          colors: data.colors,
+        }
+        applyThemeConfig(v1Config, theme)
+        persistThemeId(data.themeId)
+      }
+    })
+    return unsub
   }, [theme])
 
   return {

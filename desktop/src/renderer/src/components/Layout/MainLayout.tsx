@@ -173,32 +173,8 @@ export function MainLayout() {
     return unsub
   }, [])
 
-  // 监听主题变更事件，应用明暗模式 + 配色
-  useEffect(() => {
-    const unsub = window.electronAPI.on('theme:changed', (data: { themeId: string; mode?: string; colors?: Record<string, string> }) => {
-      applyThemeToDOM(data.mode, data.colors)
-    })
-    return unsub
-  }, [])
-
-  // 启动时加载已保存的主题
-  useEffect(() => {
-    const loadSavedTheme = async () => {
-      try {
-        const themeId = await window.electronAPI.invoke('config:get', { key: 'activeTheme' })
-        if (themeId && typeof themeId === 'string') {
-          const res = await window.electronAPI.invoke('theme_list')
-          if (res?.success) {
-            const theme = (res.data as Array<{ id: string; mode?: string; colors: Record<string, string> }>).find((t) => t.id === themeId)
-            if (theme) {
-              applyThemeToDOM(theme.mode, theme.colors)
-            }
-          }
-        }
-      } catch { /* ignore */ }
-    }
-    loadSavedTheme()
-  }, [])
+  // 主题管理由 useTheme hook 统一处理（theme:changed 监听 + 启动加载）
+  // 详见 src/renderer/src/hooks/useTheme.ts
 
   const isChat = activePanel === 'chat'
 

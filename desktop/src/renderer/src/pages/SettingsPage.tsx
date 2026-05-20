@@ -135,10 +135,6 @@ export function SettingsPage() {
       >
         <AvatarUploader />
         <div className="settings-row">
-          <label className="settings-label">主题</label>
-          <button className="btn btn-primary btn-sm" onClick={() => setActivePanel('theme-store')}>🎨 打开主题商店</button>
-        </div>
-        <div className="settings-row">
           <label className="settings-label">语言</label>
           <LanguageSelector language={settings.appearance.language} onChange={handleLanguageChange} />
         </div>

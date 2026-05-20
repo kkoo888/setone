@@ -444,16 +444,17 @@ export function applyThemeToDOM(vars: ThemeVariables): void {
 }
 
 /**
- * 移除所有主题变量（用于切换时清理）
+ * 移除所有主题变量（新 + 旧），用于切换时清理
  */
 export function clearThemeVariables(): void {
   const root = document.documentElement
   const toRemove: string[] = []
 
-  // 收集需要移除的变量名（前缀匹配 + 精确匹配）
-  const prefixes = ['--accent-', '--gray-', '--radius-', '--spacing-', '--font-size-',
+  // 新变量前缀
+  const newPrefixes = ['--accent-', '--gray-', '--radius-', '--spacing-', '--font-size-',
     '--alpha-', '--shadow-', '--chart-', '--sidebar-']
-  const exactVars = [
+  // 新变量精确匹配
+  const newExactVars = [
     '--bg', '--fg', '--card', '--card-fg', '--popover', '--popover-fg',
     '--primary', '--primary-fg', '--secondary', '--secondary-fg',
     '--muted', '--muted-fg', '--accent-bg', '--accent-fg',
@@ -463,10 +464,21 @@ export function clearThemeVariables(): void {
     '--radius', '--font-family', '--font-mono',
     '--transition-fast', '--transition-normal', '--transition-slow',
   ]
+  // 旧变量精确匹配（原 MainLayout 系统）
+  const oldExactVars = [
+    '--color-accent', '--color-accent-hover', '--color-accent-light',
+    '--color-bg-primary', '--color-bg-secondary', '--color-bg-tertiary',
+    '--color-text-primary', '--color-text-secondary', '--color-text-tertiary',
+    '--color-border', '--color-shadow',
+    '--color-success', '--color-warning', '--color-error', '--color-info',
+    '--color-accent-text', '--color-accent-text-hover',
+  ]
 
   for (let i = 0; i < root.style.length; i++) {
     const prop = root.style[i]
-    if (prefixes.some(p => prop.startsWith(p)) || exactVars.includes(prop)) {
+    if (newPrefixes.some(p => prop.startsWith(p)) ||
+        newExactVars.includes(prop) ||
+        oldExactVars.includes(prop)) {
       toRemove.push(prop)
     }
   }
