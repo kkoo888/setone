@@ -1241,8 +1241,11 @@ export class CubismModel {
       this._drawableColorBlends[drawableIndex] ==
       CubismColorBlend.ColorBlend_None
     ) {
-      this._drawableColorBlends[drawableIndex] =
-        this._model.drawables.blendModes[drawableIndex] & 0xff;
+      // blendModes は Cubism 5.3+ で追加、旧 Core SDK には存在しない場合がある
+      const blendModes = this._model.drawables.blendModes
+      this._drawableColorBlends[drawableIndex] = blendModes
+        ? blendModes[drawableIndex] & 0xff
+        : CubismColorBlend.ColorBlend_Normal
     }
     return this._drawableColorBlends[drawableIndex];
   }
@@ -1259,8 +1262,11 @@ export class CubismModel {
       this._drawableAlphaBlends[drawableIndex] ==
       CubismAlphaBlend.AlphaBlend_None
     ) {
-      this._drawableAlphaBlends[drawableIndex] =
-        (this._model.drawables.blendModes[drawableIndex] >> 8) & 0xff;
+      // blendModes は Cubism 5.3+ で追加、旧 Core SDK には存在しない場合がある
+      const blendModes = this._model.drawables.blendModes
+      this._drawableAlphaBlends[drawableIndex] = blendModes
+        ? (blendModes[drawableIndex] >> 8) & 0xff
+        : CubismAlphaBlend.AlphaBlend_Over
     }
     return this._drawableAlphaBlends[drawableIndex];
   }
