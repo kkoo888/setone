@@ -16,10 +16,16 @@ const registeredHotkeys = new Map<string, () => void>()
 export function registerHotkeyHandlers(deps: HandlerDeps): void {
   const { logger } = deps
 
-  registeredModuleIpc.add('hotkey_register')
-  registeredModuleIpc.add('hotkey_unregister')
-  registeredModuleIpc.add('hotkey_list')
-  registeredModuleIpc.add('window:toggle')
+  // 如果模块已动态注册过这些通道，跳过（避免重复注册）
+  const channels = ['hotkey_register', 'hotkey_unregister', 'hotkey_list', 'window:toggle']
+  const allDone = channels.every(ch => registeredModuleIpc.has(ch))
+  if (allDone) {
+    logger.debug('hotkey IPC 已由模块动态注册，跳过')
+    return
+  }
+
+  // 标记这些通道已由本文件注册
+  for (const ch of channels) registeredModuleIpc.add(ch)
 
   /** 注册全局快捷键（兜底：当 desktop-integration 模块未加载时使用） */
   ipcMain.handle('hotkey_register', async (_event, args: { accelerator: string; description?: string }) => {
