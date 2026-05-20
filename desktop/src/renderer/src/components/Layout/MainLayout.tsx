@@ -7,7 +7,7 @@ import { CommandPalette } from '../command-palette/CommandPalette'
 import { useAppStore } from '../../stores/useAppStore'
 import { useCommandPaletteStore } from '../../stores/useCommandPaletteStore'
 import { useTheme } from '../../hooks/useTheme'
-import { MODULE_PAGE_ICONS } from '../common/IconMap'
+import { MODULE_PAGE_ICONS } from '../../utils/statusMessages'
 
 const ChatPage = lazy(() => import('../../pages/ChatPage').then(m => ({ default: m.ChatPage })))
 const SkillsPage = lazy(() => import('../../pages/SkillsPage').then(m => ({ default: m.SkillsPage })))

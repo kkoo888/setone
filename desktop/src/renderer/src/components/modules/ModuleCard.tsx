@@ -4,7 +4,7 @@
  * 参考"生活小工具"风格设计
  */
 import React from 'react'
-import { FolderOpen } from '@icon-park/react'
+import { FolderOpen } from '../../utils/statusMessages'
 import type { ModuleInfo } from '../../stores/useModulesStore'
 
 interface ModuleCardProps {

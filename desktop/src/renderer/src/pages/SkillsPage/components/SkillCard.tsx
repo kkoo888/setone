@@ -4,7 +4,7 @@
  */
 import React, { useCallback } from 'react'
 import { SkillToggle } from './SkillToggle'
-import { Robot, ChartHistogram, FolderOpen, SettingOne } from '@icon-park/react'
+import { Robot, ChartHistogram, FolderOpen, SettingOne } from '../../../utils/statusMessages'
 import type { SkillMeta } from '../../../stores/useSkillStore'
 
 const TAG_ICONS: Record<string, React.ReactNode> = { 'AI': React.createElement(Robot, { size: 14, fill: 'currentColor', theme: 'outline' }), '数据': React.createElement(ChartHistogram, { size: 14, fill: 'currentColor', theme: 'outline' }) }

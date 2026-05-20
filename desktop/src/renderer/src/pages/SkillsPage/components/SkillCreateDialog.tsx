@@ -3,7 +3,7 @@
  * 用户输入描述，AI 生成技能内容，支持预览和编辑
  */
 import React, { useState, useCallback, useEffect } from 'react'
-import { Magic, LoadingFour } from '@icon-park/react'
+import { Magic, LoadingFour } from '../../../utils/statusMessages'
 import { useSkillStore } from '../../../stores/useSkillStore'
 
 interface SkillCreateDialogProps {

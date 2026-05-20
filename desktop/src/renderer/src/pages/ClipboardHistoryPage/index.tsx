@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { EMPTY_ICONS, STATUS_ICONS, ACTION_ICONS } from '../../components/common/IconMap'
-import { Clipboard, Pushpin, DeleteOne, Location } from '@icon-park/react'
+import { EMPTY_ICONS, STATUS_ICONS, ACTION_ICONS, Clipboard, Pushpin, DeleteOne, Location } from '../../utils/statusMessages'
 const clipI = React.createElement(Clipboard, { size: 16, fill: 'currentColor', theme: 'outline' })
 const pinI = React.createElement(Pushpin, { size: 14, fill: 'currentColor', theme: 'outline' })
 const locI = React.createElement(Location, { size: 14, fill: 'currentColor', theme: 'outline' })

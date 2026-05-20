@@ -5,7 +5,7 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react'
 import { useSkillStore } from '../../../stores/useSkillStore'
 import { useSettingsStore } from '../../../stores/useSettingsStore'
-import { FolderOpen, Star, LoadingFour, DownloadOne, Plug, Search, Tips } from '@icon-park/react'
+import { FolderOpen, Star, LoadingFour, DownloadOne, Plug, Search, Tips } from '../../../utils/statusMessages'
 import type { MarketSkill } from '../../../stores/useSkillStore'
 
 /** 安装来源 Tab */

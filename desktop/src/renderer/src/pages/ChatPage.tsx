@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react'
-import { CloseOne } from '@icon-park/react'
+import { CloseOne } from '../utils/statusMessages'
 import { ErrorBoundary } from '../components/common/ErrorBoundary'
 import { Loading } from '../components/common/Loading'
 import { MessageList } from '../components/chat/MessageList'

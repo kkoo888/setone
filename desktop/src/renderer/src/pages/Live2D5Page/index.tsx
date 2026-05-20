@@ -6,7 +6,7 @@
  * 不使用内部 IPC（live2d5:xxx）。
  */
 import React, { useState, useCallback, useEffect } from 'react'
-import { FolderOpen, SettingOne } from '@icon-park/react'
+import { FolderOpen, SettingOne } from '../../utils/statusMessages'
 import { ModuleHeader } from '../../components/common/module/ModuleHeader'
 
 interface Live2D5Status {

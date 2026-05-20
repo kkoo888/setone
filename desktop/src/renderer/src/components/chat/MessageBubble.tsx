@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react'
-import { SettingOne } from '@icon-park/react'
+import { SettingOne } from '../../utils/statusMessages'
 import { ToolCallCard } from './ToolCallCard'
 import { MessageActions } from './MessageActions'
 import { parseMarkdown, renderTokens } from './markdown'

@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { EMPTY_ICONS, STATUS_ICONS, ACTION_ICONS } from '../../components/common/IconMap'
-import { Search, Read, Refresh, Clipboard, FolderOpen, Magic, PlayOne, PauseOne, CheckOne, CloseOne, LoadingFour, DeleteOne } from '@icon-park/react'
+import { EMPTY_ICONS, STATUS_ICONS, ACTION_ICONS, Msg, Search, Read, Refresh, Clipboard, FolderOpen, Magic, PlayOne, PauseOne, CheckOne, CloseOne, LoadingFour, DeleteOne, Monitor } from '../../utils/statusMessages'
 const searchI = React.createElement(Search, { size: 16, fill: 'currentColor', theme: 'outline' })
 const readI = React.createElement(Read, { size: 16, fill: 'currentColor', theme: 'outline' })
 const refreshI = React.createElement(Refresh, { size: 16, fill: 'currentColor', theme: 'outline' })
@@ -219,7 +218,7 @@ export function WorkflowPage() {
                     {log.error && <span className="wf-log-error">{log.error}</span>}
                   </div>
                   <span className={`wf-log-badge wf-log-badge-${log.status}`}>
-                    {log.status === 'success' ? {STATUS_ICONS.success} + ' 成功' : log.status === 'failed' ? {STATUS_ICONS.error} + ' 失败' : {STATUS_ICONS.loading} + ' 运行中'}
+                    {log.status === 'success' ? <>{STATUS_ICONS.success} 成功</> : log.status === 'failed' ? <>{STATUS_ICONS.error} 失败</> : <>{STATUS_ICONS.loading} 运行中</>}
                   </span>
                 </div>
               ))}

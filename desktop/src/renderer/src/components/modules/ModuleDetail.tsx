@@ -4,7 +4,7 @@
  */
 import React from 'react'
 import type { ModuleInfo } from '../../stores/useModulesStore'
-import { FolderOpen } from '@icon-park/react'
+import { FolderOpen } from '../../utils/statusMessages'
 import { Button } from '../common/Button'
 
 interface ModuleDetailProps {

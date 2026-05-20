@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useCallback } from 'react'
 import { useCommandPaletteStore } from '../../stores/useCommandPaletteStore'
-import { ACTION_ICONS } from '../common/IconMap'
+import { ACTION_ICONS } from '../../utils/statusMessages'
 import '../../styles/command-palette.css'
 
 const CATEGORY_LABELS: Record<string, string> = {

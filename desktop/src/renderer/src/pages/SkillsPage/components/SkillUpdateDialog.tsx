@@ -6,7 +6,7 @@
 import React, { useCallback, useState, useEffect } from 'react'
 import { useSkillStore } from '../../../stores/useSkillStore'
 import { useSettingsStore } from '../../../stores/useSettingsStore'
-import { FolderOpen, Refresh, Plug, LoadingFour, CheckOne } from '@icon-park/react'
+import { FolderOpen, Refresh, Plug, LoadingFour, CheckOne } from '../../../utils/statusMessages'
 import type { UpdateInfo } from '../../../stores/useSkillStore'
 
 /** 更新项属性 */

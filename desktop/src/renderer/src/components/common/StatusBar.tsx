@@ -5,7 +5,7 @@
  */
 import React, { useState, useEffect, useRef } from 'react'
 import { useSettingsStore } from '../../stores/useSettingsStore'
-import { Monitor, FolderOpen } from '@icon-park/react'
+import { Monitor, FolderOpen } from '../../utils/statusMessages'
 import { registerPolling, unregisterPolling, tickPolling } from '../../utils/polling-helper'
 
 /** 资源快照 */

@@ -3,7 +3,7 @@
  * 带图标的搜索输入框
  */
 import React, { useCallback } from 'react'
-import { Search } from '@icon-park/react'
+import { Search } from '../../../utils/statusMessages'
 
 interface SkillSearchProps {
   /** 搜索值 */

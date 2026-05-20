@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react'
 import { ModuleHeader } from '../../components/common/module/ModuleHeader'
-import { PreviewOpen, Eyes } from '@icon-park/react'
+
 import { ModuleList, ModuleListItem } from '../../components/common/module/ModuleList'
 
 interface PreviewResult { path: string; content: string; type: string; size: number; modified: number }

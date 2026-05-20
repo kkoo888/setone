@@ -4,7 +4,7 @@
  * 仅在点击刷新按钮时扫描，不自动加载
  */
 import React, { useState, useCallback, useRef, useEffect } from 'react'
-import { STATUS_ICONS, ACTION_ICONS } from '../common/IconMap'
+import { STATUS_ICONS, ACTION_ICONS } from '../../utils/statusMessages'
 
 interface ModelSelectorProps {
   /** 当前选中的模型名称 */

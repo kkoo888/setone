@@ -3,7 +3,7 @@
  * 支持拖拽或选择 .tar.gz 归档文件，导入前显示扫描结果
  */
 import React, { useState, useCallback, useRef, useEffect } from 'react'
-import { FolderOpen, Help, CheckOne, CloseOne } from '@icon-park/react'
+import { FolderOpen, Help, CheckOne, CloseOne } from '../../../utils/statusMessages'
 
 /** 组件属性 */
 interface SkillImportDialogProps {

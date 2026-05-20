@@ -3,7 +3,7 @@
  * 侧滑弹窗，展示技能的使用次数、成功率、平均耗时等统计数据
  */
 import React, { useEffect, useCallback, useState, useMemo } from 'react'
-import { FolderOpen, ChartHistogram, LoadingFour, Inbox, CheckOne, CloseOne } from '@icon-park/react'
+import { FolderOpen, ChartHistogram, LoadingFour, Inbox, CheckOne, CloseOne } from '../../../utils/statusMessages'
 import { useSkillStore } from '../../../stores/useSkillStore'
 
 interface SkillStatsPanelProps {

@@ -5,7 +5,7 @@
  */
 import React, { useEffect, useCallback, useState, useMemo } from 'react'
 import { useSkillStore } from '../../../stores/useSkillStore'
-import { SettingOne, LoadingFour, Inbox } from '@icon-park/react'
+import { SettingOne, LoadingFour, Inbox } from '../../../utils/statusMessages'
 import type { SkillMeta } from '../../../stores/useSkillStore'
 
 interface SkillConfigPanelProps {

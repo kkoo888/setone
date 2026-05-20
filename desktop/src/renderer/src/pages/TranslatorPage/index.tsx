@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { ModuleHeader } from '../../components/common/module/ModuleHeader'
 import { ModuleList, ModuleListItem, ModuleModal } from '../../components/common/module/ModuleList'
-import { EMPTY_ICONS, ACTION_ICONS } from '../../components/common/IconMap'
-import { Globe, Star, DeleteOne } from '@icon-park/react'
+import { EMPTY_ICONS, ACTION_ICONS, Globe, Star, DeleteOne } from '../../utils/statusMessages'
 
 const starIcon = React.createElement(Star, { size: 14, fill: '#f59e0b', theme: 'filled' })
 const starOutlineIcon = React.createElement(Star, { size: 14, fill: 'currentColor', theme: 'outline' })

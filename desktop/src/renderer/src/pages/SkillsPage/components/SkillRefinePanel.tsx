@@ -4,7 +4,7 @@
  */
 import React, { useState, useCallback, useEffect, useMemo } from 'react'
 import { useSkillStore } from '../../../stores/useSkillStore'
-import { Fire, Search, ChartHistogram, LoadingFour, Tips, CheckOne } from '@icon-park/react'
+import { Fire, Search, ChartHistogram, LoadingFour, Tips, CheckOne } from '../../../utils/statusMessages'
 import type { SkillMeta } from '../../../stores/useSkillStore'
 
 /** 分析结果 */

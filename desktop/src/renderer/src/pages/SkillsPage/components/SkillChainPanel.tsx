@@ -4,7 +4,7 @@
  */
 import React, { useEffect, useCallback, useState, useMemo } from 'react'
 import { useSkillStore } from '../../../stores/useSkillStore'
-import { FolderOpen, CheckOne, CloseOne } from '@icon-park/react'
+import { FolderOpen, CheckOne, CloseOne } from '../../../utils/statusMessages'
 import type { SkillMeta } from '../../../stores/useSkillStore'
 
 /** 工作流步骤 */

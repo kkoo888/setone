@@ -1,5 +1,5 @@
 import React from 'react'
-import { Robot, Refresh } from '@icon-park/react'
+import { Robot, Refresh } from '../../utils/statusMessages'
 
 interface Live2DFallbackProps { errorMessage?: string; onRetry?: () => void; message?: string }
 

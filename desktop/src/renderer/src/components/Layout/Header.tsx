@@ -1,5 +1,5 @@
 import React from 'react'
-import { SettingOne } from '@icon-park/react'
+import { SettingOne } from '../../utils/statusMessages'
 import { useAppStore } from '../../stores/useAppStore'
 
 /** 页面自带标题的页面列表（Header 不再显示标题，避免重复） */

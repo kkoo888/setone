@@ -2,7 +2,7 @@ import React, { useState, useCallback, useEffect, useMemo } from 'react'
 import { useAppStore, type PanelId } from '../../stores/useAppStore'
 import { useSettingsStore } from '../../stores/useSettingsStore'
 import { useModulesStore } from '../../stores/useModulesStore'
-import { SIDEBAR_ICONS } from '../common/IconMap'
+import { SIDEBAR_ICONS } from '../../utils/statusMessages'
 
 /** 固定面板项（始终显示） */
 const FIXED_PANELS: Array<{ id: PanelId; icon: React.ReactNode; label: string }> = [

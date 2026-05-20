@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react'
-import { Clipboard, DeleteOne } from '@icon-park/react'
+import { Clipboard, DeleteOne } from '../../utils/statusMessages'
 import { useChatStore } from '../../stores/useChatStore'
 import { showToast } from '../common/Toast'
 

@@ -17,7 +17,7 @@ import { ModelSelector } from '../components/settings/ModelSelector'
 import { Toggle } from '../components/common/Toggle'
 import { Slider } from '../components/common/Slider'
 import { Button } from '../components/common/Button'
-import { SettingOne, Robot, Brain, ChartHistogram } from '@icon-park/react'
+
 import type { OllamaConfig as OllamaConfigType, PerformanceMonitorSettings, Language } from '../types/settings'
 
 export function SettingsPage() {

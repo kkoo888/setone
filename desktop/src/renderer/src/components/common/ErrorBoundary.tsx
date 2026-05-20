@@ -1,5 +1,5 @@
 import React, { Component, type ErrorInfo, type ReactNode } from 'react'
-import { Help } from '@icon-park/react'
+import { Help } from '../../utils/statusMessages'
 
 interface ErrorBoundaryProps { children: ReactNode; fallback?: ReactNode }
 interface ErrorBoundaryState { hasError: boolean; error: Error | null }

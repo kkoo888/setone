@@ -2,8 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react'
 import { ModuleHeader } from '../../components/common/module/ModuleHeader'
 import { ModuleList, ModuleListItem, ModuleModal } from '../../components/common/module/ModuleList'
 import { KBDocument, KBSearchResult, KBAskResult } from '../types/knowledge-base'
-import { EMPTY_ICONS, STATUS_ICONS, ACTION_ICONS } from '../../components/common/IconMap'
-import { BookOpen, Search, Tips, DownloadOne, FolderOpen } from '@icon-park/react'
+import { EMPTY_ICONS, STATUS_ICONS, ACTION_ICONS, Msg, BookOpen, Search, Tips, DownloadOne, FolderOpen } from '../../utils/statusMessages'
 
 const bookIcon = React.createElement(BookOpen, { size: 16, fill: 'currentColor', theme: 'outline' })
 const searchIcon = React.createElement(Search, { size: 16, fill: 'currentColor', theme: 'outline' })
@@ -158,10 +157,10 @@ export function KnowledgeBasePage() {
         return next
       })
       if (progress.state === 'completed') {
-        setMessage(STATUS_ICONS.success + ' "${progress.datasetName}" 下载完成！`)
+        setMessage(Msg.downloadComplete(progress.datasetName))
         loadDatasets()
       } else if (progress.state === 'interrupted') {
-        setMessage(`STATUS_ICONS.warning + ' "${progress.datasetName}" 下载中断`)
+        setMessage(Msg.downloadInterrupted(progress.datasetName))
       }
     }
 
@@ -180,7 +179,7 @@ export function KnowledgeBasePage() {
       const res = await window.electronAPI.invoke('kb_network_status', { enabled: newState })
       if (res?.success) {
         setNetworkEnabled(newState)
-        setMessage(newState ? STATUS_ICONS.success + ' 联网功能已开启' : STATUS_ICONS.warning + ' 联网功能已关闭（本地文件操作和已有向量搜索不受影响）')
+        setMessage(newState ? Msg.networkOn : Msg.networkOff)
       }
     } catch (e) { setMessage(`切换失败：${(e as Error).message}`) }
   }
@@ -191,20 +190,20 @@ export function KnowledgeBasePage() {
     // 网络地址需要联网，本地路径不需要
     const isRemotePath = /^https?:\/\//i.test(importPath.trim())
     if (isRemotePath && !networkEnabled) {
-      setMessage('STATUS_ICONS.warning + ' 当前处于断网状态，无法从网络地址导入。请使用本地路径或开启联网功能')
+      setMessage(Msg.offlineImport)
       return
     }
     setLoading(true)
     try {
       const res = await window.electronAPI.invoke('kb_import', { path: importPath })
       if (res?.success) {
-        setMessage(`导入完成：${res.data.success} 成功，${res.data.failed} 失败`)
+        setMessage(Msg.importSuccess(res.data.success, res.data.failed))
         setImportPath('')
         loadDocuments()
       } else {
-        setMessage(`导入失败：${res?.error}`)
+        setMessage(Msg.importFailed(res?.error))
       }
-    } catch (e) { setMessage(`错误：${(e as Error).message}`) }
+    } catch (e) { setMessage(Msg.error((e as Error).message)) }
     setLoading(false)
   }
 
@@ -258,19 +257,19 @@ export function KnowledgeBasePage() {
   const handleFetchRemote = async () => {
     if (!remoteUrl.trim()) return
     if (!networkEnabled) {
-      setMessage('STATUS_ICONS.warning + ' 当前处于断网状态，无法加载远程数据集。请先在设置中开启联网功能')
+      setMessage(Msg.offlineDataset)
       return
     }
     setLoadingDatasets(true)
     try {
       const res = await window.electronAPI.invoke('kb_dataset_fetch_remote', { url: remoteUrl })
       if (res?.success) {
-        setMessage(STATUS_ICONS.success + ' ${res.data.message}`)
+        setMessage(`✅ ${res.data.message}`)
         loadDatasets()
       } else {
-        setMessage(`加载失败：${res?.error}`)
+        setMessage(Msg.loadFailed(res?.error))
       }
-    } catch (e) { setMessage(`错误：${(e as Error).message}`) }
+    } catch (e) { setMessage(Msg.error((e as Error).message)) }
     setLoadingDatasets(false)
   }
 
@@ -287,7 +286,7 @@ export function KnowledgeBasePage() {
   const handleConfirmDownload = () => {
     if (!showDownloadConfirm) return
     if (!networkEnabled) {
-      setMessage('STATUS_ICONS.warning + ' 当前处于断网状态，无法下载数据集。请先在设置中开启联网功能')
+      setMessage(Msg.offlineDownload)
       setShowDownloadConfirm(null)
       return
     }
@@ -371,13 +370,13 @@ export function KnowledgeBasePage() {
 
     if (dl.state === 'completed') {
       return (
-        <span style={{ fontSize: 12, color: 'var(--color-success)', fontWeight: 600 }}>STATUS_ICONS.success + ' 已完成</span>
+        <span style={{ fontSize: 12, color: 'var(--color-success)', fontWeight: 600 }}>{STATUS_ICONS.success} 已完成</span>
       )
     }
 
     if (dl.state === 'pending') {
       return (
-        <span style={{ fontSize: 12, color: 'var(--color-text-tertiary)' }}>STATUS_ICONS.loading + ' 准备中...</span>
+        <span style={{ fontSize: 12, color: 'var(--color-text-tertiary)' }}>{STATUS_ICONS.loading} 准备中...</span>
       )
     }
 

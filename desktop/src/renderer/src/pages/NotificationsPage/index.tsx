@@ -2,8 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react'
 import { ModuleHeader } from '../../components/common/module/ModuleHeader'
 import { ModuleToolbar, FilterButtons } from '../../components/common/module/ModuleToolbar'
 import { ModuleList, ModuleListItem } from '../../components/common/module/ModuleList'
-import { EMPTY_ICONS, STATUS_ICONS, ACTION_ICONS } from '../../components/common/IconMap'
-import { Notice, Tips, CheckOne, Help, CloseOne } from '@icon-park/react'
+import { EMPTY_ICONS, STATUS_ICONS, ACTION_ICONS, Notice, Tips, CheckOne, Help, CloseOne } from '../../utils/statusMessages'
 
 const noticeIcon = React.createElement(Notice, { size: 16, fill: 'currentColor', theme: 'outline' })
 const typeIcons: Record<string, React.ReactNode> = {

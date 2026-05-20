@@ -7,7 +7,7 @@ import { SkillToggle } from './SkillToggle'
 import type { SkillMeta, Permission } from '../../../stores/useSkillStore'
 import {
   Document, EditOne, Globe, SettingOne, Camera, Clipboard, Notice, FolderOpen
-} from '@icon-park/react'
+} from '../../../utils/statusMessages'
 
 const permIcon = (p: string) =>
   React.createElement({ 'file.read': Document, 'file.write': EditOne, 'network': Globe, 'exec': SettingOne, 'screen': Camera, 'clipboard': Clipboard, 'notification': Notice }[p] ?? SettingOne, { size: 16, fill: 'currentColor', theme: 'outline' })

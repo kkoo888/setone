@@ -6,7 +6,7 @@ import React, { useState, useCallback, useEffect } from 'react'
 import { Live2DProvider, useLive2DContext } from '../components/live2d/Live2DContext'
 import { Live2DCanvas } from '../components/live2d/Live2DCanvas'
 import { Live2DStatus } from '../components/live2d/types/live2d'
-import { Magic, CloseOne, Monitor, Tips, Refresh, ChartHistogram, LoadingFour, CheckOne } from '@icon-park/react'
+import { Magic, CloseOne, Monitor, Tips, Refresh, ChartHistogram, LoadingFour, CheckOne } from '../utils/statusMessages'
 import { live2dEasyControl, type Live2DPetState } from '../services/Live2DEasyControlService'
 
 /** Live2D 页面内部内容（必须在 Live2DProvider 内部使用） */

@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { STATUS_ICONS } from '../common/IconMap'
+import { STATUS_ICONS } from '../../utils/statusMessages'
 
 export interface ToolCallData {
   id: string

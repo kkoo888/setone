@@ -1,5 +1,5 @@
 import React from 'react'
-import { EMPTY_ICONS } from '../IconMap'
+import { EMPTY_ICONS } from '../../../utils/statusMessages'
 
 /** 模块内容列表容器 */
 export function ModuleList({ children, emptyText = '暂无数据', emptyIcon }: {

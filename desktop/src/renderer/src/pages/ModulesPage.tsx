@@ -8,7 +8,7 @@ import { useModulesStore, type ModuleStatus } from '../stores/useModulesStore'
 import { ModuleHeader } from '../components/common/module/ModuleHeader'
 import { ModuleCard } from './ModulesPage/components/ModuleCard'
 import { ModuleDetail } from './ModulesPage/components/ModuleDetail'
-import { Search, LoadingFour, Inbox } from '@icon-park/react'
+
 import '../styles/modules.css'
 
 /** 状态筛选选项 */

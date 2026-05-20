@@ -3,7 +3,7 @@
  * 支持选择技能、选择导出路径、导出进度显示
  */
 import React, { useState, useCallback, useEffect } from 'react'
-import { CheckOne, CloseOne } from '@icon-park/react'
+import { CheckOne, CloseOne } from '../../../utils/statusMessages'
 import type { SkillMeta } from '../../../stores/useSkillStore'
 
 /** 组件属性 */

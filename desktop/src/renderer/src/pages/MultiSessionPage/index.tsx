@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { ModuleHeader } from '../../components/common/module/ModuleHeader'
-import { MessageOne, Message, Pushpin, DeleteOne, Location } from '@icon-park/react'
+import { MessageOne, Message, Pushpin, DeleteOne, Location } from '../../utils/statusMessages'
 import { ModuleList, ModuleListItem } from '../../components/common/module/ModuleList'
 
 interface Session { id: string; name: string; model: string; messageCount: number; createdAt: number; lastActiveAt: number; pinned: boolean }

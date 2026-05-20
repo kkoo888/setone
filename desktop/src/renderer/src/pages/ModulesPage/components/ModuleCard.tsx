@@ -3,7 +3,7 @@
  * 列表式布局：左侧图标 + 中间名称描述状态 + 右侧开关
  */
 import React, { useMemo } from 'react'
-import { FolderOpen } from '@icon-park/react'
+import { FolderOpen } from '../../../utils/statusMessages'
 import type { ModuleInfo, ModuleStatus } from '../../../stores/useModulesStore'
 
 interface ModuleCardProps {

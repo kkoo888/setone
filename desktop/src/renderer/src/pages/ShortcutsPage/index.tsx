@@ -3,7 +3,7 @@
  * 每个词条下方内联展开编辑表单
  */
 import React, { useState, useEffect, useCallback } from 'react'
-import { Tips, CheckOne, CloseOne, PauseOne, PlayOne, EditOne, DeleteOne } from '@icon-park/react'
+import { Tips, CheckOne, CloseOne, PauseOne, PlayOne, EditOne, DeleteOne } from '../../utils/statusMessages'
 import { ModuleHeader } from '../../components/common/module/ModuleHeader'
 
 interface Shortcut {

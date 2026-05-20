@@ -1,5 +1,5 @@
 import React, { useEffect, useCallback, useRef, useState } from 'react'
-import { Refresh, Magic, FolderOpen } from '@icon-park/react'
+import { Refresh, Magic, FolderOpen } from '../../utils/statusMessages'
 import { useChangesStore, type ChangedFile } from '../../stores/useChangesStore'
 import { FileTree } from './FileTree'
 import { FilePreview } from './FilePreview'

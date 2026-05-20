@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { ModuleHeader } from '../../components/common/module/ModuleHeader'
-import { ChartHistogram, Refresh, Brain, Tips, Help } from '@icon-park/react'
+import { ChartHistogram, Refresh, Brain, Tips, Help } from '../../utils/statusMessages'
 import { registerPolling, unregisterPolling, tickPolling, onPollingUpdate } from '../../utils/polling-helper'
 
 interface SystemInfo { cpu: number; memory: { used: number; total: number; percent: number }; disk: { used: number; total: number; percent: number }; uptime: number; platform: string; hostname: string }

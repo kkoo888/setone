@@ -4,7 +4,7 @@
  */
 import React, { useRef, useEffect, useState } from 'react'
 import type { ThemeMode } from '../../types/settings'
-import { THEME_ICONS } from '../common/IconMap'
+import { THEME_ICONS } from '../../utils/statusMessages'
 
 interface ThemeSwitcherProps {
   /** 当前主题 */

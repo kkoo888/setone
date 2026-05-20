@@ -16,7 +16,7 @@ import { SkillInstallDialog } from './components/SkillInstallDialog'
 import { SkillUpdateDialog } from './components/SkillUpdateDialog'
 import { NetworkToggle } from './components/NetworkToggle'
 import SkillCreateDialog from './components/SkillCreateDialog'
-import { Magic, Search, DeleteOne, Refresh, Fire, LoadingFour, Inbox } from '@icon-park/react'
+import { Magic, Search, DeleteOne, Refresh, Fire, LoadingFour, Inbox } from '../../utils/statusMessages'
 import SkillRefinePanel from './components/SkillRefinePanel'
 
 /** 二级导航标签 */

@@ -8,7 +8,7 @@
  * - WebGL 上下文丢失：监听事件并提示用户
  */
 import React, { useState, useEffect, useRef, useCallback } from 'react'
-import { Help } from '@icon-park/react'
+import { Help } from '../utils/statusMessages'
 
 /** electronAPI 最小接口 */
 interface ElectronAPI {
