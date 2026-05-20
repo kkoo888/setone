@@ -533,17 +533,21 @@ class Cubism5Service {
       // 模型状态
       const model = this.model as any
       try {
-        const internalModel = model.getModel ? model.getModel() : model
-        console.log('[Cubism5-DEBUG] drawableCount:', internalModel.getDrawableCount?.())
-        console.log('[Cubism5-DEBUG] parameterCount:', internalModel.getParameterCount?.())
+        // CubismModel 包装类方法
+        const drawCount = typeof model.getDrawableCount === 'function' ? model.getDrawableCount() : 'N/A'
+        const paramCount = typeof model.getParameterCount === 'function' ? model.getParameterCount() : 'N/A'
+        console.log('[Cubism5-DEBUG] drawableCount:', drawCount)
+        console.log('[Cubism5-DEBUG] parameterCount:', paramCount)
 
         // 检查每个 drawable 的可见性
-        const drawCount = internalModel.getDrawableCount?.() ?? 0
-        let visibleCount = 0
-        for (let i = 0; i < drawCount; i++) {
-          if (internalModel.getDrawableDynamicFlagIsVisible?.(i)) visibleCount++
+        if (typeof model.getDrawableCount === 'function') {
+          const dc = model.getDrawableCount()
+          let visibleCount = 0
+          for (let i = 0; i < dc; i++) {
+            if (model.getDrawableDynamicFlagIsVisible?.(i)) visibleCount++
+          }
+          console.log('[Cubism5-DEBUG] 可见 drawable 数:', visibleCount, '/', dc)
         }
-        console.log('[Cubism5-DEBUG] 可见 drawable 数:', visibleCount, '/', drawCount)
 
         // 检查纹理绑定
         console.log('[Cubism5-DEBUG] _textures 长度:', renderer?._textures?.size)
