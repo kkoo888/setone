@@ -32,6 +32,29 @@ export function createAppMenu(): void {
           : { role: 'quit' as const, label: '退出' }
       ]
     },
+    // 编辑
+    {
+      label: '编辑',
+      submenu: [
+        { role: 'undo' as const, label: '撤销' },
+        { role: 'redo' as const, label: '重做' },
+        { type: 'separator' as const },
+        { role: 'cut' as const, label: '剪切' },
+        { role: 'copy' as const, label: '复制' },
+        { role: 'paste' as const, label: '粘贴' },
+        ...(isMac
+          ? [
+              { role: 'pasteAndMatchStyle' as const, label: '粘贴并匹配样式' },
+              { role: 'delete' as const, label: '删除' },
+              { role: 'selectAll' as const, label: '全选' }
+            ]
+          : [
+              { role: 'delete' as const, label: '删除' },
+              { type: 'separator' as const },
+              { role: 'selectAll' as const, label: '全选' }
+            ])
+      ]
+    },
     // 视图
     {
       label: '视图',
@@ -45,6 +68,23 @@ export function createAppMenu(): void {
         { role: 'zoomOut' as const, label: '缩小' },
         { type: 'separator' as const },
         { role: 'togglefullscreen' as const, label: '切换全屏' }
+      ]
+    },
+    // 窗口
+    {
+      label: '窗口',
+      submenu: [
+        { role: 'minimize' as const, label: '最小化' },
+        { role: 'zoom' as const, label: '缩放' },
+        ...(isMac
+          ? [
+              { type: 'separator' as const },
+              { role: 'front' as const, label: '全部置于前面' }
+            ]
+          : [
+              { type: 'separator' as const },
+              { role: 'close' as const, label: '关闭' }
+            ])
       ]
     },
     // 帮助

@@ -67,7 +67,7 @@ function createWindow(config: ConfigManagerImpl | null): void {
       sandbox: false
     },
     titleBarStyle: 'hiddenInset',
-    backgroundColor: '#fdf6e3',
+    backgroundColor: '#ffffff',
     show: false
   })
 
