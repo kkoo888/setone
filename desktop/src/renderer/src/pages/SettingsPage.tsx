@@ -32,7 +32,7 @@ export function SettingsPage() {
     saveToMainProcess,
   } = useSettingsStore()
 
-  const { setLanguage, setActivePanel } = useAppStore()
+  const { setLanguage } = useAppStore()
 
   /** 处理 Ollama 配置变更 */
   const handleOllamaChange = useCallback(
