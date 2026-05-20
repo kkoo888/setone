@@ -7,7 +7,17 @@ import { SkillToggle } from './SkillToggle'
 import { Robot, ChartHistogram, FolderOpen, SettingOne } from '../../../utils/statusMessages'
 import type { SkillMeta } from '../../../stores/useSkillStore'
 
-const TAG_ICONS: Record<string, React.ReactNode> = { 'AI': React.createElement(Robot, { size: 14, fill: 'currentColor', theme: 'outline' }), '数据': React.createElement(ChartHistogram, { size: 14, fill: 'currentColor', theme: 'outline' }) }
+/** 标签图标映射（IconPark 组件 + Emoji） */
+const TAG_ICONS: Record<string, React.ReactNode> = {
+  'AI': React.createElement(Robot, { size: 14, fill: 'currentColor', theme: 'outline' }),
+  '数据': React.createElement(ChartHistogram, { size: 14, fill: 'currentColor', theme: 'outline' }),
+  '开发工具': '🛠️',
+  '效率': '⚡',
+  '生活服务': '🏠',
+  'OPC一人公司': '🏢',
+  '安全': '🔒',
+  '文档': '📄'
+}
 
 interface SkillCardProps {
   /** 技能元数据 */
@@ -20,20 +30,8 @@ interface SkillCardProps {
   onConfig?: (id: string) => void
 }
 
-/** 默认图标映射 */
-const TAG_ICONS: Record<string, string> = {
-  '开发工具': '🛠️',
-  '效率': '⚡',
-  '生活服务': '🏠',
-  'OPC一人公司': '🏢',
-  'AI': TAG_ICONS['AI'],
-  '数据': TAG_ICONS['数据'],
-  '安全': '🔒',
-  '文档': '📄'
-}
-
 /** 根据标签获取图标 */
-function getSkillIcon(skill: SkillMeta): string {
+function getSkillIcon(skill: SkillMeta): React.ReactNode {
   if (skill.icon) return skill.icon
   for (const tag of skill.tags) {
     if (TAG_ICONS[tag]) return TAG_ICONS[tag]
