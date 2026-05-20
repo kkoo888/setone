@@ -134,9 +134,13 @@ function buildModule(moduleId) {
         mkdirSync(outFileDir, { recursive: true })
       }
 
+      // preload 脚本必须用 CJS 格式（Electron 沙箱要求），其余用 ESM
+      const isPreload = /preload\.ts$/i.test(tsFile)
+      const format = isPreload ? 'cjs' : 'esm'
+
       execSync(
-        `npx esbuild "${tsFile}" --outfile="${outFilePath}" --format=esm --target=es2022 --platform=node --bundle=false`,
-        { cwd: ROOT, stdio: 'pipe', timeout: 10000 }
+        `npx esbuild "${tsFile}" --outfile="${outFilePath}" --format=${format} --target=es2022 --platform=node --bundle=false --loader:.ts=ts`,
+        { cwd: ROOT, stdio: 'pipe', timeout: 30000 }
       )
     }
 
