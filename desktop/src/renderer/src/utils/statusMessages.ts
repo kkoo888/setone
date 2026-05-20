@@ -62,6 +62,7 @@ import {
   Pushpin,
   LocalPin,
   DataServer,
+  Camera,
 } from '@icon-park/react'
 
 // ============================================================
@@ -335,5 +336,5 @@ export {
   Computer, Sun, Moon, Square, FullScreenPlay,
   // 扩展
   Robot, Magic, DeleteOne, DownloadOne, EditOne,
-  Fire, RecycleBin, Pushpin, LocalPin, DataServer,
+  Fire, RecycleBin, Pushpin, LocalPin, DataServer, Camera,
 }
