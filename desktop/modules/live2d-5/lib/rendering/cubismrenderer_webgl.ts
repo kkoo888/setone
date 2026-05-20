@@ -764,26 +764,6 @@ export class CubismRenderer_WebGL extends CubismRenderer {
    * Shaderの読み込みを行う
    * @param shaderPath シェーダのパス
    */
-  /**
-   * 等待 shader 加载完成（异步）
-   * @param timeoutMs 超时时间，默认 10 秒
-   * @returns 是否加载成功
-   */
-  public async waitForShaders(timeoutMs: number = 10000): Promise<boolean> {
-    if (this.gl == null) return false;
-    const shader = CubismShaderManager_WebGL.getInstance().getShader(this.gl);
-    if (shader._isShaderLoaded) return true;
-    return shader.generateShadersAsync(timeoutMs);
-  }
-
-  /**
-   * shader 是否已加载完成
-   */
-  public isShadersReady(): boolean {
-    if (this.gl == null) return false;
-    return CubismShaderManager_WebGL.getInstance().getShader(this.gl)._isShaderLoaded;
-  }
-
   public loadShaders(shaderPath: string = null): void {
     if (this.gl == null) {
       CubismLogError(
@@ -920,24 +900,6 @@ export class CubismRenderer_WebGL extends CubismRenderer {
     const totalCount = drawableCount + offscreenCount;
     const renderOrder = model.getRenderOrders();
 
-    // ===== 诊断：drawObjectLoop 入口 =====
-    if (!(this as any)._loopDiagDone) {
-      ;(this as any)._loopDiagDone = true
-      console.log('[Cubism5-DEBUG] ===== drawObjectLoop 诊断 =====')
-      console.log('[Cubism5-DEBUG] drawableCount:', drawableCount, 'offscreenCount:', offscreenCount, 'totalCount:', totalCount)
-      console.log('[Cubism5-DEBUG] _currentFbo:', lastFbo)
-      console.log('[Cubism5-DEBUG] _modelRenderTargetWidth:', this._modelRenderTargetWidth, '_modelRenderTargetHeight:', this._modelRenderTargetHeight)
-      // 检查前几个 drawable 的可见性
-      let visCount = 0
-      for (let i = 0; i < Math.min(drawableCount, 10); i++) {
-        const vis = model.getDrawableDynamicFlagIsVisible(i)
-        if (vis) visCount++
-        console.log(`[Cubism5-DEBUG]   drawable[${i}] visible=${vis} renderOrder=${renderOrder[i]}`)
-      }
-      console.log('[Cubism5-DEBUG] 前10个中可见:', visCount)
-      console.log('[Cubism5-DEBUG] ===== drawObjectLoop 诊断结束 =====')
-    }
-
     this._currentOffscreen = null; // 現在のオフスクリーンを初期化
     this._currentFbo = lastFbo;
     this._modelRootFbo = lastFbo;
@@ -1008,20 +970,7 @@ export class CubismRenderer_WebGL extends CubismRenderer {
   public drawDrawable(drawableIndex: number, rootFbo: WebGLFramebuffer): void {
     // Drawableが表示状態でなければ処理をパスする
     if (!this.getModel().getDrawableDynamicFlagIsVisible(drawableIndex)) {
-      // ===== 诊断：不可见跳过 =====
-      if (!(this as any)._skipDiagDone) {
-        ;(this as any)._skipDiagDone = true
-        console.log('[Cubism5-DEBUG] drawDrawable: 所有 drawable 都不可见? index:', drawableIndex)
-      }
       return;
-    }
-
-    // ===== 诊断：drawDrawable 被调用 =====
-    if (!(this as any)._drawDrawableDiagDone) {
-      ;(this as any)._drawDrawableDiagDone = true
-      console.log('[Cubism5-DEBUG] drawDrawable 首次调用: index=', drawableIndex, 'rootFbo=', rootFbo)
-      console.log('[Cubism5-DEBUG] _drawableClippingManager:', !!this._drawableClippingManager)
-      console.log('[Cubism5-DEBUG] isUsingHighPrecisionMask:', this.isUsingHighPrecisionMask())
     }
 
     this.submitDrawToParentOffscreen(
@@ -1141,54 +1090,18 @@ export class CubismRenderer_WebGL extends CubismRenderer {
         ._isShaderLoaded
     ) {
       // シェーダーがロードされていない場合は描画を行わない
-      if (!(this as any)._shaderWarned) {
-        ;(this as any)._shaderWarned = true
-        console.warn('[Cubism5-DEBUG] drawMeshWebGL 跳过: _isShaderLoaded=false, index:', index)
-        // ===== 诊断：shader 详细状态 =====
-        const shaderMgr = CubismShaderManager_WebGL.getInstance().getShader(this.gl)
-        console.warn('[Cubism5-DEBUG] shader _shaderSets 长度:', shaderMgr._shaderSets?.length)
-        console.warn('[Cubism5-DEBUG] shader _isShaderLoaded:', shaderMgr._isShaderLoaded)
-      }
+      // NOTE: Cubism 5.2 以前のモデル描画時にのみ、マスク無しのモデルが描画されてしまうためここで早期リターン
       return;
     }
 
     {
       const indexCount: number = model.getDrawableVertexIndexCount(index);
-
-      // ===== 诊断：首帧首个 drawable 的绘制信息 =====
-      if (!(this as any)._drawDiagDone) {
-        ;(this as any)._drawDiagDone = true
-        const shaderMgr = CubismShaderManager_WebGL.getInstance().getShader(this.gl)
-        const firstShaderSet = shaderMgr._shaderSets?.[1] // NormalPremultipliedAlpha + offset
-        console.log('[Cubism5-DEBUG] ===== drawMeshWebGL 首帧诊断 =====')
-        console.log('[Cubism5-DEBUG] _isShaderLoaded:', shaderMgr._isShaderLoaded)
-        console.log('[Cubism5-DEBUG] _shaderSets 长度:', shaderMgr._shaderSets?.length)
-        console.log('[Cubism5-DEBUG] drawable index:', index, 'indexCount:', indexCount)
-        console.log('[Cubism5-DEBUG] shaderSet uniformMatrixLocation:', firstShaderSet?.uniformMatrixLocation)
-        console.log('[Cubism5-DEBUG] shaderSet program:', firstShaderSet?.shaderProgram)
-        console.log('[Cubism5-DEBUG] 当前 gl program:', this.gl.getParameter(this.gl.CURRENT_PROGRAM))
-        console.log('[Cubism5-DEBUG] isGeneratingMask:', this.isGeneratingMask())
-        // 检查 VBO 状态
-        console.log('[Cubism5-DEBUG] ARRAY_BUFFER_BINDING:', this.gl.getParameter(this.gl.ARRAY_BUFFER_BINDING))
-        console.log('[Cubism5-DEBUG] ELEMENT_ARRAY_BUFFER_BINDING:', this.gl.getParameter(this.gl.ELEMENT_ARRAY_BUFFER_BINDING))
-        console.log('[Cubism5-DEBUG] VERTEX_ATTRIB_ARRAY_ENABLED[0]:', this.gl.getVertexAttrib(0, this.gl.VERTEX_ATTRIB_ARRAY_ENABLED))
-        console.log('[Cubism5-DEBUG] VERTEX_ATTRIB_ARRAY_ENABLED[1]:', this.gl.getVertexAttrib(1, this.gl.VERTEX_ATTRIB_ARRAY_ENABLED))
-        console.log('[Cubism5-DEBUG] ===== drawMeshWebGL 首帧诊断结束 =====')
-      }
-
       this.gl.drawElements(
         this.gl.TRIANGLES,
         indexCount,
         this.gl.UNSIGNED_SHORT,
         0
       );
-
-      // ===== 诊断：drawElements 后 GL 错误 =====
-      if (!(this as any)._drawElemDiagDone) {
-        ;(this as any)._drawElemDiagDone = true
-        const postErr = this.gl.getError()
-        console.log('[Cubism5-DEBUG] drawElements 后 gl.getError():', postErr)
-      }
     }
 
     // 後処理

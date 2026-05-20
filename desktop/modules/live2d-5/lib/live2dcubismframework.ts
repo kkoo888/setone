@@ -163,14 +163,7 @@ export class CubismFramework {
     // 複数モデル表示時などにモデルが更新されない際に使用してください。
     // 指定する際は必ず1024*1024*16 byte(16MB)以上の値を指定してください。
     // それ以外はすべて1024*1024*16 byteに丸めます。
-    // NOTE: Cubism 5 Core SDK 的 minified 文件存在 minification bug，
-    // Live2DCubismCore.Memory 可能被错误赋值为 Utils 对象。
-    // 这里做安全检查，避免 initializeAmountOfMemory 不存在时崩溃。
-    if (Live2DCubismCore.Memory?.initializeAmountOfMemory) {
-      Live2DCubismCore.Memory.initializeAmountOfMemory(memorySize);
-    } else {
-      console.warn('[CubismFramework] Live2DCubismCore.Memory.initializeAmountOfMemory 不可用，跳过内存初始化');
-    }
+    Live2DCubismCore.Memory.initializeAmountOfMemory(memorySize);
 
     s_isInitialized = true;
 

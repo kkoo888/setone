@@ -22,25 +22,25 @@ export const NoOffscreenIndex = -1; // オフスクリーンが取得できな�
  */
 export enum CubismColorBlend {
   ColorBlend_None = -1,
-  // 以下值必须与 Live2DCubismCore.ColorBlendType_* 一致（R5 Core SDK 实际值）
-  ColorBlend_Normal = 0,
-  ColorBlend_AddCompatible = 1,
-  ColorBlend_MultiplyCompatible = 2,
-  ColorBlend_Add = 3,
-  ColorBlend_AddGlow = 4,
-  ColorBlend_Darken = 5,
-  ColorBlend_Multiply = 6,
-  ColorBlend_ColorBurn = 7,
-  ColorBlend_LinearBurn = 8,
-  ColorBlend_Lighten = 9,
-  ColorBlend_Screen = 10,
-  ColorBlend_ColorDodge = 11,
-  ColorBlend_Overlay = 12,
-  ColorBlend_SoftLight = 13,
-  ColorBlend_HardLight = 14,
-  ColorBlend_LinearLight = 15,
-  ColorBlend_Hue = 16,
-  ColorBlend_Color = 17
+  ColorBlend_Normal = Live2DCubismCore.ColorBlendType_Normal,
+  ColorBlend_AddGlow = Live2DCubismCore.ColorBlendType_AddGlow,
+  ColorBlend_Add = Live2DCubismCore.ColorBlendType_Add,
+  ColorBlend_Darken = Live2DCubismCore.ColorBlendType_Darken,
+  ColorBlend_Multiply = Live2DCubismCore.ColorBlendType_Multiply,
+  ColorBlend_ColorBurn = Live2DCubismCore.ColorBlendType_ColorBurn,
+  ColorBlend_LinearBurn = Live2DCubismCore.ColorBlendType_LinearBurn,
+  ColorBlend_Lighten = Live2DCubismCore.ColorBlendType_Lighten,
+  ColorBlend_Screen = Live2DCubismCore.ColorBlendType_Screen,
+  ColorBlend_ColorDodge = Live2DCubismCore.ColorBlendType_ColorDodge,
+  ColorBlend_Overlay = Live2DCubismCore.ColorBlendType_Overlay,
+  ColorBlend_SoftLight = Live2DCubismCore.ColorBlendType_SoftLight,
+  ColorBlend_HardLight = Live2DCubismCore.ColorBlendType_HardLight,
+  ColorBlend_LinearLight = Live2DCubismCore.ColorBlendType_LinearLight,
+  ColorBlend_Hue = Live2DCubismCore.ColorBlendType_Hue,
+  ColorBlend_Color = Live2DCubismCore.ColorBlendType_Color,
+  // Cubism 5.2以前
+  ColorBlend_AddCompatible = Live2DCubismCore.ColorBlendType_AddCompatible,
+  ColorBlend_MultiplyCompatible = Live2DCubismCore.ColorBlendType_MultiplyCompatible
 }
 
 /**
@@ -1008,8 +1008,8 @@ export class CubismModel {
    * @return Drawableの描画順リスト
    */
   public getRenderOrders(): Int32Array {
-    // Cubism 5 Core SDK: renderOrders 在 drawables 子对象上，不在 Model 根对象
-    return this._model.drawables.renderOrders;
+    const renderOrders: Int32Array = this._model.getRenderOrders();
+    return renderOrders;
   }
 
   /**
@@ -1241,11 +1241,8 @@ export class CubismModel {
       this._drawableColorBlends[drawableIndex] ==
       CubismColorBlend.ColorBlend_None
     ) {
-      // blendModes は Cubism 5.3+ で追加、旧 Core SDK には存在しない場合がある
-      const blendModes = this._model.drawables.blendModes
-      this._drawableColorBlends[drawableIndex] = blendModes
-        ? blendModes[drawableIndex] & 0xff
-        : CubismColorBlend.ColorBlend_Normal
+      this._drawableColorBlends[drawableIndex] =
+        this._model.drawables.blendModes[drawableIndex] & 0xff;
     }
     return this._drawableColorBlends[drawableIndex];
   }
@@ -1262,11 +1259,8 @@ export class CubismModel {
       this._drawableAlphaBlends[drawableIndex] ==
       CubismAlphaBlend.AlphaBlend_None
     ) {
-      // blendModes は Cubism 5.3+ で追加、旧 Core SDK には存在しない場合がある
-      const blendModes = this._model.drawables.blendModes
-      this._drawableAlphaBlends[drawableIndex] = blendModes
-        ? (blendModes[drawableIndex] >> 8) & 0xff
-        : CubismAlphaBlend.AlphaBlend_Over
+      this._drawableAlphaBlends[drawableIndex] =
+        (this._model.drawables.blendModes[drawableIndex] >> 8) & 0xff;
     }
     return this._drawableAlphaBlends[drawableIndex];
   }
@@ -1547,7 +1541,7 @@ export class CubismModel {
 
     this._parameterValues = this._model.parameters.values;
     this._partOpacities = this._model.parts.opacities;
-    this._offscreenOpacities = this._model.offscreens?.opacities ?? null;
+    this._offscreenOpacities = this._model.offscreens.opacities;
 
     this._parameterMaximumValues = this._model.parameters.maximumValues;
     this._parameterMinimumValues = this._model.parameters.minimumValues;
@@ -1588,7 +1582,7 @@ export class CubismModel {
       const userCulling: CullingData = new CullingData(false, false);
 
       // Offscreenカリング設定
-      this._userOffscreenCullings.length = this._model.offscreens?.count ?? 0;
+      this._userOffscreenCullings.length = this._model.offscreens.count;
       const userOffscreenCulling: CullingData = new CullingData(false, false);
 
       // Drawables
@@ -1604,7 +1598,7 @@ export class CubismModel {
 
       // Offscreens
       {
-        for (let i = 0; i < (this._model.offscreens?.count ?? 0); ++i) {
+        for (let i = 0; i < this._model.offscreens.count; ++i) {
           this._userOffscreenCullings[i] = userOffscreenCulling;
         }
       }
@@ -1802,25 +1796,6 @@ export class CubismModel {
    */
   public constructor(model: Live2DCubismCore.Model) {
     this._model = model;
-
-    // 兼容性垫片：offscreens 是 Cubism 5.2+ 新增的，旧 Core SDK 没有
-    if (!model.offscreens) {
-      const emptyInt32 = new Int32Array(0)
-      const emptyUint8 = new Uint8Array(0)
-      const emptyFloat32 = new Float32Array(0)
-      ;(model as any).offscreens = {
-        count: 0,
-        opacities: emptyFloat32,
-        constantFlags: emptyUint8,
-        multiplyColors: emptyFloat32,
-        screenColors: emptyFloat32,
-        blendModes: emptyInt32,
-        ownerIndices: emptyInt32,
-        masks: emptyInt32,
-        maskCounts: emptyInt32
-      }
-    }
-
     this._parameterValues = null;
     this._parameterMaximumValues = null;
     this._parameterMinimumValues = null;
@@ -1867,13 +1842,11 @@ export class CubismModel {
     ).fill(CubismAlphaBlend.AlphaBlend_None);
 
     // Offscreenのカラーブレンドとアルファブレンドの初期化
-    // offscreens は Cubism 5.2+ で追加、旧 Core SDK には存在しない場合がある
-    const offscreenCount = model.offscreens?.count ?? 0;
     this._offscreenColorBlends = new Array<CubismColorBlend>(
-      offscreenCount
+      model.offscreens.count
     ).fill(CubismColorBlend.ColorBlend_None);
     this._offscreenAlphaBlends = new Array<CubismAlphaBlend>(
-      offscreenCount
+      model.offscreens.count
     ).fill(CubismAlphaBlend.AlphaBlend_None);
   }
 
