@@ -895,18 +895,6 @@ export class CubismRenderer_WebGL extends CubismRenderer {
    */
   public drawObjectLoop(lastFbo: WebGLFramebuffer): void {
     const model = this.getModel();
-    // DEBUG: 打印 renderer 拿到的 model 对象
-    console.log('[CubismRenderer] 🔍 drawObjectLoop 被调用')
-    console.log('[CubismRenderer] 🔍 model 类型:', typeof model)
-    console.log('[CubismRenderer] 🔍 model 存在:', !!model)
-    if (model) {
-      console.log('[CubismRenderer] 🔍 model.getRenderOrders 类型:', typeof (model as any).getRenderOrders)
-      console.log('[CubismRenderer] 🔍 model._model 存在:', !!(model as any)._model)
-      if ((model as any)._model) {
-        console.log('[CubismRenderer] 🔍 model._model.drawables 存在:', !!(model as any)._model.drawables)
-        console.log('[CubismRenderer] 🔍 model._model.drawables.renderOrders 存在:', !!(model as any)._model.drawables?.renderOrders)
-      }
-    }
     const drawableCount = model.getDrawableCount();
     const offscreenCount = model.getOffscreenCount();
     const totalCount = drawableCount + offscreenCount;

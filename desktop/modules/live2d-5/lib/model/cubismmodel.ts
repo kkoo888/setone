@@ -1008,20 +1008,6 @@ export class CubismModel {
    * @return Drawableの描画順リスト
    */
   public getRenderOrders(): Int32Array {
-    // DEBUG: 打印 model 结构，定位 getRenderOrders 错误
-    console.log('[CubismModel] 🔍 getRenderOrders 被调用')
-    console.log('[CubismModel] 🔍 this._model 类型:', typeof this._model)
-    console.log('[CubismModel] 🔍 this._model 存在:', !!this._model)
-    if (this._model) {
-      console.log('[CubismModel] 🔍 this._model.drawables 存在:', !!(this._model as any).drawables)
-      console.log('[CubismModel] 🔍 this._model.getRenderOrders 存在:', typeof (this._model as any).getRenderOrders)
-      if ((this._model as any).drawables) {
-        console.log('[CubismModel] 🔍 this._model.drawables.renderOrders 存在:', !!(this._model as any).drawables.renderOrders)
-        console.log('[CubismModel] 🔍 this._model.drawables.renderOrders 类型:', typeof (this._model as any).drawables.renderOrders)
-      }
-      // 打印 model 的所有顶层 key
-      console.log('[CubismModel] 🔍 this._model keys:', Object.keys(this._model as any).join(', '))
-    }
     // Cubism 5 Core SDK: renderOrders 在 drawables 子对象上，不在 Model 根对象
     return this._model.drawables.renderOrders;
   }

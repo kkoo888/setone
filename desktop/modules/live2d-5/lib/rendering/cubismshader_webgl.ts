@@ -66,20 +66,11 @@ export class CubismShader_WebGL {
    * @return シェーダーのソースコード
    */
   private async loadShader(url: string): Promise<string> {
-    // DEBUG: 打印 shader 加载路径
-    console.log('[CubismShader] 🔍 尝试加载 shader:', url)
-    try {
-      const response = await fetch(url);
-      if (!response.ok) {
-        console.error('[CubismShader] ❌ shader 加载失败:', url, 'status:', response.status)
-      } else {
-        console.log('[CubismShader] ✅ shader 加载成功:', url)
-      }
-      return await response.text();
-    } catch (err) {
-      console.error('[CubismShader] ❌ shader fetch 异常:', url, err)
-      throw err
+    const response = await fetch(url);
+    if (!response.ok) {
+      console.error(`[CubismShader] ❌ shader 加载失败: ${url} (${response.status})`);
     }
+    return await response.text();
   }
 
   /**
@@ -88,10 +79,6 @@ export class CubismShader_WebGL {
   private async loadShaders(): Promise<void> {
     // _shaderPathがnullまたはundefinedの場合はデフォルトパスを使用
     const shaderDir = this._shaderPath ?? this._defaultShaderPath;
-    // DEBUG: 打印 shader 目录
-    console.log('[CubismShader] 🔍 loadShaders shaderDir:', shaderDir)
-    console.log('[CubismShader] 🔍 this._shaderPath:', this._shaderPath)
-    console.log('[CubismShader] 🔍 this._defaultShaderPath:', this._defaultShaderPath)
 
     // シェーダーファイルのパスとプロパティの対応
     // NOTE: prop は CubismShader_WebGL に設定された変数名
@@ -230,7 +217,6 @@ export class CubismShader_WebGL {
     // 页面 URL 是 dist/renderer/index.html
     // fetch() 相对路径是相对页面解析的，所以用 ./Framework/Shaders/WebGL/
     this._defaultShaderPath = './Framework/Shaders/WebGL/';
-    console.log('[CubismShader] 🔍 _defaultShaderPath:', this._defaultShaderPath)
     this._shaderPath = this._defaultShaderPath;
   }
 
