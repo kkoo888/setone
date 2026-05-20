@@ -152,7 +152,6 @@ export class CubismShader_WebGL {
     } else {
       console.warn(`[Cubism5-DEBUG] ✅ 全部 ${results.length} 个 shader 文件加载成功, 首个文件长度: ${results[0]?.data?.length}`)
     }
-    });
   }
 
   /**
