@@ -1111,10 +1111,6 @@ export class CubismRenderer_WebGL extends CubismRenderer {
     ) {
       // シェーダーがロードされていない場合は描画を行わない
       // NOTE: Cubism 5.2 以前のモデル描画時にのみ、マスク無しのモデルが描画されてしまうためここで早期リターン
-      if (!(this as any)._shaderWarned) {
-        ;(this as any)._shaderWarned = true
-        console.warn('[Cubism5-DEBUG] drawMeshWebGL 跳过: _isShaderLoaded=false, index:', index)
-      }
       return;
     }
 
