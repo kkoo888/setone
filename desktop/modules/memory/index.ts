@@ -2,6 +2,7 @@
 import type { Module, ModuleContext, Capability } from '../../src/main/types/module'
 import { MemoryManager } from './services/memory-manager'
 import { Summarizer } from './services/summarizer'
+import { MemoryRepository } from './repositories/memory-repository'
 
 export default class MemoryModule implements Module {
   id = 'memory'
@@ -14,7 +15,12 @@ export default class MemoryModule implements Module {
     this.context = context
 
     const settings = context.config?.settings as Record<string, unknown> | undefined
-    this.manager = new MemoryManager(context.logger, {
+
+    // 创建 Repository → init（建表）→ 创建 MemoryManager
+    const repository = new MemoryRepository(context.db, context.logger)
+    await repository.init()
+
+    this.manager = new MemoryManager(repository, context.logger, {
       shortTermMaxItems: settings?.shortTermMaxItems as number | undefined,
       longTermMaxItems: settings?.longTermMaxItems as number | undefined,
       autoSummarizeThreshold: settings?.autoSummarizeThreshold as number | undefined ?? 50
@@ -25,9 +31,7 @@ export default class MemoryModule implements Module {
       ollamaModel: settings?.ollamaModel as string | undefined
     })
 
-    // 绑定数据库用于持久化
-    this.manager.setDatabase(context.db)
-    await this.manager.initDatabase()
+    // 从数据库加载记忆
     await this.manager.loadFromDatabase()
 
     // 设置自动摘要回调
@@ -39,8 +43,6 @@ export default class MemoryModule implements Module {
   }
 
   async deactivate(): Promise<void> {
-    // 清理 DB 引用
-    this.manager.setDatabase(undefined as never)
     this.context.logger.info('记忆模块已停用')
   }
 

@@ -2,7 +2,8 @@ import type { Module, ModuleContext, Capability } from '../../src/main/types/mod
 import type { TranslatorSettings } from './types'
 import { TranslationEngine } from './services/TranslationEngine'
 import { LanguageDetector } from './services/LanguageDetector'
-import { TranslationHistory } from './services/TranslationHistory'
+import { TranslationRepository } from './repositories/translation-repository'
+import { TranslationService } from './services/translation-service'
 
 /**
  * 翻译面板模块
@@ -16,7 +17,7 @@ export default class TranslatorModule implements Module {
   private context!: ModuleContext
   private engine!: TranslationEngine
   private detector!: LanguageDetector
-  private history!: TranslationHistory
+  private history!: TranslationService
   private assistantName: string = '小希'
 
   async activate(context: ModuleContext): Promise<void> {
@@ -33,8 +34,9 @@ export default class TranslatorModule implements Module {
     // 初始化语言检测器
     this.detector = new LanguageDetector()
 
-    // 初始化历史存储
-    this.history = new TranslationHistory(context.db, context.logger, settings.maxHistory ?? 200)
+    // 初始化历史存储（Repository → Service 分层）
+    const repo = new TranslationRepository(context.db, context.logger, settings.maxHistory ?? 200)
+    this.history = new TranslationService(repo, context.logger)
     await this.history.init()
 
     context.logger.info(`翻译面板模块已激活（助手名称: ${this.assistantName}）`)

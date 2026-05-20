@@ -2,8 +2,9 @@ import type { Session } from '../types'
 import { randomUUID } from 'crypto'
 
 /**
- * 会话存储服务
- * 负责 sessions 表的 CRUD 操作
+ * @deprecated 已由 SessionRepository + SessionService 替代，将在下个版本移除
+ * @see repositories/session-repository.ts
+ * @see services/session-service.ts
  */
 export class SessionStore {
   private sessions: Session[] = []

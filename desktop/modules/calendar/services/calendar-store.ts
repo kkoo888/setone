@@ -1,6 +1,13 @@
 import type { CalEvent } from '../types'
 
 /**
+ * @deprecated 此类已废弃，请使用 CalendarEventRepository + CalendarEventService 替代。
+ * 保留仅为向后兼容，将在后续版本移除。
+ *
+ * @see CalendarEventRepository — 数据库操作层
+ * @see CalendarEventService — 业务逻辑层
+ */
+/**
  * 日历数据库服务
  * 负责 calendar_events 表的 CRUD 操作
  */

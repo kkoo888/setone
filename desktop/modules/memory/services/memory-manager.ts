@@ -1,5 +1,5 @@
 import type { Logger } from '../../../src/main/types/logger'
-import type { DatabaseManager } from '../../../src/main/types/database'
+import type { MemoryRepository } from '../repositories/memory-repository'
 
 export interface MemoryItem {
   id: string
@@ -32,7 +32,7 @@ export class MemoryManager {
   private logger: Logger
   private maxShortTerm: number
   private maxLongTerm: number
-  private db: DatabaseManager | null = null
+  private repository: MemoryRepository
   /** 自动摘要阈值：短期记忆超过此数量时触发自动压缩 */
   private autoSummarizeThreshold: number
   /** 摘要回调：当需要自动摘要时调用 */
@@ -44,6 +44,7 @@ export class MemoryManager {
   private indexDirty = true
 
   constructor(
+    repository: MemoryRepository,
     logger: Logger,
     settings?: {
       shortTermMaxItems?: number
@@ -51,17 +52,11 @@ export class MemoryManager {
       autoSummarizeThreshold?: number
     }
   ) {
+    this.repository = repository
     this.logger = logger
     this.maxShortTerm = settings?.shortTermMaxItems ?? 100
     this.maxLongTerm = settings?.longTermMaxItems ?? 10000
     this.autoSummarizeThreshold = settings?.autoSummarizeThreshold ?? 50
-  }
-
-  /**
-   * 绑定数据库实例，用于记忆持久化
-   */
-  setDatabase(db: DatabaseManager): void {
-    this.db = db
   }
 
   /**
@@ -73,60 +68,30 @@ export class MemoryManager {
   }
 
   /**
-   * 创建 memories 数据表
+   * 初始化：建表 + 从数据库加载记忆
    */
-  async initDatabase(): Promise<void> {
-    if (!this.db) return
-    await this.db.run(`
-      CREATE TABLE IF NOT EXISTS memories (
-        id TEXT PRIMARY KEY,
-        content TEXT NOT NULL,
-        type TEXT NOT NULL DEFAULT 'short-term',
-        tags TEXT DEFAULT '[]',
-        timestamp INTEGER NOT NULL,
-        metadata TEXT DEFAULT '{}'
-      )
-    `)
-    this.logger.info('memories 数据表已初始化')
+  async init(): Promise<void> {
+    await this.repository.init()
+    await this.loadFromDatabase()
   }
 
   /**
    * 从数据库加载所有记忆到内存
    */
   async loadFromDatabase(): Promise<void> {
-    if (!this.db) return
-    try {
-      const rows = await this.db.query<{
-        id: string
-        content: string
-        type: string
-        tags: string
-        timestamp: number
-        metadata: string
-      }>('SELECT * FROM memories ORDER BY timestamp ASC')
+    const rows = await this.repository.findAll()
 
-      this.shortTerm = []
-      this.longTerm = []
-      for (const row of rows) {
-        const item: MemoryItem = {
-          id: row.id,
-          content: row.content,
-          type: row.type as 'short-term' | 'long-term',
-          tags: this.safeParseJson(row.tags, []),
-          timestamp: row.timestamp,
-          metadata: this.safeParseJson(row.metadata, {})
-        }
-        if (item.type === 'short-term') {
-          this.shortTerm.push(item)
-        } else {
-          this.longTerm.push(item)
-        }
+    this.shortTerm = []
+    this.longTerm = []
+    for (const item of rows) {
+      if (item.type === 'short-term') {
+        this.shortTerm.push(item)
+      } else {
+        this.longTerm.push(item)
       }
-      this.indexDirty = true
-      this.logger.info(`从数据库加载记忆: 短期 ${this.shortTerm.length} 条, 长期 ${this.longTerm.length} 条`)
-    } catch (err) {
-      this.logger.error('从数据库加载记忆失败', err as Error)
     }
+    this.indexDirty = true
+    this.logger.info(`从数据库加载记忆: 短期 ${this.shortTerm.length} 条, 长期 ${this.longTerm.length} 条`)
   }
 
   /**
@@ -157,8 +122,8 @@ export class MemoryManager {
       if (this.longTerm.length > this.maxLongTerm) this.longTerm.shift()
     }
 
-    // 写入数据库
-    await this.persistItem(item)
+    // 通过 repository 持久化
+    await this.repository.save(item)
     this.indexDirty = true
     this.logger.info(`记忆已保存: ${item.id} (${type})`)
 
@@ -242,14 +207,14 @@ export class MemoryManager {
     const sIdx = this.shortTerm.findIndex((m) => m.id === id)
     if (sIdx >= 0) {
       this.shortTerm.splice(sIdx, 1)
-      await this.deleteFromDb(id)
+      await this.repository.removeById(id)
       this.indexDirty = true
       return true
     }
     const lIdx = this.longTerm.findIndex((m) => m.id === id)
     if (lIdx >= 0) {
       this.longTerm.splice(lIdx, 1)
-      await this.deleteFromDb(id)
+      await this.repository.removeById(id)
       this.indexDirty = true
       return true
     }
@@ -276,9 +241,7 @@ export class MemoryManager {
     const item = this.shortTerm.splice(idx, 1)[0]
     item.type = 'long-term'
     this.longTerm.push(item)
-    if (this.db) {
-      await this.db.run('UPDATE memories SET type = ? WHERE id = ?', ['long-term', id])
-    }
+    await this.repository.updateType(id, 'long-term')
     this.indexDirty = true
     return true
   }
@@ -406,34 +369,7 @@ export class MemoryManager {
     return dot / (aLen * bLen)
   }
 
-  // ──── 数据库持久化 ────
-
-  /**
-   * 将单条记忆持久化到数据库
-   */
-  private async persistItem(item: MemoryItem): Promise<void> {
-    if (!this.db) return
-    try {
-      await this.db.run(
-        'INSERT OR REPLACE INTO memories (id, content, type, tags, timestamp, metadata) VALUES (?, ?, ?, ?, ?, ?)',
-        [item.id, item.content, item.type, JSON.stringify(item.tags), item.timestamp, JSON.stringify(item.metadata ?? {})]
-      )
-    } catch (err) {
-      this.logger.error('记忆持久化失败', err as Error)
-    }
-  }
-
-  /**
-   * 从数据库删除单条记忆
-   */
-  private async deleteFromDb(id: string): Promise<void> {
-    if (!this.db) return
-    try {
-      await this.db.run('DELETE FROM memories WHERE id = ?', [id])
-    } catch (err) {
-      this.logger.error('数据库删除记忆失败', err as Error)
-    }
-  }
+  // ──── 自动摘要 ────
 
   /**
    * 自动摘要：当短期记忆超过阈值时，压缩为一条长期记忆
@@ -444,39 +380,22 @@ export class MemoryManager {
     if (!this.onAutoSummarize || this.shortTerm.length === 0) return
 
     this.logger.info(`短期记忆达到 ${this.shortTerm.length} 条，触发自动摘要`)
-    try {
-      const itemsToSummarize = [...this.shortTerm]
-      const summary = await this.onAutoSummarize(itemsToSummarize)
-      if (summary) {
-        // 清空已摘要的短期记忆
-        for (const item of itemsToSummarize) {
-          await this.deleteFromDb(item.id)
-        }
-        this.shortTerm = []
+    const itemsToSummarize = [...this.shortTerm]
+    const summary = await this.onAutoSummarize(itemsToSummarize)
+    if (summary) {
+      // 清空已摘要的短期记忆
+      await this.repository.removeBatch(itemsToSummarize.map((i) => i.id))
+      this.shortTerm = []
 
-        // 保存摘要为长期记忆
-        const summaryTags = ['auto-summary', 'compressed']
-        const summaryMeta = {
-          sourceCount: itemsToSummarize.length,
-          sourceIds: itemsToSummarize.map((i) => i.id),
-          summarizedAt: Date.now()
-        }
-        await this.save(summary, 'long-term', summaryTags, summaryMeta)
-        this.logger.info(`自动摘要完成: ${itemsToSummarize.length} 条 → 1 条长期记忆`)
+      // 保存摘要为长期记忆
+      const summaryTags = ['auto-summary', 'compressed']
+      const summaryMeta = {
+        sourceCount: itemsToSummarize.length,
+        sourceIds: itemsToSummarize.map((i) => i.id),
+        summarizedAt: Date.now()
       }
-    } catch (err) {
-      this.logger.error('自动摘要失败', err as Error)
-    }
-  }
-
-  /**
-   * 安全的 JSON 解析
-   */
-  private safeParseJson<T>(json: string, fallback: T): T {
-    try {
-      return JSON.parse(json) as T
-    } catch {
-      return fallback
+      await this.save(summary, 'long-term', summaryTags, summaryMeta)
+      this.logger.info(`自动摘要完成: ${itemsToSummarize.length} 条 → 1 条长期记忆`)
     }
   }
 }

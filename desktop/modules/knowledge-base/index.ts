@@ -7,6 +7,8 @@ import { KBManager } from './services/KBManager'
 import { RAGEngine } from './services/RAGEngine'
 import { DatasetCatalog } from './services/DatasetCatalog'
 import { DatasetDownloader } from './services/DatasetDownloader'
+import { DocumentRepository } from './repositories/document-repository'
+import { ChunkRepository } from './repositories/chunk-repository'
 
 /**
  * 本地知识库模块
@@ -43,8 +45,12 @@ export default class KnowledgeBaseModule implements Module {
     )
     this.embeddingService.setNetworkEnabled(this.networkEnabled)
 
-    // 初始化向量存储
-    this.vectorStore = new VectorStore(context.db, context.logger)
+    // 初始化 Repository 层
+    const docRepo = new DocumentRepository(context.db)
+    const chunkRepo = new ChunkRepository(context.db)
+
+    // 初始化向量存储（注入 Repository）
+    this.vectorStore = new VectorStore(docRepo, chunkRepo, context.logger)
     await this.vectorStore.init()
 
     // 初始化知识库管理器

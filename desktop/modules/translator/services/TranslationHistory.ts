@@ -17,6 +17,9 @@ interface HistoryRow {
 /**
  * 翻译历史存储服务
  * 使用 SQLite 管理翻译记录和收藏
+ *
+ * @deprecated 此类已拆分为 TranslationRepository（数据访问）+ TranslationService（业务逻辑）。
+ * 请使用 TranslationService 替代。此类将在后续版本移除。
  */
 export class TranslationHistory {
   private readonly db: DatabaseManager

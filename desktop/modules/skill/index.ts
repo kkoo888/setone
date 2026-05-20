@@ -4,7 +4,9 @@ import type { Module, ModuleContext, Capability } from '../../src/main/types/mod
 import { SkillDiscovery } from './SkillDiscovery'
 import { SkillScanner } from './SkillScanner'
 import { SkillCreator } from './SkillCreator'
-import { SkillPersist } from './SkillPersist'
+import { SkillStateRepository } from './repositories/skill-state-repository'
+import { SkillStatsRepository } from './repositories/skill-stats-repository'
+import { SkillPersistService } from './services/skill-persist-service'
 import { SkillTransfer } from './SkillTransfer'
 import { SkillInstaller } from './SkillInstaller'
 import { SkillRefiner } from './services/SkillRefiner'
@@ -31,7 +33,7 @@ export default class SkillModule implements Module {
   private discovery!: SkillDiscovery
   private scanner!: SkillScanner
   private creator!: SkillCreator
-  private persist!: SkillPersist
+  private service!: SkillPersistService
   private transfer!: SkillTransfer
   private installer!: SkillInstaller
   private refiner!: SkillRefiner
@@ -41,13 +43,15 @@ export default class SkillModule implements Module {
   async activate(context: ModuleContext): Promise<void> {
     this.context = context
 
-    // 初始化持久化层
+    // 初始化 Repository + Service 分层
     const stateFilePath = join(context.config.dataDir, 'skill-state.json')
-    this.persist = new SkillPersist(context.logger, context.db, stateFilePath)
-    await this.persist.init()
+    const stateRepo = new SkillStateRepository(context.logger, stateFilePath)
+    const statsRepo = new SkillStatsRepository(context.db, context.logger)
+    this.service = new SkillPersistService(stateRepo, statsRepo, context.logger)
+    await this.service.init()
 
     // 从持久化恢复激活状态
-    const savedStates = this.persist.getAllSkillStates()
+    const savedStates = this.service.getAllSkillStates()
 
     // 初始化发现引擎（传入已保存的激活状态）
     const activeStates = new Map<string, boolean>()
@@ -93,7 +97,7 @@ export default class SkillModule implements Module {
   }
 
   async deactivate(): Promise<void> {
-    await this.persist.flush()
+    await this.service.flush()
     this.context.logger.info('技能模块已停用')
   }
 
@@ -142,7 +146,7 @@ export default class SkillModule implements Module {
             const { dirs } = p as { dirs: string[] }
             const metas = await this.discovery.discover(dirs)
             for (const meta of metas) {
-              const saved = this.persist.getSkillState(meta.id)
+              const saved = this.service.getSkillState(meta.id)
               if (saved) {
                 meta.active = saved.active
                 meta.config = saved.config
@@ -172,7 +176,7 @@ export default class SkillModule implements Module {
               return { success: false, error: `技能 ${id} 不存在` }
             }
             skill.meta.active = active
-            this.persist.setActive(id, active)
+            this.service.setActive(id, active)
             this.context.eventBus.emit('skill:toggled', { id, active })
             return { success: true, id, active }
           }
@@ -191,7 +195,7 @@ export default class SkillModule implements Module {
             const params = p as unknown as CreateSkillParams
             const meta = await this.creator.create(params)
             this.skills.set(meta.id, { meta })
-            this.persist.setActive(meta.id, true)
+            this.service.setActive(meta.id, true)
             return { success: true, data: meta }
           }
         }
@@ -264,7 +268,7 @@ export default class SkillModule implements Module {
             if (!skill) {
               return { success: false, error: `技能 ${id} 不存在` }
             }
-            await this.persist.moveToTrash(id, skill.meta.path)
+            await this.service.moveToTrash(id, skill.meta.path)
             this.skills.delete(id)
             return { success: true }
           }
@@ -297,7 +301,7 @@ export default class SkillModule implements Module {
         handler: {
           execute: async (p) => {
             const { id } = p as { id?: string }
-            const stats = await this.persist.getStats(id)
+            const stats = await this.service.getStats(id)
             return { success: true, data: stats }
           }
         }
@@ -319,7 +323,7 @@ export default class SkillModule implements Module {
             }
             if (config !== undefined) {
               skill.meta.config = config
-              this.persist.setConfig(id, config)
+              this.service.setConfig(id, config)
               return { success: true, data: config }
             }
             return { success: true, data: skill.meta.config ?? {} }
@@ -336,7 +340,7 @@ export default class SkillModule implements Module {
         moduleId: this.id,
         handler: {
           execute: async () => {
-            return { success: true, data: this.persist.getTrash() }
+            return { success: true, data: this.service.getTrash() }
           }
         }
       },
@@ -351,7 +355,7 @@ export default class SkillModule implements Module {
         handler: {
           execute: async (p) => {
             const { id } = p as { id: string }
-            const path = await this.persist.restoreFromTrash(id)
+            const path = await this.service.restoreFromTrash(id)
             if (!path) {
               return { success: false, error: `技能 ${id} 不在回收站中` }
             }
@@ -359,7 +363,7 @@ export default class SkillModule implements Module {
             const metas = await this.discovery.discover([path])
             for (const meta of metas) {
               if (meta.id === id) {
-                const saved = this.persist.getSkillState(id)
+                const saved = this.service.getSkillState(id)
                 if (saved) {
                   meta.active = saved.active
                   meta.config = saved.config
@@ -381,7 +385,7 @@ export default class SkillModule implements Module {
         moduleId: this.id,
         handler: {
           execute: async () => {
-            const count = this.persist.emptyTrash()
+            const count = this.service.emptyTrash()
             return { success: true, count }
           }
         }
@@ -397,7 +401,7 @@ export default class SkillModule implements Module {
         handler: {
           execute: async (p) => {
             const { id } = p as { id: string }
-            const ok = this.persist.permanentDelete(id)
+            const ok = this.service.permanentDelete(id)
             if (!ok) {
               return { success: false, error: `技能 ${id} 不在回收站中` }
             }
@@ -418,7 +422,7 @@ export default class SkillModule implements Module {
             const { id, durationMs, success, error } = p as {
               id: string; durationMs: number; success: boolean; error?: string
             }
-            await this.persist.recordUsage(id, durationMs, success, error)
+            await this.service.recordUsage(id, durationMs, success, error)
             const skill = this.skills.get(id)
             if (skill) {
               skill.meta.lastUsedAt = Date.now()

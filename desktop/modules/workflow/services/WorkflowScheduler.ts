@@ -10,7 +10,7 @@ import type { Logger } from '../../../src/main/types/logger'
 import type { Workflow } from '../types'
 import { parseCron, matchCron } from './CronParser'
 import { WorkflowEngine } from './WorkflowEngine'
-import { WorkflowStore } from './WorkflowStore'
+import { WorkflowRepository } from '../repositories/workflow-repository'
 
 /** 调度的 cron 任务 */
 interface ScheduledCron {
@@ -22,16 +22,16 @@ interface ScheduledCron {
 export class WorkflowScheduler {
   private context: ModuleContext
   private logger: Logger
-  private store: WorkflowStore
+  private workflowRepo: WorkflowRepository
   private engine: WorkflowEngine
   private cronJobs = new Map<string, ScheduledCron>()
   private eventHandlers = new Map<string, { event: string; handler: (data: unknown) => void }>()
   private hotkeyHandlers = new Map<string, (data: unknown) => void>()
 
-  constructor(context: ModuleContext, store: WorkflowStore, engine: WorkflowEngine) {
+  constructor(context: ModuleContext, workflowRepo: WorkflowRepository, engine: WorkflowEngine) {
     this.context = context
     this.logger = context.logger
-    this.store = store
+    this.workflowRepo = workflowRepo
     this.engine = engine
   }
 
@@ -106,7 +106,7 @@ export class WorkflowScheduler {
   async reloadAll(): Promise<void> {
     this.unregisterAll()
 
-    const workflows = await this.store.listWorkflows({ enabled: true })
+    const workflows = await this.workflowRepo.findEnabled()
     for (const workflow of workflows) {
       await this.register(workflow)
     }

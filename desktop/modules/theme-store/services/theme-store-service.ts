@@ -1,14 +1,11 @@
-import type { Theme, ThemeMode, ThemeSource } from '../types'
-import type { DatabaseManager } from '../../../src/main/types/database'
-import type { ConfigManager } from '../../../src/main/types/config'
-import type { Logger } from '../../../src/main/types/logger'
+import type { Theme, ThemeMode } from '../types'
+import type { ThemeRepository } from '../repositories/theme-repository'
+import type { ConfigManager } from '../../../../src/main/types/config'
+import type { Logger } from '../../../../src/main/types/logger'
 import { dialog } from 'electron'
 import { writeFile, readFile, readdir } from 'fs/promises'
 import { existsSync } from 'fs'
-import { join, basename } from 'path'
-
-/** 内置主题列表（始终可用，不可删除） */
-const BUILTIN_THEMES: Theme[] = [
+import { join } from 'path'
 
 /** 内置主题列表（始终可用，不可删除） */
 const BUILTIN_THEMES: Theme[] = [
@@ -93,69 +90,48 @@ const BUILTIN_THEMES: Theme[] = [
 ]
 
 /**
- * 主题存储服务
- * @deprecated 请使用 {@link ThemeRepository} + {@link ThemeStoreService} 分层架构替代
- * 管理：内置主题 + 用户导入的主题 + 本地仓库可下载主题
+ * 主题商店服务
+ * 职责：业务逻辑（内置主题 + 扫描 + 导入导出 + 应用）
+ * 数据持久化委托给 ThemeRepository
  */
-export class ThemeStore {
+export class ThemeStoreService {
   private themes: Theme[] = []
-  private db: DatabaseManager
+  private repository: ThemeRepository
   private config: ConfigManager
   private logger: Logger
   private themesDir: string
   private initialized = false
 
-  constructor(db: DatabaseManager, config: ConfigManager, logger: Logger, themesDir: string) {
-    this.db = db
+  constructor(repository: ThemeRepository, config: ConfigManager, logger: Logger, themesDir: string) {
+    this.repository = repository
     this.config = config
     this.logger = logger
     this.themesDir = themesDir
   }
 
-  /** 初始化 */
+  /** 初始化：加载内置 → 加载已导入 → 扫描目录 → 标记激活 */
   async init(): Promise<void> {
     if (this.initialized) return
 
     // 1. 加载内置主题
     this.themes = BUILTIN_THEMES.map(t => ({ ...t }))
 
-    // 2. 建表（存储导入的自定义主题）
+    // 2. 从 Repository 加载已导入的自定义主题
     try {
-      await this.db.run(`CREATE TABLE IF NOT EXISTS themes (
-        id TEXT PRIMARY KEY,
-        name TEXT NOT NULL,
-        author TEXT NOT NULL DEFAULT '',
-        description TEXT NOT NULL DEFAULT '',
-        mode TEXT NOT NULL DEFAULT 'dark',
-        colors TEXT NOT NULL DEFAULT '{}',
-        source TEXT NOT NULL DEFAULT 'imported'
-      )`)
-    } catch (err) {
-      this.logger.warn('创建主题表失败', { error: err })
-    }
-
-    // 3. 加载已导入的自定义主题
-    try {
-      const rows = await this.db.all('SELECT * FROM themes')
-      for (const row of rows as Array<{ id: string; name: string; author: string; description: string; mode: string; colors: string; source: string }>) {
-        if (!this.themes.find(t => t.id === row.id)) {
-          let colors: Record<string, string> = {}
-          try { colors = JSON.parse(row.colors) } catch { /* ignore */ }
-          this.themes.push({
-            id: row.id, name: row.name, author: row.author, description: row.description,
-            mode: (row.mode as ThemeMode) || 'dark', colors, preview: '',
-            source: 'imported', active: false
-          })
+      const imported = await this.repository.findAll()
+      for (const theme of imported) {
+        if (!this.themes.find(t => t.id === theme.id)) {
+          this.themes.push(theme)
         }
       }
     } catch (err) {
-      this.logger.debug('加载已导入主题（表可能不存在）', { error: err })
+      this.logger.debug('加载已导入主题失败（表可能不存在）', { error: err })
     }
 
-    // 4. 扫描本地主题仓库（themes/ 目录）
+    // 3. 扫描本地主题仓库（themes/ 目录）
     await this.scanThemesDir()
 
-    // 5. 标记当前激活的主题
+    // 4. 标记当前激活的主题
     const activeId = await this.config.get<string>('activeTheme')
     if (activeId) {
       this.themes.forEach(x => x.active = x.id === activeId)
@@ -192,13 +168,17 @@ export class ThemeStore {
     }
   }
 
-  getAll(): Theme[] { return this.themes }
+  getAll(): Theme[] {
+    return this.themes
+  }
 
-  findById(id: string): Theme | undefined { return this.themes.find(t => t.id === id) }
+  findById(id: string): Theme | undefined {
+    return this.themes.find(t => t.id === id)
+  }
 
   /**
    * 应用主题
-   * 从仓库"下载"时自动转为 imported
+   * 从仓库"下载"时自动转为 imported 并持久化
    */
   apply(id: string): { theme: Theme; mode: ThemeMode; colors: Record<string, string> } | null {
     const t = this.themes.find(x => x.id === id)
@@ -206,7 +186,9 @@ export class ThemeStore {
     // 如果是可下载的主题，自动导入
     if (t.source === 'available') {
       t.source = 'imported'
-      this.persistTheme(t).catch(() => { /* ignore */ })
+      this.repository.save(t).catch(err => {
+        this.logger.warn('自动导入主题失败', { id: t.id, error: err })
+      })
     }
     this.themes.forEach(x => x.active = x.id === id)
     return { theme: t, mode: t.mode, colors: t.colors }
@@ -248,22 +230,10 @@ export class ThemeStore {
         this.themes.push(theme)
       }
 
-      await this.persistTheme(theme)
+      await this.repository.save(theme)
       return { theme }
     } catch (err) {
       return { theme: null, error: `导入失败: ${(err as Error).message}` }
-    }
-  }
-
-  /** 持久化主题到数据库 */
-  private async persistTheme(theme: Theme): Promise<void> {
-    try {
-      await this.db.run(
-        'INSERT OR REPLACE INTO themes (id, name, author, description, mode, colors, source) VALUES (?, ?, ?, ?, ?, ?, ?)',
-        [theme.id, theme.name, theme.author, theme.description, theme.mode, JSON.stringify(theme.colors), theme.source]
-      )
-    } catch (err) {
-      this.logger.warn('持久化主题失败', { id: theme.id, error: err })
     }
   }
 
@@ -273,13 +243,9 @@ export class ThemeStore {
     if (!t) return { ok: false, error: '主题不存在' }
     if (t.source === 'builtin') return { ok: false, error: '不能删除内置主题' }
     if (t.active) return { ok: false, error: '不能删除当前使用的主题' }
-    // 从列表移除
+    // 从内存列表移除
     this.themes = this.themes.filter(x => x.id !== id)
-    try {
-      await this.db.run('DELETE FROM themes WHERE id = ?', [id])
-    } catch (err) {
-      this.logger.warn('删除主题记录失败', { id, error: err })
-    }
+    await this.repository.removeById(id)
     return { ok: true }
   }
 

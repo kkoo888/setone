@@ -4,6 +4,8 @@ import { randomUUID } from 'crypto'
 /**
  * 代码片段存储服务
  * 负责 code_snippets 表的 CRUD 操作
+ *
+ * @deprecated 已由 SnippetRepository + SnippetService 分层架构替代，请使用新架构。
  */
 export class SnippetStore {
   private snippets: Snippet[] = []

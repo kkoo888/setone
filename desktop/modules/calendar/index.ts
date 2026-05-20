@@ -1,8 +1,8 @@
 import type { Module, ModuleContext, Capability } from '../../src/main/types/module'
 import type { CalEvent, CalendarListParams, CalendarCreateParams, CalendarUpdateParams, CalendarDeleteParams } from './types'
-import { CalendarStore } from './services/calendar-store'
+import { CalendarEventRepository } from './repositories/calendar-event-repository'
+import { CalendarEventService } from './services/calendar-event-service'
 import { ReminderChecker } from './services/reminder-checker'
-import { randomUUID } from 'crypto'
 
 export default class CalendarModule implements Module {
   id = 'calendar'
@@ -10,14 +10,19 @@ export default class CalendarModule implements Module {
   private context!: ModuleContext
   private events: CalEvent[] = []
   private reminderTimer?: NodeJS.Timeout
-  private store!: CalendarStore
+  private service!: CalendarEventService
   private checker!: ReminderChecker
 
   async activate(context: ModuleContext): Promise<void> {
     this.context = context
-    this.store = new CalendarStore(context.db)
+
+    const repository = new CalendarEventRepository(context.db, context.logger)
+    this.service = new CalendarEventService(repository, context.logger)
+    await this.service.init()
+
     this.checker = new ReminderChecker(context.eventBus)
-    this.events = await this.store.loadAll()
+    this.events = await this.service.getAllEvents()
+
     // 每分钟检查提醒
     this.reminderTimer = setInterval(() => this.checker.check(this.events), 60000)
     context.logger.info('日程日历模块已激活')
@@ -29,6 +34,7 @@ export default class CalendarModule implements Module {
       this.reminderTimer = undefined
     }
     this.events = []
+    this.service = undefined as unknown as CalendarEventService
     this.context.logger.info('日程日历模块已停用')
   }
 
@@ -46,9 +52,8 @@ export default class CalendarModule implements Module {
           execute: async (p) => {
             const { month, year } = (p ?? {}) as CalendarListParams
             if (month !== undefined && year !== undefined) {
-              const start = new Date(year, month, 1).getTime()
-              const end = new Date(year, month + 1, 0, 23, 59, 59).getTime()
-              return { success: true, data: this.events.filter(e => e.startTime < end && e.endTime > start) }
+              const data = await this.service.getEventsByMonth(year, month)
+              return { success: true, data }
             }
             return { success: true, data: this.events }
           }
@@ -70,13 +75,8 @@ export default class CalendarModule implements Module {
         handler: {
           execute: async (p) => {
             const params = p as CalendarCreateParams
-            const e: CalEvent = {
-              id: randomUUID(), title: params.title, description: params.description ?? '',
-              startTime: params.startTime, endTime: params.endTime, color: params.color ?? '#4a9eff',
-              allDay: params.allDay ?? false, reminder: params.reminder ?? 15
-            }
+            const e = await this.service.createEvent(params)
             this.events.push(e)
-            await this.store.save(e)
             return { success: true, data: e }
           }
         }
@@ -97,13 +97,12 @@ export default class CalendarModule implements Module {
         },
         handler: {
           execute: async (p) => {
-            const { id, ...updates } = p as CalendarUpdateParams
-            const idx = this.events.findIndex(e => e.id === id)
-            if (idx === -1) return { success: false, error: '日程不存在' }
-            this.events[idx] = { ...this.events[idx], ...updates }
-            this.checker.resetNotification(id)
-            await this.store.save(this.events[idx])
-            return { success: true, data: this.events[idx] }
+            const params = p as CalendarUpdateParams
+            const updated = await this.service.updateEvent(params)
+            const idx = this.events.findIndex(e => e.id === params.id)
+            if (idx !== -1) this.events[idx] = updated
+            this.checker.resetNotification(params.id)
+            return { success: true, data: updated }
           }
         }
       },
@@ -117,8 +116,8 @@ export default class CalendarModule implements Module {
         handler: {
           execute: async (p) => {
             const { id } = p as CalendarDeleteParams
+            await this.service.deleteEvent(id)
             this.events = this.events.filter(e => e.id !== id)
-            await this.store.delete(id)
             return { success: true }
           }
         }

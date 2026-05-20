@@ -1,22 +1,23 @@
 import type { Module, ModuleContext, Capability } from '../../src/main/types/module'
 import type { SessionCreateParams, SessionIdParams, SessionRenameParams } from './types'
-import { SessionStore } from './services/session-store'
+import { SessionRepository } from './repositories/session-repository'
+import { SessionService } from './services/session-service'
 
 export default class MultiSessionModule implements Module {
   id = 'multi-session'
   meta!: import('../../src/main/types/module').ModuleMeta
   private context!: ModuleContext
-  private store!: SessionStore
+  private service!: SessionService
 
   async activate(context: ModuleContext): Promise<void> {
     this.context = context
-    this.store = new SessionStore(context.db)
-    await this.store.loadAll()
+    const repo = new SessionRepository(context.db, context.logger)
+    await repo.init()
+    this.service = new SessionService(repo, context.logger)
     context.logger.info('多会话管理模块已激活')
   }
 
   async deactivate(): Promise<void> {
-    // 无定时器或事件监听需清理，数据已持久化到 DB
     this.context.logger.info('多会话管理模块已停用')
   }
 
@@ -26,7 +27,7 @@ export default class MultiSessionModule implements Module {
         type: 'tool', name: 'session_list', description: '列出所有会话及当前活跃会话', priority: 10, moduleId: this.id,
         parameters: { type: 'object', properties: {}, required: [] },
         handler: {
-          execute: async () => ({ success: true, data: this.store.getAll(), activeId: this.store.getActiveId() })
+          execute: async () => ({ success: true, data: this.service.getAll(), activeId: this.service.getActiveId() })
         }
       },
       {
@@ -40,7 +41,7 @@ export default class MultiSessionModule implements Module {
         handler: {
           execute: async (p) => {
             const { name, model } = (p ?? {}) as SessionCreateParams
-            const s = this.store.create(name, model)
+            const s = await this.service.create(name, model)
             return { success: true, data: s }
           }
         }
@@ -55,7 +56,7 @@ export default class MultiSessionModule implements Module {
         handler: {
           execute: async (p) => {
             const { id } = p as SessionIdParams
-            const s = this.store.switchTo(id)
+            const s = await this.service.switchTo(id)
             if (!s) return { success: false, error: '会话不存在' }
             return { success: true }
           }
@@ -71,7 +72,7 @@ export default class MultiSessionModule implements Module {
         handler: {
           execute: async (p) => {
             const { id } = p as SessionIdParams
-            const ok = this.store.delete(id)
+            const ok = await this.service.delete(id)
             if (!ok) return { success: false, error: '会话不存在' }
             return { success: true }
           }
@@ -88,7 +89,7 @@ export default class MultiSessionModule implements Module {
         handler: {
           execute: async (p) => {
             const { id, name } = p as SessionRenameParams
-            const s = this.store.rename(id, name)
+            const s = await this.service.rename(id, name)
             if (!s) return { success: false, error: '会话不存在' }
             return { success: true }
           }
@@ -104,7 +105,7 @@ export default class MultiSessionModule implements Module {
         handler: {
           execute: async (p) => {
             const { id } = p as SessionIdParams
-            const pinned = this.store.togglePin(id)
+            const pinned = await this.service.togglePin(id)
             if (pinned === null) return { success: false, error: '会话不存在' }
             return { success: true, data: { pinned } }
           }

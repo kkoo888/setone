@@ -7,6 +7,9 @@ import type { SkillStateFile, SkillStateEntry, SkillStats } from './types'
 /**
  * 技能状态持久化引擎
  * 使用 JSON 文件存储技能状态，SQLite 存储使用统计
+ *
+ * @deprecated 已拆分为 SkillStateRepository + SkillStatsRepository + SkillPersistService，
+ * 请使用 {@link SkillPersistService} 替代。
  */
 export class SkillPersist {
   private logger: Logger

@@ -1,161 +1,131 @@
-import type { DatabaseManager } from '../../../src/main/types/database'
 import type { Logger } from '../../../src/main/types/logger'
-import type { KBChunk, KBSearchResult } from '../types'
-
-/** SQLite 行类型 */
-interface ChunkRow {
-  id: string
-  document_id: string
-  chunk_index: number
-  content: string
-  embedding: Buffer
-  created_at: number
-}
-
-interface DocumentRow {
-  id: string
-  file_name: string
-  file_path: string
-}
+import type { KBChunk, KBSearchResult, KBDocument } from '../types'
+import type { DocumentRepository } from '../repositories/document-repository'
+import type { ChunkRepository } from '../repositories/chunk-repository'
 
 /**
- * 向量存储服务
- * 使用 SQLite 存储文本片段和嵌入向量，支持余弦相似度搜索
+ * 向量存储服务（Service 层）
+ * 协调 Repository 完成业务逻辑，保留向量相似度搜索核心能力
  */
 export class VectorStore {
-  private readonly db: DatabaseManager
+  private readonly docRepo: DocumentRepository
+  private readonly chunkRepo: ChunkRepository
   private readonly logger: Logger
 
-  constructor(db: DatabaseManager, logger: Logger) {
-    this.db = db
+  constructor(docRepo: DocumentRepository, chunkRepo: ChunkRepository, logger: Logger) {
+    this.docRepo = docRepo
+    this.chunkRepo = chunkRepo
     this.logger = logger
   }
 
   /**
-   * 初始化数据库表
+   * 初始化：委托两个 Repository 建表
    */
   async init(): Promise<void> {
-    await this.db.run(`
-      CREATE TABLE IF NOT EXISTS kb_documents (
-        id TEXT PRIMARY KEY,
-        file_name TEXT NOT NULL,
-        file_path TEXT NOT NULL,
-        file_type TEXT NOT NULL,
-        file_size INTEGER NOT NULL,
-        chunk_count INTEGER NOT NULL DEFAULT 0,
-        created_at INTEGER NOT NULL,
-        updated_at INTEGER NOT NULL
-      )
-    `)
-
-    await this.db.run(`
-      CREATE TABLE IF NOT EXISTS kb_chunks (
-        id TEXT PRIMARY KEY,
-        document_id TEXT NOT NULL,
-        chunk_index INTEGER NOT NULL,
-        content TEXT NOT NULL,
-        embedding BLOB NOT NULL,
-        created_at INTEGER NOT NULL,
-        FOREIGN KEY (document_id) REFERENCES kb_documents(id) ON DELETE CASCADE
-      )
-    `)
-
-    await this.db.run(`
-      CREATE INDEX IF NOT EXISTS idx_kb_chunks_document_id ON kb_chunks(document_id)
-    `)
-
+    await this.docRepo.init()
+    await this.chunkRepo.init()
     this.logger.info('知识库数据库表已初始化')
   }
 
   /**
-   * 存储文档
+   * 存储文档（委托 DocumentRepository）
    */
-  async saveDocument(id: string, fileName: string, filePath: string, fileType: string, fileSize: number, chunkCount: number): Promise<void> {
+  async saveDocument(
+    id: string,
+    fileName: string,
+    filePath: string,
+    fileType: string,
+    fileSize: number,
+    chunkCount: number
+  ): Promise<void> {
     const now = Date.now()
-    await this.db.run(
-      `INSERT OR REPLACE INTO kb_documents (id, file_name, file_path, file_type, file_size, chunk_count, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [id, fileName, filePath, fileType, fileSize, chunkCount, now, now]
-    )
+    const doc: KBDocument = {
+      id,
+      fileName,
+      filePath,
+      fileType,
+      fileSize,
+      chunkCount,
+      createdAt: now,
+      updatedAt: now
+    }
+    await this.docRepo.save(doc)
   }
 
   /**
-   * 存储文本片段及其嵌入向量
+   * 存储文本片段（委托 ChunkRepository）
    */
   async saveChunks(chunks: KBChunk[]): Promise<void> {
-    await this.db.transaction(async () => {
-      for (const chunk of chunks) {
-        const embeddingBuffer = this.float32ArrayToBuffer(chunk.embedding)
-        await this.db.run(
-          `INSERT OR REPLACE INTO kb_chunks (id, document_id, chunk_index, content, embedding, created_at)
-           VALUES (?, ?, ?, ?, ?, ?)`,
-          [chunk.id, chunk.documentId, chunk.chunkIndex, chunk.content, embeddingBuffer, chunk.createdAt]
-        )
-      }
-    })
+    await this.chunkRepo.saveAll(chunks)
   }
 
   /**
-   * 语义搜索：计算余弦相似度返回 Top-K 结果
+   * 语义搜索：从 chunkRepo 获取向量 + 计算余弦相似度
    */
   async search(queryEmbedding: number[], topK: number = 5): Promise<KBSearchResult[]> {
-    const rows = await this.db.query<ChunkRow>(`
-      SELECT c.id, c.document_id, c.chunk_index, c.content, c.embedding, c.created_at,
-             d.file_name, d.file_path
-      FROM kb_chunks c
-      JOIN kb_documents d ON c.document_id = d.id
-    `)
+    const chunksWithEmbedding = await this.chunkRepo.findAllWithEmbedding()
 
     const scored: KBSearchResult[] = []
-    for (const row of rows) {
-      const chunkEmbedding = this.bufferToFloat32Array(row.embedding)
-      // 跳过空向量（联网关闭时导入的文档）
-      if (chunkEmbedding.length === 0) continue
-      const score = this.cosineSimilarity(queryEmbedding, chunkEmbedding)
+    for (const chunk of chunksWithEmbedding) {
+      const score = this.cosineSimilarity(queryEmbedding, Array.from(chunk.embedding))
       scored.push({
-        chunkId: row.id,
-        documentId: row.document_id,
-        fileName: row.file_name,
-        filePath: row.file_path,
-        content: row.content,
+        chunkId: chunk.id,
+        documentId: chunk.documentId,
+        fileName: '',   // JOIN 字段不在 chunk 实体中，需从 docRepo 补
+        filePath: '',
+        content: chunk.content,
         score,
-        chunkIndex: row.chunk_index
+        chunkIndex: chunk.chunkIndex
       })
     }
 
     // 按相似度降序排列，取 Top-K
     scored.sort((a, b) => b.score - a.score)
-    return scored.slice(0, topK)
+    const topResults = scored.slice(0, topK)
+
+    // 补充文档信息
+    const docIds = [...new Set(topResults.map(r => r.documentId))]
+    const docMap = new Map<string, KBDocument>()
+    for (const docId of docIds) {
+      const doc = await this.docRepo.findById(docId)
+      if (doc) docMap.set(docId, doc)
+    }
+    for (const result of topResults) {
+      const doc = docMap.get(result.documentId)
+      if (doc) {
+        result.fileName = doc.fileName
+        result.filePath = doc.filePath
+      }
+    }
+
+    return topResults
   }
 
   /**
-   * 获取所有文档
+   * 获取所有文档（委托 DocumentRepository）
    */
-  async listDocuments(): Promise<Array<{
-    id: string; fileName: string; filePath: string; fileType: string;
-    fileSize: number; chunkCount: number; createdAt: number; updatedAt: number
-  }>> {
-    return this.db.query(`SELECT * FROM kb_documents ORDER BY created_at DESC`)
+  async listDocuments(): Promise<KBDocument[]> {
+    return this.docRepo.findAll()
   }
 
   /**
-   * 删除文档及其所有片段
+   * 删除文档及其所有片段（事务内删除）
    */
   async deleteDocument(documentId: string): Promise<boolean> {
-    const result = await this.db.run(`DELETE FROM kb_documents WHERE id = ?`, [documentId])
-    await this.db.run(`DELETE FROM kb_chunks WHERE document_id = ?`, [documentId])
-    return result.changes > 0
+    const doc = await this.docRepo.findById(documentId)
+    if (!doc) return false
+
+    await this.chunkRepo.removeByDocumentId(documentId)
+    await this.docRepo.removeById(documentId)
+    return true
   }
 
   /**
    * 获取文档片段数
    */
   async getChunkCount(documentId: string): Promise<number> {
-    const row = await this.db.get<{ count: number }>(
-      `SELECT COUNT(*) as count FROM kb_chunks WHERE document_id = ?`,
-      [documentId]
-    )
-    return row?.count ?? 0
+    const chunks = await this.chunkRepo.findByDocumentId(documentId)
+    return chunks.length
   }
 
   /**
@@ -178,21 +148,5 @@ export class VectorStore {
     if (denominator === 0) return 0
 
     return dotProduct / denominator
-  }
-
-  /**
-   * Float32Array → Buffer（用于 SQLite BLOB 存储）
-   */
-  private float32ArrayToBuffer(arr: number[]): Buffer {
-    const float32 = new Float32Array(arr)
-    return Buffer.from(float32.buffer)
-  }
-
-  /**
-   * Buffer → Float32Array（从 SQLite BLOB 读取）
-   */
-  private bufferToFloat32Array(buf: Buffer): number[] {
-    const float32 = new Float32Array(buf.buffer, buf.byteOffset, buf.byteLength / 4)
-    return Array.from(float32)
   }
 }

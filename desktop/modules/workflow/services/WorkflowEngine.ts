@@ -11,7 +11,8 @@ import type {
   WorkflowRunStatus,
   StepResult
 } from '../types'
-import { WorkflowStore } from './WorkflowStore'
+import { WorkflowRepository } from '../repositories/workflow-repository'
+import { WorkflowRunRepository } from '../repositories/workflow-run-repository'
 import { StepExecutor, type StepExecutionContext } from './StepExecutor'
 
 /** 正在运行的工作流引用 */
@@ -23,15 +24,21 @@ interface RunningWorkflow {
 export class WorkflowEngine {
   private context: ModuleContext
   private logger: Logger
-  private store: WorkflowStore
+  private workflowRepo: WorkflowRepository
+  private runRepo: WorkflowRunRepository
   private stepExecutor: StepExecutor
   private running = new Map<string, RunningWorkflow>()
   private executionTimeout: number
 
-  constructor(context: ModuleContext, store: WorkflowStore) {
+  constructor(
+    context: ModuleContext,
+    workflowRepo: WorkflowRepository,
+    runRepo: WorkflowRunRepository
+  ) {
     this.context = context
     this.logger = context.logger
-    this.store = store
+    this.workflowRepo = workflowRepo
+    this.runRepo = runRepo
     this.stepExecutor = new StepExecutor(context)
 
     // 从 settings 读取超时配置
@@ -66,7 +73,7 @@ export class WorkflowEngine {
     this.running.set(runId, runningRef)
 
     // 持久化初始记录
-    await this.store.saveRun(run)
+    await this.runRepo.save(run)
 
     this.logger.info(`开始执行工作流: ${workflow.name} (runId: ${runId})`)
 
@@ -95,7 +102,7 @@ export class WorkflowEngine {
         run.stepResults.push(stepResult)
 
         // 持久化中间结果
-        await this.store.saveRun(run)
+        await this.runRepo.save(run)
 
         // 记录输出到上下文（即使失败也可能有部分输出）
         if (stepResult.output !== undefined) {
@@ -131,14 +138,10 @@ export class WorkflowEngine {
     this.running.delete(runId)
 
     // 持久化最终结果
-    await this.store.saveRun(run)
+    await this.runRepo.save(run)
 
     // 更新工作流统计
-    await this.store.updateWorkflowRunCount(
-      workflow.id,
-      workflow.runCount + 1,
-      run.finishedAt
-    )
+    await this.workflowRepo.updateRunInfo(workflow.id, run.finishedAt)
 
     // 发送事件
     this.context.eventBus.emit('workflow:completed' as never, {

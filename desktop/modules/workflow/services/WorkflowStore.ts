@@ -1,6 +1,9 @@
 /**
  * 工作流存储层
  * 负责工作流定义和运行记录的 SQLite 持久化
+ *
+ * @deprecated 已拆分为 WorkflowRepository + WorkflowRunRepository + WorkflowService 分层架构。
+ *             请使用新的 Repository/Service 层，此类保留仅为向后兼容。
  */
 import type { DatabaseManager } from '../../../src/main/types/database'
 import type { Logger } from '../../../src/main/types/logger'
@@ -37,6 +40,7 @@ interface RunRow {
   error: string | null
 }
 
+/** @deprecated 使用 WorkflowRepository + WorkflowRunRepository + WorkflowService 替代 */
 export class WorkflowStore {
   private db: DatabaseManager
   private logger: Logger
