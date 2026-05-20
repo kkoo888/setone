@@ -6,6 +6,7 @@
  */
 import { ipcMain, BrowserWindow } from 'electron'
 import { join } from 'node:path'
+import { registeredModuleIpc } from './module.handlers'
 import type { HandlerDeps } from './types'
 
 /** Live2D 宠物窗口引用 */
@@ -17,6 +18,15 @@ let live2dWindow: BrowserWindow | null = null
  */
 export function registerLive2dHandlers(deps: HandlerDeps): void {
   const { logger } = deps
+
+  registeredModuleIpc.add('live2d:create-window')
+  registeredModuleIpc.add('live2d:close-window')
+  registeredModuleIpc.add('live2d:toggle-visibility')
+  registeredModuleIpc.add('live2d:set-ignore-mouse')
+  registeredModuleIpc.add('live2d:start-drag')
+  registeredModuleIpc.add('live2d:get-bounds')
+  registeredModuleIpc.add('live2d:set-size')
+  registeredModuleIpc.add('live2d:set-position')
 
   /**
    * 创建 Live2D 透明窗口

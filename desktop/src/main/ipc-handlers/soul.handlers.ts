@@ -4,6 +4,7 @@
  */
 import { ipcMain } from 'electron'
 import { SoulManager } from '../core/soul-manager'
+import { registeredModuleIpc } from './module.handlers'
 import type { HandlerDeps } from './types'
 
 /** 获取 SoulManager 单例 */
@@ -22,6 +23,12 @@ function getSoulManager() {
  * @param deps - 共享依赖
  */
 export function registerSoulHandlers(_deps: HandlerDeps): void {
+  registeredModuleIpc.add('soul:initialize')
+  registeredModuleIpc.add('soul:get')
+  registeredModuleIpc.add('soul:create')
+  registeredModuleIpc.add('soul:update')
+  registeredModuleIpc.add('soul:reset')
+
   /** 初始化 SOUL（检查本地配置或继承 SOUL.md） */
   ipcMain.handle('soul:initialize', async () => {
     const sm = await getSoulManager()

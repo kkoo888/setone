@@ -5,6 +5,7 @@
  */
 import { ipcMain } from 'electron'
 import { pollingRegistry } from '../core/polling-registry'
+import { registeredModuleIpc } from './module.handlers'
 import type { HandlerDeps } from './types'
 
 /**
@@ -12,6 +13,13 @@ import type { HandlerDeps } from './types'
  * @param deps - 共享依赖
  */
 export function registerPollingHandlers(_deps: HandlerDeps): void {
+  registeredModuleIpc.add('polling:register')
+  registeredModuleIpc.add('polling:registerModule')
+  registeredModuleIpc.add('polling:unregister')
+  registeredModuleIpc.add('polling:update')
+  registeredModuleIpc.add('polling:tick')
+  registeredModuleIpc.add('polling:list')
+
   /** 注册核心轮询任务（不绑定模块，常驻） */
   ipcMain.handle('polling:register', async (_event, task) => {
     pollingRegistry.register(task)

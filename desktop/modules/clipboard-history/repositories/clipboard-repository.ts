@@ -1,5 +1,5 @@
 import type { ClipItem } from '../types'
-import type { Logger } from '../../src/main/types/module'
+import type { Logger } from '../../../src/main/types/logger'
 
 /**
  * 剪贴板历史 Repository 层
@@ -23,16 +23,17 @@ export class ClipboardRepository {
   }
 
   /**
-   * 同步获取缓存（高频调用）
+   * 同步获取缓存快照（高频调用）
+   * 返回只读数组，防止外部直接修改内部缓存
    */
-  getCache(): ClipItem[] {
+  getCache(): readonly ClipItem[] {
     return this.cache
   }
 
   /**
    * 从缓存中按 ID 查找
    */
-  async findById(id: string): Promise<ClipItem | undefined> {
+  findById(id: string): ClipItem | undefined {
     return this.cache.find(c => c.id === id)
   }
 

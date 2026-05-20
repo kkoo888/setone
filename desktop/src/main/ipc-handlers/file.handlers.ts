@@ -3,7 +3,7 @@
  * file:read / file:write / file:list
  */
 import { ipcMain } from 'electron'
-import { invokeModuleCapability } from './module.handlers'
+import { invokeModuleCapability, registeredModuleIpc } from './module.handlers'
 import type { HandlerDeps } from './types'
 
 /**
@@ -11,6 +11,10 @@ import type { HandlerDeps } from './types'
  * @param deps - 共享依赖
  */
 export function registerFileHandlers(deps: HandlerDeps): void {
+  registeredModuleIpc.add('file:read')
+  registeredModuleIpc.add('file:write')
+  registeredModuleIpc.add('file:list')
+
   /** 读取文件 */
   ipcMain.handle('file:read', async (_event, args: { path: string }) => {
     return invokeModuleCapability('file', 'file_read', args, deps)

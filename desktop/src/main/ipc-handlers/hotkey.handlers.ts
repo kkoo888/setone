@@ -3,6 +3,7 @@
  * hotkey_register / hotkey_unregister / hotkey_list / window:toggle
  */
 import { ipcMain, BrowserWindow, globalShortcut } from 'electron'
+import { registeredModuleIpc } from './module.handlers'
 import type { HandlerDeps } from './types'
 
 /** 已注册的快捷键映射 accelerator → callback */
@@ -14,6 +15,11 @@ const registeredHotkeys = new Map<string, () => void>()
  */
 export function registerHotkeyHandlers(deps: HandlerDeps): void {
   const { logger } = deps
+
+  registeredModuleIpc.add('hotkey_register')
+  registeredModuleIpc.add('hotkey_unregister')
+  registeredModuleIpc.add('hotkey_list')
+  registeredModuleIpc.add('window:toggle')
 
   /** 注册全局快捷键（兜底：当 desktop-integration 模块未加载时使用） */
   ipcMain.handle('hotkey_register', async (_event, args: { accelerator: string; description?: string }) => {

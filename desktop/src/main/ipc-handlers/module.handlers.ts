@@ -86,6 +86,11 @@ function unregisterModuleCapabilities(moduleId: string, deps: HandlerDeps): void
 export function registerModuleHandlers(deps: HandlerDeps): void {
   const { config, logger, eventBus, moduleManager } = deps
 
+  registeredModuleIpc.add('module:list')
+  registeredModuleIpc.add('module:enable')
+  registeredModuleIpc.add('module:disable')
+  registeredModuleIpc.add('module:reload')
+
   /** 获取所有模块列表 */
   ipcMain.handle('module:list', async () => {
     if (!moduleManager) {

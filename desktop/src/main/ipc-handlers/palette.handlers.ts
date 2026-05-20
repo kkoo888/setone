@@ -3,7 +3,7 @@
  * palette:search / palette:execute / palette:open / palette:close
  */
 import { ipcMain } from 'electron'
-import { invokeModuleCapability } from './module.handlers'
+import { invokeModuleCapability, registeredModuleIpc } from './module.handlers'
 import type { HandlerDeps } from './types'
 
 /**
@@ -11,6 +11,11 @@ import type { HandlerDeps } from './types'
  * @param deps - 共享依赖
  */
 export function registerPaletteHandlers(deps: HandlerDeps): void {
+  registeredModuleIpc.add('palette:search')
+  registeredModuleIpc.add('palette:execute')
+  registeredModuleIpc.add('palette:open')
+  registeredModuleIpc.add('palette:close')
+
   /** 搜索命令 */
   ipcMain.handle('palette:search', async (_event, args: { query?: string }) => {
     try {

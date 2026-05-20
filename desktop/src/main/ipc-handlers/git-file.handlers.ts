@@ -7,6 +7,7 @@ import { ipcMain, BrowserWindow, dialog } from 'electron'
 import { execFile } from 'node:child_process'
 import { join } from 'node:path'
 import { readdir, stat, readFile } from 'node:fs/promises'
+import { registeredModuleIpc } from './module.handlers'
 import type { HandlerDeps } from './types'
 
 /** 项目根目录（开发模式下向上两级） */
@@ -142,6 +143,14 @@ async function buildFileTree(dirPath: string, depth: number, maxDepth: number): 
  */
 export function registerGitFileHandlers(deps: HandlerDeps): void {
   const { logger } = deps
+
+  registeredModuleIpc.add('git:status')
+  registeredModuleIpc.add('git:diff')
+  registeredModuleIpc.add('files:list')
+  registeredModuleIpc.add('files:read')
+  registeredModuleIpc.add('files:readAny')
+  registeredModuleIpc.add('files:openPicker')
+  registeredModuleIpc.add('dialog:openFile')
 
   /** 获取 git 变更列表 */
   ipcMain.handle('git:status', async () => {

@@ -3,6 +3,7 @@
  * 所有 skill:* 相关 IPC 通道
  */
 import { ipcMain } from 'electron'
+import { registeredModuleIpc } from './module.handlers'
 import type { HandlerDeps } from './types'
 
 /**
@@ -40,6 +41,29 @@ async function assertNetworkAllowed(deps: HandlerDeps): Promise<boolean> {
  */
 export function registerSkillHandlers(deps: HandlerDeps): void {
   const { logger } = deps
+
+  registeredModuleIpc.add('skill:list')
+  registeredModuleIpc.add('skill:discover')
+  registeredModuleIpc.add('skill:toggle')
+  registeredModuleIpc.add('skill:create')
+  registeredModuleIpc.add('skill:refine')
+  registeredModuleIpc.add('skill:delete')
+  registeredModuleIpc.add('skill:scan')
+  registeredModuleIpc.add('skill:config')
+  registeredModuleIpc.add('skill:trash:list')
+  registeredModuleIpc.add('skill:trash:restore')
+  registeredModuleIpc.add('skill:trash:empty')
+  registeredModuleIpc.add('skill:trash:delete')
+  registeredModuleIpc.add('skill:stats')
+  registeredModuleIpc.add('skill:export')
+  registeredModuleIpc.add('skill:import')
+  registeredModuleIpc.add('skill:export:batch')
+  registeredModuleIpc.add('skill:import:batch')
+  registeredModuleIpc.add('skill:market:search')
+  registeredModuleIpc.add('skill:market:install')
+  registeredModuleIpc.add('skill:install:url')
+  registeredModuleIpc.add('skill:update:check')
+  registeredModuleIpc.add('skill:update:run')
 
   /** 获取全部技能列表 */
   ipcMain.handle('skill:list', async () => {

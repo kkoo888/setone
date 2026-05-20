@@ -3,6 +3,7 @@
  * performance:snapshot / ollama:listModels
  */
 import { ipcMain } from 'electron'
+import { registeredModuleIpc } from './module.handlers'
 import type { HandlerDeps } from './types'
 
 /** Ollama 模型信息 */
@@ -18,6 +19,9 @@ interface OllamaModel {
  */
 export function registerPerformanceHandlers(deps: HandlerDeps): void {
   const { config, logger } = deps
+
+  registeredModuleIpc.add('ollama:listModels')
+  registeredModuleIpc.add('performance:snapshot')
 
   /** 获取 Ollama 已安装的模型列表 */
   ipcMain.handle('ollama:listModels', async () => {

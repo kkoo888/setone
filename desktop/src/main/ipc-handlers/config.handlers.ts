@@ -4,6 +4,7 @@
  */
 import { ipcMain } from 'electron'
 import { readAssistantNameFromSoul } from '../core/soul-reader'
+import { registeredModuleIpc } from './module.handlers'
 import type { HandlerDeps } from './types'
 
 /**
@@ -12,6 +13,10 @@ import type { HandlerDeps } from './types'
  */
 export function registerConfigHandlers(deps: HandlerDeps): void {
   const { config } = deps
+
+  registeredModuleIpc.add('config:get')
+  registeredModuleIpc.add('config:set')
+  registeredModuleIpc.add('soul:readName')
 
   /** 获取配置值（支持不传 key 返回全部配置） */
   ipcMain.handle('config:get', async (_event, args?: { key?: string; defaultValue?: unknown }) => {

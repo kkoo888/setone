@@ -5,6 +5,7 @@
 import { ipcMain, BrowserWindow } from 'electron'
 import type { ToolDefinition, ToolCall } from '../types/ai'
 import { getToolParamSchema } from '../core/tool-param-schemas'
+import { registeredModuleIpc } from './module.handlers'
 import type { HandlerDeps } from './types'
 
 /**
@@ -14,7 +15,7 @@ import type { HandlerDeps } from './types'
  * @returns 工具定义数组
  */
 function collectModuleTools(deps: HandlerDeps): ToolDefinition[] {
-  const { moduleManager } = deps
+  const { moduleManager, logger } = deps
   if (!moduleManager) return []
   const tools: ToolDefinition[] = []
   const modules = moduleManager.getModules()
@@ -40,8 +41,8 @@ function collectModuleTools(deps: HandlerDeps): ToolDefinition[] {
           }
         })
       }
-    } catch {
-      // 模块能力收集失败，跳过
+    } catch (err) {
+      logger.warn(`收集模块 ${reg.meta.id} 的工具定义失败，跳过`, err as Error)
     }
   }
   return tools
@@ -93,6 +94,9 @@ async function executeToolCall(toolCall: ToolCall, deps: HandlerDeps): Promise<{
  */
 export function registerAiHandlers(deps: HandlerDeps): void {
   const { logger, aiService } = deps
+
+  registeredModuleIpc.add('ai:chat')
+  registeredModuleIpc.add('ai:chatStream')
 
   /** AI 非流式对话（支持工具调用） */
   ipcMain.handle('ai:chat', async (_event, args: { messages: Array<{ role: string; content: string; images?: string[] }> }) => {

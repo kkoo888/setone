@@ -144,11 +144,12 @@ app.whenReady().then(async () => {
       db = new DatabaseManager(logger)
     } catch (dbErr) {
       console.error('[Main] 数据库初始化失败:', dbErr)
-      logger.error('数据库初始化失败，部分功能将不可用', dbErr as Error)
+      logger.error('数据库初始化失败，应用无法启动', dbErr as Error)
+      throw dbErr
     }
 
     const modulesPath = getModulesPath()
-    const moduleManager = new ModuleManager(eventBus, config, aiService, db!, modulesPath)
+    const moduleManager = new ModuleManager(eventBus, config, aiService, db as DatabaseManager, modulesPath)
 
     const performanceMonitor = new PerformanceMonitor()
 
@@ -161,7 +162,7 @@ app.whenReady().then(async () => {
 
     performanceMonitor.start()
 
-    registerAllIpcHandlers({ config, logger, eventBus, aiService, db: db!, moduleManager, performanceMonitor })
+    registerAllIpcHandlers({ config, logger, eventBus, aiService, db: db as DatabaseManager, moduleManager, performanceMonitor })
     createAppMenu()
     createTray(() => mainWindow, config!)
 
