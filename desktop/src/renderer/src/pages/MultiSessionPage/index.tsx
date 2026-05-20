@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { ModuleHeader } from '../../components/common/module/ModuleHeader'
-import { MessageOne, Message, Pushpin, DeleteOne, LocalPin } from '../../utils/statusMessages'
+import { EMPTY_ICONS, MessageOne, Message, Pushpin, DeleteOne, LocalPin } from '../../utils/statusMessages'
 import { ModuleList, ModuleListItem } from '../../components/common/module/ModuleList'
 
 const msgOneIcon = React.createElement(MessageOne, { size: 16, fill: 'currentColor', theme: 'outline' })
