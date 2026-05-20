@@ -5,6 +5,7 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react'
 import { useSkillStore } from '../../../stores/useSkillStore'
 import { useSettingsStore } from '../../../stores/useSettingsStore'
+import { FolderOpen, Star, LoadingFour, DownloadOne, Plug, Search, Tips } from '@icon-park/react'
 import type { MarketSkill } from '../../../stores/useSkillStore'
 
 /** 安装来源 Tab */
@@ -24,7 +25,7 @@ function MarketSkillCard({ skill, installing, onInstall }: {
     <div className='skill-install-item'>
       <div className='skill-install-item-info'>
         <div className='skill-install-item-header'>
-          <span className='skill-install-item-icon'>📦</span>
+          <span className='skill-install-item-icon'>{folderI}</span>
           <div>
             <span className='skill-install-item-name'>{skill.name}</span>
             <span className='skill-install-item-author'>by {skill.author}</span>
@@ -34,7 +35,7 @@ function MarketSkillCard({ skill, installing, onInstall }: {
         <p className='skill-install-item-desc'>{skill.description}</p>
         <div className='skill-install-item-meta'>
           <span>⬇️ {skill.downloads.toLocaleString()}</span>
-          <span>⭐ {skill.rating.toFixed(1)}</span>
+          <span>{starI} {skill.rating.toFixed(1)}</span>
           {skill.tags.length > 0 && (
             skill.tags.map((tag) => (
               <span key={tag} className='skill-install-tag'>{tag}</span>
@@ -47,7 +48,7 @@ function MarketSkillCard({ skill, installing, onInstall }: {
         disabled={installing}
         onClick={() => onInstall(skill.id)}
       >
-        {installing ? '⏳ 安装中...' : '📥 安装'}
+        {installing ? <>{loadingI} 安装中...</> : <>{downloadI} 安装</>}
       </button>
     </div>
   )
@@ -133,7 +134,7 @@ export function SkillInstallDialog({ onClose }: SkillInstallDialogProps) {
         {/* 头部 */}
         <div className='skill-install-header'>
           <div className='skill-install-header-left'>
-            <span className='skill-install-icon' aria-hidden='true'>📥</span>
+            <span className='skill-install-icon' aria-hidden='true'>{downloadI}</span>
             <h2 className='skill-install-title'>添加技能</h2>
           </div>
           <button className='skill-install-close' onClick={onClose} aria-label='关闭'>✕</button>
@@ -161,13 +162,13 @@ export function SkillInstallDialog({ onClose }: SkillInstallDialogProps) {
           {activeTab === 'market' && (
             !networkEnabled ? (
               <div className='skill-install-empty'>
-                <span className='skill-install-empty-icon'>🔌</span>
+                <span className='skill-install-empty-icon'>{plugI}</span>
                 <span className='skill-install-empty-text'>网络已断开，请先恢复网络后再搜索技能市场</span>
               </div>
             ) : (
               <>
                 <div className='skill-install-search'>
-                  <span className='skill-install-search-icon'>🔍</span>
+                  <span className='skill-install-search-icon'>{searchI}</span>
                   <input
                     type='text'
                     className='skill-install-search-input'
@@ -181,12 +182,12 @@ export function SkillInstallDialog({ onClose }: SkillInstallDialogProps) {
                 <div className='skill-install-results'>
                   {marketLoading ? (
                     <div className='skill-install-empty'>
-                      <span className='skill-install-empty-icon'>⏳</span>
+                      <span className='skill-install-empty-icon'>{loadingBigI}</span>
                       <span className='skill-install-empty-text'>搜索中...</span>
                     </div>
                   ) : marketResults.length === 0 ? (
                     <div className='skill-install-empty'>
-                      <span className='skill-install-empty-icon'>{searchQuery ? '🔍' : '💡'}</span>
+                      <span className='skill-install-empty-icon'>{searchQuery ? searchBigI : tipsI}</span>
                       <span className='skill-install-empty-text'>
                         {searchQuery ? '没有找到匹配的技能' : '输入关键词搜索技能市场'}
                       </span>
@@ -236,7 +237,7 @@ export function SkillInstallDialog({ onClose }: SkillInstallDialogProps) {
         {/* 安装进度 */}
         {installProgress && (
           <div className='skill-install-progress'>
-            <span>⏳</span>
+            <span>{loadingI}</span>
             <span>{installProgress}</span>
           </div>
         )}

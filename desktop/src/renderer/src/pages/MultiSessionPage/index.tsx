@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { ModuleHeader } from '../../components/common/module/ModuleHeader'
+import { MessageOne, Message, Pushpin, DeleteOne, Location } from '@icon-park/react'
 import { ModuleList, ModuleListItem } from '../../components/common/module/ModuleList'
 
 interface Session { id: string; name: string; model: string; messageCount: number; createdAt: number; lastActiveAt: number; pinned: boolean }
@@ -55,14 +56,14 @@ export function MultiSessionPage() {
       id={s.id}
       highlight={activeId === s.id}
       onClick={() => handleSwitch(s.id)}
-      icon={s.pinned ? '📌' : '💬'}
+      icon={s.pinned ? pinIcon : msgIcon}
       title={s.name}
       subtitle={`${s.model} · ${s.messageCount} 条消息`}
       actions={
         <>
-          <button onClick={(e) => { e.stopPropagation(); handlePin(s.id) }} className="btn-icon-lg" title="固定">{s.pinned ? '📌' : '📍'}</button>
-          <button onClick={(e) => { e.stopPropagation(); handleRename(s.id) }} className="btn-icon-lg" title="重命名">✏️</button>
-          <button onClick={(e) => { e.stopPropagation(); handleDelete(s.id) }} className="btn-icon-lg" title="删除">🗑</button>
+          <button onClick={(e) => { e.stopPropagation(); handlePin(s.id) }} className="btn-icon-lg" title="固定">{s.pinned ? pinIcon : locIcon}</button>
+          <button onClick={(e) => { e.stopPropagation(); handleRename(s.id) }} className="btn-icon-lg" title="重命名">{React.createElement(EditOne, { size: 14, fill: 'currentColor', theme: 'outline' })}</button>
+          <button onClick={(e) => { e.stopPropagation(); handleDelete(s.id) }} className="btn-icon-lg" title="删除">{delIcon}</button>
         </>
       }
     />
@@ -71,7 +72,7 @@ export function MultiSessionPage() {
   return (
     <div className="mod-page">
       <ModuleHeader
-        icon="💬"
+        icon={msgOneIcon}
         title="多会话管理"
         actions={<button onClick={() => setShowCreate(true)} className="btn btn-primary">＋ 新建会话</button>}
       />
@@ -85,7 +86,7 @@ export function MultiSessionPage() {
         </div>
       )}
 
-      <ModuleList emptyText="暂无会话" emptyIcon="💬">
+      <ModuleList emptyText="暂无会话" emptyIcon={EMPTY_ICONS.chat}>
         {pinned.map(renderSession)}
         {unpinned.map(renderSession)}
       </ModuleList>

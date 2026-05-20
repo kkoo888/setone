@@ -1,8 +1,8 @@
 {
   "id": "oled-dark",
-  "name": "OLED暗黑",
+  "name": "纯黑荧绿",
   "author": "setone",
-  "description": "纯黑省电，为OLED屏幕优化的极致暗色主题",
+  "description": "纯黑底色搭配荧光绿，OLED 屏幕省电首选",
   "seed": {
     "accent": "#39FF14",
     "bg": "#000000",

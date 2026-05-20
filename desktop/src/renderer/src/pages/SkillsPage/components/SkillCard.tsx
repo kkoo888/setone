@@ -4,7 +4,10 @@
  */
 import React, { useCallback } from 'react'
 import { SkillToggle } from './SkillToggle'
+import { Robot, ChartHistogram, FolderOpen, SettingOne } from '@icon-park/react'
 import type { SkillMeta } from '../../../stores/useSkillStore'
+
+const TAG_ICONS: Record<string, React.ReactNode> = { 'AI': React.createElement(Robot, { size: 14, fill: 'currentColor', theme: 'outline' }), '数据': React.createElement(ChartHistogram, { size: 14, fill: 'currentColor', theme: 'outline' }) }
 
 interface SkillCardProps {
   /** 技能元数据 */
@@ -23,8 +26,8 @@ const TAG_ICONS: Record<string, string> = {
   '效率': '⚡',
   '生活服务': '🏠',
   'OPC一人公司': '🏢',
-  'AI': '🤖',
-  '数据': '📊',
+  'AI': TAG_ICONS['AI'],
+  '数据': TAG_ICONS['数据'],
   '安全': '🔒',
   '文档': '📄'
 }
@@ -35,7 +38,7 @@ function getSkillIcon(skill: SkillMeta): string {
   for (const tag of skill.tags) {
     if (TAG_ICONS[tag]) return TAG_ICONS[tag]
   }
-  return '📦'
+  return React.createElement(FolderOpen, { size: 16, fill: 'currentColor', theme: 'outline' })
 }
 
 export function SkillCard({ skill, onToggle, onClick, onConfig }: SkillCardProps) {
@@ -99,7 +102,7 @@ export function SkillCard({ skill, onToggle, onClick, onConfig }: SkillCardProps
               title='配置'
               aria-label={`${skill.name} 配置`}
             >
-              ⚙️
+              {React.createElement(SettingOne, { size: 16, fill: 'currentColor', theme: 'outline' })}
             </button>
           )}
           <div onClick={handleToggle}>

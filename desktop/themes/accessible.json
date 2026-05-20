@@ -1,8 +1,8 @@
 {
   "id": "accessible",
-  "name": "无障碍",
+  "name": "明锐宝蓝",
   "author": "setone",
-  "description": "WCAG AAA 高对比，为所有人设计的无障碍主题",
+  "description": "宝蓝色高对比度，清晰锐利，WCAG AAA 无障碍标准",
   "seed": {
     "accent": "#0052CC",
     "bg": "#FFFFFF",

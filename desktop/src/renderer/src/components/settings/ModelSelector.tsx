@@ -4,6 +4,7 @@
  * 仅在点击刷新按钮时扫描，不自动加载
  */
 import React, { useState, useCallback, useRef, useEffect } from 'react'
+import { STATUS_ICONS, ACTION_ICONS } from '../common/IconMap'
 
 interface ModelSelectorProps {
   /** 当前选中的模型名称 */
@@ -105,7 +106,7 @@ export function ModelSelector({
       >
         {/* 占位提示 */}
         {!scanned && !value && (
-          <option value="__placeholder__">点击 🔄 扫描可用模型</option>
+          <option value="__placeholder__">点击扫描可用模型</option>
         )}
         {scanned && loading && (
           <option value="__placeholder__">扫描中…</option>
@@ -123,7 +124,7 @@ export function ModelSelector({
           </option>
         ))}
         {/* 手动输入入口 */}
-        <option value="__input__">✏️ 手动输入模型名</option>
+        <option value="__input__">手动输入模型名</option>
       </select>
       <input
         ref={inputRef}
@@ -143,7 +144,7 @@ export function ModelSelector({
         disabled={loading}
         title="扫描模型列表"
       >
-        {loading ? '⏳' : '🔄'}
+        {loading ? STATUS_ICONS.loading : ACTION_ICONS.refresh}
       </button>
     </div>
   )

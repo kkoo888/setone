@@ -1,4 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react'
+import { EMPTY_ICONS, STATUS_ICONS, ACTION_ICONS } from '../../components/common/IconMap'
+import { Search, Read, Refresh, Clipboard, FolderOpen, Magic, PlayOne, PauseOne, CheckOne, CloseOne, LoadingFour, DeleteOne } from '@icon-park/react'
+const searchI = React.createElement(Search, { size: 16, fill: 'currentColor', theme: 'outline' })
+const readI = React.createElement(Read, { size: 16, fill: 'currentColor', theme: 'outline' })
+const refreshI = React.createElement(Refresh, { size: 16, fill: 'currentColor', theme: 'outline' })
+const clipI = React.createElement(Clipboard, { size: 16, fill: 'currentColor', theme: 'outline' })
+const folderI = React.createElement(FolderOpen, { size: 16, fill: 'currentColor', theme: 'outline' })
+const magicI = React.createElement(Magic, { size: 16, fill: 'currentColor', theme: 'outline' })
+const playI = React.createElement(PlayOne, { size: 16, fill: 'currentColor', theme: 'outline' })
+const pauseI = React.createElement(PauseOne, { size: 16, fill: 'currentColor', theme: 'outline' })
+const delI = React.createElement(DeleteOne, { size: 14, fill: 'currentColor', theme: 'outline' })
 import { ModuleHeader } from '../../components/common/module/ModuleHeader'
 import { ModuleList, ModuleListItem, ModuleModal } from '../../components/common/module/ModuleList'
 import '../../styles/pages/workflow.css'
@@ -12,10 +23,10 @@ const TRIGGER_ICONS: Record<string, string> = { manual: '👆', cron: '⏰', eve
 const TEMPLATES = [
   { name: '每日日报', desc: '聚合今日工作内容，自动生成日报', trigger: 'cron', icon: '📝' },
   { name: '文件备份', desc: '定时备份指定目录到目标位置', trigger: 'cron', icon: '💾' },
-  { name: '代码审查', desc: 'AI 审查当前文件并给出优化建议', trigger: 'manual', icon: '🔍' },
+  { name: '代码审查', desc: 'AI 审查当前文件并给出优化建议', trigger: 'manual', icon: searchI },
   { name: '消息汇总', desc: '汇总今日未读消息生成摘要', trigger: 'cron', icon: '📬' },
-  { name: '系统巡检', desc: '检查系统资源、模块状态、异常日志', trigger: 'cron', icon: '🖥️' },
-  { name: '知识整理', desc: '自动整理知识库中的碎片内容', trigger: 'manual', icon: '📚' },
+  { name: '系统巡检', desc: '检查系统资源、模块状态、异常日志', trigger: 'cron', icon: React.createElement(Monitor, { size: 16, fill: 'currentColor', theme: 'outline' }) },
+  { name: '知识整理', desc: '自动整理知识库中的碎片内容', trigger: 'manual', icon: readI },
 ]
 
 export function WorkflowPage() {
@@ -95,12 +106,12 @@ export function WorkflowPage() {
   return (
     <div className="mod-page">
       <ModuleHeader
-        icon="🔄"
+        icon={refreshI}
         title="工作流"
         tabs={[
-          { key: 'list', label: '📋 工作流', count: workflows.length },
+          { key: 'list', label: <>{clipI} 工作流</>, count: workflows.length },
           { key: 'logs', label: '📜 执行日志', count: logs.length },
-          { key: 'templates', label: '📦 模板' },
+          { key: 'templates', label: <>{folderI} 模板</> },
         ]}
         activeTab={activeTab}
         onTabChange={setActiveTab}
@@ -112,7 +123,7 @@ export function WorkflowPage() {
         <div className="wf-modal-overlay" onClick={() => setShowCreate(false)}>
           <div className="wf-modal" onClick={e => e.stopPropagation()}>
             <div className="wf-modal-header">
-              <h3>✨ 新建工作流</h3>
+              <h3>{magicI} 新建工作流</h3>
               <button className="wf-modal-close" onClick={() => setShowCreate(false)}>✕</button>
             </div>
             <div className="wf-modal-body">
@@ -158,12 +169,12 @@ export function WorkflowPage() {
       )}
 
       {activeTab === 'list' && (
-        <ModuleList emptyText="还没有工作流，点击上方按钮创建" emptyIcon="🔄">
+        <ModuleList emptyText="还没有工作流，点击上方按钮创建" emptyIcon={EMPTY_ICONS.refresh}>
           {workflows.map(wf => (
             <ModuleListItem
               key={wf.id}
               id={wf.id}
-              icon={wf.enabled ? '🔄' : '⏸'}
+              icon={wf.enabled ? refreshI : pauseI}
               title={wf.name}
               subtitle={
                 <span className="wf-card-subtitle">
@@ -182,7 +193,7 @@ export function WorkflowPage() {
               actions={
                 <>
                   <button onClick={(e) => { e.stopPropagation(); handleExecute(wf.id) }} disabled={loading || !wf.enabled} className="btn-icon-lg" title="执行">▶</button>
-                  <button onClick={(e) => { e.stopPropagation(); handleDelete(wf.id) }} className="btn-icon-lg" title="删除">🗑</button>
+                  <button onClick={(e) => { e.stopPropagation(); handleDelete(wf.id) }} className="btn-icon-lg" title="删除">{delI}</button>
                 </>
               }
             />
@@ -208,7 +219,7 @@ export function WorkflowPage() {
                     {log.error && <span className="wf-log-error">{log.error}</span>}
                   </div>
                   <span className={`wf-log-badge wf-log-badge-${log.status}`}>
-                    {log.status === 'success' ? '✅ 成功' : log.status === 'failed' ? '❌ 失败' : '⏳ 运行中'}
+                    {log.status === 'success' ? {STATUS_ICONS.success} + ' 成功' : log.status === 'failed' ? {STATUS_ICONS.error} + ' 失败' : {STATUS_ICONS.loading} + ' 运行中'}
                   </span>
                 </div>
               ))}

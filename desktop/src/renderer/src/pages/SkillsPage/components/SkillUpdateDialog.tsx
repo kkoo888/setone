@@ -6,6 +6,7 @@
 import React, { useCallback, useState, useEffect } from 'react'
 import { useSkillStore } from '../../../stores/useSkillStore'
 import { useSettingsStore } from '../../../stores/useSettingsStore'
+import { FolderOpen, Refresh, Plug, LoadingFour, CheckOne } from '@icon-park/react'
 import type { UpdateInfo } from '../../../stores/useSkillStore'
 
 /** 更新项属性 */
@@ -20,7 +21,7 @@ function UpdateItem({ info, updating, onUpdate }: UpdateItemProps) {
   return (
     <div className='update-item'>
       <div className='update-item-info'>
-        <span className='update-item-icon'>📦</span>
+        <span className='update-item-icon'>{folderI}</span>
         <div className='update-item-detail'>
           <h4 className='update-item-name'>{info.skillId}</h4>
           <p className='update-item-version'>
@@ -105,7 +106,7 @@ export function SkillUpdateDialog() {
       <div className='dialog-panel update-dialog' onClick={(e) => e.stopPropagation()}>
         {/* 标题栏 */}
         <div className='dialog-header'>
-          <h2 className='dialog-title'>🔄 技能更新</h2>
+          <h2 className='dialog-title'>{refreshI} 技能更新</h2>
           <button className='dialog-close' onClick={handleClose}>✕</button>
         </div>
 
@@ -114,20 +115,20 @@ export function SkillUpdateDialog() {
           {/* 网络关闭提示 */}
           {!networkEnabled ? (
             <div className='update-empty'>
-              <span className='update-empty-icon'>🔌</span>
+              <span className='update-empty-icon'>{plugI}</span>
               <span className='update-empty-text'>网络已关闭</span>
               <p className='update-empty-hint'>请先在设置中开启网络，再检查技能更新</p>
             </div>
           ) : !hasChecked ? (
             /* 正在检查中 */
             <div className='update-empty'>
-              <span className='update-empty-icon'>⏳</span>
+              <span className='update-empty-icon'>{loadingI}</span>
               <span className='update-empty-text'>正在检查更新...</span>
             </div>
           ) : updateList.length === 0 ? (
             /* 全部最新 */
             <div className='update-empty'>
-              <span className='update-empty-icon'>✅</span>
+              <span className='update-empty-icon'>{checkI}</span>
               <span className='update-empty-text'>所有技能已是最新版本</span>
             </div>
           ) : (
@@ -164,7 +165,7 @@ export function SkillUpdateDialog() {
         {/* 更新进度 */}
         {installProgress && (
           <div className='install-progress'>
-            <span className='install-progress-icon'>⏳</span>
+            <span className='install-progress-icon'>{loadingSmI}</span>
             <span className='install-progress-text'>{installProgress}</span>
           </div>
         )}

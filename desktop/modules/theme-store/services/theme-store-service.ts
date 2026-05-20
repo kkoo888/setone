@@ -10,7 +10,7 @@ import { join } from 'path'
 /** 内置主题列表（始终可用，不可删除） */
 const BUILTIN_THEMES: Theme[] = [
   {
-    id: 'light', name: '亮色模式', author: 'setone', description: '明亮清爽的默认亮色主题', preview: '',
+    id: 'light', name: '素白靛紫', author: 'setone', description: '纯净白底搭配靛紫强调色，简洁明亮，适合日间办公', preview: '',
     mode: 'light',
     colors: {
       accent: '#4338ca', 'accent-hover': '#3730a3', 'accent-light': '#a78bfa',
@@ -22,7 +22,7 @@ const BUILTIN_THEMES: Theme[] = [
     source: 'builtin', active: true
   },
   {
-    id: 'dark', name: '暗色模式', author: 'setone', description: '柔和护眼的暗色主题', preview: '',
+    id: 'dark', name: '午夜极光', author: 'setone', description: '深空蓝夜底色映衬柔紫光晕，沉浸护眼，夜间首选', preview: '',
     mode: 'dark',
     colors: {
       accent: '#818cf8', 'accent-hover': '#6366f1', 'accent-light': '#c4b5fd',
@@ -34,7 +34,7 @@ const BUILTIN_THEMES: Theme[] = [
     source: 'builtin', active: false
   },
   {
-    id: 'default', name: '清新蓝', author: 'setone', description: '蓝紫色强调色暗色主题', preview: '',
+    id: 'default', name: '墨蓝星辰', author: 'setone', description: '墨蓝深底点缀星光蓝调，沉稳专业，程序员挚爱', preview: '',
     mode: 'dark',
     colors: {
       accent: '#4a9eff', 'accent-hover': '#3b82f6', 'accent-light': '#93c5fd',
@@ -46,13 +46,13 @@ const BUILTIN_THEMES: Theme[] = [
     source: 'builtin', active: false
   },
   {
-    id: 'sakura', name: '樱花粉', author: 'setone', description: '少女心粉色主题', preview: '',
+    id: 'sakura', name: '樱落春雪', author: 'setone', description: '浅樱粉底配玫瑰点缀，柔美清新，少女心满满', preview: '',
     mode: 'light',
     colors: { accent: '#be185d', 'accent-hover': '#9d174d', 'accent-light': '#f9a8d4', 'bg-primary': '#fdf2f8', 'bg-secondary': '#fce7f3' },
     source: 'builtin', active: false
   },
   {
-    id: 'forest', name: '森林绿', author: 'setone', description: '自然绿色护眼主题', preview: '',
+    id: 'forest', name: '翠竹幽林', author: 'setone', description: '深林墨绿底衬翠竹青，沉静自然，久看不累', preview: '',
     mode: 'dark',
     colors: {
       accent: '#22c55e', 'accent-hover': '#16a34a', 'accent-light': '#86efac',
@@ -64,7 +64,7 @@ const BUILTIN_THEMES: Theme[] = [
     source: 'builtin', active: false
   },
   {
-    id: 'sunset', name: '日落橙', author: 'setone', description: '温暖橙色主题', preview: '',
+    id: 'sunset', name: '落日熔金', author: 'setone', description: '暮色深褐底泛琥珀暖光，温暖厚重，治愈系配色', preview: '',
     mode: 'dark',
     colors: {
       accent: '#f97316', 'accent-hover': '#ea580c', 'accent-light': '#fdba74',
@@ -76,7 +76,7 @@ const BUILTIN_THEMES: Theme[] = [
     source: 'builtin', active: false
   },
   {
-    id: 'ocean', name: '深海蓝', author: 'setone', description: '深邃蓝色主题', preview: '',
+    id: 'ocean', name: '深渊碧海', author: 'setone', description: '极深海底映碧蓝波光，幽邃宁静，深海沉浸感', preview: '',
     mode: 'dark',
     colors: {
       accent: '#06b6d4', 'accent-hover': '#0891b2', 'accent-light': '#67e8f9',

@@ -5,6 +5,12 @@
 import React, { useCallback, useEffect } from 'react'
 import { SkillToggle } from './SkillToggle'
 import type { SkillMeta, Permission } from '../../../stores/useSkillStore'
+import {
+  Document, EditOne, Globe, SettingOne, Camera, Clipboard, Notice, FolderOpen
+} from '@icon-park/react'
+
+const permIcon = (p: string) =>
+  React.createElement({ 'file.read': Document, 'file.write': EditOne, 'network': Globe, 'exec': SettingOne, 'screen': Camera, 'clipboard': Clipboard, 'notification': Notice }[p] ?? SettingOne, { size: 16, fill: 'currentColor', theme: 'outline' })
 
 interface SkillDetailProps {
   /** 技能元数据 */
@@ -18,14 +24,14 @@ interface SkillDetailProps {
 }
 
 /** 权限图标映射 */
-const PERMISSION_ICONS: Record<Permission, string> = {
-  'file.read': '📖',
-  'file.write': '✏️',
-  'network': '🌐',
-  'exec': '⚙️',
-  'screen': '📸',
-  'clipboard': '📋',
-  'notification': '🔔'
+const PERMISSION_ICONS: Record<string, React.ReactNode> = {
+  'file.read': permIcon('file.read'),
+  'file.write': permIcon('file.write'),
+  'network': permIcon('network'),
+  'exec': permIcon('exec'),
+  'screen': permIcon('screen'),
+  'clipboard': permIcon('clipboard'),
+  'notification': permIcon('notification'),
 }
 
 /** 权限名称映射 */
@@ -108,7 +114,7 @@ export function SkillDetail({ skill, onClose, onToggle, onConfig }: SkillDetailP
         <div className='skill-detail-header'>
           <div className='skill-detail-header-left'>
             <div className='skill-detail-icon' aria-hidden='true'>
-              {skill.icon ?? '📦'}
+              {skill.icon ?? React.createElement(FolderOpen, { size: 16, fill: 'currentColor', theme: 'outline' })}
             </div>
             <div className='skill-detail-title-group'>
               <h2 className='skill-detail-name'>{skill.name}</h2>
@@ -207,7 +213,7 @@ export function SkillDetail({ skill, onClose, onToggle, onConfig }: SkillDetailP
                 aria-label={`${skill.name} 参数配置`}
                 style={{ fontSize: '20px', width: '36px', height: '36px' }}
               >
-                ⚙️
+                {React.createElement(SettingOne, { size: 16, fill: 'currentColor', theme: 'outline' })}
               </button>
             )}
             <span className='skill-detail-toggle-label'>

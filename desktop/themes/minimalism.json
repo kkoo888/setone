@@ -1,8 +1,8 @@
 {
   "id": "minimalism",
-  "name": "极简瑞士风格",
+  "name": "纯黑白瑞士",
   "author": "setone",
-  "description": "追求极致简洁，无装饰，受瑞士设计学派启发的纯净风格",
+  "description": "纯黑白瑞士风格，极致简洁的无装饰设计",
   "seed": {
     "accent": "#000000",
     "bg": "#FFFFFF",

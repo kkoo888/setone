@@ -6,6 +6,7 @@ import React, { useState, useCallback, useEffect } from 'react'
 import { Live2DProvider, useLive2DContext } from '../components/live2d/Live2DContext'
 import { Live2DCanvas } from '../components/live2d/Live2DCanvas'
 import { Live2DStatus } from '../components/live2d/types/live2d'
+import { Magic, CloseOne, Monitor, Tips, Refresh, ChartHistogram, LoadingFour, CheckOne } from '@icon-park/react'
 import { live2dEasyControl, type Live2DPetState } from '../services/Live2DEasyControlService'
 
 /** Live2D 页面内部内容（必须在 Live2DProvider 内部使用） */
@@ -74,7 +75,7 @@ function Live2DPageContent() {
         <div className="live2d-page-title-group">
           <h1 className="live2d-page-title">Live2D 桌面宠物</h1>
           <p className="live2d-page-subtitle">
-            可爱的 Live2D 伙伴，陪伴你的每一天 ✨
+            可爱的 Live2D 伙伴，陪伴你的每一天
           </p>
         </div>
       </div>
@@ -108,7 +109,7 @@ function Live2DPageContent() {
               </div>
               {isError && state.errorMessage && (
                 <p className="live2d-error-detail">
-                  ❌ {state.errorMessage}
+                  {React.createElement(CloseOne, { size: 14, fill: '#ef4444', theme: 'outline' })} {state.errorMessage}
                 </p>
               )}
             </div>
@@ -120,7 +121,7 @@ function Live2DPageContent() {
           {/* 桌面宠物开关 */}
           <div className="live2d-toggle-card">
             <div className="live2d-toggle-info">
-              <h3 className="live2d-toggle-title">🖥️ 桌面宠物</h3>
+              <h3 className="live2d-toggle-title">{React.createElement(Monitor, { size: 16, fill: 'currentColor', theme: 'outline' })} 桌面宠物</h3>
               <p className="live2d-toggle-desc">
                 开启后将在桌面显示透明窗口的 Live2D 宠物
               </p>
@@ -138,7 +139,7 @@ function Live2DPageContent() {
           {/* 提示信息 */}
           {isError && (
             <div className="live2d-hint-card">
-              <p className="live2d-hint-title">💡 解决方案</p>
+              <p className="live2d-hint-title">{React.createElement(Tips, { size: 14, fill: '#f59e0b', theme: 'outline' })} 解决方案</p>
               <ol className="live2d-hint-list">
                 <li>确保已安装依赖：<code>npm install pixi.js pixi-live2d-display</code></li>
                 <li>确保 <code>public/lib/live2dcubismcore.min.js</code> 存在</li>
@@ -148,7 +149,7 @@ function Live2DPageContent() {
                 className="btn btn-primary live2d-section"
                 onClick={handleRetry}
               >
-                🔄 重新加载
+                {React.createElement(Refresh, { size: 14, fill: 'currentColor', theme: 'outline' })} 重新加载
               </button>
             </div>
           )}
@@ -156,7 +157,7 @@ function Live2DPageContent() {
           {/* 模型信息 */}
           {isLoaded && (
             <div className="live2d-info-card">
-              <h3>📊 模型信息</h3>
+              <h3>{React.createElement(ChartHistogram, { size: 16, fill: 'currentColor', theme: 'outline' })} 模型信息</h3>
               <div className="live2d-info-grid">
                 <div className="live2d-info-item">
                   <span className="live2d-info-label">名称</span>
@@ -189,7 +190,7 @@ function Live2DPageContent() {
               <div className="live2d-info-grid">
                 <div className="live2d-info-item">
                   <span className="live2d-info-label">库加载</span>
-                  <span className="live2d-info-value">{petState.loaded ? '✅ 已加载' : '⏳ 等待中'}</span>
+                  <span className="live2d-info-value">{petState.loaded ? <>{React.createElement(CheckOne, { size: 14, fill: '#10b981', theme: 'outline' })} 已加载</> : <>{React.createElement(LoadingFour, { size: 14, fill: 'currentColor', theme: 'outline' })} 等待中</>}</span>
                 </div>
                 <div className="live2d-info-item">
                   <span className="live2d-info-label">鼠标跟随</span>

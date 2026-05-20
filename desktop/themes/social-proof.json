@@ -1,8 +1,8 @@
 {
   "id": "social-proof",
-  "name": "社会认证",
+  "name": "信任蓝",
   "author": "setone",
-  "description": "信任感，以社会认证为核心的信任建立设计",
+  "description": "蓝色调建立信任，以社会认证为核心的设计",
   "seed": {
     "accent": "#0984E3",
     "bg": "#F8F9FA",

@@ -3,6 +3,7 @@
  * 用户输入描述，AI 生成技能内容，支持预览和编辑
  */
 import React, { useState, useCallback, useEffect } from 'react'
+import { Magic, LoadingFour } from '@icon-park/react'
 import { useSkillStore } from '../../../stores/useSkillStore'
 
 interface SkillCreateDialogProps {
@@ -147,7 +148,7 @@ export default function SkillCreateDialog({ onClose }: SkillCreateDialogProps) {
         {/* 头部 */}
         <div className='skill-create-header'>
           <div className='skill-create-header-left'>
-            <span className='skill-create-icon' aria-hidden='true'>✨</span>
+            <span className='skill-create-icon' aria-hidden='true'>{React.createElement(Magic, { size: 24, fill: '#f59e0b', theme: 'outline' })}</span>
             <h2 className='skill-create-title'>
               {step === 'input' ? '生成新技能' : '预览生成结果'}
             </h2>
@@ -224,7 +225,7 @@ export default function SkillCreateDialog({ onClose }: SkillCreateDialogProps) {
                 onClick={handleGenerate}
                 disabled={generating || !description.trim()}
               >
-                {generating ? '⏳ AI 生成中...' : '✨ AI 生成'}
+                {generating ? <>{React.createElement(LoadingFour, { size: 14, fill: 'currentColor', theme: 'outline' })} AI 生成中...</> : <>{React.createElement(Magic, { size: 14, fill: 'currentColor', theme: 'outline' })} AI 生成</>}
               </button>
             </>
           ) : (

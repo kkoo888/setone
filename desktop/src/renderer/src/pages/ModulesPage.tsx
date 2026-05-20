@@ -8,6 +8,7 @@ import { useModulesStore, type ModuleStatus } from '../stores/useModulesStore'
 import { ModuleHeader } from '../components/common/module/ModuleHeader'
 import { ModuleCard } from './ModulesPage/components/ModuleCard'
 import { ModuleDetail } from './ModulesPage/components/ModuleDetail'
+import { Search, LoadingFour, Inbox } from '@icon-park/react'
 import '../styles/modules.css'
 
 /** 状态筛选选项 */
@@ -109,7 +110,7 @@ export function ModulesPage() {
         title="模块管理"
         actions={
           <div className='module-search'>
-            <span className='module-search-icon'>🔍</span>
+            <span className='module-search-icon'>{searchI}</span>
             <input
               className='module-search-input'
               type='text'
@@ -138,12 +139,12 @@ export function ModulesPage() {
       <div className='modules-list'>
         {loading ? (
           <div className='modules-empty'>
-            <span className='modules-empty-icon'>⏳</span>
+            <span className='modules-empty-icon'>{loadingI}</span>
             <span className='modules-empty-text'>加载中...</span>
           </div>
         ) : filteredModules.length === 0 ? (
           <div className='modules-empty'>
-            <span className='modules-empty-icon'>📭</span>
+            <span className='modules-empty-icon'>{inboxI}</span>
             <span className='modules-empty-text'>
               {searchQuery ? '没有匹配的模块' : '暂无已安装模块'}
             </span>

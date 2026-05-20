@@ -1,4 +1,5 @@
 import React, { useCallback } from 'react'
+import { CloseOne } from '@icon-park/react'
 import { ErrorBoundary } from '../components/common/ErrorBoundary'
 import { Loading } from '../components/common/Loading'
 import { MessageList } from '../components/chat/MessageList'
@@ -48,7 +49,7 @@ function ChatPageContent() {
       },
       onError: (error) => {
         flushStreamingBuffer()
-        addMessage({ role: 'assistant', content: `❌ 错误：${error}`, isError: true })
+        addMessage({ role: 'assistant', content: React.createElement(CloseOne, { size: 14, fill: '#ef4444', theme: 'outline' }) + ' 错误：' + error, isError: true })
         setStreamingContent('')
         setProcessing(false)
       }
@@ -92,7 +93,7 @@ function ChatPageContent() {
 
 export function ChatPage() {
   return (
-    <ErrorBoundary fallback={<div className="chat-error-fallback" role="alert"><div className="chat-error-icon">💬</div><h3>聊天组件加载失败</h3><p>聊天界面遇到了渲染错误，请尝试刷新页面。</p><button className="btn btn-primary" onClick={() => window.location.reload()}>刷新页面</button></div>}>
+    <ErrorBoundary fallback={<div className="chat-error-fallback" role="alert"><div className="chat-error-icon">{React.createElement(CloseOne, { size: 32, fill: '#ef4444', theme: 'outline' })}</div><h3>聊天组件加载失败</h3><p>聊天界面遇到了渲染错误，请尝试刷新页面。</p><button className="btn btn-primary" onClick={() => window.location.reload()}>刷新页面</button></div>}>
       <ChatPageContent />
     </ErrorBoundary>
   )

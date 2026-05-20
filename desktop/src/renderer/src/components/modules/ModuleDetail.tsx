@@ -4,6 +4,7 @@
  */
 import React from 'react'
 import type { ModuleInfo } from '../../stores/useModulesStore'
+import { FolderOpen } from '@icon-park/react'
 import { Button } from '../common/Button'
 
 interface ModuleDetailProps {
@@ -20,7 +21,7 @@ export function ModuleDetail({ module, onClose, onToggle }: ModuleDetailProps) {
     <div className="module-detail">
       <div className="module-detail-header">
         <div className="module-detail-title">
-          <span className="module-detail-icon">{module.icon ?? '📦'}</span>
+          <span className="module-detail-icon">{module.icon ?? React.createElement(FolderOpen, { size: 16, fill: 'currentColor', theme: 'outline' })}</span>
           <div>
             <h3>{module.name}</h3>
             <span className="module-detail-version">v{module.version}</span>

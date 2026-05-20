@@ -1,8 +1,8 @@
 {
   "id": "solarized-light",
-  "name": "Solarized 亮色",
+  "name": "日光蓝",
   "author": "setone",
-  "description": "经典 Solarized 配色方案的亮色版本",
+  "description": "经典 Solarized 蓝色调，科学配色的亮色版本",
   "seed": {
     "accent": "#268bd2",
     "bg": "#fdf6e3",

@@ -8,6 +8,7 @@
  * - WebGL 上下文丢失：监听事件并提示用户
  */
 import React, { useState, useEffect, useRef, useCallback } from 'react'
+import { Help } from '@icon-park/react'
 
 /** electronAPI 最小接口 */
 interface ElectronAPI {
@@ -257,7 +258,7 @@ const Live2D5PetPage: React.FC = () => {
             gap: 8,
           }}
         >
-          <span>⚠️ WebGL 上下文丢失，等待恢复...</span>
+          <span>{React.createElement(Help, { size: 14, fill: '#f59e0b', theme: 'outline' })} WebGL 上下文丢失，等待恢复...</span>
           <button
             onClick={handleRetry}
             style={{

@@ -17,6 +17,7 @@ import { ModelSelector } from '../components/settings/ModelSelector'
 import { Toggle } from '../components/common/Toggle'
 import { Slider } from '../components/common/Slider'
 import { Button } from '../components/common/Button'
+import { SettingOne, Robot, Brain, ChartHistogram } from '@icon-park/react'
 import type { OllamaConfig as OllamaConfigType, PerformanceMonitorSettings, Language } from '../types/settings'
 
 export function SettingsPage() {
@@ -73,13 +74,13 @@ export function SettingsPage() {
 
   return (
     <div className="settings-page mod-page">
-      <ModuleHeader icon="⚙️" title="设置" />
+      <ModuleHeader icon={settingI} title="设置" />
 
       {/* Ollama 配置 */}
       <SettingsSection
         title="Ollama 配置"
         description="配置本地 Ollama 服务连接参数"
-        icon="🤖"
+        icon={robotI}
       >
         <OllamaConfig config={settings.ollama} onChange={handleOllamaChange} />
       </SettingsSection>
@@ -88,7 +89,7 @@ export function SettingsPage() {
       <SettingsSection
         title="AI 设置"
         description="配置 AI 模型和对话参数"
-        icon="🧠"
+        icon={brainI}
       >
         <div className="settings-row">
           <label className="settings-label">模型</label>
@@ -153,7 +154,7 @@ export function SettingsPage() {
       <SettingsSection
         title="通用设置"
         description="应用行为和通知配置"
-        icon="⚙️"
+        icon={settingI}
       >
         <div className="settings-row">
           <label className="settings-label">助手名称</label>
@@ -198,7 +199,7 @@ export function SettingsPage() {
       <SettingsSection
         title="性能监控"
         description="配置系统资源监控参数"
-        icon="📊"
+        icon={chartI}
       >
         <PerformanceMonitorConfig
           config={settings.performanceMonitor}

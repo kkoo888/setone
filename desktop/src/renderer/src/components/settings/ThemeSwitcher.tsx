@@ -4,6 +4,7 @@
  */
 import React, { useRef, useEffect, useState } from 'react'
 import type { ThemeMode } from '../../types/settings'
+import { THEME_ICONS } from '../common/IconMap'
 
 interface ThemeSwitcherProps {
   /** 当前主题 */
@@ -13,11 +14,11 @@ interface ThemeSwitcherProps {
 }
 
 /** 主题选项配置 */
-const THEME_OPTIONS: ReadonlyArray<{ value: ThemeMode; label: string; icon: string }> = [
-  { value: 'light', label: '浅色', icon: '☀️' },
-  { value: 'dark', label: '深色', icon: '🌙' },
-  { value: 'system', label: '系统', icon: '💻' },
-  { value: 'compact', label: '紧凑', icon: '📐' },
+const THEME_OPTIONS: ReadonlyArray<{ value: ThemeMode; label: string; icon: React.ReactNode }> = [
+  { value: 'light', label: '浅色', icon: THEME_ICONS.light },
+  { value: 'dark', label: '深色', icon: THEME_ICONS.dark },
+  { value: 'system', label: '系统', icon: THEME_ICONS.system },
+  { value: 'compact', label: '紧凑', icon: THEME_ICONS.compact },
 ]
 
 export function ThemeSwitcher({ theme, onChange }: ThemeSwitcherProps) {

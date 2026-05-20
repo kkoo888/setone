@@ -1,8 +1,8 @@
 {
   "id": "liquid-glass",
-  "name": "流体玻璃",
+  "name": "流光洋红",
   "author": "setone",
-  "description": "全息流光，流动的玻璃质感与幻彩效果",
+  "description": "洋红流光幻彩，玻璃质感的全息视觉效果",
   "seed": {
     "accent": "#E040FB",
     "bg": "#1A0033",

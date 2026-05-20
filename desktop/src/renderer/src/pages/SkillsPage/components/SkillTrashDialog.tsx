@@ -4,6 +4,7 @@
  */
 import React, { useEffect, useCallback, useState } from 'react'
 import { useSkillStore } from '../../../stores/useSkillStore'
+import { DeleteOne, LoadingFour, Magic, Recycle } from '@icon-park/react'
 import type { TrashItem } from '../../../stores/useSkillStore'
 
 interface SkillTrashDialogProps {
@@ -122,7 +123,7 @@ export function SkillTrashDialog({ onClose }: SkillTrashDialogProps) {
         {/* 头部 */}
         <div className='skill-trash-header'>
           <div className='skill-trash-header-left'>
-            <span className='skill-trash-icon' aria-hidden='true'>🗑️</span>
+            <span className='skill-trash-icon' aria-hidden='true'>{delI}</span>
             <h2 className='skill-trash-title'>回收站</h2>
             <span className='skill-trash-count'>{trash.length} 个技能</span>
           </div>
@@ -135,12 +136,12 @@ export function SkillTrashDialog({ onClose }: SkillTrashDialogProps) {
         <div className='skill-trash-body'>
           {trashLoading ? (
             <div className='skill-trash-empty'>
-              <span className='skill-trash-empty-icon'>⏳</span>
+              <span className='skill-trash-empty-icon'>{loadingI}</span>
               <span className='skill-trash-empty-text'>加载中...</span>
             </div>
           ) : trash.length === 0 ? (
             <div className='skill-trash-empty'>
-              <span className='skill-trash-empty-icon'>✨</span>
+              <span className='skill-trash-empty-icon'>{magicI}</span>
               <span className='skill-trash-empty-text'>回收站是空的</span>
             </div>
           ) : (
@@ -160,7 +161,7 @@ export function SkillTrashDialog({ onClose }: SkillTrashDialogProps) {
                       disabled={operating === item.id}
                       title='恢复技能'
                     >
-                      {operating === item.id ? '⏳' : '♻️'} 恢复
+                      {operating === item.id ? loadingI : recycleI} 恢复
                     </button>
                     <button
                       className='skill-trash-btn skill-trash-btn--delete'
@@ -168,7 +169,7 @@ export function SkillTrashDialog({ onClose }: SkillTrashDialogProps) {
                       disabled={operating === item.id}
                       title='永久删除'
                     >
-                      {operating === item.id ? '⏳' : '🗑️'} 删除
+                      {operating === item.id ? loadingI : delSmI} 删除
                     </button>
                   </div>
                 </div>

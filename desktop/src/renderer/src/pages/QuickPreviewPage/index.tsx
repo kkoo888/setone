@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react'
 import { ModuleHeader } from '../../components/common/module/ModuleHeader'
+import { PreviewOpen, Eyes } from '@icon-park/react'
 import { ModuleList, ModuleListItem } from '../../components/common/module/ModuleList'
 
 interface PreviewResult { path: string; content: string; type: string; size: number; modified: number }
@@ -41,12 +42,12 @@ export function QuickPreviewPage() {
 
   return (
     <div className="mod-page">
-      <ModuleHeader icon="👁" title="快速预览" />
+      <ModuleHeader icon={previewI} title="快速预览" />
 
       <div className="form-toolbar">
         <input value={filePath} onChange={e => setFilePath(e.target.value)} onKeyDown={e => e.key === 'Enter' && handlePreview()} placeholder="输入文件路径..." className="mod-search" />
         <button onClick={() => handlePreview()} disabled={loading} className="btn btn-primary">
-          {loading ? '加载中...' : '👁 预览'}
+          {loading ? '加载中...' : <>{previewI} 预览</>}
         </button>
         <button onClick={handleOpenFile} className="btn">📂 浏览</button>
       </div>

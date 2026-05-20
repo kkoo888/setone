@@ -5,6 +5,7 @@
  */
 import React, { useState, useEffect, useRef } from 'react'
 import { useSettingsStore } from '../../stores/useSettingsStore'
+import { Monitor, FolderOpen } from '@icon-park/react'
 import { registerPolling, unregisterPolling, tickPolling } from '../../utils/polling-helper'
 
 /** 资源快照 */
@@ -76,7 +77,7 @@ export function StatusBar() {
   return (
     <div className="status-bar" role="status" aria-label="系统资源状态">
       <div className="status-bar-item" title={`CPU 使用率: ${snapshot.cpu}%`}>
-        <span className="status-bar-icon">🖥️</span>
+        <span className="status-bar-icon">{React.createElement(Monitor, { size: 14, fill: 'currentColor', theme: 'outline' })}</span>
         <span className="status-bar-label">CPU</span>
         <span className="status-bar-value" style={{ color: getColor(snapshot.cpu) }}>
           {snapshot.cpu}%
@@ -84,7 +85,7 @@ export function StatusBar() {
       </div>
       <div className="status-bar-divider" />
       <div className="status-bar-item" title={`内存: ${snapshot.memoryUsedMB}MB / ${snapshot.memoryTotalMB}MB`}>
-        <span className="status-bar-icon">📦</span>
+        <span className="status-bar-icon">{React.createElement(FolderOpen, { size: 14, fill: 'currentColor', theme: 'outline' })}</span>
         <span className="status-bar-label">内存</span>
         <span className="status-bar-value" style={{ color: getColor(snapshot.memory) }}>
           {snapshot.memory}%

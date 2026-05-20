@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { ModuleHeader } from '../../components/common/module/ModuleHeader'
+import { ChartHistogram, Refresh, Brain, Tips, Help } from '@icon-park/react'
 import { registerPolling, unregisterPolling, tickPolling, onPollingUpdate } from '../../utils/polling-helper'
 
 interface SystemInfo { cpu: number; memory: { used: number; total: number; percent: number }; disk: { used: number; total: number; percent: number }; uptime: number; platform: string; hostname: string }
@@ -102,7 +103,7 @@ export function SystemDashboardPage() {
   return (
     <div className="dash-page mod-page">
       <ModuleHeader
-        icon="📊"
+        icon={chartI}
         title="系统仪表盘"
         actions={
           <div className="dash-controls">
@@ -110,7 +111,7 @@ export function SystemDashboardPage() {
             <select value={refreshInterval} onChange={e => setRefreshInterval(Number(e.target.value))} className="dash-select">
               <option value={2000}>2秒</option><option value={5000}>5秒</option><option value={10000}>10秒</option><option value={30000}>30秒</option>
             </select>
-            <button onClick={() => { loadSysInfo() }} className="btn btn-sm">🔄 刷新</button>
+            <button onClick={() => { loadSysInfo() }} className="btn btn-sm">{refreshI} 刷新</button>
           </div>
         }
       />
@@ -123,7 +124,7 @@ export function SystemDashboardPage() {
               <span className="dash-pct">{sysInfo.cpu.toFixed(1)}%</span>
             </div>
             <div className="dash-card">
-              <h3>🧠 内存</h3>
+              <h3>{brainI} 内存</h3>
               <div className="dash-bar"><div className="dash-bar-fill" style={{ width: `${sysInfo.memory.percent}%`, backgroundColor: barColor(sysInfo.memory.percent) }} /></div>
               <span className="dash-pct">{fmtBytes(sysInfo.memory.used)} / {fmtBytes(sysInfo.memory.total)} ({sysInfo.memory.percent}%)</span>
             </div>
@@ -133,7 +134,7 @@ export function SystemDashboardPage() {
               <span className="dash-pct">{fmtBytes(sysInfo.disk.used)} / {fmtBytes(sysInfo.disk.total)} ({sysInfo.disk.percent}%)</span>
             </div>
             <div className="dash-card">
-              <h3>ℹ️ 系统</h3>
+              <h3>{tipsI} 系统</h3>
               <div className="dash-info"><span>运行时间</span><span>{fmtUptime(sysInfo.uptime)}</span></div>
               <div className="dash-info"><span>平台</span><span>{sysInfo.platform}</span></div>
               <div className="dash-info"><span>主机名</span><span>{sysInfo.hostname}</span></div>
@@ -143,7 +144,7 @@ export function SystemDashboardPage() {
 
         {/* ═══ 轮询监控 ═══ */}
         <div className="dash-modules">
-          <h3>🔄 轮询监控 <span className="dash-section-title">({pollingTasks.length} 个任务)</span></h3>
+          <h3>{refreshI} 轮询监控 <span className="dash-section-title">({pollingTasks.length} 个任务)</span></h3>
           {pollingTasks.length === 0 ? (
             <div className="dash-polling-empty">暂无活跃的轮询任务</div>
           ) : (
@@ -229,7 +230,7 @@ export function SystemDashboardPage() {
 
                   {selectedTask.lastError && (
                     <div className="dash-detail-callout-error">
-                      <div className="dash-detail-field-label" style={{ color: 'var(--color-error)' }}>⚠️ 最近错误</div>
+                      <div className="dash-detail-field-label" style={{ color: 'var(--color-error)' }}>{warnI} 最近错误</div>
                       <div className="dash-detail-error-text">{selectedTask.lastError}</div>
                     </div>
                   )}

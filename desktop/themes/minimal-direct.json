@@ -1,8 +1,8 @@
 {
   "id": "minimal-direct",
-  "name": "极简直接",
+  "name": "墨灰极简",
   "author": "setone",
-  "description": "少即是多，去除一切多余元素的直接表达",
+  "description": "深灰极简风格，去除多余元素的直接表达",
   "seed": {
     "accent": "#2D3436",
     "bg": "#FFFFFF",

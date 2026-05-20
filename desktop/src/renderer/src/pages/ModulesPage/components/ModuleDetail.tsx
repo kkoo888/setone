@@ -4,6 +4,12 @@
  */
 import React, { useMemo } from 'react'
 import type { ModuleInfo, ModuleStatus } from '../../../stores/useModulesStore'
+import { FolderOpen, Help, 
+  Document, EditOne, Globe, SettingOne, Clipboard, Notice, Computer, Database
+} from '@icon-park/react'
+
+const permIcon = (name: string) =>
+  React.createElement({ 'file.read': Document, 'file.write': EditOne, 'network': Globe, 'system': SettingOne, 'clipboard': Clipboard, 'notification': Notice, 'shell': Computer, 'database': Database }[name] ?? SettingOne, { size: 16, fill: 'currentColor', theme: 'outline' })
 
 interface ModuleDetailProps {
   /** 模块信息 */
@@ -15,15 +21,15 @@ interface ModuleDetailProps {
 }
 
 /** 权限图标映射 */
-const PERMISSION_ICONS: Record<string, string> = {
-  'file.read': '📖',
-  'file.write': '✏️',
-  'network': '🌐',
-  'system': '⚙️',
-  'clipboard': '📋',
-  'notification': '🔔',
-  'shell': '💻',
-  'database': '🗄️',
+const PERMISSION_ICONS: Record<string, React.ReactNode> = {
+  'file.read': permIcon('file.read'),
+  'file.write': permIcon('file.write'),
+  'network': permIcon('network'),
+  'system': permIcon('system'),
+  'clipboard': permIcon('clipboard'),
+  'notification': permIcon('notification'),
+  'shell': permIcon('shell'),
+  'database': permIcon('database'),
 }
 
 /** 权限描述映射 */
@@ -70,7 +76,7 @@ export function ModuleDetail({ module, onClose, onToggle }: ModuleDetailProps) {
         <div className='mod-detail-header'>
           <div className='mod-detail-header-left'>
             <div className='mod-detail-icon'>
-              <span>{module.icon ?? '📦'}</span>
+              <span>{module.icon ?? React.createElement(FolderOpen, { size: 16, fill: 'currentColor', theme: 'outline' })}</span>
             </div>
             <div className='mod-detail-title-group'>
               <h2 className='mod-detail-name'>{module.name}</h2>
@@ -115,7 +121,7 @@ export function ModuleDetail({ module, onClose, onToggle }: ModuleDetailProps) {
             <div className='mod-detail-section'>
               <h3 className='mod-detail-section-title'>错误信息</h3>
               <div className='mod-detail-error'>
-                <span className='mod-detail-error-icon'>⚠️</span>
+                <span className='mod-detail-error-icon'>{React.createElement(Help, { size: 14, fill: '#f59e0b', theme: 'outline' })}</span>
                 <span>{module.error}</span>
               </div>
             </div>
@@ -143,7 +149,7 @@ export function ModuleDetail({ module, onClose, onToggle }: ModuleDetailProps) {
                 {permissions.map((perm) => (
                   <div key={perm} className='mod-detail-permission'>
                     <span className='mod-detail-permission-icon'>
-                      {PERMISSION_ICONS[perm] ?? '🔑'}
+                      {PERMISSION_ICONS[perm] ?? permIcon('system')}
                     </span>
                     <span className='mod-detail-permission-name'>{perm}</span>
                     <span className='mod-detail-permission-desc'>
@@ -162,7 +168,7 @@ export function ModuleDetail({ module, onClose, onToggle }: ModuleDetailProps) {
               <div className='mod-detail-deps'>
                 {dependencies.map((dep) => (
                   <div key={dep} className='mod-detail-dep'>
-                    <span className='mod-detail-dep-icon'>📦</span>
+                    <span className='mod-detail-dep-icon'>{React.createElement(FolderOpen, { size: 14, fill: 'currentColor', theme: 'outline' })}</span>
                     <span>{dep}</span>
                   </div>
                 ))}

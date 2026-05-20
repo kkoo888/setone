@@ -2,10 +2,20 @@ import React, { useState, useEffect, useCallback } from 'react'
 import { ModuleHeader } from '../../components/common/module/ModuleHeader'
 import { ModuleToolbar, FilterButtons } from '../../components/common/module/ModuleToolbar'
 import { ModuleList, ModuleListItem } from '../../components/common/module/ModuleList'
+import { EMPTY_ICONS, STATUS_ICONS, ACTION_ICONS } from '../../components/common/IconMap'
+import { Notice, Tips, CheckOne, Help, CloseOne } from '@icon-park/react'
+
+const noticeIcon = React.createElement(Notice, { size: 16, fill: 'currentColor', theme: 'outline' })
+const typeIcons: Record<string, React.ReactNode> = {
+  info: React.createElement(Tips, { size: 14, fill: 'currentColor', theme: 'outline' }),
+  success: React.createElement(CheckOne, { size: 14, fill: '#10b981', theme: 'outline' }),
+  warning: React.createElement(Help, { size: 14, fill: '#f59e0b', theme: 'outline' }),
+  error: React.createElement(CloseOne, { size: 14, fill: '#ef4444', theme: 'outline' }),
+}
 
 interface Notification { id: string; title: string; body: string; type: 'info' | 'success' | 'warning' | 'error'; read: boolean; createdAt: number }
 
-const TYPE_ICON: Record<string, string> = { info: 'ℹ️', success: '✅', warning: '⚠️', error: '❌' }
+const TYPE_ICON = typeIcons
 
 export function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([])
@@ -47,7 +57,7 @@ export function NotificationsPage() {
   return (
     <div className="mod-page">
       <ModuleHeader
-        icon="🔔"
+        icon={noticeIcon}
         title="通知中心"
         tabs={[
           { key: 'all', label: '全部' },
@@ -62,25 +72,25 @@ export function NotificationsPage() {
         actions={
           <>
             <button onClick={handleMarkAllRead} className="btn btn-sm">全部已读</button>
-            <button onClick={handleTest} className="btn btn-sm">🔔 测试</button>
+            <button onClick={handleTest} className="btn btn-sm">{noticeIcon} 测试</button>
           </>
         }
       />
 
-      <ModuleList emptyText="暂无通知" emptyIcon="🔔">
+      <ModuleList emptyText="暂无通知" emptyIcon={EMPTY_ICONS.bell}>
         {filtered.map(n => (
           <ModuleListItem
             key={n.id}
             id={n.id}
             highlight={!n.read}
-            icon={<span className="notif-type-icon">{TYPE_ICON[n.type] ?? 'ℹ️'}</span>}
+            icon={<span className="notif-type-icon">{TYPE_ICON[n.type] ?? typeIcons.info}</span>}
             title={n.title}
             subtitle={n.body}
             badge={!n.read ? <span className="notif-badge-new">新</span> : undefined}
             actions={
               <>
                 {!n.read && <button onClick={() => handleMarkRead(n.id)} className="btn-icon-lg" title="已读">✓</button>}
-                <button onClick={() => handleDelete(n.id)} className="btn-icon-lg" title="删除">🗑</button>
+                <button onClick={() => handleDelete(n.id)} className="btn-icon-lg" title="删除">{React.createElement(DeleteOne, { size: 14, fill: 'currentColor', theme: 'outline' })}</button>
               </>
             }
             extra={<span className="notif-time">{new Date(n.createdAt).toLocaleString()}</span>}

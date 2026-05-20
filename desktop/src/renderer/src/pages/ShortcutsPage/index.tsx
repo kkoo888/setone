@@ -3,6 +3,7 @@
  * 每个词条下方内联展开编辑表单
  */
 import React, { useState, useEffect, useCallback } from 'react'
+import { Tips, CheckOne, CloseOne, PauseOne, PlayOne, EditOne, DeleteOne } from '@icon-park/react'
 import { ModuleHeader } from '../../components/common/module/ModuleHeader'
 
 interface Shortcut {
@@ -178,7 +179,7 @@ export function ShortcutsPage() {
         <input value={formAccelerator} onChange={e => setFormAccelerator(e.target.value)} placeholder="快捷键（如 Ctrl+Shift+A）" className="sc-input" />
       </div>
       <input value={formDesc} onChange={e => setFormDesc(e.target.value)} placeholder="描述（可选）" className="sc-input" />
-      <div className="sc-form-hint">💡 格式：Ctrl/CommandOrControl+Shift+字母/功能键</div>
+      <div className="sc-form-hint">{tipsI} 格式：Ctrl/CommandOrControl+Shift+字母/功能键</div>
       <div className="sc-form-actions">
         <button onClick={onSubmit} className="btn btn-primary">{submitLabel}</button>
         <button onClick={handleCollapse} className="btn">取消</button>
@@ -196,7 +197,7 @@ export function ShortcutsPage() {
 
       {message && (
         <div className={`sc-message ${message.type === 'success' ? 'sc-message-success' : 'sc-message-error'}`}>
-          {message.type === 'success' ? '✅' : '❌'} {message.text}
+          {message.type === 'success' ? checkI : closeI} {message.text}
         </div>
       )}
 
@@ -222,10 +223,10 @@ export function ShortcutsPage() {
               </div>
               <div className="shortcut-actions">
                 <button onClick={() => handleToggle(s.id)} className="btn btn-sm">
-                  {s.enabled ? '⏸ 禁用' : '▶ 启用'}
+                  {s.enabled ? <>{pauseI} 禁用</> : <>{playI} 启用</>}
                 </button>
-                <button onClick={() => handleStartEdit(s.id)} className="btn btn-sm">✏️ 编辑</button>
-                <button onClick={() => handleDelete(s.id)} className="btn btn-danger btn-sm">🗑</button>
+                <button onClick={() => handleStartEdit(s.id)} className="btn btn-sm">{editI} 编辑</button>
+                <button onClick={() => handleDelete(s.id)} className="btn btn-danger btn-sm">{delI}</button>
               </div>
             </div>
             {/* 手风琴：编辑表单内联在对应词条下方 */}

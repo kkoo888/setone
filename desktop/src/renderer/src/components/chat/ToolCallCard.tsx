@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { STATUS_ICONS } from '../common/IconMap'
 
 export interface ToolCallData {
   id: string
@@ -14,7 +15,7 @@ interface Props extends ToolCallData {}
 
 export function ToolCallCard({ name, arguments: args, result, error, status = 'success', durationMs }: Props) {
   const [expanded, setExpanded] = useState(false)
-  const statusConfig = { running: { icon: '⏳', label: '执行中…', color: 'var(--color-warning, #f59e0b)' }, success: { icon: '✅', label: '完成', color: 'var(--color-success, #10b981)' }, error: { icon: '❌', label: '失败', color: 'var(--color-error, #ef4444)' } }[status]
+  const statusConfig = { running: { icon: STATUS_ICONS.loading, label: '执行中…', color: 'var(--color-warning, #f59e0b)' }, success: { icon: STATUS_ICONS.success, label: '完成', color: 'var(--color-success, #10b981)' }, error: { icon: STATUS_ICONS.error, label: '失败', color: 'var(--color-error, #ef4444)' } }[status]
   const hasDetails = args && Object.keys(args).length > 0
   return (
     <div className={`tool-call-card tool-call-${status}`}>

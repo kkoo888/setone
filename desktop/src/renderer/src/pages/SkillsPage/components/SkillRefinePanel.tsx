@@ -4,6 +4,7 @@
  */
 import React, { useState, useCallback, useEffect, useMemo } from 'react'
 import { useSkillStore } from '../../../stores/useSkillStore'
+import { Fire, Search, ChartHistogram, LoadingFour, Tips, CheckOne } from '@icon-park/react'
 import type { SkillMeta } from '../../../stores/useSkillStore'
 
 /** 分析结果 */
@@ -223,7 +224,7 @@ export default function SkillRefinePanel({ skill, onClose }: SkillRefinePanelPro
         {/* 头部 */}
         <div className='skill-refine-header'>
           <div className='skill-refine-header-left'>
-            <span className='skill-refine-icon' aria-hidden='true'>🔥</span>
+            <span className='skill-refine-icon' aria-hidden='true'>{fireBigI}</span>
             <div className='skill-refine-title-group'>
               <h2 className='skill-refine-name'>{skill.name}</h2>
               <span className='skill-refine-version'>v{skill.version} · 炼化优化</span>
@@ -246,14 +247,14 @@ export default function SkillRefinePanel({ skill, onClose }: SkillRefinePanelPro
             className={`skill-refine-tab${activeTab === 'analyze' ? ' active' : ''}`}
             onClick={() => setActiveTab('analyze')}
           >
-            🔍 AI 分析
+            {searchI} AI 分析
           </button>
           <button
             className={`skill-refine-tab${activeTab === 'diff' ? ' active' : ''}`}
             onClick={() => setActiveTab('diff')}
             disabled={!refineResult}
           >
-            📊 Diff 对比
+            {chartI} Diff 对比
           </button>
         </div>
 
@@ -264,7 +265,7 @@ export default function SkillRefinePanel({ skill, onClose }: SkillRefinePanelPro
             <div className='skill-refine-preview'>
               {loadingContent ? (
                 <div className='skill-refine-loading'>
-                  <span>⏳</span>
+                  <span>{loadingI}</span>
                   <span>加载中...</span>
                 </div>
               ) : (
@@ -278,13 +279,13 @@ export default function SkillRefinePanel({ skill, onClose }: SkillRefinePanelPro
             <div className='skill-refine-analyze'>
               {!analyzeResult && !analyzing && (
                 <div className='skill-refine-analyze-empty'>
-                  <span className='skill-refine-analyze-empty-icon'>🔍</span>
+                  <span className='skill-refine-analyze-empty-icon'>{searchBigI}</span>
                   <span>点击下方按钮开始 AI 分析</span>
                 </div>
               )}
               {analyzing && (
                 <div className='skill-refine-loading'>
-                  <span>⏳</span>
+                  <span>{loadingI}</span>
                   <span>AI 分析中...</span>
                 </div>
               )}
@@ -308,7 +309,7 @@ export default function SkillRefinePanel({ skill, onClose }: SkillRefinePanelPro
                       <ul className='skill-refine-suggestions-list'>
                         {analyzeResult.suggestions.map((s, i) => (
                           <li key={i} className='skill-refine-suggestion-item'>
-                            <span className='skill-refine-suggestion-bullet'>💡</span>
+                            <span className='skill-refine-suggestion-bullet'>{tipsI}</span>
                             <span>{s}</span>
                           </li>
                         ))}
@@ -325,7 +326,7 @@ export default function SkillRefinePanel({ skill, onClose }: SkillRefinePanelPro
             <div className='skill-refine-diff'>
               {!refineResult ? (
                 <div className='skill-refine-analyze-empty'>
-                  <span className='skill-refine-analyze-empty-icon'>📊</span>
+                  <span className='skill-refine-analyze-empty-icon'>{chartBigI}</span>
                   <span>执行炼化后可查看差异对比</span>
                 </div>
               ) : (
@@ -380,7 +381,7 @@ export default function SkillRefinePanel({ skill, onClose }: SkillRefinePanelPro
               onClick={handleRefine}
               disabled={refining || !instruction.trim()}
             >
-              {refining ? '⏳' : '🔥'} {refining ? '炼化中...' : '炼化'}
+              {refining ? loadingI : fireI} {refining ? '炼化中...' : '炼化'}
             </button>
           </div>
           {refineError && <p className='skill-refine-error'>{refineError}</p>}
@@ -393,7 +394,7 @@ export default function SkillRefinePanel({ skill, onClose }: SkillRefinePanelPro
             onClick={handleAnalyze}
             disabled={analyzing}
           >
-            {analyzing ? '⏳ 分析中...' : '🔍 AI 分析'}
+            {analyzing ? <>{loadingI} 分析中...</> : <>{searchI} AI 分析</>}
           </button>
           <div className='skill-refine-footer-right'>
             {refineResult && (
@@ -402,7 +403,7 @@ export default function SkillRefinePanel({ skill, onClose }: SkillRefinePanelPro
                 onClick={handleApply}
                 disabled={applying}
               >
-                {applying ? '⏳ 应用中...' : '✅ 应用优化'}
+                {applying ? <>{loadingI} 应用中...</> : <>{checkI} 应用优化</>}
               </button>
             )}
           </div>

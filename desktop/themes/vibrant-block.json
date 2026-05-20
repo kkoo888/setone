@@ -1,8 +1,8 @@
 {
   "id": "vibrant-block",
-  "name": "活力积木",
+  "name": "洋红积木",
   "author": "setone",
-  "description": "大胆撞色，充满活力的积木式设计",
+  "description": "洋红撞色积木设计，大胆活力的视觉冲击",
   "seed": {
     "accent": "#BF00FF",
     "bg": "#FAFAFA",

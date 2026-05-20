@@ -2,6 +2,14 @@ import React, { useState, useEffect, useCallback } from 'react'
 import { ModuleHeader } from '../../components/common/module/ModuleHeader'
 import { ModuleList, ModuleListItem, ModuleModal } from '../../components/common/module/ModuleList'
 import { KBDocument, KBSearchResult, KBAskResult } from '../types/knowledge-base'
+import { EMPTY_ICONS, STATUS_ICONS, ACTION_ICONS } from '../../components/common/IconMap'
+import { BookOpen, Search, Tips, DownloadOne, FolderOpen } from '@icon-park/react'
+
+const bookIcon = React.createElement(BookOpen, { size: 16, fill: 'currentColor', theme: 'outline' })
+const searchIcon = React.createElement(Search, { size: 16, fill: 'currentColor', theme: 'outline' })
+const tipsIcon = React.createElement(Tips, { size: 16, fill: 'currentColor', theme: 'outline' })
+const downloadIcon = React.createElement(DownloadOne, { size: 16, fill: 'currentColor', theme: 'outline' })
+const folderIcon = React.createElement(FolderOpen, { size: 12, fill: 'currentColor', theme: 'outline' })
 
 /** 数据集信息 */
 interface DatasetInfo {
@@ -140,7 +148,7 @@ export function KnowledgeBasePage() {
           next.delete(progress.datasetId)
           return next
         })
-        setMessage(`❌ "${progress.datasetName}" 下载已取消`)
+        setMessage(`"${progress.datasetName}" 下载已取消`)
         return
       }
 
@@ -150,10 +158,10 @@ export function KnowledgeBasePage() {
         return next
       })
       if (progress.state === 'completed') {
-        setMessage(`✅ "${progress.datasetName}" 下载完成！`)
+        setMessage(STATUS_ICONS.success + ' "${progress.datasetName}" 下载完成！`)
         loadDatasets()
       } else if (progress.state === 'interrupted') {
-        setMessage(`⚠️ "${progress.datasetName}" 下载中断`)
+        setMessage(`STATUS_ICONS.warning + ' "${progress.datasetName}" 下载中断`)
       }
     }
 
@@ -172,7 +180,7 @@ export function KnowledgeBasePage() {
       const res = await window.electronAPI.invoke('kb_network_status', { enabled: newState })
       if (res?.success) {
         setNetworkEnabled(newState)
-        setMessage(newState ? '✅ 联网功能已开启' : '⚠️ 联网功能已关闭（本地文件操作和已有向量搜索不受影响）')
+        setMessage(newState ? STATUS_ICONS.success + ' 联网功能已开启' : STATUS_ICONS.warning + ' 联网功能已关闭（本地文件操作和已有向量搜索不受影响）')
       }
     } catch (e) { setMessage(`切换失败：${(e as Error).message}`) }
   }
@@ -183,7 +191,7 @@ export function KnowledgeBasePage() {
     // 网络地址需要联网，本地路径不需要
     const isRemotePath = /^https?:\/\//i.test(importPath.trim())
     if (isRemotePath && !networkEnabled) {
-      setMessage('⚠️ 当前处于断网状态，无法从网络地址导入。请使用本地路径或开启联网功能')
+      setMessage('STATUS_ICONS.warning + ' 当前处于断网状态，无法从网络地址导入。请使用本地路径或开启联网功能')
       return
     }
     setLoading(true)
@@ -250,19 +258,19 @@ export function KnowledgeBasePage() {
   const handleFetchRemote = async () => {
     if (!remoteUrl.trim()) return
     if (!networkEnabled) {
-      setMessage('⚠️ 当前处于断网状态，无法加载远程数据集。请先在设置中开启联网功能')
+      setMessage('STATUS_ICONS.warning + ' 当前处于断网状态，无法加载远程数据集。请先在设置中开启联网功能')
       return
     }
     setLoadingDatasets(true)
     try {
       const res = await window.electronAPI.invoke('kb_dataset_fetch_remote', { url: remoteUrl })
       if (res?.success) {
-        setMessage(`✅ ${res.data.message}`)
+        setMessage(STATUS_ICONS.success + ' ${res.data.message}`)
         loadDatasets()
       } else {
-        setMessage(`❌ 加载失败：${res?.error}`)
+        setMessage(`加载失败：${res?.error}`)
       }
-    } catch (e) { setMessage(`❌ 错误：${(e as Error).message}`) }
+    } catch (e) { setMessage(`错误：${(e as Error).message}`) }
     setLoadingDatasets(false)
   }
 
@@ -279,7 +287,7 @@ export function KnowledgeBasePage() {
   const handleConfirmDownload = () => {
     if (!showDownloadConfirm) return
     if (!networkEnabled) {
-      setMessage('⚠️ 当前处于断网状态，无法下载数据集。请先在设置中开启联网功能')
+      setMessage('STATUS_ICONS.warning + ' 当前处于断网状态，无法下载数据集。请先在设置中开启联网功能')
       setShowDownloadConfirm(null)
       return
     }
@@ -356,20 +364,20 @@ export function KnowledgeBasePage() {
           className="btn btn-primary"
           style={{ fontSize: 12, padding: '4px 12px', whiteSpace: 'nowrap' }}
         >
-          📥 下载
+          {downloadIcon} 下载
         </button>
       )
     }
 
     if (dl.state === 'completed') {
       return (
-        <span style={{ fontSize: 12, color: 'var(--color-success)', fontWeight: 600 }}>✅ 已完成</span>
+        <span style={{ fontSize: 12, color: 'var(--color-success)', fontWeight: 600 }}>STATUS_ICONS.success + ' 已完成</span>
       )
     }
 
     if (dl.state === 'pending') {
       return (
-        <span style={{ fontSize: 12, color: 'var(--color-text-tertiary)' }}>⏳ 准备中...</span>
+        <span style={{ fontSize: 12, color: 'var(--color-text-tertiary)' }}>STATUS_ICONS.loading + ' 准备中...</span>
       )
     }
 
@@ -402,13 +410,13 @@ export function KnowledgeBasePage() {
   return (
     <div className="mod-page">
       <ModuleHeader
-        icon="📚"
+        icon={bookIcon}
         title="知识库"
         tabs={[
           { key: 'datasets', label: '🌐 数据集广场', count: datasets.length },
           { key: 'docs', label: '📄 文档管理', count: documents.length },
-          { key: 'search', label: '🔍 语义搜索' },
-          { key: 'ask', label: '💡 RAG问答' },
+          { key: 'search', label: <>{searchIcon} 语义搜索</> },
+          { key: 'ask', label: <>{tipsIcon} RAG问答</> },
         ]}
         activeTab={activeTab}
         onTabChange={setActiveTab}
@@ -514,7 +522,7 @@ export function KnowledgeBasePage() {
                           {normalizeCategory(ds.category)}
                         </span>
                         {ds.size && ds.size !== '—' && (
-                          <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)' }}>📦 {ds.size}</span>
+                          <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)' }}>{folderIcon} {ds.size}</span>
                         )}
                         {ds.downloads && (
                           <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)' }}>⬇️ {ds.downloads}</span>
@@ -541,10 +549,10 @@ export function KnowledgeBasePage() {
             <input value={importPath} onChange={e => setImportPath(e.target.value)} placeholder="输入文件或目录路径，或点击浏览选择..." className="mod-search" style={{ maxWidth: 'none', flex: 1 }} />
             <button onClick={() => setShowImportDialog(true)} className="btn">📂 浏览</button>
             <button onClick={handleImport} disabled={loading || !importPath.trim()} className="btn btn-primary">
-              {loading ? '导入中...' : '📥 导入'}
+              {loading ? '导入中...' : '{downloadIcon} 导入'}
             </button>
           </div>
-          <ModuleList emptyText="暂无文档，请导入文件" emptyIcon="📚">
+          <ModuleList emptyText="暂无文档，请导入文件" emptyIcon={EMPTY_ICONS.book}>
             {documents.map(doc => (
               <ModuleListItem
                 key={doc.id}
@@ -552,7 +560,7 @@ export function KnowledgeBasePage() {
                 icon="📄"
                 title={doc.fileName}
                 subtitle={`${doc.fileType} · ${doc.chunkCount} 片段`}
-                actions={<button onClick={() => handleDelete(doc.id)} className="btn-icon-lg" title="删除">🗑</button>}
+                actions={<button onClick={() => handleDelete(doc.id)} className="btn-icon-lg" title="删除">{React.createElement(DeleteOne, { size: 14, fill: 'currentColor', theme: 'outline' })}</button>}
               />
             ))}
           </ModuleList>
@@ -565,10 +573,10 @@ export function KnowledgeBasePage() {
           <div style={{ padding: '12px 12px', display: 'flex', gap: 8 }}>
             <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSearch()} placeholder="输入搜索内容..." className="mod-search" style={{ maxWidth: 'none', flex: 1 }} />
             <button onClick={handleSearch} disabled={loading} className="btn btn-primary">
-              {loading ? '搜索中...' : '🔍 搜索'}
+              {loading ? '搜索中...' : <>{searchIcon} 搜索</>}
             </button>
           </div>
-          <ModuleList emptyText="输入关键词开始语义搜索" emptyIcon="🔍">
+          <ModuleList emptyText="输入关键词开始语义搜索" emptyIcon={EMPTY_ICONS.search}>
             {searchResults.map(r => (
               <ModuleListItem
                 key={r.chunkId}
@@ -589,7 +597,7 @@ export function KnowledgeBasePage() {
           <div style={{ padding: '12px 12px', display: 'flex', gap: 8 }}>
             <input value={askQuestion} onChange={e => setAskQuestion(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleAsk()} placeholder="输入问题..." className="mod-search" style={{ maxWidth: 'none', flex: 1 }} />
             <button onClick={handleAsk} disabled={loading} className="btn btn-primary">
-              {loading ? '思考中...' : '💡 提问'}
+              {loading ? '思考中...' : <>{tipsIcon} 提问</>}
             </button>
           </div>
           {askResult && (
@@ -655,7 +663,7 @@ export function KnowledgeBasePage() {
                   disabled={!!isDownloading}
                   style={{ opacity: isDownloading ? 0.6 : 1 }}
                 >
-                  {isDownloading ? '⏳ 下载中...' : '📥 下载'}
+                  {isDownloading ? <>{STATUS_ICONS.loading} 下载中...</> : <>{downloadIcon} 下载</>}
                 </button>
               )}
             </>
@@ -675,7 +683,7 @@ export function KnowledgeBasePage() {
                   {normalizeCategory(showDownloadConfirm.category)}
                 </span>
                 {showDownloadConfirm.size && showDownloadConfirm.size !== '—' && (
-                  <span style={{ fontSize: 12, color: 'var(--color-text-tertiary)' }}>📦 {showDownloadConfirm.size}</span>
+                  <span style={{ fontSize: 12, color: 'var(--color-text-tertiary)' }}>{folderIcon} {showDownloadConfirm.size}</span>
                 )}
                 {showDownloadConfirm.downloads && (
                   <span style={{ fontSize: 12, color: 'var(--color-text-tertiary)' }}>⬇️ {showDownloadConfirm.downloads}</span>
@@ -715,7 +723,7 @@ export function KnowledgeBasePage() {
               {/* 已完成提示 */}
               {isCompleted && (
                 <div style={{ padding: '10px 16px', borderRadius: 8, background: 'rgba(34,197,94,0.1)', color: 'var(--color-success)', fontSize: 13, marginBottom: 16 }}>
-                  ✅ 下载完成
+                  {STATUS_ICONS.success} 下载完成
                 </div>
               )}
 

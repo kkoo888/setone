@@ -5,6 +5,7 @@
  */
 import React, { useEffect, useCallback, useState, useMemo } from 'react'
 import { useSkillStore } from '../../../stores/useSkillStore'
+import { SettingOne, LoadingFour, Inbox } from '@icon-park/react'
 import type { SkillMeta } from '../../../stores/useSkillStore'
 
 interface SkillConfigPanelProps {
@@ -185,7 +186,7 @@ export function SkillConfigPanel({ skill, onClose }: SkillConfigPanelProps) {
         {/* 头部 */}
         <div className='skill-config-header'>
           <div className='skill-config-header-left'>
-            <span className='skill-config-icon' aria-hidden='true'>⚙️</span>
+            <span className='skill-config-icon' aria-hidden='true'>{React.createElement(SettingOne, { size: 24, fill: '#9ca3af', theme: 'outline' })}</span>
             <div>
               <h2 className='skill-config-title'>{skill.name}</h2>
               <span className='skill-config-subtitle'>参数配置</span>
@@ -200,12 +201,12 @@ export function SkillConfigPanel({ skill, onClose }: SkillConfigPanelProps) {
         <div className='skill-config-body'>
           {loading ? (
             <div className='skill-config-empty'>
-              <span>⏳</span>
+              <span>{React.createElement(LoadingFour, { size: 16, fill: 'currentColor', theme: 'outline' })}</span>
               <span>加载配置...</span>
             </div>
           ) : fields.length === 0 ? (
             <div className='skill-config-empty'>
-              <span>📭</span>
+              <span>{React.createElement(Inbox, { size: 16, fill: '#9ca3af', theme: 'outline' })}</span>
               <span>该技能暂无可配置项</span>
             </div>
           ) : (

@@ -7,6 +7,7 @@ import { CommandPalette } from '../command-palette/CommandPalette'
 import { useAppStore } from '../../stores/useAppStore'
 import { useCommandPaletteStore } from '../../stores/useCommandPaletteStore'
 import { useTheme } from '../../hooks/useTheme'
+import { MODULE_PAGE_ICONS } from '../common/IconMap'
 
 const ChatPage = lazy(() => import('../../pages/ChatPage').then(m => ({ default: m.ChatPage })))
 const SkillsPage = lazy(() => import('../../pages/SkillsPage').then(m => ({ default: m.SkillsPage })))
@@ -44,7 +45,7 @@ class LazyLoadErrorBoundary extends Component<{ children: ReactNode; fallback?: 
 }
 
 /** 模块专属页面占位组件 */
-function ModulePlaceholderPage({ title, description, icon }: { title: string; description: string; icon: string }) {
+function ModulePlaceholderPage({ title, description, icon }: { title: string; description: string; icon: React.ReactNode }) {
   return (
     <div className="module-placeholder-page">
       <div className="module-placeholder-content">
@@ -57,15 +58,15 @@ function ModulePlaceholderPage({ title, description, icon }: { title: string; de
 }
 
 /** 模块面板ID → 占位页面配置 */
-const MODULE_PAGE_CONFIG: Record<string, { title: string; description: string; icon: string }> = {
-  'workflow': { title: '工作流自动化', description: '可视化工作流编排，触发器 + 多步骤自动化执行', icon: '🔄' },
-  'knowledge-base': { title: '本地知识库', description: '文件导入、向量化、语义检索，本地 RAG 问答', icon: '📚' },
-  'translator': { title: '翻译面板', description: '划词翻译、全文翻译、翻译历史与收藏', icon: '🌐' },
-  'memory': { title: '记忆系统', description: '短期/长期记忆管理，语义搜索与 AI 摘要', icon: '🧠' },
-  'task': { title: '任务规划', description: '复杂任务拆解为多步执行，状态追踪与进度管理', icon: '📋' },
-  'vision': { title: '视觉感知', description: '视频流捕获、帧变化检测、AI 画面分析', icon: '👁️' },
-  'screen': { title: '屏幕理解', description: '截图捕获、OCR 文字识别、屏幕区域选择', icon: '🖥️' },
-  'proactive': { title: '主动关怀', description: '定时提醒、天气查询、主动问候', icon: '💝' },
+const MODULE_PAGE_CONFIG: Record<string, { title: string; description: string; icon: React.ReactNode }> = {
+  'workflow': { title: '工作流自动化', description: '可视化工作流编排，触发器 + 多步骤自动化执行', icon: MODULE_PAGE_ICONS.workflow },
+  'knowledge-base': { title: '本地知识库', description: '文件导入、向量化、语义检索，本地 RAG 问答', icon: MODULE_PAGE_ICONS['knowledge-base'] },
+  'translator': { title: '翻译面板', description: '划词翻译、全文翻译、翻译历史与收藏', icon: MODULE_PAGE_ICONS.translator },
+  'memory': { title: '记忆系统', description: '短期/长期记忆管理，语义搜索与 AI 摘要', icon: MODULE_PAGE_ICONS.memory },
+  'task': { title: '任务规划', description: '复杂任务拆解为多步执行，状态追踪与进度管理', icon: MODULE_PAGE_ICONS.task },
+  'vision': { title: '视觉感知', description: '视频流捕获、帧变化检测、AI 画面分析', icon: MODULE_PAGE_ICONS.vision },
+  'screen': { title: '屏幕理解', description: '截图捕获、OCR 文字识别、屏幕区域选择', icon: MODULE_PAGE_ICONS.screen },
+  'proactive': { title: '主动关怀', description: '定时提醒、天气查询、主动问候', icon: MODULE_PAGE_ICONS.proactive },
 }
 
 export function MainLayout() {

@@ -1,4 +1,5 @@
 import React, { useEffect, useCallback, useRef, useState } from 'react'
+import { Refresh, Magic, FolderOpen } from '@icon-park/react'
 import { useChangesStore, type ChangedFile } from '../../stores/useChangesStore'
 import { FileTree } from './FileTree'
 import { FilePreview } from './FilePreview'
@@ -154,7 +155,7 @@ export function ChangesPanel() {
             title="刷新"
             aria-label="刷新"
           >
-            🔄
+            {React.createElement(Refresh, { size: 16, fill: 'currentColor', theme: 'outline' })}
           </button>
           <button
             className="changes-panel-close"
@@ -190,7 +191,7 @@ export function ChangesPanel() {
           <>
             {changedFiles.length === 0 ? (
               <div className="changes-empty">
-                <span className="changes-empty-icon">✨</span>
+                <span className="changes-empty-icon">{React.createElement(Magic, { size: 32, fill: '#9ca3af', theme: 'outline' })}</span>
                 <span>没有变更的文件</span>
               </div>
             ) : (
@@ -227,7 +228,7 @@ export function ChangesPanel() {
             {previewFile ? (
               previewFile.content === '' && previewFile.path ? (
                 <div className="file-preview-too-large">
-                  <span className="file-preview-too-large-icon">📦</span>
+                  <span className="file-preview-too-large-icon">{React.createElement(FolderOpen, { size: 32, fill: '#9ca3af', theme: 'outline' })}</span>
                   <span>文件过大，无法预览</span>
                   <span style={{ fontSize: 12, marginTop: 4, color: 'var(--text-secondary, #9ca3af)' }}>
                     {previewFile.path}

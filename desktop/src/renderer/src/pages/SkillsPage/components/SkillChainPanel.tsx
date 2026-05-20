@@ -4,6 +4,7 @@
  */
 import React, { useEffect, useCallback, useState, useMemo } from 'react'
 import { useSkillStore } from '../../../stores/useSkillStore'
+import { FolderOpen, CheckOne, CloseOne } from '@icon-park/react'
 import type { SkillMeta } from '../../../stores/useSkillStore'
 
 /** 工作流步骤 */
@@ -161,8 +162,8 @@ export default function SkillChainPanel({ onClose }: SkillChainPanelProps) {
   }, [skills])
 
   /** 获取技能图标 */
-  const getSkillIcon = useCallback((skillId: string): string => {
-    return skills.find((s) => s.id === skillId)?.icon ?? '📦'
+  const getSkillIcon = useCallback((skillId: string): React.ReactNode => {
+    return skills.find((s) => s.id === skillId)?.icon ?? React.createElement(FolderOpen, { size: 16, fill: 'currentColor', theme: 'outline' })
   }, [skills])
 
   return (
@@ -371,7 +372,7 @@ export default function SkillChainPanel({ onClose }: SkillChainPanelProps) {
                 <div className='skill-config-field'>
                   <label className='skill-config-field-label'>执行结果</label>
                   <div className={`chain-exec-result ${execResult.success ? 'success' : 'error'}`}>
-                    {execResult.success ? '✅ 执行成功' : '❌ 执行失败'}
+                    {execResult.success ? <>{React.createElement(CheckOne, { size: 14, fill: '#10b981', theme: 'outline' })} 执行成功</> : <>{React.createElement(CloseOne, { size: 14, fill: '#ef4444', theme: 'outline' })} 执行失败</>}
                     {execResult.results.length > 0 && (
                       <pre className='chain-exec-json'>
                         {JSON.stringify(execResult.results, null, 2)}

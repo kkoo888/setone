@@ -1,8 +1,8 @@
 {
   "id": "interactive-demo",
-  "name": "互动演示",
+  "name": "紫晶互动",
   "author": "setone",
-  "description": "交互丰富，以互动演示为特色的体验设计",
+  "description": "紫色调交互演示，丰富的互动体验设计",
   "seed": {
     "accent": "#6C5CE7",
     "bg": "#FFFFFF",

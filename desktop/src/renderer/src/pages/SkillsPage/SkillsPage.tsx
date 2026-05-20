@@ -16,6 +16,7 @@ import { SkillInstallDialog } from './components/SkillInstallDialog'
 import { SkillUpdateDialog } from './components/SkillUpdateDialog'
 import { NetworkToggle } from './components/NetworkToggle'
 import SkillCreateDialog from './components/SkillCreateDialog'
+import { Magic, Search, DeleteOne, Refresh, Fire, LoadingFour, Inbox } from '@icon-park/react'
 import SkillRefinePanel from './components/SkillRefinePanel'
 
 /** 二级导航标签 */
@@ -141,26 +142,26 @@ export function SkillsPage() {
     <div className='skills-page mod-page'>
       {/* 顶部标题区 */}
       <ModuleHeader
-        icon="✨"
+        icon={magicI}
         title="技能"
         actions={
           <>
             <NetworkToggle />
             <SkillSearch value={searchQuery} onChange={setSearchQuery} />
             <button className='btn-skill-action' onClick={handleScanSkills} title='扫描本地技能' aria-label='扫描本地技能'>
-              <span>🔍</span> 扫描
+              <span>{searchI}</span> 扫描
             </button>
             <button className='btn-skill-action' onClick={handleOpenTrash} title='回收站' aria-label='打开回收站'>
-              <span>🗑️</span> 回收站
+              <span>{delI}</span> 回收站
             </button>
             <button className='btn-skill-action' onClick={() => setUpdateDialogOpen(true)} title='检查更新' aria-label='检查技能更新'>
-              <span>🔄</span> 更新
+              <span>{refreshI}</span> 更新
             </button>
             <button className='btn-skill-primary' onClick={() => setInstallDialogOpen(true)}>
               <span>+</span> 添加技能
             </button>
             <button className='btn-skill-primary' onClick={() => setCreateDialogOpen(true)}>
-              <span>✨</span> 生成技能
+              <span>{magicI}</span> 生成技能
             </button>
             <button
               className='btn-skill-action'
@@ -174,7 +175,7 @@ export function SkillsPage() {
               title='炼化优化'
               aria-label='炼化优化技能'
             >
-              <span>🔥</span> 炼化
+              <span>{fireI}</span> 炼化
             </button>
           </>
         }
@@ -202,12 +203,12 @@ export function SkillsPage() {
       <div className='skills-grid'>
         {loading ? (
           <div className='skills-empty' style={{ gridColumn: '1 / -1' }}>
-            <span className='skills-empty-icon'>⏳</span>
+            <span className='skills-empty-icon'>{loadingI}</span>
             <span className='skills-empty-text'>加载中...</span>
           </div>
         ) : filteredSkills.length === 0 ? (
           <div className='skills-empty' style={{ gridColumn: '1 / -1' }}>
-            <span className='skills-empty-icon'>📭</span>
+            <span className='skills-empty-icon'>{inboxI}</span>
             <span className='skills-empty-text'>
               {searchQuery ? '没有匹配的技能' : '暂无技能'}
             </span>

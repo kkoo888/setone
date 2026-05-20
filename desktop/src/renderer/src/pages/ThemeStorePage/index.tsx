@@ -10,6 +10,7 @@ import React, { useState, useEffect, useCallback } from 'react'
 import { ModuleHeader } from '../../components/common/module/ModuleHeader'
 import { ModuleToolbar, FilterButtons } from '../../components/common/module/ModuleToolbar'
 import { useTheme } from '../../hooks/useTheme'
+import { Sun, Moon, DownloadOne, FolderOpen, DeleteOne } from '@icon-park/react'
 import type { ThemeConfigV2, ThemeConfigV1 } from '../../services/themeEngine'
 
 interface Theme {
@@ -79,7 +80,7 @@ export function ThemeStorePage() {
     return true
   })
 
-  const modeLabel = (mode: string) => mode === 'light' ? '☀️ 亮色' : '🌙 暗色'
+  const modeLabel = (mode: string) => mode === 'light' ? <>{sunI} 亮色</> : <>{moonI} 暗色</>
   const sourceLabel = (source: string) => source === 'builtin' ? '内置' : source === 'imported' ? '已导入' : '可下载'
 
   /** 渐变预览色 */
@@ -94,7 +95,7 @@ export function ThemeStorePage() {
       <ModuleHeader
         icon="🎨"
         title="主题商店"
-        actions={<button className="btn btn-primary btn-sm" onClick={handleImport} disabled={loading}>📥 导入主题</button>}
+        actions={<button className="btn btn-primary btn-sm" onClick={handleImport} disabled={loading}>{downloadI} 导入主题</button>}
       />
 
       <ModuleToolbar search={search} onSearchChange={setSearch} searchPlaceholder="搜索主题...">
@@ -102,10 +103,10 @@ export function ThemeStorePage() {
           options={[
             { key: 'all', label: '全部' },
             { key: 'builtin', label: '🏠 内置' },
-            { key: 'imported', label: '📥 已导入' },
-            { key: 'available', label: '📦 可下载' },
-            { key: 'light', label: '☀️ 亮色' },
-            { key: 'dark', label: '🌙 暗色' },
+            { key: 'imported', label: <>{downloadI} 已导入</> },
+            { key: 'available', label: <>{folderI} 可下载</> },
+            { key: 'light', label: <>{sunI} 亮色</> },
+            { key: 'dark', label: <>{moonI} 暗色</> },
           ]}
           active={filter}
           onChange={setFilter}
@@ -141,11 +142,11 @@ export function ThemeStorePage() {
             </div>
             <div className="theme-actions">
               <button onClick={() => handleApply(t.id)} disabled={loading || t.active} className="btn btn-primary btn-sm">
-                {t.active ? '已启用' : t.source === 'available' ? '📥 下载并应用' : '应用'}
+                {t.active ? '已启用' : t.source === 'available' ? <>{downloadI} 下载并应用</> : '应用'}
               </button>
-              <button onClick={() => handleExport(t.id)} className="btn btn-sm">📦 导出</button>
+              <button onClick={() => handleExport(t.id)} className="btn btn-sm">{folderI} 导出</button>
               {t.source === 'imported' && !t.active && (
-                <button onClick={() => handleDelete(t.id)} className="btn btn-danger btn-sm">🗑 删除</button>
+                <button onClick={() => handleDelete(t.id)} className="btn btn-danger btn-sm">{delI} 删除</button>
               )}
             </div>
           </div>

@@ -25,7 +25,7 @@ export function MessageList({ messages, streamingContent, containerRef, endRef, 
     >
       {messages.length === 0 && !streamingContent && (
         <div className="empty-state">
-          <p>🌸 开始和我聊天吧！</p>
+          <p>开始和我聊天吧！</p>
           <p className="empty-hint">输入消息或问我任何问题</p>
         </div>
       )}

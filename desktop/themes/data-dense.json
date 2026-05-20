@@ -1,8 +1,8 @@
 {
   "id": "data-dense",
-  "name": "数据密集",
+  "name": "数据蓝",
   "author": "setone",
-  "description": "信息密度高，为数据密集型场景优化的主题",
+  "description": "纯净蓝色调，为数据密集型界面优化的清晰布局",
   "seed": {
     "accent": "#0080FF",
     "bg": "#F5F5F5",

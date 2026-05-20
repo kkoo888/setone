@@ -3,6 +3,7 @@
  * 支持选择技能、选择导出路径、导出进度显示
  */
 import React, { useState, useCallback, useEffect } from 'react'
+import { CheckOne, CloseOne } from '@icon-park/react'
 import type { SkillMeta } from '../../../stores/useSkillStore'
 
 /** 组件属性 */
@@ -148,7 +149,7 @@ export function SkillExportDialog({ visible, skills, onClose }: SkillExportDialo
 
           {phase === 'done' && (
             <div className='dialog-success'>
-              <span className='success-icon'>✅</span>
+              <span className='success-icon'>{React.createElement(CheckOne, { size: 24, fill: '#10b981', theme: 'outline' })}</span>
               <p>导出成功！</p>
               <p className='output-path'>{outputPath}</p>
             </div>
@@ -156,7 +157,7 @@ export function SkillExportDialog({ visible, skills, onClose }: SkillExportDialo
 
           {phase === 'error' && (
             <div className='dialog-error'>
-              <span className='error-icon'>❌</span>
+              <span className='error-icon'>{React.createElement(CloseOne, { size: 24, fill: '#ef4444', theme: 'outline' })}</span>
               <p>导出失败</p>
               <p className='error-detail'>{errorMsg}</p>
             </div>

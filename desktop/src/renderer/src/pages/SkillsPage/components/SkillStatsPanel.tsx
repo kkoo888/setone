@@ -3,6 +3,7 @@
  * 侧滑弹窗，展示技能的使用次数、成功率、平均耗时等统计数据
  */
 import React, { useEffect, useCallback, useState, useMemo } from 'react'
+import { FolderOpen, ChartHistogram, LoadingFour, Inbox, CheckOne, CloseOne } from '@icon-park/react'
 import { useSkillStore } from '../../../stores/useSkillStore'
 
 interface SkillStatsPanelProps {
@@ -103,8 +104,8 @@ export default function SkillStatsPanel({ onClose }: SkillStatsPanelProps) {
   }, [skills])
 
   /** 获取技能图标 */
-  const getSkillIcon = useCallback((skillId: string): string => {
-    return skills.find((s) => s.id === skillId)?.icon ?? '📦'
+  const getSkillIcon = useCallback((skillId: string): React.ReactNode => {
+    return skills.find((s) => s.id === skillId)?.icon ?? React.createElement(FolderOpen, { size: 16, fill: 'currentColor', theme: 'outline' })
   }, [skills])
 
   return (
@@ -113,7 +114,7 @@ export default function SkillStatsPanel({ onClose }: SkillStatsPanelProps) {
         {/* 头部 */}
         <div className='skill-config-header'>
           <div className='skill-config-header-left'>
-            <span className='skill-config-icon' aria-hidden='true'>📊</span>
+            <span className='skill-config-icon' aria-hidden='true'>{React.createElement(ChartHistogram, { size: 24, fill: '#9ca3af', theme: 'outline' })}</span>
             <div>
               <h2 className='skill-config-title'>使用统计</h2>
               <span className='skill-config-subtitle'>技能使用情况分析</span>
@@ -128,7 +129,7 @@ export default function SkillStatsPanel({ onClose }: SkillStatsPanelProps) {
         <div className='skill-config-body'>
           {statsLoading ? (
             <div className='skill-config-empty'>
-              <span>⏳</span>
+              <span>{React.createElement(LoadingFour, { size: 16, fill: 'currentColor', theme: 'outline' })}</span>
               <span>加载统计数据...</span>
             </div>
           ) : (
@@ -156,7 +157,7 @@ export default function SkillStatsPanel({ onClose }: SkillStatsPanelProps) {
               {/* 技能排行 */}
               {!statsList || statsList.length === 0 ? (
                 <div className='skill-config-empty'>
-                  <span>📭</span>
+                  <span>{React.createElement(Inbox, { size: 16, fill: '#9ca3af', theme: 'outline' })}</span>
                   <span>暂无使用记录</span>
                 </div>
               ) : (
@@ -219,7 +220,7 @@ export default function SkillStatsPanel({ onClose }: SkillStatsPanelProps) {
                                 <div className='stats-records-list'>
                                   {stat.recentRecords.map((record, i) => (
                                     <div key={i} className='stats-record-row'>
-                                      <span>{record.success ? '✅' : '❌'}</span>
+                                      <span>{record.success ? React.createElement(CheckOne, { size: 14, fill: '#10b981', theme: 'outline' }) : React.createElement(CloseOne, { size: 14, fill: '#ef4444', theme: 'outline' })}</span>
                                       <span className='stats-record-time'>
                                         {formatTime(record.timestamp)}
                                       </span>

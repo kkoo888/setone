@@ -1,8 +1,8 @@
 {
   "id": "motion-driven",
-  "name": "动效驱动",
+  "name": "橙焰动效",
   "author": "setone",
-  "description": "动画丰富，以动效为核心的交互体验",
+  "description": "橙色动效驱动，丰富流畅的动画交互体验",
   "seed": {
     "accent": "#FF6B35",
     "bg": "#FAFAFA",

@@ -1,6 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { ModuleHeader } from '../../components/common/module/ModuleHeader'
 import { ModuleList, ModuleListItem, ModuleModal } from '../../components/common/module/ModuleList'
+import { EMPTY_ICONS, ACTION_ICONS } from '../../components/common/IconMap'
+import { Globe, Star, DeleteOne } from '@icon-park/react'
+
+const starIcon = React.createElement(Star, { size: 14, fill: '#f59e0b', theme: 'filled' })
+const starOutlineIcon = React.createElement(Star, { size: 14, fill: 'currentColor', theme: 'outline' })
+const deleteIcon = React.createElement(DeleteOne, { size: 14, fill: 'currentColor', theme: 'outline' })
+const globeIcon = React.createElement(Globe, { size: 16, fill: 'currentColor', theme: 'outline' })
 
 interface TranslationRecord {
   id: string; sourceText: string; translatedText: string
@@ -54,7 +61,7 @@ export function TranslatorPage() {
         loadHistory()
       } else {
         setTranslatedText('')
-        setTranslationSource(res?.error ?? '📚 知识库中未找到相关翻译')
+        setTranslationSource(res?.error ?? '知识库中未找到相关翻译')
       }
     } catch { /* ignore */ }
     setLoading(false)
@@ -106,13 +113,13 @@ export function TranslatorPage() {
       onClick={() => setModalRecord(r)}
       title={`${LANGS[r.sourceLang] ?? r.sourceLang} → ${LANGS[r.targetLang] ?? r.targetLang}`}
       subtitle={<><span className="trans-compare-label" style={{ display: 'inline', marginBottom: 0 }}>{r.sourceText}</span> → <span style={{ fontWeight: 500 }}>{r.translatedText}</span></>}
-      badge={r.isFavorite ? <span className="trans-fav-icon">⭐</span> : null}
+      badge={r.isFavorite ? <span className="trans-fav-icon">{starIcon}</span> : null}
       actions={
         <>
           <button onClick={(e) => { e.stopPropagation(); handleToggleFavorite(r.id) }} className="btn-icon-lg" title="收藏">
-            {r.isFavorite ? '⭐' : '☆'}
+            {r.isFavorite ? starIcon : starOutlineIcon}
           </button>
-          <button onClick={(e) => { e.stopPropagation(); handleDelete(r.id) }} className="btn-icon-lg" title="删除">🗑</button>
+          <button onClick={(e) => { e.stopPropagation(); handleDelete(r.id) }} className="btn-icon-lg" title="删除">{deleteIcon}</button>
         </>
       }
     />
@@ -121,7 +128,7 @@ export function TranslatorPage() {
   return (
     <div className="mod-page">
       <ModuleHeader
-        icon="🌐"
+        icon={globeIcon}
         title="翻译面板"
         tabs={tabs}
         activeTab={activeTab}
@@ -153,7 +160,7 @@ export function TranslatorPage() {
           </div>
           <div className="trans-btn-row">
             <button onClick={handleTranslate} disabled={loading || loadingKB || !sourceText.trim()} className="trans-translate-btn">
-              {loading ? '翻译中...' : '🌐 翻译'}
+              {loading ? '翻译中...' : <>{globeIcon} 翻译</>}
             </button>
             <button onClick={handleTranslateWithKB} disabled={loading || loadingKB || !sourceText.trim()} className="trans-translate-btn trans-kb-btn">
               {loadingKB ? '查找中...' : '💛 小希翻译'}
@@ -168,13 +175,13 @@ export function TranslatorPage() {
       )}
 
       {activeTab === 'history' && (
-        <ModuleList emptyText="暂无翻译历史" emptyIcon="🌐">
+        <ModuleList emptyText="暂无翻译历史" emptyIcon={EMPTY_ICONS.globe}>
           {history.map(renderRecord)}
         </ModuleList>
       )}
 
       {activeTab === 'favorites' && (
-        <ModuleList emptyText="暂无收藏" emptyIcon="⭐">
+        <ModuleList emptyText="暂无收藏" emptyIcon={EMPTY_ICONS.star}>
           {favorites.map(renderRecord)}
         </ModuleList>
       )}
@@ -183,12 +190,12 @@ export function TranslatorPage() {
       {modalRecord && (
         <ModuleModal title="翻译详情" onClose={() => setModalRecord(null)} footer={
           <>
-            <button className="btn btn-sm" onClick={() => navigator.clipboard.writeText(modalRecord.sourceText)}>📋 复制原文</button>
-            <button className="btn btn-sm" onClick={() => navigator.clipboard.writeText(modalRecord.translatedText)}>📋 复制译文</button>
+            <button className="btn btn-sm" onClick={() => navigator.clipboard.writeText(modalRecord.sourceText)}>{clipI} 复制原文</button>
+            <button className="btn btn-sm" onClick={() => navigator.clipboard.writeText(modalRecord.translatedText)}>{clipI} 复制译文</button>
             <button className="btn btn-sm" onClick={() => { handleToggleFavorite(modalRecord.id); setModalRecord({ ...modalRecord, isFavorite: !modalRecord.isFavorite }) }}>
-              {modalRecord.isFavorite ? '⭐ 取消收藏' : '☆ 收藏'}
+              {modalRecord.isFavorite ? <>{starIcon} 取消收藏</> : <>{starOutlineIcon} 收藏</>}
             </button>
-            <button className="btn btn-danger btn-sm" onClick={() => { handleDelete(modalRecord.id); setModalRecord(null) }}>🗑 删除</button>
+            <button className="btn btn-danger btn-sm" onClick={() => { handleDelete(modalRecord.id); setModalRecord(null) }}>{deleteIcon} 删除</button>
           </>
         }>
           <div className="trans-compare-grid">

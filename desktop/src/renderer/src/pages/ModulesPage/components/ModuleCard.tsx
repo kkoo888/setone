@@ -3,6 +3,7 @@
  * 列表式布局：左侧图标 + 中间名称描述状态 + 右侧开关
  */
 import React, { useMemo } from 'react'
+import { FolderOpen } from '@icon-park/react'
 import type { ModuleInfo, ModuleStatus } from '../../../stores/useModulesStore'
 
 interface ModuleCardProps {
@@ -49,7 +50,7 @@ export function ModuleCard({ module, selected, onSelect, onToggle }: ModuleCardP
     >
       {/* 左侧图标 */}
       <div className='mod-card-icon'>
-        <span>{module.icon ?? '📦'}</span>
+        <span>{module.icon ?? folderI}</span>
       </div>
 
       {/* 中间信息 */}

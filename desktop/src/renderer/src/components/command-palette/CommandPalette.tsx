@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useCallback } from 'react'
 import { useCommandPaletteStore } from '../../stores/useCommandPaletteStore'
+import { ACTION_ICONS } from '../common/IconMap'
 import '../../styles/command-palette.css'
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -96,7 +97,7 @@ export function CommandPalette() {
     <div className="palette-overlay" onClick={close}>
       <div className="palette-container" onClick={e => e.stopPropagation()} onKeyDown={handleKeyDown}>
         <div className="palette-input-wrapper">
-          <span className="palette-input-icon">🔍</span>
+          <span className="palette-input-icon">{ACTION_ICONS.search}</span>
           <input
             ref={inputRef}
             className="palette-input"
@@ -127,7 +128,7 @@ export function CommandPalette() {
               }}
               onMouseEnter={() => setSelectedIndex(index)}
             >
-              <span className="palette-item-icon">{result.icon ?? '📋'}</span>
+              <span className="palette-item-icon">{result.icon ?? ACTION_ICONS.clipboard}</span>
               <div className="palette-item-text">
                 <span className="palette-item-label">{result.label}</span>
                 {result.description && (

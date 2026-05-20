@@ -4,6 +4,7 @@
  * 参考"生活小工具"风格设计
  */
 import React from 'react'
+import { FolderOpen } from '@icon-park/react'
 import type { ModuleInfo } from '../../stores/useModulesStore'
 
 interface ModuleCardProps {
@@ -30,7 +31,7 @@ export function ModuleCard({ module, selected, onSelect, onToggle }: ModuleCardP
     >
       {/* 左侧图标 */}
       <div className="mc-icon-wrap">
-        <span className="mc-icon">{module.icon ?? '📦'}</span>
+        <span className="mc-icon">{module.icon ?? React.createElement(FolderOpen, { size: 16, fill: 'currentColor', theme: 'outline' })}</span>
       </div>
 
       {/* 中间名称 + 描述 */}

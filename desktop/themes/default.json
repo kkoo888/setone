@@ -1,8 +1,8 @@
 {
   "id": "default",
-  "name": "默认主题",
+  "name": "幻紫积木",
   "author": "setone",
-  "description": "Vibrant & Block-based — 大胆活力的积木式配色方案",
+  "description": "紫色积木式撞色，大胆活力的默认风格",
   "seed": {
     "accent": "#6C5CE7",
     "bg": "#FAFAFA",

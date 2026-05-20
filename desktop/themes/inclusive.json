@@ -1,8 +1,8 @@
 {
   "id": "inclusive",
-  "name": "包容性设计",
+  "name": "包容蓝",
   "author": "setone",
-  "description": "色盲友好，为所有人设计的包容性主题",
+  "description": "蓝色无障碍配色，色盲友好的包容性设计",
   "seed": {
     "accent": "#1565C0",
     "bg": "#FFFFFF",

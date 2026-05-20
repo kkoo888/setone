@@ -3,6 +3,7 @@
  * 带图标的搜索输入框
  */
 import React, { useCallback } from 'react'
+import { Search } from '@icon-park/react'
 
 interface SkillSearchProps {
   /** 搜索值 */
@@ -23,7 +24,7 @@ export function SkillSearch({ value, onChange, placeholder = '搜索技能' }: S
 
   return (
     <div className='skill-search'>
-      <span className='skill-search-icon' aria-hidden='true'>🔍</span>
+      <span className='skill-search-icon' aria-hidden='true'>{React.createElement(Search, { size: 16, fill: '#9ca3af', theme: 'outline' })}</span>
       <input
         className='skill-search-input'
         type='text'

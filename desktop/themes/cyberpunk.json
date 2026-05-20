@@ -1,8 +1,8 @@
 {
   "id": "cyberpunk",
-  "name": "赛博朋克",
+  "name": "霓虹赛博",
   "author": "setone",
-  "description": "霓虹灯风格的赛博朋克配色",
+  "description": "霓虹粉紫闪烁，赛博朋克夜城氛围",
   "seed": {
     "accent": "#f0abfc",
     "bg": "#0a0a0f",

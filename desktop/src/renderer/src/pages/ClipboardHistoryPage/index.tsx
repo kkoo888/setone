@@ -1,4 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react'
+import { EMPTY_ICONS, STATUS_ICONS, ACTION_ICONS } from '../../components/common/IconMap'
+import { Clipboard, Pushpin, DeleteOne, Location } from '@icon-park/react'
+const clipI = React.createElement(Clipboard, { size: 16, fill: 'currentColor', theme: 'outline' })
+const pinI = React.createElement(Pushpin, { size: 14, fill: 'currentColor', theme: 'outline' })
+const locI = React.createElement(Location, { size: 14, fill: 'currentColor', theme: 'outline' })
+const delI = React.createElement(DeleteOne, { size: 14, fill: 'currentColor', theme: 'outline' })
 import { ModuleHeader } from '../../components/common/module/ModuleHeader'
 import { ModuleToolbar, FilterButtons } from '../../components/common/module/ModuleToolbar'
 import { ModuleList, ModuleListItem } from '../../components/common/module/ModuleList'
@@ -47,7 +53,7 @@ export function ClipboardHistoryPage() {
   return (
     <div className="mod-page">
       <ModuleHeader
-        icon="📋"
+        icon={clipI}
         title="剪贴板历史"
         actions={<button onClick={handleClear} className="btn btn-danger btn-sm">清空历史</button>}
       />
@@ -65,20 +71,20 @@ export function ClipboardHistoryPage() {
         />
       </ModuleToolbar>
 
-      <ModuleList emptyText="暂无剪贴板记录" emptyIcon="📋">
+      <ModuleList emptyText="暂无剪贴板记录" emptyIcon={EMPTY_ICONS.clipboard}>
         {pinned.map(c => (
           <ModuleListItem
             key={c.id}
             id={c.id}
             highlight
-            icon="📌"
+            icon={pinI}
             title={c.type === 'text' ? c.content.slice(0, 100) : `[${c.type}] ${c.content}`}
             subtitle={new Date(c.createdAt).toLocaleString()}
             actions={
               <>
-                <button onClick={() => handleCopy(c.id)} className="btn-icon-lg" title="复制">📋</button>
-                <button onClick={() => handlePin(c.id)} className="btn-icon-lg" title="取消固定">📌</button>
-                <button onClick={() => handleDelete(c.id)} className="btn-icon-lg" title="删除">🗑</button>
+                <button onClick={() => handleCopy(c.id)} className="btn-icon-lg" title="复制">{clipI}</button>
+                <button onClick={() => handlePin(c.id)} className="btn-icon-lg" title="取消固定">{pinI}</button>
+                <button onClick={() => handleDelete(c.id)} className="btn-icon-lg" title="删除">{delI}</button>
               </>
             }
           />
@@ -91,9 +97,9 @@ export function ClipboardHistoryPage() {
             subtitle={new Date(c.createdAt).toLocaleString()}
             actions={
               <>
-                <button onClick={() => handleCopy(c.id)} className="btn-icon-lg" title="复制">📋</button>
-                <button onClick={() => handlePin(c.id)} className="btn-icon-lg" title="固定">📌</button>
-                <button onClick={() => handleDelete(c.id)} className="btn-icon-lg" title="删除">🗑</button>
+                <button onClick={() => handleCopy(c.id)} className="btn-icon-lg" title="复制">{clipI}</button>
+                <button onClick={() => handlePin(c.id)} className="btn-icon-lg" title="固定">{pinI}</button>
+                <button onClick={() => handleDelete(c.id)} className="btn-icon-lg" title="删除">{delI}</button>
               </>
             }
           />

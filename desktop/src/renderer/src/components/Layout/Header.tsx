@@ -1,4 +1,5 @@
 import React from 'react'
+import { SettingOne } from '@icon-park/react'
 import { useAppStore } from '../../stores/useAppStore'
 
 /** 页面自带标题的页面列表（Header 不再显示标题，避免重复） */
@@ -35,7 +36,7 @@ export function Header() {
             <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
           </svg>
         </button>
-        <button className="header-settings-btn" onClick={() => setActivePanel('settings')} title="打开设置" aria-label="打开设置">⚙️</button>
+        <button className="header-settings-btn" onClick={() => setActivePanel('settings')} title="打开设置" aria-label="打开设置">{React.createElement(SettingOne, { size: 16, fill: 'currentColor', theme: 'outline' })}</button>
       </div>
     </header>
   )

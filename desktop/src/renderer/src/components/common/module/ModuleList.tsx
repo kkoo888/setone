@@ -1,16 +1,17 @@
 import React from 'react'
+import { EMPTY_ICONS } from '../IconMap'
 
 /** 模块内容列表容器 */
-export function ModuleList({ children, emptyText = '暂无数据', emptyIcon = '📭' }: {
+export function ModuleList({ children, emptyText = '暂无数据', emptyIcon }: {
   children: React.ReactNode
   emptyText?: string
-  emptyIcon?: string
+  emptyIcon?: React.ReactNode
 }) {
   const childArray = React.Children.toArray(children)
   if (childArray.length === 0) {
     return (
       <div className="mod-empty">
-        <span className="mod-empty-icon">{emptyIcon}</span>
+        <span className="mod-empty-icon">{emptyIcon ?? EMPTY_ICONS.default}</span>
         <span>{emptyText}</span>
       </div>
     )

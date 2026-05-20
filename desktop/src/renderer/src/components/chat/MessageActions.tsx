@@ -1,4 +1,5 @@
 import React, { useCallback } from 'react'
+import { Clipboard, DeleteOne } from '@icon-park/react'
 import { useChatStore } from '../../stores/useChatStore'
 import { showToast } from '../common/Toast'
 
@@ -19,8 +20,8 @@ export function MessageActions({ messageId, role, content }: Props) {
 
   return (
     <div className="message-actions" role="toolbar" aria-label="消息操作">
-      <button className="message-action-btn ghost sm" onClick={handleCopy} title="复制消息" aria-label="复制消息">📋</button>
-      <button className="message-action-btn ghost sm" onClick={handleDelete} title="删除消息" aria-label="删除消息">🗑️</button>
+      <button className="message-action-btn ghost sm" onClick={handleCopy} title="复制消息" aria-label="复制消息">{React.createElement(Clipboard, { size: 14, fill: 'currentColor', theme: 'outline' })}</button>
+      <button className="message-action-btn ghost sm" onClick={handleDelete} title="删除消息" aria-label="删除消息">{React.createElement(DeleteOne, { size: 14, fill: 'currentColor', theme: 'outline' })}</button>
     </div>
   )
 }

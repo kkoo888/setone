@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react'
+import { SettingOne } from '@icon-park/react'
 import { ToolCallCard } from './ToolCallCard'
 import { MessageActions } from './MessageActions'
 import { parseMarkdown, renderTokens } from './markdown'
@@ -32,7 +33,7 @@ export function MessageBubble({ message }: Props) {
           {avatar ? (
             <img src={avatar} alt="" className="message-avatar-img" />
           ) : (
-            <span className="message-avatar-emoji">{isSystem ? '⚙️' : '🌸'}</span>
+            <span className="message-avatar-emoji">{isSystem ? React.createElement(SettingOne, { size: 16, fill: 'currentColor', theme: 'outline' }) : '🌸'}</span>
           )}
         </div>
       )}

@@ -1,4 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react'
+import { EMPTY_ICONS, STATUS_ICONS, ACTION_ICONS } from '../../components/common/IconMap'
+import { Scissor, Clipboard, DeleteOne } from '@icon-park/react'
+const scissorI = React.createElement(Scissor, { size: 16, fill: 'currentColor', theme: 'outline' })
+const clipI = React.createElement(Clipboard, { size: 14, fill: 'currentColor', theme: 'outline' })
+const delI = React.createElement(DeleteOne, { size: 14, fill: 'currentColor', theme: 'outline' })
 import { ModuleHeader } from '../../components/common/module/ModuleHeader'
 import { ModuleToolbar, FilterButtons } from '../../components/common/module/ModuleToolbar'
 import { ModuleList, ModuleListItem, ModuleModal } from '../../components/common/module/ModuleList'
@@ -63,7 +68,7 @@ export function CodeSnippetsPage() {
   return (
     <div className="mod-page">
       <ModuleHeader
-        icon="✂️"
+        icon={scissorI}
         title="代码片段"
         actions={
           <button onClick={() => { setShowCreate(true); setEditId(null); setForm({ title: '', language: 'javascript', code: '', description: '', tags: '' }) }} className="btn btn-primary">
@@ -96,7 +101,7 @@ export function CodeSnippetsPage() {
         </ModuleModal>
       )}
 
-      <ModuleList emptyText="暂无代码片段" emptyIcon="✂️">
+      <ModuleList emptyText="暂无代码片段" emptyIcon={EMPTY_ICONS.scissors}>
         {filtered.map(s => (
           <ModuleListItem
             key={s.id}
@@ -118,10 +123,10 @@ export function CodeSnippetsPage() {
             }
             actions={
               <>
-                <button onClick={(e) => { e.stopPropagation(); handleCopy(s.code) }} className="btn-icon-lg" title="复制">📋</button>
+                <button onClick={(e) => { e.stopPropagation(); handleCopy(s.code) }} className="btn-icon-lg" title="复制">{clipI}</button>
                 <button onClick={(e) => { e.stopPropagation(); handleUse(s.id) }} className="btn-icon-lg" title="使用">▶</button>
-                <button onClick={(e) => { e.stopPropagation(); handleEdit(s) }} className="btn-icon-lg" title="编辑">✏️</button>
-                <button onClick={(e) => { e.stopPropagation(); handleDelete(s.id) }} className="btn-icon-lg" title="删除">🗑</button>
+                <button onClick={(e) => { e.stopPropagation(); handleEdit(s) }} className="btn-icon-lg" title="编辑">{React.createElement(EditOne, { size: 14, fill: 'currentColor', theme: 'outline' })}</button>
+                <button onClick={(e) => { e.stopPropagation(); handleDelete(s.id) }} className="btn-icon-lg" title="删除">{delI}</button>
               </>
             }
           />

@@ -6,6 +6,7 @@
  * 不使用内部 IPC（live2d5:xxx）。
  */
 import React, { useState, useCallback, useEffect } from 'react'
+import { FolderOpen, SettingOne } from '@icon-park/react'
 import { ModuleHeader } from '../../components/common/module/ModuleHeader'
 
 interface Live2D5Status {
@@ -64,8 +65,8 @@ export function Live2D5Page() {
         title="Live2D Cubism 5"
         tabs={[
           { key: 'control', label: '🎮 控制面板' },
-          { key: 'models', label: '📦 模型管理' },
-          { key: 'settings', label: '⚙️ 设置' },
+          { key: 'models', label: <>{folderI} 模型管理</> },
+          { key: 'settings', label: <>{settingI} 设置</> },
         ]}
         activeTab={activeTab}
         onTabChange={setActiveTab}
@@ -124,7 +125,7 @@ export function Live2D5Page() {
         {activeTab === 'models' && (
           <div className="live2d5-models-panel">
             <div className="live2d5-empty">
-              <span className="live2d5-empty-icon">📦</span>
+              <span className="live2d5-empty-icon">{folderBigI}</span>
               <p>模型管理功能开发中...</p>
             </div>
           </div>
@@ -133,7 +134,7 @@ export function Live2D5Page() {
         {activeTab === 'settings' && (
           <div className="live2d5-settings-panel">
             <div className="live2d5-empty">
-              <span className="live2d5-empty-icon">⚙️</span>
+              <span className="live2d5-empty-icon">{settingBigI}</span>
               <p>设置功能开发中...</p>
             </div>
           </div>

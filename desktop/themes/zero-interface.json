@@ -1,8 +1,8 @@
 {
   "id": "zero-interface",
-  "name": "零界面",
+  "name": "隐灰无界",
   "author": "setone",
-  "description": "极简隐形，让界面退居幕后的设计哲学",
+  "description": "灰色隐退界面，让内容成为主角的设计哲学",
   "seed": {
     "accent": "#666666",
     "bg": "#FAFAFA",

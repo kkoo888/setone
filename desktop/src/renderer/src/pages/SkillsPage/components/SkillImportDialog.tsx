@@ -3,6 +3,7 @@
  * 支持拖拽或选择 .tar.gz 归档文件，导入前显示扫描结果
  */
 import React, { useState, useCallback, useRef, useEffect } from 'react'
+import { FolderOpen, Help, CheckOne, CloseOne } from '@icon-park/react'
 
 /** 组件属性 */
 interface SkillImportDialogProps {
@@ -181,7 +182,7 @@ export function SkillImportDialog({ visible, onClose, onImported }: SkillImportD
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
             >
-              <span className='dropzone-icon'>📦</span>
+              <span className='dropzone-icon'>{React.createElement(FolderOpen, { size: 32, fill: '#9ca3af', theme: 'outline' })}</span>
               <p className='dropzone-text'>拖拽归档文件到此处</p>
               <p className='dropzone-hint'>支持 .tar.gz 格式</p>
               <button className='btn btn-secondary' onClick={handleBrowse}>
@@ -208,7 +209,7 @@ export function SkillImportDialog({ visible, onClose, onImported }: SkillImportD
             <>
               {scanData && !scanData.safe && (
                 <div className='scan-warning'>
-                  <span className='warning-icon'>⚠️</span>
+                  <span className='warning-icon'>{React.createElement(Help, { size: 16, fill: '#f59e0b', theme: 'outline' })}</span>
                   <p>安全扫描发现以下问题：</p>
                   <ul>
                     {scanData.warnings.map((w, i) => (
@@ -220,7 +221,7 @@ export function SkillImportDialog({ visible, onClose, onImported }: SkillImportD
 
               {scanData?.safe && (
                 <div className='scan-safe'>
-                  <span className='safe-icon'>✅</span>
+                  <span className='safe-icon'>{React.createElement(CheckOne, { size: 16, fill: '#10b981', theme: 'outline' })}</span>
                   <p>安全扫描通过</p>
                 </div>
               )}
@@ -255,7 +256,7 @@ export function SkillImportDialog({ visible, onClose, onImported }: SkillImportD
 
           {phase === 'done' && importResult && (
             <div className='dialog-success'>
-              <span className='success-icon'>✅</span>
+              <span className='success-icon'>{React.createElement(CheckOne, { size: 24, fill: '#10b981', theme: 'outline' })}</span>
               <p>导入成功！</p>
               {importResult.skillName && (
                 <p className='import-detail'>技能：{importResult.skillName}</p>
@@ -275,7 +276,7 @@ export function SkillImportDialog({ visible, onClose, onImported }: SkillImportD
 
           {phase === 'error' && (
             <div className='dialog-error'>
-              <span className='error-icon'>❌</span>
+              <span className='error-icon'>{React.createElement(CloseOne, { size: 24, fill: '#ef4444', theme: 'outline' })}</span>
               <p>{scanData ? '扫描失败' : '导入失败'}</p>
               <p className='error-detail'>{errorMsg}</p>
             </div>

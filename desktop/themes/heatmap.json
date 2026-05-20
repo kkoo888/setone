@@ -1,8 +1,8 @@
 {
   "id": "heatmap",
-  "name": "热力图",
+  "name": "热力蓝",
   "author": "setone",
-  "description": "数据可视化，适合热力图与数据图表展示的主题",
+  "description": "蓝色调数据可视化，热力图与图表的理想画布",
   "seed": {
     "accent": "#0080FF",
     "bg": "#FAFAFA",

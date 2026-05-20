@@ -1,4 +1,5 @@
 import React, { Component, type ErrorInfo, type ReactNode } from 'react'
+import { Help } from '@icon-park/react'
 
 interface ErrorBoundaryProps { children: ReactNode; fallback?: ReactNode }
 interface ErrorBoundaryState { hasError: boolean; error: Error | null }
@@ -13,7 +14,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       if (this.props.fallback) return this.props.fallback
       return (
         <div className="error-boundary" role="alert">
-          <div className="error-boundary-icon">⚠️</div>
+          <div className="error-boundary-icon">{React.createElement(Help, { size: 32, fill: '#f59e0b', theme: 'outline' })}</div>
           <h2 className="error-boundary-title">应用遇到了错误</h2>
           <p className="error-boundary-message">{this.state.error?.message ?? '未知错误'}</p>
           <div className="error-boundary-actions">

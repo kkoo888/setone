@@ -1,8 +1,8 @@
 {
   "id": "dracula",
-  "name": "Dracula",
+  "name": "德古拉暗紫",
   "author": "setone",
-  "description": "经典 Dracula 暗色配色方案",
+  "description": "经典德古拉配色，暗底紫光优雅神秘",
   "seed": {
     "accent": "#bd93f9",
     "bg": "#282a36",
