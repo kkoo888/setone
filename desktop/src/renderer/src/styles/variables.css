@@ -83,7 +83,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) {
+  :root:not([data-theme='light']):not([data-theme='compact']) {
     --color-bg-primary: #1a1a2e;
     --color-bg-secondary: #16213e;
     --color-bg-tertiary: #0f3460;
