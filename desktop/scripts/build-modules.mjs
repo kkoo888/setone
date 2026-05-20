@@ -1,13 +1,13 @@
 /**
  * 模块编译脚本（轻量版）
- * 使用 esbuild 将 TypeScript 转译为 JavaScript（不打包依赖，节省磁盘）
+ * 使用 esbuild JavaScript API 将 TypeScript 转译为 JavaScript（不打包依赖，节省磁盘）
  * 输出到 modules-dist/<module-id>/index.js + module.json + 非TS资源
  *
  * 用法: node scripts/build-modules.mjs
  */
 import { readdirSync, existsSync, mkdirSync, cpSync, rmSync, readFileSync, writeFileSync } from 'fs'
 import { join, resolve, dirname, extname } from 'path'
-import { execSync } from 'child_process'
+import esbuild from 'esbuild'
 
 const ROOT = resolve(import.meta.dirname, '..')
 const MODULES_DIR = join(ROOT, 'modules')
@@ -100,7 +100,7 @@ function fixEsmImportExtensions(dir) {
 }
 
 /**
- * 编译单个模块（使用 esbuild 转译，不打包依赖）
+ * 编译单个模块（使用 esbuild API 转译，不打包依赖）
  * @param {string} moduleId - 模块目录名
  * @returns {boolean} 是否成功
  */
@@ -124,7 +124,8 @@ function buildModule(moduleId) {
     // 获取模块内所有 TS 源文件
     const tsFiles = getAllTsFiles(moduleDir)
 
-    // 使用 esbuild 逐个转译（保留目录结构）
+    // 使用 esbuild API 逐个转译（保留目录结构）
+    // 通过 API 直接调用，彻底避免 shell 路径转义问题（Windows 兼容）
     for (const tsFile of tsFiles) {
       const relativePath = tsFile.replace(moduleDir + '/', '').replace(moduleDir + '\\', '')
       const outFilePath = join(outDir, relativePath.replace(/\.ts$/, '.js'))
@@ -136,12 +137,17 @@ function buildModule(moduleId) {
 
       // preload 脚本必须用 CJS 格式（Electron 沙箱要求），其余用 ESM
       const isPreload = /preload\.ts$/i.test(tsFile)
-      const format = isPreload ? 'cjs' : 'esm'
 
-      execSync(
-        `npx esbuild "${tsFile}" --outfile="${outFilePath}" --format=${format} --target=es2022 --platform=node --bundle=false --loader:.ts=ts`,
-        { cwd: ROOT, stdio: 'pipe', timeout: 30000 }
-      )
+      esbuild.buildSync({
+        entryPoints: [tsFile],
+        outfile: outFilePath,
+        format: isPreload ? 'cjs' : 'esm',
+        target: 'es2022',
+        platform: 'node',
+        bundle: false,
+        // 显式指定 loader，确保 Windows 下也能正确识别 TypeScript
+        loader: { '.ts': 'ts' }
+      })
     }
 
     // 复制 module.json 到输出目录
@@ -166,7 +172,7 @@ function buildModule(moduleId) {
 
 /** 主流程 */
 function main() {
-  console.log('🔧 开始编译模块（esbuild 轻量模式）...\n')
+  console.log('🔧 开始编译模块（esbuild API 模式）...\n')
 
   if (!existsSync(MODULES_DIR)) {
     console.error('❌ 模块目录不存在:', MODULES_DIR)
