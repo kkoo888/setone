@@ -249,6 +249,8 @@ export default class Live2D5Module implements Module {
       return
     }
 
+    console.log('[Live2D5] 🪟 开始创建宠物窗口...')
+
     this.petWindow = new BrowserWindow({
       width: PET_WINDOW_WIDTH,
       height: PET_WINDOW_HEIGHT,
@@ -266,6 +268,15 @@ export default class Live2D5Module implements Module {
 
     this.petWindow.setIgnoreMouseEvents(false)
 
+    // 监听页面加载失败
+    this.petWindow.webContents.on('did-fail-load', (_event, errorCode, errorDescription, validatedURL) => {
+      console.error(`[Live2D5] ❌ 页面加载失败! errorCode=${errorCode}, desc=${errorDescription}, url=${validatedURL}`)
+    })
+
+    this.petWindow.webContents.on('did-finish-load', () => {
+      console.log('[Live2D5] ✅ renderer 页面 did-finish-load')
+    })
+
     // 监听 renderer 端的拖拽 IPC（renderer 通过 invoke 通知主进程执行拖拽）
     const dragHandler = (_event: Electron.IpcMainEvent) => {
       if (this.petWindow && !this.petWindow.isDestroyed()) {
@@ -277,6 +288,7 @@ export default class Live2D5Module implements Module {
 
     // 清理：窗口关闭时移除监听
     this.petWindow.on('closed', () => {
+      console.log('[Live2D5] 🪟 宠物窗口已关闭')
       ipcMain.removeListener('live2d5:request-drag', dragHandler)
       this.petWindow = null
       // 如果有 deactivate 等待的 resolve，调用它
@@ -287,14 +299,20 @@ export default class Live2D5Module implements Module {
     })
 
     // 加载独立的 Live2D 5 页面（独立 renderer，不会与旧 SDK 冲突）
+    console.log('[Live2D5] 🌐 VITE_DEV_SERVER_URL:', process.env.VITE_DEV_SERVER_URL ?? '(undefined)')
     if (process.env.VITE_DEV_SERVER_URL) {
-      this.petWindow.loadURL(`${process.env.VITE_DEV_SERVER_URL}#/live2d5-pet`)
+      const url = `${process.env.VITE_DEV_SERVER_URL}#/live2d5-pet`
+      console.log('[Live2D5] 🌐 加载 URL:', url)
+      await this.petWindow.loadURL(url)
+      console.log('[Live2D5] ✅ 页面加载完成')
     } else {
       // renderer 由 electron-vite 构建到 dist/renderer/，不在 modules-dist/
       const rendererPath = join(__dirname, '../../dist/renderer/index.html')
-      this.petWindow.loadFile(rendererPath, {
+      console.log('[Live2D5] 🌐 加载文件:', rendererPath)
+      await this.petWindow.loadFile(rendererPath, {
         hash: '#/live2d5-pet'
       })
+      console.log('[Live2D5] ✅ 页面加载完成')
     }
   }
 
@@ -305,14 +323,17 @@ export default class Live2D5Module implements Module {
   private closePetWindow(): Promise<void> {
     return new Promise<void>((resolve) => {
       if (!this.petWindow || this.petWindow.isDestroyed()) {
+        console.log('[Live2D5] 🔒 closePetWindow: 窗口已销毁，跳过')
         this.petWindow = null
         resolve()
         return
       }
 
+      console.log('[Live2D5] 🔒 closePetWindow: 开始关闭流程...')
+
       // 设置超时：如果 renderer 3秒内没响应，强制关闭
       const timeout = setTimeout(() => {
-        console.warn('[Live2D5] renderer 清理超时，强制关闭窗口')
+        console.warn('[Live2D5] ⏰ renderer 清理超时，强制关闭窗口')
         this.forceClose()
         resolve()
       }, 3000)
