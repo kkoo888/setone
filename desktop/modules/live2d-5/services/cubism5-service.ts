@@ -354,12 +354,10 @@ class Cubism5Service {
       const { CubismModelMatrix } = await import('../lib/math/cubismmodelmatrix')
       // 缓存类引用供 createMvpMatrix 使用
       this._Matrix44Class = CubismModelMatrix
-      const internalModel = this.model.getModel()
-      if (!internalModel) return
 
       const modelMatrix = new CubismModelMatrix(
-        internalModel.getCanvasWidth(),
-        internalModel.getCanvasHeight()
+        this.model.getCanvasWidth(),
+        this.model.getCanvasHeight()
       )
       modelMatrix.scale(scale, scale)
       // 存储到 service 上供渲染时使用
