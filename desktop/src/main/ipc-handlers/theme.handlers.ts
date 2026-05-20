@@ -13,6 +13,7 @@ import { ipcMain, BrowserWindow, dialog, app } from 'electron'
 import { readdir, readFile, writeFile, mkdir, unlink, copyFile } from 'fs/promises'
 import { join, extname, basename } from 'path'
 import { existsSync } from 'fs'
+import { registeredModuleIpc } from './module.handlers'
 
 /** 主题 JSON 结构（兼容 v1 和 v2） */
 interface ThemeFile {
@@ -121,6 +122,14 @@ function getRelativeLuminance(hex: string): number {
  * 注册主题相关的 IPC 处理器
  */
 export function registerThemeHandlers(): void {
+  // 标记这些通道已由主进程注册，防止模块系统重复注册
+  registeredModuleIpc.add('theme_list')
+  registeredModuleIpc.add('theme_get')
+  registeredModuleIpc.add('theme_apply')
+  registeredModuleIpc.add('theme_import')
+  registeredModuleIpc.add('theme_delete')
+  registeredModuleIpc.add('theme_export')
+
   // ── theme_list: 列出所有主题 ──
   ipcMain.handle('theme_list', async () => {
     try {
