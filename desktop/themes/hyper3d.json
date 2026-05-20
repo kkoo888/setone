@@ -1,0 +1,41 @@
+{
+  "id": "hyper3d",
+  "name": "3D超写实",
+  "author": "setone",
+  "description": "深邃立体，沉浸式三维视觉体验",
+  "seed": {
+    "accent": "#FFD700",
+    "bg": "#001F3F",
+    "fg": "#E8E8E8",
+    "radius": 12,
+    "fontBase": 14,
+    "spacingBase": 8,
+    "mode": "dark"
+  },
+  "overrides": {
+    "alias": {
+      "--primary": "#FFD700",
+      "--primary-fg": "#001F3F",
+      "--secondary": "#0A3D6B",
+      "--secondary-fg": "#E8E8E8",
+      "--accent-bg": "rgba(255,215,0,0.15)",
+      "--accent-fg": "#FFD700",
+      "--destructive": "#FF4444",
+      "--destructive-fg": "#FFFFFF",
+      "--success": "#00E676",
+      "--success-fg": "#001F3F",
+      "--warning": "#FFAB00",
+      "--warning-fg": "#001F3F",
+      "--info": "#40C4FF",
+      "--info-fg": "#001F3F",
+      "--border": "rgba(255,215,0,0.2)",
+      "--ring": "#FFD700",
+      "--sidebar-bg": "#001630",
+      "--sidebar-accent": "#002850",
+      "--sidebar-accent-fg": "#FFD700",
+      "--shadow-sm": "rgba(0,0,0,0.4)",
+      "--shadow-md": "rgba(0,0,0,0.55)",
+      "--shadow-lg": "rgba(0,0,0,0.7)"
+    }
+  }
+}

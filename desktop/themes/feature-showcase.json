@@ -1,0 +1,41 @@
+{
+  "id": "feature-showcase",
+  "name": "功能展示",
+  "author": "setone",
+  "description": "功能丰富，适合展示产品功能的布局主题",
+  "seed": {
+    "accent": "#5352ED",
+    "bg": "#F8F9FA",
+    "fg": "#2C2C54",
+    "radius": 12,
+    "fontBase": 14,
+    "spacingBase": 8,
+    "mode": "light"
+  },
+  "overrides": {
+    "alias": {
+      "--primary": "#5352ED",
+      "--primary-fg": "#FFFFFF",
+      "--secondary": "#7B68EE",
+      "--secondary-fg": "#FFFFFF",
+      "--accent-bg": "rgba(83,82,237,0.08)",
+      "--accent-fg": "#5352ED",
+      "--destructive": "#FF4757",
+      "--destructive-fg": "#FFFFFF",
+      "--success": "#2ED573",
+      "--success-fg": "#FFFFFF",
+      "--warning": "#FFA502",
+      "--warning-fg": "#2C2C54",
+      "--info": "#70A1FF",
+      "--info-fg": "#FFFFFF",
+      "--border": "rgba(83,82,237,0.12)",
+      "--ring": "#5352ED",
+      "--sidebar-bg": "#F0F0FF",
+      "--sidebar-accent": "#E5E5FF",
+      "--sidebar-accent-fg": "#5352ED",
+      "--shadow-sm": "rgba(83,82,237,0.08)",
+      "--shadow-md": "rgba(83,82,237,0.14)",
+      "--shadow-lg": "rgba(83,82,237,0.2)"
+    }
+  }
+}

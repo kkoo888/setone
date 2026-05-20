@@ -1,0 +1,41 @@
+{
+  "id": "minimalism",
+  "name": "极简瑞士风格",
+  "author": "setone",
+  "description": "追求极致简洁，无装饰，受瑞士设计学派启发的纯净风格",
+  "seed": {
+    "accent": "#000000",
+    "bg": "#FFFFFF",
+    "fg": "#1A1A1A",
+    "radius": 0,
+    "fontBase": 14,
+    "spacingBase": 8,
+    "mode": "light"
+  },
+  "overrides": {
+    "alias": {
+      "--primary": "#000000",
+      "--primary-fg": "#FFFFFF",
+      "--secondary": "#404040",
+      "--secondary-fg": "#FFFFFF",
+      "--accent-bg": "#F5F5F5",
+      "--accent-fg": "#000000",
+      "--destructive": "#CC0000",
+      "--destructive-fg": "#FFFFFF",
+      "--success": "#006600",
+      "--success-fg": "#FFFFFF",
+      "--warning": "#CC8800",
+      "--warning-fg": "#1A1A1A",
+      "--info": "#333333",
+      "--info-fg": "#FFFFFF",
+      "--border": "#E0E0E0",
+      "--ring": "#000000",
+      "--sidebar-bg": "#FAFAFA",
+      "--sidebar-accent": "#F0F0F0",
+      "--sidebar-accent-fg": "#000000",
+      "--shadow-sm": "rgba(0,0,0,0.05)",
+      "--shadow-md": "rgba(0,0,0,0.08)",
+      "--shadow-lg": "rgba(0,0,0,0.12)"
+    }
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "id": "accessible",
+  "name": "无障碍",
+  "author": "setone",
+  "description": "WCAG AAA 高对比，为所有人设计的无障碍主题",
+  "seed": {
+    "accent": "#0052CC",
+    "bg": "#FFFFFF",
+    "fg": "#1A1A1A",
+    "radius": 8,
+    "fontBase": 14,
+    "spacingBase": 8,
+    "mode": "light"
+  },
+  "overrides": {
+    "alias": {
+      "--primary": "#0052CC",
+      "--primary-fg": "#FFFFFF",
+      "--secondary": "#172B4D",
+      "--secondary-fg": "#FFFFFF",
+      "--accent-bg": "#DEEBFF",
+      "--accent-fg": "#0052CC",
+      "--destructive": "#DE350B",
+      "--destructive-fg": "#FFFFFF",
+      "--success": "#006644",
+      "--success-fg": "#FFFFFF",
+      "--warning": "#FF8B00",
+      "--warning-fg": "#1A1A1A",
+      "--info": "#0065FF",
+      "--info-fg": "#FFFFFF",
+      "--border": "#6B778C",
+      "--ring": "#0052CC",
+      "--sidebar-bg": "#F4F5F7",
+      "--sidebar-accent": "#DFE1E6",
+      "--sidebar-accent-fg": "#1A1A1A",
+      "--shadow-sm": "rgba(0,0,0,0.1)",
+      "--shadow-md": "rgba(0,0,0,0.16)",
+      "--shadow-lg": "rgba(0,0,0,0.22)"
+    }
+  }
+}

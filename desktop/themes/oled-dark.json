@@ -1,0 +1,41 @@
+{
+  "id": "oled-dark",
+  "name": "OLED暗黑",
+  "author": "setone",
+  "description": "纯黑省电，为OLED屏幕优化的极致暗色主题",
+  "seed": {
+    "accent": "#39FF14",
+    "bg": "#000000",
+    "fg": "#E0E0E0",
+    "radius": 8,
+    "fontBase": 14,
+    "spacingBase": 8,
+    "mode": "dark"
+  },
+  "overrides": {
+    "alias": {
+      "--primary": "#39FF14",
+      "--primary-fg": "#000000",
+      "--secondary": "#1A8A0A",
+      "--secondary-fg": "#E0E0E0",
+      "--accent-bg": "rgba(57,255,20,0.1)",
+      "--accent-fg": "#39FF14",
+      "--destructive": "#FF3B30",
+      "--destructive-fg": "#FFFFFF",
+      "--success": "#39FF14",
+      "--success-fg": "#000000",
+      "--warning": "#FFCC00",
+      "--warning-fg": "#000000",
+      "--info": "#0A84FF",
+      "--info-fg": "#FFFFFF",
+      "--border": "rgba(255,255,255,0.08)",
+      "--ring": "#39FF14",
+      "--sidebar-bg": "#050505",
+      "--sidebar-accent": "#111111",
+      "--sidebar-accent-fg": "#39FF14",
+      "--shadow-sm": "rgba(0,0,0,0.6)",
+      "--shadow-md": "rgba(0,0,0,0.75)",
+      "--shadow-lg": "rgba(0,0,0,0.9)"
+    }
+  }
+}

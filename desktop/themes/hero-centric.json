@@ -1,0 +1,41 @@
+{
+  "id": "hero-centric",
+  "name": "英雄区",
+  "author": "setone",
+  "description": "大气落地页，以英雄区域为核心的展示型设计",
+  "seed": {
+    "accent": "#FF4757",
+    "bg": "#FFFFFF",
+    "fg": "#2F3542",
+    "radius": 12,
+    "fontBase": 14,
+    "spacingBase": 8,
+    "mode": "light"
+  },
+  "overrides": {
+    "alias": {
+      "--primary": "#FF4757",
+      "--primary-fg": "#FFFFFF",
+      "--secondary": "#FF6B81",
+      "--secondary-fg": "#FFFFFF",
+      "--accent-bg": "rgba(255,71,87,0.08)",
+      "--accent-fg": "#FF4757",
+      "--destructive": "#E84142",
+      "--destructive-fg": "#FFFFFF",
+      "--success": "#2ED573",
+      "--success-fg": "#FFFFFF",
+      "--warning": "#FFA502",
+      "--warning-fg": "#2F3542",
+      "--info": "#70A1FF",
+      "--info-fg": "#FFFFFF",
+      "--border": "rgba(255,71,87,0.15)",
+      "--ring": "#FF4757",
+      "--sidebar-bg": "#FFF5F5",
+      "--sidebar-accent": "#FFE8E8",
+      "--sidebar-accent-fg": "#FF4757",
+      "--shadow-sm": "rgba(255,71,87,0.08)",
+      "--shadow-md": "rgba(255,71,87,0.14)",
+      "--shadow-lg": "rgba(255,71,87,0.2)"
+    }
+  }
+}

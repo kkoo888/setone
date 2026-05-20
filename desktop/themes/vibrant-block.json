@@ -1,0 +1,41 @@
+{
+  "id": "vibrant-block",
+  "name": "活力积木",
+  "author": "setone",
+  "description": "大胆撞色，充满活力的积木式设计",
+  "seed": {
+    "accent": "#BF00FF",
+    "bg": "#FAFAFA",
+    "fg": "#1A1A2E",
+    "radius": 12,
+    "fontBase": 14,
+    "spacingBase": 8,
+    "mode": "light"
+  },
+  "overrides": {
+    "alias": {
+      "--primary": "#BF00FF",
+      "--primary-fg": "#FFFFFF",
+      "--secondary": "#FF6B00",
+      "--secondary-fg": "#FFFFFF",
+      "--accent-bg": "rgba(191,0,255,0.08)",
+      "--accent-fg": "#BF00FF",
+      "--destructive": "#FF2D55",
+      "--destructive-fg": "#FFFFFF",
+      "--success": "#30D158",
+      "--success-fg": "#FFFFFF",
+      "--warning": "#FFD60A",
+      "--warning-fg": "#1A1A2E",
+      "--info": "#5AC8FA",
+      "--info-fg": "#FFFFFF",
+      "--border": "rgba(191,0,255,0.15)",
+      "--ring": "#BF00FF",
+      "--sidebar-bg": "#F5F0FF",
+      "--sidebar-accent": "#EDE5FF",
+      "--sidebar-accent-fg": "#BF00FF",
+      "--shadow-sm": "rgba(191,0,255,0.08)",
+      "--shadow-md": "rgba(191,0,255,0.14)",
+      "--shadow-lg": "rgba(191,0,255,0.2)"
+    }
+  }
+}

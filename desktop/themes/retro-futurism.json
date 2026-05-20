@@ -1,0 +1,41 @@
+{
+  "id": "retro-futurism",
+  "name": "复古未来",
+  "author": "setone",
+  "description": "赛博朋克风格，复古与未来交织的霓虹美学",
+  "seed": {
+    "accent": "#FF006E",
+    "bg": "#1A1A2E",
+    "fg": "#00FFFF",
+    "radius": 4,
+    "fontBase": 14,
+    "spacingBase": 8,
+    "mode": "dark"
+  },
+  "overrides": {
+    "alias": {
+      "--primary": "#FF006E",
+      "--primary-fg": "#FFFFFF",
+      "--secondary": "#00FFFF",
+      "--secondary-fg": "#1A1A2E",
+      "--accent-bg": "rgba(255,0,110,0.15)",
+      "--accent-fg": "#FF006E",
+      "--destructive": "#FF0000",
+      "--destructive-fg": "#FFFFFF",
+      "--success": "#00FF88",
+      "--success-fg": "#1A1A2E",
+      "--warning": "#FFFF00",
+      "--warning-fg": "#1A1A2E",
+      "--info": "#00FFFF",
+      "--info-fg": "#1A1A2E",
+      "--border": "rgba(0,255,255,0.2)",
+      "--ring": "#FF006E",
+      "--sidebar-bg": "#12122A",
+      "--sidebar-accent": "rgba(255,0,110,0.1)",
+      "--sidebar-accent-fg": "#FF006E",
+      "--shadow-sm": "rgba(255,0,110,0.2)",
+      "--shadow-md": "rgba(255,0,110,0.3)",
+      "--shadow-lg": "rgba(255,0,110,0.45)"
+    }
+  }
+}

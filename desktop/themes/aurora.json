@@ -1,0 +1,41 @@
+{
+  "id": "aurora",
+  "name": "极光",
+  "author": "setone",
+  "description": "流光渐变，如北极光般绚烂的暗色主题",
+  "seed": {
+    "accent": "#8B5CF6",
+    "bg": "#0F0F23",
+    "fg": "#E8E8FF",
+    "radius": 12,
+    "fontBase": 14,
+    "spacingBase": 8,
+    "mode": "dark"
+  },
+  "overrides": {
+    "alias": {
+      "--primary": "#8B5CF6",
+      "--primary-fg": "#FFFFFF",
+      "--secondary": "#06B6D4",
+      "--secondary-fg": "#FFFFFF",
+      "--accent-bg": "rgba(139,92,246,0.15)",
+      "--accent-fg": "#A78BFA",
+      "--destructive": "#F43F5E",
+      "--destructive-fg": "#FFFFFF",
+      "--success": "#10B981",
+      "--success-fg": "#FFFFFF",
+      "--warning": "#F59E0B",
+      "--warning-fg": "#0F0F23",
+      "--info": "#38BDF8",
+      "--info-fg": "#0F0F23",
+      "--border": "rgba(139,92,246,0.2)",
+      "--ring": "#8B5CF6",
+      "--sidebar-bg": "#0A0A1A",
+      "--sidebar-accent": "rgba(139,92,246,0.1)",
+      "--sidebar-accent-fg": "#A78BFA",
+      "--shadow-sm": "rgba(139,92,246,0.2)",
+      "--shadow-md": "rgba(139,92,246,0.3)",
+      "--shadow-lg": "rgba(139,92,246,0.4)"
+    }
+  }
+}

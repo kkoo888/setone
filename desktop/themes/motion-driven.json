@@ -1,0 +1,41 @@
+{
+  "id": "motion-driven",
+  "name": "动效驱动",
+  "author": "setone",
+  "description": "动画丰富，以动效为核心的交互体验",
+  "seed": {
+    "accent": "#FF6B35",
+    "bg": "#FAFAFA",
+    "fg": "#1A1A2E",
+    "radius": 12,
+    "fontBase": 14,
+    "spacingBase": 8,
+    "mode": "light"
+  },
+  "overrides": {
+    "alias": {
+      "--primary": "#FF6B35",
+      "--primary-fg": "#FFFFFF",
+      "--secondary": "#FF8F6B",
+      "--secondary-fg": "#FFFFFF",
+      "--accent-bg": "rgba(255,107,53,0.08)",
+      "--accent-fg": "#FF6B35",
+      "--destructive": "#E53935",
+      "--destructive-fg": "#FFFFFF",
+      "--success": "#43A047",
+      "--success-fg": "#FFFFFF",
+      "--warning": "#FFB300",
+      "--warning-fg": "#1A1A2E",
+      "--info": "#1E88E5",
+      "--info-fg": "#FFFFFF",
+      "--border": "rgba(255,107,53,0.15)",
+      "--ring": "#FF6B35",
+      "--sidebar-bg": "#FFF5F0",
+      "--sidebar-accent": "#FFE8DD",
+      "--sidebar-accent-fg": "#FF6B35",
+      "--shadow-sm": "rgba(255,107,53,0.08)",
+      "--shadow-md": "rgba(255,107,53,0.14)",
+      "--shadow-lg": "rgba(255,107,53,0.2)"
+    }
+  }
+}

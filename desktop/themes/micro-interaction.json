@@ -1,0 +1,41 @@
+{
+  "id": "micro-interaction",
+  "name": "微交互",
+  "author": "setone",
+  "description": "精致反馈，注重每一个细节的微交互设计",
+  "seed": {
+    "accent": "#00BFA5",
+    "bg": "#F5FFFE",
+    "fg": "#1A2E2E",
+    "radius": 10,
+    "fontBase": 14,
+    "spacingBase": 8,
+    "mode": "light"
+  },
+  "overrides": {
+    "alias": {
+      "--primary": "#00BFA5",
+      "--primary-fg": "#FFFFFF",
+      "--secondary": "#26A69A",
+      "--secondary-fg": "#FFFFFF",
+      "--accent-bg": "rgba(0,191,165,0.08)",
+      "--accent-fg": "#00BFA5",
+      "--destructive": "#EF5350",
+      "--destructive-fg": "#FFFFFF",
+      "--success": "#00C853",
+      "--success-fg": "#FFFFFF",
+      "--warning": "#FFC107",
+      "--warning-fg": "#1A2E2E",
+      "--info": "#29B6F6",
+      "--info-fg": "#FFFFFF",
+      "--border": "rgba(0,191,165,0.15)",
+      "--ring": "#00BFA5",
+      "--sidebar-bg": "#F0FFFD",
+      "--sidebar-accent": "#E0FFF8",
+      "--sidebar-accent-fg": "#00BFA5",
+      "--shadow-sm": "rgba(0,191,165,0.08)",
+      "--shadow-md": "rgba(0,191,165,0.14)",
+      "--shadow-lg": "rgba(0,191,165,0.2)"
+    }
+  }
+}

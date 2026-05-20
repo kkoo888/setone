@@ -1,0 +1,41 @@
+{
+  "id": "trust-authority",
+  "name": "信任权威",
+  "author": "setone",
+  "description": "专业可信，传递权威感与专业性的设计",
+  "seed": {
+    "accent": "#1E40AF",
+    "bg": "#F8FAFC",
+    "fg": "#1E293B",
+    "radius": 8,
+    "fontBase": 14,
+    "spacingBase": 8,
+    "mode": "light"
+  },
+  "overrides": {
+    "alias": {
+      "--primary": "#1E40AF",
+      "--primary-fg": "#FFFFFF",
+      "--secondary": "#334155",
+      "--secondary-fg": "#FFFFFF",
+      "--accent-bg": "rgba(30,64,175,0.08)",
+      "--accent-fg": "#1E40AF",
+      "--destructive": "#DC2626",
+      "--destructive-fg": "#FFFFFF",
+      "--success": "#16A34A",
+      "--success-fg": "#FFFFFF",
+      "--warning": "#D97706",
+      "--warning-fg": "#FFFFFF",
+      "--info": "#2563EB",
+      "--info-fg": "#FFFFFF",
+      "--border": "#CBD5E1",
+      "--ring": "#1E40AF",
+      "--sidebar-bg": "#F1F5F9",
+      "--sidebar-accent": "#E2E8F0",
+      "--sidebar-accent-fg": "#1E293B",
+      "--shadow-sm": "rgba(30,64,175,0.06)",
+      "--shadow-md": "rgba(30,64,175,0.1)",
+      "--shadow-lg": "rgba(30,64,175,0.16)"
+    }
+  }
+}

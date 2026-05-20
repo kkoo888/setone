@@ -1,0 +1,41 @@
+{
+  "id": "flat-design",
+  "name": "扁平设计",
+  "author": "setone",
+  "description": "简洁纯色，回归扁平设计的本质",
+  "seed": {
+    "accent": "#2196F3",
+    "bg": "#FFFFFF",
+    "fg": "#333333",
+    "radius": 4,
+    "fontBase": 14,
+    "spacingBase": 8,
+    "mode": "light"
+  },
+  "overrides": {
+    "alias": {
+      "--primary": "#2196F3",
+      "--primary-fg": "#FFFFFF",
+      "--secondary": "#607D8B",
+      "--secondary-fg": "#FFFFFF",
+      "--accent-bg": "#E3F2FD",
+      "--accent-fg": "#2196F3",
+      "--destructive": "#F44336",
+      "--destructive-fg": "#FFFFFF",
+      "--success": "#4CAF50",
+      "--success-fg": "#FFFFFF",
+      "--warning": "#FF9800",
+      "--warning-fg": "#333333",
+      "--info": "#03A9F4",
+      "--info-fg": "#FFFFFF",
+      "--border": "#E0E0E0",
+      "--ring": "#2196F3",
+      "--sidebar-bg": "#FAFAFA",
+      "--sidebar-accent": "#F5F5F5",
+      "--sidebar-accent-fg": "#333333",
+      "--shadow-sm": "rgba(0,0,0,0.06)",
+      "--shadow-md": "rgba(0,0,0,0.1)",
+      "--shadow-lg": "rgba(0,0,0,0.15)"
+    }
+  }
+}

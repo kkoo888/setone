@@ -1,0 +1,41 @@
+{
+  "id": "inclusive",
+  "name": "包容性设计",
+  "author": "setone",
+  "description": "色盲友好，为所有人设计的包容性主题",
+  "seed": {
+    "accent": "#1565C0",
+    "bg": "#FFFFFF",
+    "fg": "#212121",
+    "radius": 8,
+    "fontBase": 14,
+    "spacingBase": 8,
+    "mode": "light"
+  },
+  "overrides": {
+    "alias": {
+      "--primary": "#1565C0",
+      "--primary-fg": "#FFFFFF",
+      "--secondary": "#37474F",
+      "--secondary-fg": "#FFFFFF",
+      "--accent-bg": "#E3F2FD",
+      "--accent-fg": "#1565C0",
+      "--destructive": "#C62828",
+      "--destructive-fg": "#FFFFFF",
+      "--success": "#2E7D32",
+      "--success-fg": "#FFFFFF",
+      "--warning": "#E65100",
+      "--warning-fg": "#FFFFFF",
+      "--info": "#0277BD",
+      "--info-fg": "#FFFFFF",
+      "--border": "#90A4AE",
+      "--ring": "#1565C0",
+      "--sidebar-bg": "#F5F5F5",
+      "--sidebar-accent": "#E0E0E0",
+      "--sidebar-accent-fg": "#212121",
+      "--shadow-sm": "rgba(0,0,0,0.1)",
+      "--shadow-md": "rgba(0,0,0,0.16)",
+      "--shadow-lg": "rgba(0,0,0,0.22)"
+    }
+  }
+}

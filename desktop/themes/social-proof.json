@@ -1,0 +1,41 @@
+{
+  "id": "social-proof",
+  "name": "社会认证",
+  "author": "setone",
+  "description": "信任感，以社会认证为核心的信任建立设计",
+  "seed": {
+    "accent": "#0984E3",
+    "bg": "#F8F9FA",
+    "fg": "#2D3436",
+    "radius": 10,
+    "fontBase": 14,
+    "spacingBase": 8,
+    "mode": "light"
+  },
+  "overrides": {
+    "alias": {
+      "--primary": "#0984E3",
+      "--primary-fg": "#FFFFFF",
+      "--secondary": "#6C5CE7",
+      "--secondary-fg": "#FFFFFF",
+      "--accent-bg": "rgba(9,132,227,0.08)",
+      "--accent-fg": "#0984E3",
+      "--destructive": "#D63031",
+      "--destructive-fg": "#FFFFFF",
+      "--success": "#00B894",
+      "--success-fg": "#FFFFFF",
+      "--warning": "#E17055",
+      "--warning-fg": "#FFFFFF",
+      "--info": "#74B9FF",
+      "--info-fg": "#FFFFFF",
+      "--border": "rgba(9,132,227,0.12)",
+      "--ring": "#0984E3",
+      "--sidebar-bg": "#F0F4FF",
+      "--sidebar-accent": "#E0E8FF",
+      "--sidebar-accent-fg": "#0984E3",
+      "--shadow-sm": "rgba(9,132,227,0.08)",
+      "--shadow-md": "rgba(9,132,227,0.14)",
+      "--shadow-lg": "rgba(9,132,227,0.2)"
+    }
+  }
+}

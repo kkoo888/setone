@@ -1,0 +1,41 @@
+{
+  "id": "soft-evolution",
+  "name": "进化软UI",
+  "author": "setone",
+  "description": "柔和现代，软UI设计语言的进化版本",
+  "seed": {
+    "accent": "#5B86E5",
+    "bg": "#F0F2F5",
+    "fg": "#2D3436",
+    "radius": 12,
+    "fontBase": 14,
+    "spacingBase": 8,
+    "mode": "light"
+  },
+  "overrides": {
+    "alias": {
+      "--primary": "#5B86E5",
+      "--primary-fg": "#FFFFFF",
+      "--secondary": "#74B9FF",
+      "--secondary-fg": "#FFFFFF",
+      "--accent-bg": "rgba(91,134,229,0.08)",
+      "--accent-fg": "#5B86E5",
+      "--destructive": "#E17055",
+      "--destructive-fg": "#FFFFFF",
+      "--success": "#00B894",
+      "--success-fg": "#FFFFFF",
+      "--warning": "#FDCB6E",
+      "--warning-fg": "#2D3436",
+      "--info": "#74B9FF",
+      "--info-fg": "#FFFFFF",
+      "--border": "rgba(91,134,229,0.15)",
+      "--ring": "#5B86E5",
+      "--sidebar-bg": "#E8EBF0",
+      "--sidebar-accent": "#DFE3EA",
+      "--sidebar-accent-fg": "#2D3436",
+      "--shadow-sm": "rgba(91,134,229,0.08)",
+      "--shadow-md": "rgba(91,134,229,0.14)",
+      "--shadow-lg": "rgba(91,134,229,0.2)"
+    }
+  }
+}

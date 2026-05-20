@@ -1,0 +1,41 @@
+{
+  "id": "storytelling",
+  "name": "故事叙述",
+  "author": "setone",
+  "description": "叙事感，以故事叙述为核心的沉浸式设计",
+  "seed": {
+    "accent": "#E17055",
+    "bg": "#FFF9F5",
+    "fg": "#2D3436",
+    "radius": 12,
+    "fontBase": 14,
+    "spacingBase": 8,
+    "mode": "light"
+  },
+  "overrides": {
+    "alias": {
+      "--primary": "#E17055",
+      "--primary-fg": "#FFFFFF",
+      "--secondary": "#FAB1A0",
+      "--secondary-fg": "#2D3436",
+      "--accent-bg": "rgba(225,112,85,0.08)",
+      "--accent-fg": "#E17055",
+      "--destructive": "#D63031",
+      "--destructive-fg": "#FFFFFF",
+      "--success": "#00B894",
+      "--success-fg": "#FFFFFF",
+      "--warning": "#FDCB6E",
+      "--warning-fg": "#2D3436",
+      "--info": "#74B9FF",
+      "--info-fg": "#FFFFFF",
+      "--border": "rgba(225,112,85,0.15)",
+      "--ring": "#E17055",
+      "--sidebar-bg": "#FFF5F0",
+      "--sidebar-accent": "#FFE8DD",
+      "--sidebar-accent-fg": "#E17055",
+      "--shadow-sm": "rgba(225,112,85,0.08)",
+      "--shadow-md": "rgba(225,112,85,0.14)",
+      "--shadow-lg": "rgba(225,112,85,0.2)"
+    }
+  }
+}

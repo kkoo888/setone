@@ -1,0 +1,41 @@
+{
+  "id": "heatmap",
+  "name": "热力图",
+  "author": "setone",
+  "description": "数据可视化，适合热力图与数据图表展示的主题",
+  "seed": {
+    "accent": "#0080FF",
+    "bg": "#FAFAFA",
+    "fg": "#333333",
+    "radius": 8,
+    "fontBase": 14,
+    "spacingBase": 8,
+    "mode": "light"
+  },
+  "overrides": {
+    "alias": {
+      "--primary": "#0080FF",
+      "--primary-fg": "#FFFFFF",
+      "--secondary": "#FF6B35",
+      "--secondary-fg": "#FFFFFF",
+      "--accent-bg": "rgba(0,128,255,0.08)",
+      "--accent-fg": "#0080FF",
+      "--destructive": "#FF3B30",
+      "--destructive-fg": "#FFFFFF",
+      "--success": "#34C759",
+      "--success-fg": "#FFFFFF",
+      "--warning": "#FF9500",
+      "--warning-fg": "#333333",
+      "--info": "#5AC8FA",
+      "--info-fg": "#FFFFFF",
+      "--border": "#E0E0E0",
+      "--ring": "#0080FF",
+      "--sidebar-bg": "#F5F5F5",
+      "--sidebar-accent": "#EBEBEB",
+      "--sidebar-accent-fg": "#333333",
+      "--shadow-sm": "rgba(0,0,0,0.05)",
+      "--shadow-md": "rgba(0,0,0,0.09)",
+      "--shadow-lg": "rgba(0,0,0,0.14)"
+    }
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "id": "skeuomorphism",
+  "name": "拟物风",
+  "author": "setone",
+  "description": "写实质感，模拟真实世界材质的经典拟物风格",
+  "seed": {
+    "accent": "#8B4513",
+    "bg": "#F5F0E8",
+    "fg": "#3E2723",
+    "radius": 8,
+    "fontBase": 14,
+    "spacingBase": 8,
+    "mode": "light"
+  },
+  "overrides": {
+    "alias": {
+      "--primary": "#8B4513",
+      "--primary-fg": "#FFFFFF",
+      "--secondary": "#6D4C41",
+      "--secondary-fg": "#FFFFFF",
+      "--accent-bg": "#EFEBE9",
+      "--accent-fg": "#8B4513",
+      "--destructive": "#C62828",
+      "--destructive-fg": "#FFFFFF",
+      "--success": "#2E7D32",
+      "--success-fg": "#FFFFFF",
+      "--warning": "#EF6C00",
+      "--warning-fg": "#FFFFFF",
+      "--info": "#1565C0",
+      "--info-fg": "#FFFFFF",
+      "--border": "#D7CCC8",
+      "--ring": "#8B4513",
+      "--sidebar-bg": "#EEE8E0",
+      "--sidebar-accent": "#DDD5CB",
+      "--sidebar-accent-fg": "#3E2723",
+      "--shadow-sm": "rgba(62,39,35,0.1)",
+      "--shadow-md": "rgba(62,39,35,0.16)",
+      "--shadow-lg": "rgba(62,39,35,0.24)"
+    }
+  }
+}

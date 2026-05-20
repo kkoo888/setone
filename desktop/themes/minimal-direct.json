@@ -1,0 +1,41 @@
+{
+  "id": "minimal-direct",
+  "name": "极简直接",
+  "author": "setone",
+  "description": "少即是多，去除一切多余元素的直接表达",
+  "seed": {
+    "accent": "#2D3436",
+    "bg": "#FFFFFF",
+    "fg": "#2D3436",
+    "radius": 4,
+    "fontBase": 14,
+    "spacingBase": 8,
+    "mode": "light"
+  },
+  "overrides": {
+    "alias": {
+      "--primary": "#2D3436",
+      "--primary-fg": "#FFFFFF",
+      "--secondary": "#636E72",
+      "--secondary-fg": "#FFFFFF",
+      "--accent-bg": "#F0F0F0",
+      "--accent-fg": "#2D3436",
+      "--destructive": "#D63031",
+      "--destructive-fg": "#FFFFFF",
+      "--success": "#00B894",
+      "--success-fg": "#FFFFFF",
+      "--warning": "#E17055",
+      "--warning-fg": "#FFFFFF",
+      "--info": "#636E72",
+      "--info-fg": "#FFFFFF",
+      "--border": "#DFE6E9",
+      "--ring": "#2D3436",
+      "--sidebar-bg": "#FAFAFA",
+      "--sidebar-accent": "#F0F0F0",
+      "--sidebar-accent-fg": "#2D3436",
+      "--shadow-sm": "rgba(45,52,54,0.05)",
+      "--shadow-md": "rgba(45,52,54,0.08)",
+      "--shadow-lg": "rgba(45,52,54,0.12)"
+    }
+  }
+}

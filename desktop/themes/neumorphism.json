@@ -1,0 +1,41 @@
+{
+  "id": "neumorphism",
+  "name": "新拟态",
+  "author": "setone",
+  "description": "柔和浮雕效果，光影交错的立体质感",
+  "seed": {
+    "accent": "#6B8DD6",
+    "bg": "#E0E5EC",
+    "fg": "#44476A",
+    "radius": 16,
+    "fontBase": 14,
+    "spacingBase": 8,
+    "mode": "light"
+  },
+  "overrides": {
+    "alias": {
+      "--primary": "#6B8DD6",
+      "--primary-fg": "#FFFFFF",
+      "--secondary": "#8B9DC3",
+      "--secondary-fg": "#FFFFFF",
+      "--accent-bg": "#D5DBE8",
+      "--accent-fg": "#44476A",
+      "--destructive": "#E55A5A",
+      "--destructive-fg": "#FFFFFF",
+      "--success": "#5ABE7E",
+      "--success-fg": "#FFFFFF",
+      "--warning": "#E5A54A",
+      "--warning-fg": "#44476A",
+      "--info": "#6B8DD6",
+      "--info-fg": "#FFFFFF",
+      "--border": "#C8CDD5",
+      "--ring": "#6B8DD6",
+      "--sidebar-bg": "#D8DDE5",
+      "--sidebar-accent": "#C8CDD5",
+      "--sidebar-accent-fg": "#44476A",
+      "--shadow-sm": "rgba(163,177,198,0.4), rgba(255,255,255,0.8)",
+      "--shadow-md": "rgba(163,177,198,0.5), rgba(255,255,255,0.9)",
+      "--shadow-lg": "rgba(163,177,198,0.6), rgba(255,255,255,1.0)"
+    }
+  }
+}

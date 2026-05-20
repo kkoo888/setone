@@ -1,0 +1,41 @@
+{
+  "id": "liquid-glass",
+  "name": "流体玻璃",
+  "author": "setone",
+  "description": "全息流光，流动的玻璃质感与幻彩效果",
+  "seed": {
+    "accent": "#E040FB",
+    "bg": "#1A0033",
+    "fg": "#F0E0FF",
+    "radius": 20,
+    "fontBase": 14,
+    "spacingBase": 8,
+    "mode": "dark"
+  },
+  "overrides": {
+    "alias": {
+      "--primary": "#E040FB",
+      "--primary-fg": "#FFFFFF",
+      "--secondary": "#7C4DFF",
+      "--secondary-fg": "#FFFFFF",
+      "--accent-bg": "rgba(224,64,251,0.12)",
+      "--accent-fg": "#E040FB",
+      "--destructive": "#FF1744",
+      "--destructive-fg": "#FFFFFF",
+      "--success": "#00E676",
+      "--success-fg": "#1A0033",
+      "--warning": "#FFD740",
+      "--warning-fg": "#1A0033",
+      "--info": "#40C4FF",
+      "--info-fg": "#1A0033",
+      "--border": "rgba(224,64,251,0.2)",
+      "--ring": "#E040FB",
+      "--sidebar-bg": "#120028",
+      "--sidebar-accent": "rgba(224,64,251,0.08)",
+      "--sidebar-accent-fg": "#E040FB",
+      "--shadow-sm": "rgba(224,64,251,0.2)",
+      "--shadow-md": "rgba(224,64,251,0.3)",
+      "--shadow-lg": "rgba(224,64,251,0.45)"
+    }
+  }
+}

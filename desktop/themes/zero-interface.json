@@ -1,0 +1,41 @@
+{
+  "id": "zero-interface",
+  "name": "零界面",
+  "author": "setone",
+  "description": "极简隐形，让界面退居幕后的设计哲学",
+  "seed": {
+    "accent": "#666666",
+    "bg": "#FAFAFA",
+    "fg": "#333333",
+    "radius": 8,
+    "fontBase": 14,
+    "spacingBase": 8,
+    "mode": "light"
+  },
+  "overrides": {
+    "alias": {
+      "--primary": "#666666",
+      "--primary-fg": "#FFFFFF",
+      "--secondary": "#999999",
+      "--secondary-fg": "#FFFFFF",
+      "--accent-bg": "#F0F0F0",
+      "--accent-fg": "#666666",
+      "--destructive": "#CC3333",
+      "--destructive-fg": "#FFFFFF",
+      "--success": "#558B2F",
+      "--success-fg": "#FFFFFF",
+      "--warning": "#BF8C00",
+      "--warning-fg": "#333333",
+      "--info": "#555555",
+      "--info-fg": "#FFFFFF",
+      "--border": "#E5E5E5",
+      "--ring": "#666666",
+      "--sidebar-bg": "#F5F5F5",
+      "--sidebar-accent": "#EEEEEE",
+      "--sidebar-accent-fg": "#333333",
+      "--shadow-sm": "rgba(0,0,0,0.04)",
+      "--shadow-md": "rgba(0,0,0,0.07)",
+      "--shadow-lg": "rgba(0,0,0,0.1)"
+    }
+  }
+}

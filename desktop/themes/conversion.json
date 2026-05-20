@@ -1,0 +1,41 @@
+{
+  "id": "conversion",
+  "name": "转化优化",
+  "author": "setone",
+  "description": "高转化率，以数据驱动的转化优化设计",
+  "seed": {
+    "accent": "#FF6348",
+    "bg": "#FFFFFF",
+    "fg": "#2C3E50",
+    "radius": 8,
+    "fontBase": 14,
+    "spacingBase": 8,
+    "mode": "light"
+  },
+  "overrides": {
+    "alias": {
+      "--primary": "#FF6348",
+      "--primary-fg": "#FFFFFF",
+      "--secondary": "#5F27CD",
+      "--secondary-fg": "#FFFFFF",
+      "--accent-bg": "rgba(255,99,72,0.08)",
+      "--accent-fg": "#FF6348",
+      "--destructive": "#EE5A24",
+      "--destructive-fg": "#FFFFFF",
+      "--success": "#27AE60",
+      "--success-fg": "#FFFFFF",
+      "--warning": "#F39C12",
+      "--warning-fg": "#2C3E50",
+      "--info": "#3498DB",
+      "--info-fg": "#FFFFFF",
+      "--border": "rgba(255,99,72,0.15)",
+      "--ring": "#FF6348",
+      "--sidebar-bg": "#FFF8F6",
+      "--sidebar-accent": "#FFE8E2",
+      "--sidebar-accent-fg": "#FF6348",
+      "--shadow-sm": "rgba(255,99,72,0.08)",
+      "--shadow-md": "rgba(255,99,72,0.14)",
+      "--shadow-lg": "rgba(255,99,72,0.2)"
+    }
+  }
+}

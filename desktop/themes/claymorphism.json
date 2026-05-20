@@ -1,0 +1,41 @@
+{
+  "id": "claymorphism",
+  "name": "黏土风",
+  "author": "setone",
+  "description": "圆润可爱，柔软的黏土质感设计",
+  "seed": {
+    "accent": "#FF6B9D",
+    "bg": "#FFF5F5",
+    "fg": "#4A4A6A",
+    "radius": 20,
+    "fontBase": 14,
+    "spacingBase": 8,
+    "mode": "light"
+  },
+  "overrides": {
+    "alias": {
+      "--primary": "#FF6B9D",
+      "--primary-fg": "#FFFFFF",
+      "--secondary": "#C084FC",
+      "--secondary-fg": "#FFFFFF",
+      "--accent-bg": "rgba(255,107,157,0.1)",
+      "--accent-fg": "#FF6B9D",
+      "--destructive": "#EF4444",
+      "--destructive-fg": "#FFFFFF",
+      "--success": "#34D399",
+      "--success-fg": "#FFFFFF",
+      "--warning": "#FBBF24",
+      "--warning-fg": "#4A4A6A",
+      "--info": "#60A5FA",
+      "--info-fg": "#FFFFFF",
+      "--border": "rgba(255,107,157,0.2)",
+      "--ring": "#FF6B9D",
+      "--sidebar-bg": "#FFF0F3",
+      "--sidebar-accent": "#FFE0E8",
+      "--sidebar-accent-fg": "#FF6B9D",
+      "--shadow-sm": "rgba(255,107,157,0.12)",
+      "--shadow-md": "rgba(255,107,157,0.18)",
+      "--shadow-lg": "rgba(255,107,157,0.25)"
+    }
+  }
+}

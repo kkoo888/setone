@@ -1,0 +1,41 @@
+{
+  "id": "brutalism",
+  "name": "粗犷主义",
+  "author": "setone",
+  "description": "原始、高对比，不加修饰的直率表达",
+  "seed": {
+    "accent": "#FF0000",
+    "bg": "#FFFFFF",
+    "fg": "#000000",
+    "radius": 0,
+    "fontBase": 14,
+    "spacingBase": 8,
+    "mode": "light"
+  },
+  "overrides": {
+    "alias": {
+      "--primary": "#FF0000",
+      "--primary-fg": "#FFFFFF",
+      "--secondary": "#000000",
+      "--secondary-fg": "#FFFFFF",
+      "--accent-bg": "#FFE0E0",
+      "--accent-fg": "#FF0000",
+      "--destructive": "#CC0000",
+      "--destructive-fg": "#FFFFFF",
+      "--success": "#00AA00",
+      "--success-fg": "#FFFFFF",
+      "--warning": "#FF8800",
+      "--warning-fg": "#000000",
+      "--info": "#000000",
+      "--info-fg": "#FFFFFF",
+      "--border": "#000000",
+      "--ring": "#FF0000",
+      "--sidebar-bg": "#F0F0F0",
+      "--sidebar-accent": "#E0E0E0",
+      "--sidebar-accent-fg": "#000000",
+      "--shadow-sm": "rgba(0,0,0,0.15)",
+      "--shadow-md": "rgba(0,0,0,0.25)",
+      "--shadow-lg": "rgba(0,0,0,0.35)"
+    }
+  }
+}

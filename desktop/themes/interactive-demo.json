@@ -1,0 +1,41 @@
+{
+  "id": "interactive-demo",
+  "name": "互动演示",
+  "author": "setone",
+  "description": "交互丰富，以互动演示为特色的体验设计",
+  "seed": {
+    "accent": "#6C5CE7",
+    "bg": "#FFFFFF",
+    "fg": "#2D3436",
+    "radius": 12,
+    "fontBase": 14,
+    "spacingBase": 8,
+    "mode": "light"
+  },
+  "overrides": {
+    "alias": {
+      "--primary": "#6C5CE7",
+      "--primary-fg": "#FFFFFF",
+      "--secondary": "#A29BFE",
+      "--secondary-fg": "#FFFFFF",
+      "--accent-bg": "rgba(108,92,231,0.08)",
+      "--accent-fg": "#6C5CE7",
+      "--destructive": "#FF6B6B",
+      "--destructive-fg": "#FFFFFF",
+      "--success": "#51CF66",
+      "--success-fg": "#FFFFFF",
+      "--warning": "#FFD43B",
+      "--warning-fg": "#2D3436",
+      "--info": "#74C0FC",
+      "--info-fg": "#2D3436",
+      "--border": "rgba(108,92,231,0.15)",
+      "--ring": "#6C5CE7",
+      "--sidebar-bg": "#F8F7FF",
+      "--sidebar-accent": "#EFEEFF",
+      "--sidebar-accent-fg": "#6C5CE7",
+      "--shadow-sm": "rgba(108,92,231,0.08)",
+      "--shadow-md": "rgba(108,92,231,0.14)",
+      "--shadow-lg": "rgba(108,92,231,0.2)"
+    }
+  }
+}
