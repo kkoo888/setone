@@ -404,3 +404,164 @@
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+/* === 模型管理工具栏 === */
+.live2d5-models-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: var(--spacing-md);
+}
+
+/* === 添加模型弹窗 === */
+.live2d5-scan-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  min-width: 480px;
+  max-width: 560px;
+}
+
+.live2d5-scan-input-row {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.live2d5-scan-input {
+  flex: 1;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+  background: var(--color-bg-primary);
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+
+.live2d5-scan-input:focus {
+  border-color: var(--color-primary);
+}
+
+.live2d5-scan-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.live2d5-scan-input::placeholder {
+  color: var(--color-text-tertiary);
+}
+
+/* === 扫描提示 === */
+.live2d5-scan-alert {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-xs);
+  animation: live2d5-fade-in 0.2s ease;
+}
+
+.live2d5-scan-alert--error {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--color-error, #ef4444);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.live2d5-scan-alert--success {
+  background: rgba(34, 197, 94, 0.1);
+  color: var(--color-success, #22c55e);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+}
+
+@keyframes live2d5-fade-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* === 扫描结果 === */
+.live2d5-scan-results {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  max-height: 360px;
+  overflow-y: auto;
+}
+
+.live2d5-scan-card {
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.live2d5-scan-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.live2d5-scan-card-name {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.live2d5-scan-card-version {
+  font-size: var(--font-size-2xs);
+  color: var(--color-text-tertiary);
+  background: var(--color-bg-primary);
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+}
+
+.live2d5-scan-card-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+}
+
+.live2d5-scan-card-groups {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+}
+
+.live2d5-scan-card-path {
+  font-size: var(--font-size-2xs);
+  color: var(--color-text-tertiary);
+  word-break: break-all;
+  opacity: 0.7;
+}
+
+.live2d5-scan-card-error {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.live2d5-scan-card-err-text {
+  font-size: var(--font-size-xs);
+  color: var(--color-error, #ef4444);
+}
+
+/* === 暗色主题适配（弹窗） === */
+[data-theme='dark'] .live2d5-scan-input {
+  background: var(--color-bg-tertiary);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme='dark'] .live2d5-scan-card {
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+[data-theme='dark'] .live2d5-scan-alert--error {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.15);
+}
+
+[data-theme='dark'] .live2d5-scan-alert--success {
+  background: rgba(34, 197, 94, 0.08);
+  border-color: rgba(34, 197, 94, 0.15);
+}

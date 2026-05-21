@@ -155,6 +155,72 @@ export default class Live2D5Module implements Module {
       return { success: true, data: null }
     })
 
+    // ★ 新增：扫描指定目录下的 model3.json 文件
+    ipcMain.handle('live2d5_scan_model', async (_event, args: { dirPath: string }) => {
+      try {
+        const { dirPath } = args
+        const fs = await import('fs')
+        const path = await import('path')
+
+        // 检查目录是否存在
+        if (!fs.existsSync(dirPath) || !fs.statSync(dirPath).isDirectory()) {
+          return { success: false, error: '目录不存在或不是有效目录' }
+        }
+
+        // 递归扫描 model3.json 文件（最多递归 3 层）
+        const modelFiles: string[] = []
+        const scanDir = (dir: string, depth: number) => {
+          if (depth > 3) return
+          try {
+            const entries = fs.readdirSync(dir, { withFileTypes: true })
+            for (const entry of entries) {
+              const fullPath = path.join(dir, entry.name)
+              if (entry.isFile() && entry.name.endsWith('.model3.json')) {
+                modelFiles.push(fullPath)
+              } else if (entry.isDirectory() && !entry.name.startsWith('.') && entry.name !== 'node_modules') {
+                scanDir(fullPath, depth + 1)
+              }
+            }
+          } catch { /* 忽略无权限目录 */ }
+        }
+        scanDir(dirPath, 0)
+
+        if (modelFiles.length === 0) {
+          return { success: false, error: '该目录下未找到 model3.json 文件' }
+        }
+
+        // 读取每个 model3.json 的基本信息
+        const models = modelFiles.map(filePath => {
+          try {
+            const content = fs.readFileSync(filePath, 'utf-8')
+            const json = JSON.parse(content)
+            const fileRefs = json.FileReferences ?? {}
+            const modelName = path.basename(path.dirname(filePath))
+
+            return {
+              name: modelName,
+              path: filePath,
+              version: json.Version ?? 0,
+              textures: (fileRefs.Textures ?? []).length,
+              expressions: (fileRefs.Expressions ?? []).length,
+              motions: Object.values(fileRefs.Motions ?? {}).reduce(
+                (sum: number, arr: any) => sum + (Array.isArray(arr) ? arr.length : 0), 0
+              ),
+              motionGroups: Object.keys(fileRefs.Motions ?? {}),
+              hasPhysics: !!fileRefs.Physics,
+              hasPose: !!fileRefs.Pose,
+            }
+          } catch {
+            return { name: path.basename(filePath), path: filePath, error: '解析失败' }
+          }
+        })
+
+        return { success: true, data: models }
+      } catch (err) {
+        return { success: false, error: (err as Error).message }
+      }
+    })
+
     // ★ 新增：重新加载当前模型
     ipcMain.handle('live2d5_reload_model', async () => {
       if (this.petWindow && !this.petWindow.isDestroyed()) {
@@ -181,6 +247,7 @@ export default class Live2D5Module implements Module {
     ipcMain.removeHandler('live2d5_unload_model')
     ipcMain.removeHandler('live2d5_get_live_status')
     ipcMain.removeHandler('live2d5_get_preview')
+    ipcMain.removeHandler('live2d5_scan_model')
     ipcMain.removeHandler('live2d5_reload_model')
   }
 
@@ -435,6 +502,82 @@ export default class Live2D5Module implements Module {
               return { success: true, data: result }
             }
             return { success: true, data: null }
+          }
+        }
+      },
+      {
+        type: 'tool',
+        name: 'live2d5_scan_model',
+        description: '扫描指定目录下的 Live2D5 模型文件（model3.json）',
+        priority: 10,
+        moduleId: this.id,
+        parameters: {
+          type: 'object',
+          properties: {
+            dirPath: { type: 'string', description: '要扫描的目录路径' }
+          },
+          required: ['dirPath']
+        },
+        handler: {
+          execute: async (p) => {
+            const { dirPath } = p as { dirPath: string }
+            try {
+              const fs = await import('fs')
+              const path = await import('path')
+
+              if (!fs.existsSync(dirPath) || !fs.statSync(dirPath).isDirectory()) {
+                return { success: false, error: '目录不存在或不是有效目录' }
+              }
+
+              const modelFiles: string[] = []
+              const scanDir = (dir: string, depth: number) => {
+                if (depth > 3) return
+                try {
+                  const entries = fs.readdirSync(dir, { withFileTypes: true })
+                  for (const entry of entries) {
+                    const fullPath = path.join(dir, entry.name)
+                    if (entry.isFile() && entry.name.endsWith('.model3.json')) {
+                      modelFiles.push(fullPath)
+                    } else if (entry.isDirectory() && !entry.name.startsWith('.') && entry.name !== 'node_modules') {
+                      scanDir(fullPath, depth + 1)
+                    }
+                  }
+                } catch { /* 忽略无权限目录 */ }
+              }
+              scanDir(dirPath, 0)
+
+              if (modelFiles.length === 0) {
+                return { success: false, error: '该目录下未找到 model3.json 文件' }
+              }
+
+              const models = modelFiles.map(filePath => {
+                try {
+                  const content = fs.readFileSync(filePath, 'utf-8')
+                  const json = JSON.parse(content)
+                  const fileRefs = json.FileReferences ?? {}
+                  const modelName = path.basename(path.dirname(filePath))
+                  return {
+                    name: modelName,
+                    path: filePath,
+                    version: json.Version ?? 0,
+                    textures: (fileRefs.Textures ?? []).length,
+                    expressions: (fileRefs.Expressions ?? []).length,
+                    motions: Object.values(fileRefs.Motions ?? {}).reduce(
+                      (sum: number, arr: any) => sum + (Array.isArray(arr) ? arr.length : 0), 0
+                    ),
+                    motionGroups: Object.keys(fileRefs.Motions ?? {}),
+                    hasPhysics: !!fileRefs.Physics,
+                    hasPose: !!fileRefs.Pose,
+                  }
+                } catch {
+                  return { name: path.basename(filePath), path: filePath, error: '解析失败' }
+                }
+              })
+
+              return { success: true, data: models }
+            } catch (err) {
+              return { success: false, error: (err as Error).message }
+            }
           }
         }
       },

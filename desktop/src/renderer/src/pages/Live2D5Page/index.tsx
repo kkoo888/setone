@@ -8,6 +8,7 @@
 import React, { useState, useCallback, useEffect } from 'react'
 import { FolderOpen, SettingOne } from '../../utils/statusMessages'
 import { ModuleHeader } from '../../components/common/module/ModuleHeader'
+import { Modal } from '../../components/common/Modal'
 
 const folderI = React.createElement(FolderOpen, { size: 14, fill: 'currentColor', theme: 'outline' })
 const settingI = React.createElement(SettingOne, { size: 14, fill: 'currentColor', theme: 'outline' })
@@ -57,6 +58,14 @@ export function Live2D5Page() {
   const [previewImage, setPreviewImage] = useState<string | null>(null)
   const [refreshing, setRefreshing] = useState(false)
   const [reloading, setReloading] = useState(false)
+
+  // 添加模型弹窗状态
+  const [showAddModel, setShowAddModel] = useState(false)
+  const [scanPath, setScanPath] = useState('')
+  const [scanning, setScanning] = useState(false)
+  const [scanResult, setScanResult] = useState<any[] | null>(null)
+  const [scanError, setScanError] = useState<string | null>(null)
+  const [scanSuccess, setScanSuccess] = useState<string | null>(null)
 
   /** 查询状态 */
   const refreshStatus = useCallback(async () => {
@@ -187,6 +196,41 @@ export function Live2D5Page() {
     }
     setReloading(false)
   }, [handleRefreshControl])
+
+  /** 扫描模型目录 */
+  const handleScanModel = useCallback(async () => {
+    if (!scanPath.trim()) {
+      setScanError('请输入模型目录路径')
+      return
+    }
+    setScanning(true)
+    setScanError(null)
+    setScanSuccess(null)
+    setScanResult(null)
+    try {
+      const result = await window.electronAPI.invoke('live2d5_scan_model', { dirPath: scanPath.trim() })
+      if (result?.success && Array.isArray(result.data)) {
+        setScanResult(result.data)
+        setScanSuccess(`扫描完成，找到 ${result.data.length} 个模型`)
+      } else {
+        setScanError(result?.error || '扫描失败')
+      }
+    } catch (err) {
+      setScanError(err instanceof Error ? err.message : '扫描出错')
+    }
+    setScanning(false)
+  }, [scanPath])
+
+  /** 提示信息自动消失 */
+  useEffect(() => {
+    if (scanError || scanSuccess) {
+      const timer = setTimeout(() => {
+        setScanError(null)
+        setScanSuccess(null)
+      }, 3000)
+      return () => clearTimeout(timer)
+    }
+  }, [scanError, scanSuccess])
 
   return (
     <div className="mod-page">
@@ -376,6 +420,16 @@ export function Live2D5Page() {
         {/* ====== 模型管理 ====== */}
         {activeTab === 'models' && (
           <div className="live2d5-models-panel">
+            {/* 添加模型按钮 */}
+            <div className="live2d5-models-toolbar">
+              <button
+                className="btn btn-primary"
+                onClick={() => setShowAddModel(true)}
+              >
+                ＋ 添加模型
+              </button>
+            </div>
+
             {!status.windowOpen ? (
               <div className="live2d5-empty">
                 <span className="live2d5-empty-icon" style={{ fontSize: 32, opacity: 0.4 }}>🎭</span>
@@ -456,6 +510,105 @@ export function Live2D5Page() {
                 ))}
               </div>
             )}
+
+            {/* 添加模型弹窗 */}
+            <Modal
+              open={showAddModel}
+              onClose={() => {
+                setShowAddModel(false)
+                setScanPath('')
+                setScanResult(null)
+                setScanError(null)
+                setScanSuccess(null)
+              }}
+              title="添加模型"
+              footer={
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => {
+                    setShowAddModel(false)
+                    setScanPath('')
+                    setScanResult(null)
+                    setScanError(null)
+                    setScanSuccess(null)
+                  }}
+                >
+                  关闭
+                </button>
+              }
+            >
+              <div className="live2d5-scan-section">
+                {/* 扫描输入区域 */}
+                <div className="live2d5-scan-input-row">
+                  <input
+                    type="text"
+                    className="live2d5-scan-input"
+                    placeholder="输入模型目录路径，如 /home/user/models"
+                    value={scanPath}
+                    onChange={e => setScanPath(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && handleScanModel()}
+                    disabled={scanning}
+                  />
+                  <button
+                    className="btn btn-primary"
+                    onClick={handleScanModel}
+                    disabled={scanning || !scanPath.trim()}
+                  >
+                    {scanning ? '扫描中...' : '扫描'}
+                  </button>
+                </div>
+
+                {/* 提示信息 */}
+                {scanError && (
+                  <div className="live2d5-scan-alert live2d5-scan-alert--error">
+                    ❌ {scanError}
+                  </div>
+                )}
+                {scanSuccess && (
+                  <div className="live2d5-scan-alert live2d5-scan-alert--success">
+                    ✅ {scanSuccess}
+                  </div>
+                )}
+
+                {/* 扫描结果 */}
+                {scanResult && scanResult.length > 0 && (
+                  <div className="live2d5-scan-results">
+                    {scanResult.map((model: any, idx: number) => (
+                      <div key={idx} className="live2d5-scan-card">
+                        {model.error ? (
+                          <div className="live2d5-scan-card-error">
+                            <span className="live2d5-scan-card-name">{model.name}</span>
+                            <span className="live2d5-scan-card-err-text">{model.error}</span>
+                          </div>
+                        ) : (
+                          <>
+                            <div className="live2d5-scan-card-header">
+                              <span className="live2d5-scan-card-name">{model.name}</span>
+                              <span className="live2d5-scan-card-version">v{model.version}</span>
+                            </div>
+                            <div className="live2d5-scan-card-details">
+                              <span>🎭 表情: {model.expressions}</span>
+                              <span>🎬 动作: {model.motions}</span>
+                              <span>🖼️ 贴图: {model.textures}</span>
+                              {model.hasPhysics && <span>⚙️ 物理演算</span>}
+                              {model.hasPose && <span>🧍 姿态</span>}
+                            </div>
+                            {model.motionGroups.length > 0 && (
+                              <div className="live2d5-scan-card-groups">
+                                动作组: {model.motionGroups.join(', ')}
+                              </div>
+                            )}
+                            <div className="live2d5-scan-card-path" title={model.path}>
+                              📁 {model.path}
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </Modal>
           </div>
         )}
 
