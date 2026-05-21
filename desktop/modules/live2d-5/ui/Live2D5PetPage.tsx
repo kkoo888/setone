@@ -11,7 +11,7 @@ const Live2D5PetPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
-  // 加载模型
+  // 加载已应用的模型
   useEffect(() => {
     let cancelled = false
 
@@ -23,12 +23,24 @@ const Live2D5PetPage: React.FC = () => {
           if (!cancelled) setState(s)
         })
 
+        // 从后端读取已应用的模型
+        let modelPath = './live2d/Hiyori/Hiyori.model3.json'  // fallback
+        let modelName = 'Hiyori'
+        try {
+          const result = await window.electronAPI.invoke('live2d5_get_applied_model')
+          if (result?.success && result.data) {
+            modelPath = result.data.path
+            modelName = result.data.name
+          }
+        } catch {}
+
+        // 相对路径用 new URL 解析，绝对路径直接用
+        const resolvedPath = modelPath.startsWith('./') || modelPath.startsWith('../')
+          ? new URL(modelPath, document.baseURI).href
+          : modelPath
+
         await cubism5Service.loadModel(
-          {
-            name: 'Hiyori',
-            modelPath: new URL('./live2d/Hiyori/Hiyori.model3.json', document.baseURI).href,
-            scale: 0.6,  // ★ 默认缩放 0.6，居中显示
-          },
+          { name: modelName, modelPath: resolvedPath, scale: 0.6 },
           containerRef.current
         )
       } catch (err) {

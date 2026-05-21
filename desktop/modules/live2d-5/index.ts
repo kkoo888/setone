@@ -9,7 +9,7 @@ console.log('[Live2D5] 🔵 模块 index.ts 文件已加载')
 import type { Module, ModuleContext, Capability } from '../../src/main/types/module'
 import { BrowserWindow, ipcMain, app, dialog } from 'electron'
 import { join, dirname } from 'path'
-import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs'
+import { existsSync, readFileSync, writeFileSync, mkdirSync, readdirSync } from 'fs'
 import { fileURLToPath } from 'url'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -17,6 +17,21 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 /** 宠物窗口默认尺寸 */
 const PET_WINDOW_WIDTH = 400
 const PET_WINDOW_HEIGHT = 500
+
+/** 模型注册表条目 */
+interface RegisteredModelEntry {
+  name: string
+  path: string
+  applied: boolean
+  addedAt: number
+  version?: number
+  textures?: number
+  expressions?: number
+  motions?: number
+  motionGroups?: string[]
+  hasPhysics?: boolean
+  hasPose?: boolean
+}
 
 export default class Live2D5Module implements Module {
   id = 'live2d-5'
@@ -31,7 +46,7 @@ export default class Live2D5Module implements Module {
   }
 
   /** 读取模型注册表 */
-  private readModelRegistry(): Array<{ name: string; path: string; addedAt: number }> {
+  private readModelRegistry(): RegisteredModelEntry[] {
     try {
       const filePath = this.getModelRegistryPath()
       if (existsSync(filePath)) {
@@ -42,7 +57,7 @@ export default class Live2D5Module implements Module {
   }
 
   /** 写入模型注册表 */
-  private writeModelRegistry(models: Array<{ name: string; path: string; addedAt: number }>): void {
+  private writeModelRegistry(models: RegisteredModelEntry[]): void {
     try {
       writeFileSync(this.getModelRegistryPath(), JSON.stringify(models, null, 2))
     } catch (err) {
@@ -50,9 +65,66 @@ export default class Live2D5Module implements Module {
     }
   }
 
+  /** 获取当前已应用的模型 */
+  private getAppliedModel(): RegisteredModelEntry | null {
+    return this.readModelRegistry().find(m => m.applied) ?? null
+  }
+
+  /** 自动注册 public 目录下的默认模型到模型库（仅首次启动时执行） */
+  private registerDefaultModels(): void {
+    try {
+      const existing = this.readModelRegistry()
+      if (existing.length > 0) return  // 已有数据，不重复注册
+
+      const publicLive2dDir = join(app.getAppPath(), 'public', 'live2d')
+      if (!existsSync(publicLive2dDir)) return
+
+      const entries = readdirSync(publicLive2dDir, { withFileTypes: true })
+      const models: RegisteredModelEntry[] = []
+
+      for (const entry of entries) {
+        if (!entry.isDirectory()) continue
+        const modelJsonPath = join(publicLive2dDir, entry.name, `${entry.name}.model3.json`)
+        if (!existsSync(modelJsonPath)) continue
+
+        let version = 0, textures = 0, expressions = 0, motions = 0
+        let motionGroups: string[] = [], hasPhysics = false, hasPose = false
+        try {
+          const json = JSON.parse(readFileSync(modelJsonPath, 'utf-8'))
+          const fileRefs = json.FileReferences ?? {}
+          version = json.Version ?? 0
+          textures = (fileRefs.Textures ?? []).length
+          expressions = (fileRefs.Expressions ?? []).length
+          motions = Object.values(fileRefs.Motions ?? {}).reduce(
+            (sum: number, arr: unknown) => sum + (Array.isArray(arr) ? arr.length : 0), 0
+          )
+          motionGroups = Object.keys(fileRefs.Motions ?? {})
+          hasPhysics = !!fileRefs.Physics
+          hasPose = !!fileRefs.Pose
+        } catch { /* 解析失败用默认值 */ }
+
+        models.push({
+          name: entry.name,
+          path: `./live2d/${entry.name}/${entry.name}.model3.json`,
+          applied: models.length === 0,  // 第一个模型默认已应用
+          addedAt: Date.now(),
+          version, textures, expressions, motions, motionGroups, hasPhysics, hasPose,
+        })
+      }
+
+      if (models.length > 0) {
+        this.writeModelRegistry(models)
+        console.log(`[Live2D5] 📦 自动注册 ${models.length} 个默认模型，已应用: ${models[0].name}`)
+      }
+    } catch (err) {
+      console.error('[Live2D5] 注册默认模型失败:', err)
+    }
+  }
+
   async activate(context: ModuleContext): Promise<void> {
     this.context = context
     this.registerIPCHandlers()
+    this.registerDefaultModels()
     context.logger.info('Live2D Cubism 5 模块已激活')
   }
 
@@ -247,35 +319,7 @@ export default class Live2D5Module implements Module {
       }
     })
 
-    // ★ 新增：加载扫描到的模型到宠物窗口
-    ipcMain.handle('live2d5_load_scanned_model', async (_event, args: { modelPath: string; name: string }) => {
-      if (!this.petWindow || this.petWindow.isDestroyed()) {
-        return { success: false, error: '宠物窗口未打开，请先打开宠物窗口' }
-      }
-      try {
-        const result = await this.petWindow.webContents.executeJavaScript(
-          `(async () => {
-            const container = document.querySelector('canvas')?.parentElement || document.querySelector('div');
-            const svc = window.__cubism5Service;
-            if (!svc) return 'service 不可用';
-            await svc.loadModel({
-              name: ${JSON.stringify(args.name)},
-              modelPath: ${JSON.stringify(args.modelPath)},
-              scale: 0.6
-            }, container);
-            return true;
-          })().catch(e => e.message)`
-        ).catch(() => '执行失败')
-        if (result === true) {
-          return { success: true, message: `模型 "${args.name}" 已加载` }
-        }
-        return { success: false, error: typeof result === 'string' ? result : '加载失败' }
-      } catch (err) {
-        return { success: false, error: (err as Error).message }
-      }
-    })
-
-    // ★ 新增：打开文件夹选择对话框
+    // ★ 打开文件夹选择对话框
     ipcMain.handle('live2d5_select_directory', async () => {
       const result = await dialog.showOpenDialog({
         properties: ['openDirectory'],
@@ -299,19 +343,24 @@ export default class Live2D5Module implements Module {
       return { success: false, error: '宠物窗口未打开' }
     })
 
-    // ★ 新增：获取已注册模型列表（模型库）
+    // ★ 获取已注册模型列表（模型库）
     ipcMain.handle('live2d5_get_registered_models', async () => {
       return { success: true, data: this.readModelRegistry() }
     })
 
-    // ★ 新增：注册模型（添加到模型库）
+    // ★ 获取当前已应用的模型（从注册表读取）
+    ipcMain.handle('live2d5_get_applied_model', async () => {
+      return { success: true, data: this.getAppliedModel() }
+    })
+
+    // ★ 注册模型（添加到模型库，默认未应用）
     ipcMain.handle('live2d5_register_models', async (_event, args: { models: Array<{ name: string; path: string; version?: number; textures?: number; expressions?: number; motions?: number; motionGroups?: string[]; hasPhysics?: boolean; hasPose?: boolean }> }) => {
       try {
         const existing = this.readModelRegistry()
         const existingPaths = new Set(existing.map(m => m.path))
-        const newModels = args.models
+        const newModels: RegisteredModelEntry[] = args.models
           .filter(m => !existingPaths.has(m.path))
-          .map(m => ({ ...m, addedAt: Date.now() }))
+          .map(m => ({ ...m, applied: false, addedAt: Date.now() }))
         const updated = [...existing, ...newModels]
         this.writeModelRegistry(updated)
         return { success: true, data: updated, added: newModels.length }
@@ -320,26 +369,36 @@ export default class Live2D5Module implements Module {
       }
     })
 
-    // ★ 新增：注销模型（从模型库移除，同时卸载宠物窗口中的模型）
+    // ★ 应用模型（设置为已应用，需先关闭宠物窗口）
+    ipcMain.handle('live2d5_apply_model', async (_event, args: { path: string }) => {
+      try {
+        // 检查宠物窗口是否运行中
+        if (this.petWindow && !this.petWindow.isDestroyed()) {
+          return { success: false, error: '宠物窗口运行中，请先关闭窗口再切换模型' }
+        }
+
+        const registry = this.readModelRegistry()
+        const target = registry.find(m => m.path === args.path)
+        if (!target) return { success: false, error: '模型未找到' }
+
+        // 切换 applied 标记
+        const updated = registry.map(m => ({ ...m, applied: m.path === args.path }))
+        this.writeModelRegistry(updated)
+        return { success: true, data: updated }
+      } catch (err) {
+        return { success: false, error: (err as Error).message }
+      }
+    })
+
+    // ★ 注销模型（从模型库移除，已应用的不能移除）
     ipcMain.handle('live2d5_unregister_model', async (_event, args: { path: string }) => {
       try {
-        // 先从宠物窗口卸载模型（如果已加载）
-        if (this.petWindow && !this.petWindow.isDestroyed()) {
-          await this.petWindow.webContents.executeJavaScript(
-            `(async () => {
-              const svc = window.__cubism5Service;
-              if (!svc) return;
-              const models = svc.getLoadedModels?.() ?? [];
-              const target = models.find(m => m.name === ${JSON.stringify(args.path.split('/').pop()?.replace('.model3.json', '') || '')});
-              if (target && !target.active) {
-                svc.unloadModel?.(target.name);
-              }
-            })().catch(() => {})`
-          ).catch(() => {})
+        const registry = this.readModelRegistry()
+        const target = registry.find(m => m.path === args.path)
+        if (target?.applied) {
+          return { success: false, error: '不能移除已应用的模型，请先切换到其他模型' }
         }
-        // 从注册表移除
-        const existing = this.readModelRegistry()
-        const updated = existing.filter(m => m.path !== args.path)
+        const updated = registry.filter(m => m.path !== args.path)
         this.writeModelRegistry(updated)
         return { success: true, data: updated }
       } catch (err) {
@@ -363,11 +422,12 @@ export default class Live2D5Module implements Module {
     ipcMain.removeHandler('live2d5_get_live_status')
     ipcMain.removeHandler('live2d5_get_preview')
     ipcMain.removeHandler('live2d5_scan_model')
-    ipcMain.removeHandler('live2d5_load_scanned_model')
     ipcMain.removeHandler('live2d5_select_directory')
     ipcMain.removeHandler('live2d5_reload_model')
     ipcMain.removeHandler('live2d5_get_registered_models')
+    ipcMain.removeHandler('live2d5_get_applied_model')
     ipcMain.removeHandler('live2d5_register_models')
+    ipcMain.removeHandler('live2d5_apply_model')
     ipcMain.removeHandler('live2d5_unregister_model')
   }
 
@@ -703,45 +763,46 @@ export default class Live2D5Module implements Module {
       },
       {
         type: 'tool',
-        name: 'live2d5_load_scanned_model',
-        description: '加载扫描到的 Live2D5 模型到宠物窗口',
+        name: 'live2d5_apply_model',
+        description: '应用指定模型（需先关闭宠物窗口）',
         priority: 10,
         moduleId: this.id,
         parameters: {
           type: 'object',
           properties: {
-            modelPath: { type: 'string', description: '模型文件路径（model3.json）' },
-            name: { type: 'string', description: '模型名称' }
+            path: { type: 'string', description: '模型文件路径' }
           },
-          required: ['modelPath', 'name']
+          required: ['path']
         },
         handler: {
           execute: async (p) => {
-            const { modelPath, name } = p as { modelPath: string; name: string }
-            if (!this.petWindow || this.petWindow.isDestroyed()) {
-              return { success: false, error: '宠物窗口未打开，请先打开宠物窗口' }
+            const { path: modelPath } = p as { path: string }
+            if (this.petWindow && !this.petWindow.isDestroyed()) {
+              return { success: false, error: '宠物窗口运行中，请先关闭窗口再切换模型' }
             }
-            try {
-              const result = await this.petWindow.webContents.executeJavaScript(
-                `(async () => {
-                  const container = document.querySelector('canvas')?.parentElement || document.querySelector('div');
-                  const svc = window.__cubism5Service;
-                  if (!svc) return 'service 不可用';
-                  await svc.loadModel({
-                    name: ${JSON.stringify(name)},
-                    modelPath: ${JSON.stringify(modelPath)},
-                    scale: 0.6
-                  }, container);
-                  return true;
-                })().catch(e => e.message)`
-              ).catch(() => '执行失败')
-              if (result === true) {
-                return { success: true, message: `模型 "${name}" 已加载` }
-              }
-              return { success: false, error: typeof result === 'string' ? result : '加载失败' }
-            } catch (err) {
-              return { success: false, error: (err as Error).message }
-            }
+            const registry = this.readModelRegistry()
+            const target = registry.find(m => m.path === modelPath)
+            if (!target) return { success: false, error: '模型未找到' }
+            const updated = registry.map(m => ({ ...m, applied: m.path === modelPath }))
+            this.writeModelRegistry(updated)
+            return { success: true, data: updated }
+          }
+        }
+      },
+      {
+        type: 'tool',
+        name: 'live2d5_get_applied_model',
+        description: '获取当前已应用的模型信息',
+        priority: 10,
+        moduleId: this.id,
+        parameters: {
+          type: 'object',
+          properties: {},
+          required: []
+        },
+        handler: {
+          execute: async () => {
+            return { success: true, data: this.getAppliedModel() }
           }
         }
       },
@@ -848,7 +909,7 @@ export default class Live2D5Module implements Module {
               const existingPaths = new Set(existing.map(m => m.path))
               const newModels = models
                 .filter(m => !existingPaths.has(m.path))
-                .map(m => ({ ...m, addedAt: Date.now() }))
+                .map(m => ({ ...m, applied: false, addedAt: Date.now() }))
               const updated = [...existing, ...newModels]
               this.writeModelRegistry(updated)
               return { success: true, data: updated, added: newModels.length }
@@ -876,6 +937,10 @@ export default class Live2D5Module implements Module {
             const { path: modelPath } = p as { path: string }
             try {
               const existing = this.readModelRegistry()
+              const target = existing.find(m => m.path === modelPath)
+              if (target?.applied) {
+                return { success: false, error: '不能移除已应用的模型，请先切换到其他模型' }
+              }
               const updated = existing.filter(m => m.path !== modelPath)
               this.writeModelRegistry(updated)
               return { success: true, data: updated }

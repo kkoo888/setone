@@ -51,6 +51,7 @@ interface ScannedModel {
 interface RegisteredModel {
   name: string
   path: string
+  applied: boolean
   addedAt: number
   version?: number
   textures?: number
@@ -97,7 +98,6 @@ export function Live2D5Page() {
   // 模型库状态
   const [registeredModels, setRegisteredModels] = useState<RegisteredModel[]>([])
   const [selectedScans, setSelectedScans] = useState<Set<string>>(new Set())
-  const [activeModelPath, setActiveModelPath] = useState<string | null>(null)
   const [registering, setRegistering] = useState(false)
 
   /** 查询状态 */
@@ -348,21 +348,17 @@ export function Live2D5Page() {
     setRegistering(false)
   }, [scanResult, selectedScans, refreshRegisteredModels])
 
-  /** 应用已注册的模型 */
+  /** 应用模型（设置为已应用，需先关闭宠物窗口） */
   const handleApplyModel = useCallback(async (model: RegisteredModel) => {
+    if (status.windowOpen) {
+      setScanError('宠物窗口运行中，请先关闭窗口再切换模型')
+      return
+    }
     setLoadingModel(model.path)
     try {
-      // 先打开宠物窗口（如果没开）
-      if (!status.windowOpen) {
-        await window.electronAPI.invoke('live2d5_open')
-        await refreshStatus()
-        // 等待窗口加载
-        await new Promise(r => setTimeout(r, 1500))
-      }
-      const result = await window.electronAPI.invoke('live2d5_load_scanned_model', { modelPath: model.path, name: model.name })
+      const result = await window.electronAPI.invoke('live2d5_apply_model', { path: model.path })
       if (result?.success) {
-        setActiveModelPath(model.path)
-        await refreshModels()
+        await refreshRegisteredModels()
       } else {
         setScanError(result?.error || '应用失败')
       }
@@ -370,21 +366,23 @@ export function Live2D5Page() {
       setScanError(err instanceof Error ? err.message : '应用出错')
     }
     setLoadingModel(null)
-  }, [status.windowOpen, refreshStatus, refreshModels])
+  }, [status.windowOpen, refreshRegisteredModels])
 
-  /** 从模型库移除（同时卸载宠物窗口中的模型） */
+  /** 从模型库移除（需先关闭宠物窗口，已应用的不能移除） */
   const handleRemoveRegistered = useCallback(async (modelPath: string) => {
+    if (status.windowOpen) {
+      setScanError('宠物窗口运行中，请先关闭窗口再操作')
+      return
+    }
     try {
-      // 如果是当前活跃模型，先提示
-      if (activeModelPath === modelPath) {
-        setScanError('不能移除当前正在使用的模型，请先切换到其他模型')
+      const result = await window.electronAPI.invoke('live2d5_unregister_model', { path: modelPath })
+      if (!result?.success) {
+        setScanError(result?.error || '移除失败')
         return
       }
-      await window.electronAPI.invoke('live2d5_unregister_model', { path: modelPath })
       await refreshRegisteredModels()
-      await refreshModels()
     } catch {}
-  }, [refreshRegisteredModels, refreshModels, activeModelPath])
+  }, [status.windowOpen, refreshRegisteredModels])
 
   /** 关闭添加模型弹窗 */
   const handleCloseAddModel = useCallback(() => {
@@ -617,7 +615,7 @@ export function Live2D5Page() {
             ) : (
               <div className="live2d5-registered-list">
                 {registeredModels.map(m => {
-                  const isApplied = activeModelPath === m.path
+                  const isApplied = m.applied
                   return (
                     <div key={m.path} className={`live2d5-registered-card ${isApplied ? 'live2d5-registered-card--active' : ''}`}>
                       <div className="live2d5-registered-info">
