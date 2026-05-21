@@ -21,20 +21,11 @@ import type {
 /** 默认模型缩放比例 */
 const DEFAULT_MODEL_SCALE = 0.15
 
-/**
- * 根据 document.baseURI 计算 public 目录下的资源路径
- * 兼容 file:// 协议（Electron 打包后）和 http:// 协议（开发模式）
- */
-function getPublicPath(relativePath: string): string {
-  const base = document.baseURI.endsWith('/') ? document.baseURI : document.baseURI + '/'
-  return new URL(relativePath, base).href
-}
+/** Live2D Core SDK 路径（相对于 HTML 文档） */
+const CUBISM_CORE_SDK_PATH = './lib/live2dcubismcore5.min.js'
 
-/** Live2D Core SDK 路径 */
-const CUBISM_CORE_SDK_PATH = 'lib/live2dcubismcore5.min.js'
-
-/** Cubism 5 Shader 路径 */
-const CUBISM5_SHADER_PATH = 'Framework/Shaders/WebGL/'
+/** Cubism 5 Shader 路径（相对于 HTML 文档） */
+const CUBISM5_SHADER_PATH = './Framework/Shaders/WebGL/'
 
 // ============ Cubism 5 Core 全局声明 ============
 
@@ -127,7 +118,7 @@ class Cubism5Service {
       // 动态加载 Cubism 5 Core SDK
       await new Promise<void>((resolve, reject) => {
         const script = document.createElement('script')
-        script.src = getPublicPath(CUBISM_CORE_SDK_PATH)
+        script.src = CUBISM_CORE_SDK_PATH
         script.onload = () => {
           const win = window as WindowWithCubism
           if (win.Live2DCubismCore) {
