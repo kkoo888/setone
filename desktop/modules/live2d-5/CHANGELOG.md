@@ -1,5 +1,62 @@
 # Changelog - Live2D Cubism 5 模块
 
+## [2.0.0] - 2026-05-21
+
+### 🔴 重大重构：基于 CubismUserModel 重写
+
+**问题**：旧版 `cubism5-service.ts` 手动使用底层 API 拼装模型，绕过了 SDK 的标准加载链路，导致大量效果缺失（物理演算、自动眨眼、呼吸、注视、Pose、LipSync）。
+
+**方案**：删除旧的手动拼装代码，新建 `AppModel` 继承 `CubismUserModel`，使用 SDK 标准加载链路重写。
+
+### 新增
+- **AppModel** — 继承 `CubismUserModel` 的完整模型类（`services/AppModel.ts`）
+  - `loadAssets()` — SDK 标准加载链路：loadModel → loadExpressions → loadPhysics → loadPose → createRenderer → setupUpdaters → preloadExpressions → preloadMotions
+  - `CubismModelSettingJson` — 使用官方 model3.json 解析器替代手写 JSON 解析
+  - `CubismUpdateScheduler` — 统一调度所有效果 Updater
+  - `CubismEyeBlinkUpdater` — 自动眨眼效果
+  - `CubismBreathUpdater` — 呼吸效果（5 个参数：AngleX/Y/Z, BodyAngleX, Breath）
+  - `CubismLookUpdater` — 鼠标注视效果（通过 CubismTargetPoint）
+  - `CubismPhysicsUpdater` — 物理演算（头发/衣服摇摆）
+  - `CubismExpressionUpdater` — 表情管理
+  - `CubismPoseUpdater` — Pose 切换
+  - `CubismLipSyncUpdater` — 口型同步（预留接口，需音频输入）
+  - `playExpression()` — 切换表情（预加载缓存）
+  - `playMotion()` — 播放动作（预加载缓存 + fadeIn/fadeOut 配置）
+  - `updateModel()` — UpdateScheduler 统一调度更新
+  - `render()` — 渲染模型（自动调用 startUp/gl）
+  - `releaseAll()` — 完整资源释放
+
+### 重构
+- **cubism5-service.ts** — 完全重写，使用 `AppModel` 替代手动拼装
+  - `loadModel()` → 调用 `AppModel.loadAssets()`
+  - `setExpression()` → 调用 `AppModel.playExpression()`
+  - `playMotion()` → 调用 `AppModel.playMotion()`
+  - `renderFrame()` → 调用 `AppModel.updateModel()` + `AppModel.render()`
+  - 对外接口不变，`Live2D5PetPage` 无需改动
+
+### 删除
+- 手动 `CubismMoc.create()` + `createModel()` 拼装
+- 手动 `initRenderer()` 实现
+- 手动 `initMotionManagers()` 实现
+- 手动 `updateMotionAndExpression()` 实现
+- 手动 `createMvpMatrix()` 实现（改用 ModelMatrix 直接计算）
+- 手动 `loadMotionAndExpressionConfig()` 实现
+- 首帧调试代码（大量 console.log 诊断）
+- `Cubism3ModelJson` 手写接口（改用官方 `CubismModelSettingJson`）
+
+### 效果对比
+| 功能 | 旧版 | 新版 |
+|------|------|------|
+| 物理演算（头发/衣服） | ❌ 缺失 | ✅ 自动 |
+| 自动眨眼 | ❌ 缺失 | ✅ 自动 |
+| 呼吸效果 | ❌ 缺失 | ✅ 自动 |
+| 鼠标注视 | ❌ 缺失 | ✅ 自动 |
+| Pose 切换 | ❌ 缺失 | ✅ 自动 |
+| 口型同步 | ❌ 缺失 | ⚡ 预留接口 |
+| UpdateScheduler | ❌ 缺失 | ✅ 统一调度 |
+| 表情预加载 | ❌ 每次 fetch | ✅ 启动时缓存 |
+| 动作预加载 | ❌ 每次 fetch | ✅ 启动时缓存 + fadeIn/fadeOut |
+
 ## [1.4.0] - 2026-05-20
 
 ### 修复
