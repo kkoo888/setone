@@ -34,10 +34,10 @@ const Live2D5PetPage: React.FC = () => {
           }
         } catch {}
 
-        // 相对路径用 new URL 解析，绝对路径直接用
+        // 相对路径用 new URL 解析，绝对路径走 local-file:// 自定义协议
         const resolvedPath = modelPath.startsWith('./') || modelPath.startsWith('../')
           ? new URL(modelPath, document.baseURI).href
-          : modelPath
+          : `local-file://${modelPath}`
 
         await cubism5Service.loadModel(
           { name: modelName, modelPath: resolvedPath, scale: 0.6 },

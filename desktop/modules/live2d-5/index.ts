@@ -7,10 +7,10 @@
  */
 console.log('[Live2D5] 🔵 模块 index.ts 文件已加载')
 import type { Module, ModuleContext, Capability } from '../../src/main/types/module'
-import { BrowserWindow, ipcMain, app, dialog } from 'electron'
+import { BrowserWindow, ipcMain, app, dialog, protocol, net } from 'electron'
 import { join, dirname } from 'path'
 import { existsSync, readFileSync, writeFileSync, mkdirSync, readdirSync } from 'fs'
-import { fileURLToPath } from 'url'
+import { fileURLToPath, pathToFileURL } from 'url'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
@@ -32,6 +32,13 @@ interface RegisteredModelEntry {
   hasPhysics?: boolean
   hasPose?: boolean
 }
+
+// ★ 自定义协议：让 renderer 能通过 fetch() 加载本地绝对路径的模型文件
+// 必须在 app ready 之前注册 scheme
+protocol.registerSchemesAsPrivileged([{
+  scheme: 'local-file',
+  privileges: { standard: true, supportFetchAPI: true, corsEnabled: true }
+}])
 
 export default class Live2D5Module implements Module {
   id = 'live2d-5'
@@ -130,10 +137,24 @@ export default class Live2D5Module implements Module {
     }
   }
 
+  /** 注册 local-file:// 自定义协议，让 renderer 能 fetch 本地绝对路径文件 */
+  private registerLocalFileProtocol(): void {
+    protocol.handle('local-file', (request) => {
+      const filePath = decodeURIComponent(request.url.replace('local-file://', ''))
+      // 安全检查：只允许读取存在的文件
+      if (!existsSync(filePath)) {
+        return new Response('File not found', { status: 404 })
+      }
+      return net.fetch(pathToFileURL(filePath).href)
+    })
+    console.log('[Live2D5] ✅ local-file:// 协议已注册')
+  }
+
   async activate(context: ModuleContext): Promise<void> {
     this.context = context
     this.registerIPCHandlers()
     this.registerDefaultModels()
+    this.registerLocalFileProtocol()
     context.logger.info('Live2D Cubism 5 模块已激活')
   }
 
