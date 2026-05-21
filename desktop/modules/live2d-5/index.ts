@@ -305,7 +305,7 @@ export default class Live2D5Module implements Module {
     })
 
     // ★ 新增：注册模型（添加到模型库）
-    ipcMain.handle('live2d5_register_models', async (_event, args: { models: Array<{ name: string; path: string }> }) => {
+    ipcMain.handle('live2d5_register_models', async (_event, args: { models: Array<{ name: string; path: string; version?: number; textures?: number; expressions?: number; motions?: number; motionGroups?: string[]; hasPhysics?: boolean; hasPose?: boolean }> }) => {
       try {
         const existing = this.readModelRegistry()
         const existingPaths = new Set(existing.map(m => m.path))
@@ -811,7 +811,14 @@ export default class Live2D5Module implements Module {
                 type: 'object',
                 properties: {
                   name: { type: 'string', description: '模型名称' },
-                  path: { type: 'string', description: '模型文件路径' }
+                  path: { type: 'string', description: '模型文件路径' },
+                  version: { type: 'number', description: '模型版本' },
+                  textures: { type: 'number', description: '贴图数量' },
+                  expressions: { type: 'number', description: '表情数量' },
+                  motions: { type: 'number', description: '动作数量' },
+                  motionGroups: { type: 'array', items: { type: 'string' }, description: '动作组列表' },
+                  hasPhysics: { type: 'boolean', description: '是否有物理演算' },
+                  hasPose: { type: 'boolean', description: '是否有姿态' }
                 }
               }
             }
@@ -820,7 +827,7 @@ export default class Live2D5Module implements Module {
         },
         handler: {
           execute: async (p) => {
-            const { models } = p as { models: Array<{ name: string; path: string }> }
+            const { models } = p as { models: Array<{ name: string; path: string; version?: number; textures?: number; expressions?: number; motions?: number; motionGroups?: string[]; hasPhysics?: boolean; hasPose?: boolean }> }
             try {
               const existing = this.readModelRegistry()
               const existingPaths = new Set(existing.map(m => m.path))

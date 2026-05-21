@@ -52,6 +52,13 @@ interface RegisteredModel {
   name: string
   path: string
   addedAt: number
+  version?: number
+  textures?: number
+  expressions?: number
+  motions?: number
+  motionGroups?: string[]
+  hasPhysics?: boolean
+  hasPose?: boolean
 }
 
 const defaultLiveStatus: LiveStatus = {
@@ -316,7 +323,17 @@ export function Live2D5Page() {
     try {
       const toAdd = scanResult
         .filter(m => selectedScans.has(m.path) && !m.error)
-        .map(m => ({ name: m.name, path: m.path }))
+        .map(m => ({
+          name: m.name,
+          path: m.path,
+          version: m.version,
+          textures: m.textures,
+          expressions: m.expressions,
+          motions: m.motions,
+          motionGroups: m.motionGroups,
+          hasPhysics: m.hasPhysics,
+          hasPose: m.hasPose,
+        }))
       const result = await window.electronAPI.invoke('live2d5_register_models', { models: toAdd })
       if (result?.success) {
         setScanSuccess(`已添加 ${result.added ?? toAdd.length} 个模型到模型库`)
@@ -602,8 +619,23 @@ export function Live2D5Page() {
                         <div className="live2d5-registered-name">
                           {isApplied && <span className="live2d5-status-dot live2d5-status-dot--active" />}
                           {m.name}
+                          {m.version !== undefined && <span className="live2d5-scan-card-version">v{m.version}</span>}
                         </div>
-                        <div className="live2d5-registered-path" title={m.path}>{m.path}</div>
+                        {m.expressions !== undefined && (
+                          <div className="live2d5-scan-card-details">
+                            <span>🎭 表情: {m.expressions}</span>
+                            <span>🎬 动作: {m.motions ?? 0}</span>
+                            <span>🖼️ 贴图: {m.textures ?? 0}</span>
+                            {m.hasPhysics && <span>⚙️ 物理演算</span>}
+                            {m.hasPose && <span>🧍 姿态</span>}
+                          </div>
+                        )}
+                        {m.motionGroups && m.motionGroups.length > 0 && (
+                          <div className="live2d5-scan-card-groups">
+                            动作组: {m.motionGroups.join(', ')}
+                          </div>
+                        )}
+                        <div className="live2d5-registered-path" title={m.path}>📁 {m.path}</div>
                       </div>
                       <div className="live2d5-registered-actions">
                         {isApplied ? (
