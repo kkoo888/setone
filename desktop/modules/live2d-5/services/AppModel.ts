@@ -38,6 +38,7 @@ import { CubismDefaultParameterId } from '../lib/cubismdefaultparameterid'
 import { CubismIdHandle } from '../lib/id/cubismid'
 import { CubismViewMatrix } from '../lib/math/cubismviewmatrix'
 import { CubismMatrix44 } from '../lib/math/cubismmatrix44'
+import { WavFileHandler } from './WavFileHandler'
 
 // ★ 动作优先级常量（与 Demo LAppDefine 一致）
 const PriorityNone = 0
@@ -89,7 +90,10 @@ export class AppModel extends CubismUserModel {
   private _eyeBlinkIds: CubismIdHandle[] = []
   private _lipSyncIds: CubismIdHandle[] = []
 
-  // ★ 新增：帧内动作更新标志（与 Demo _motionUpdated 一致）
+  // ★ 新增：WAV 音频处理器（用于 LipSync）
+  private _wavFileHandler: WavFileHandler = new WavFileHandler()
+
+  // 帧内动作更新标志（与 Demo _motionUpdated 一致）
   private _motionUpdated: boolean = false
 
   /** 表情名称列表 */
@@ -167,7 +171,10 @@ export class AppModel extends CubismUserModel {
     // 12. 读取眨眼/唇动参数 ID
     this.setupEffectIds()
 
-    // 13. 预加载表情
+    // 13. 加载用户数据（与 Demo loadUserData 一致）
+    await this.loadUserDataFile()
+
+    // 14. 预加载表情
     await this.preloadExpressions()
 
     // 14. 预加载动作
@@ -288,6 +295,30 @@ export class AppModel extends CubismUserModel {
     }
     const buffer = await response.arrayBuffer()
     this.loadPose(buffer, buffer.byteLength)
+  }
+
+  /**
+   * 加载用户数据（与 Demo loadUserData 一致）
+   * 用户数据通常包含点击区域的附加信息等
+   */
+  private async loadUserDataFile(): Promise<void> {
+    if (!this._setting) return
+    const userDataFile = this._setting.getUserDataFile()
+    if (!userDataFile) return
+
+    const userDataPath = this._modelDir + userDataFile
+    try {
+      const response = await fetch(userDataPath)
+      if (!response.ok) {
+        console.warn(`[AppModel] ⚠️ 用户数据加载失败: ${response.status}`)
+        return
+      }
+      const buffer = await response.arrayBuffer()
+      // CubismUserModel.loadUserData
+      this.loadUserData(buffer, buffer.byteLength)
+    } catch (err) {
+      console.warn(`[AppModel] ⚠️ 用户数据加载异常:`, err)
+    }
   }
 
   /** 创建渲染器（CubismUserModel.createRenderer） */
@@ -422,9 +453,9 @@ export class AppModel extends CubismUserModel {
       this._lipSyncIds.push(this._setting.getLipSyncParameterId(i))
     }
 
-    // 使用配置读取的 LipSync ID 初始化 Updater
+    // 使用配置读取的 LipSync ID 初始化 Updater（传入 WAV 音频处理器）
     if (this._lipSyncIds.length > 0) {
-      this._lipSyncUpdater = new CubismLipSyncUpdater(this._lipSyncIds, null)
+      this._lipSyncUpdater = new CubismLipSyncUpdater(this._lipSyncIds, this._wavFileHandler)
       this._updateScheduler?.addUpdatableList(this._lipSyncUpdater)
     }
 
@@ -484,7 +515,8 @@ export class AppModel extends CubismUserModel {
           const motion = this.loadMotion(
             buffer, buffer.byteLength, name,
             undefined, undefined,
-            this._setting, group, i
+            this._setting, group, i,
+            true // shouldCheckMotionConsistency（与 Demo 一致）
           )
           if (motion) {
             ;(motion as CubismMotion).setEffectIds(this._eyeBlinkIds, this._lipSyncIds)
@@ -531,8 +563,8 @@ export class AppModel extends CubismUserModel {
   }
 
   /**
-   * 播放动作（带优先级系统 + 回调支持）
-   * @param name 动作名称
+   * 播放动作（带优先级系统 + 回调支持 + 声音播放）
+   * @param name 动作名称（格式：group_no）
    * @param priority 优先级（默认 PriorityNormal = 200）
    * @param onFinished 动作结束回调
    * @param onBegan 动作开始回调
@@ -564,7 +596,31 @@ export class AppModel extends CubismUserModel {
       motion.setBeganMotionHandler(onBegan)
     }
 
+    // ★ 新增：播放关联声音（与 Demo startMotion voice 部分一致）
+    this.playMotionSound(name)
+
     this._motionManager.startMotionPriority(motion, false, priority)
+  }
+
+  /**
+   * 播放动作关联的声音文件
+   * @param motionName 动作名称（格式：group_no）
+   */
+  private playMotionSound(motionName: string): void {
+    if (!this._setting) return
+
+    // 解析 group 和 no
+    const lastUnderscore = motionName.lastIndexOf('_')
+    if (lastUnderscore < 0) return
+    const group = motionName.substring(0, lastUnderscore)
+    const no = parseInt(motionName.substring(lastUnderscore + 1), 10)
+    if (isNaN(no)) return
+
+    const voice = this._setting.getMotionSoundFileName(group, no)
+    if (voice && voice !== '') {
+      const voicePath = this._modelDir + voice
+      this._wavFileHandler.start(voicePath)
+    }
   }
 
   /**
@@ -726,6 +782,7 @@ export class AppModel extends CubismUserModel {
     this._setting = null
     this._viewMatrix = null
     this._deviceToScreen = null
+    this._wavFileHandler = null
     this._motionCache.clear()
     this._expressionCache.clear()
     this._expressionNames = []

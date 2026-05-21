@@ -8,6 +8,7 @@
  */
 
 import { AppModel } from './AppModel'
+import { TouchManager } from './TouchManager'
 import type { Cubism5ModelState, Cubism5ModelConfig, StateCallback, MotionGroup } from '../types'
 // 静态导入 CubismFramework（Vite 警告修复）
 import { CubismFramework } from '../lib/live2dcubismframework'
@@ -42,6 +43,9 @@ class Cubism5Service {
 
   private gl: WebGLRenderingContext | WebGL2RenderingContext | null = null
   private canvas: HTMLCanvasElement | null = null
+
+  // ★ 新增：手势管理器（与 Demo TouchManager 一致）
+  private _touchManager: TouchManager = new TouchManager()
 
   // WebGL 上下文丢失标志
   private contextLost = false
@@ -363,8 +367,51 @@ class Cubism5Service {
   }
 
   /**
-   * ★ 修复：点击事件（设备坐标 → HiDPI 适配 → 逻辑坐标 → hitTest）
-   * 与 Demo LAppView.onTouchesEnded 一致：乘以 devicePixelRatio
+   * ★ 新增：触摸/按下开始（与 Demo LAppView.onTouchesBegan 一致）
+   */
+  onTouchesBegan(deviceX: number, deviceY: number): void {
+    const dpr = window.devicePixelRatio || 1
+    this._touchManager.touchesBegan(deviceX * dpr, deviceY * dpr)
+  }
+
+  /**
+   * ★ 新增：触摸/拖拽移动（与 Demo LAppView.onTouchesMoved 一致）
+   */
+  onTouchesMoved(deviceX: number, deviceY: number): void {
+    if (!this.model) return
+    const dpr = window.devicePixelRatio || 1
+    const posX = deviceX * dpr
+    const posY = deviceY * dpr
+
+    const viewX = this.model.transformViewX(this._touchManager.getX())
+    const viewY = this.model.transformViewY(this._touchManager.getY())
+
+    this._touchManager.touchesMoved(posX, posY)
+
+    this.model.setDragging(viewX, viewY)
+  }
+
+  /**
+   * ★ 新增：触摸/抬起结束（与 Demo LAppView.onTouchesEnded 一致）
+   */
+  onTouchesEnded(deviceX: number, deviceY: number): void {
+    if (!this.model) return
+    const dpr = window.devicePixelRatio || 1
+    const posX = deviceX * dpr
+    const posY = deviceY * dpr
+
+    // 清除拖拽
+    this.model.setDragging(0.0, 0.0)
+
+    // 坐标转换后触发点击
+    const viewX = this.model.transformViewX(posX)
+    const viewY = this.model.transformViewY(posY)
+    this.model.onTap(viewX, viewY)
+  }
+
+  /**
+   * 点击事件（设备坐标 → HiDPI 适配 → 逻辑坐标 → hitTest）
+   * 保留兼容接口
    */
   onTap(deviceX: number, deviceY: number): void {
     if (!this.model) return
@@ -387,14 +434,13 @@ class Cubism5Service {
 
   /**
    * 设置拖拽（设备坐标 → HiDPI 适配 → 归一化 → setDragging）
-   * 与 Demo LAppView.onTouchesMoved 一致
+   * 保留兼容接口，推荐使用 onTouchesBegan/Moved/Ended
    */
   setDragging(deviceX: number, deviceY: number): void {
     if (!this.model || !this.canvas) return
     const dpr = window.devicePixelRatio || 1
     const viewX = this.model.transformViewX(deviceX * dpr)
     const viewY = this.model.transformViewY(deviceY * dpr)
-    // 归一化到 -1 ~ 1
     const canvasW = this.canvas.clientWidth
     const canvasH = this.canvas.clientHeight
     const ratio = canvasW / canvasH
