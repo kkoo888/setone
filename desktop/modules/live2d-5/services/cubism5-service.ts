@@ -544,7 +544,13 @@ class Cubism5Service {
     const path = this._modelPath
     const scale = this._modelScale
 
-    // 销毁旧模型
+    // 停止渲染循环
+    if (this.animFrameId !== null) {
+      cancelAnimationFrame(this.animFrameId)
+      this.animFrameId = null
+    }
+
+    // 销毁旧模型（releaseAll 会把 renderer.gl 设为 null）
     const oldModel = this._models.get(name)
     if (oldModel) {
       oldModel.releaseAll()
@@ -552,15 +558,29 @@ class Cubism5Service {
     }
     this._activeModelName = null
 
-    // 停止渲染循环
-    if (this.animFrameId !== null) {
-      cancelAnimationFrame(this.animFrameId)
-      this.animFrameId = null
-    }
-
     try {
       this.updateState('loading')
       this.initFramework()
+
+      // ★ 关键修复：重建 GL 上下文（旧 renderer.release() 已清除内部 GL 引用）
+      if (this.canvas) {
+        // 先尝试释放旧上下文
+        try {
+          const ext = this.gl?.getExtension('WEBGL_lose_context')
+          ext?.loseContext()
+        } catch { /* ignore */ }
+
+        // 重新获取上下文
+        this.gl = this.canvas.getContext('webgl2') || this.canvas.getContext('webgl')
+
+        // 重新注册上下文事件
+        this.registerContextEvents()
+      }
+      if (!this.gl) {
+        throw new Error('WebGL 上下文不可用，无法重新加载模型')
+      }
+
+      console.log('[Cubism5] 🔄 GL 上下文已重建，开始加载模型...')
 
       const appModel = new AppModel()
       await appModel.loadAssets(path, scale, this.gl)
