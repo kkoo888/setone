@@ -53,6 +53,10 @@ class Cubism5Service {
   // ★ 新增：销毁标志，防止 destroy 后执行恢复逻辑
   private destroyed = false
 
+  // ★ 新增：上下文事件处理器引用（用于 destroy 时移除）
+  private _contextLostHandler: ((e: Event) => void) | null = null
+  private _contextRestoredHandler: (() => void) | null = null
+
   // 时间追踪
   private lastUpdateTime = 0
 
@@ -283,23 +287,34 @@ class Cubism5Service {
   private registerContextEvents(): void {
     if (!this.canvas) return
 
-    this.canvas.addEventListener('webglcontextlost', (e) => {
+    // 先移除旧监听器（防止重复注册）
+    if (this._contextLostHandler) {
+      this.canvas.removeEventListener('webglcontextlost', this._contextLostHandler)
+    }
+    if (this._contextRestoredHandler) {
+      this.canvas.removeEventListener('webglcontextrestored', this._contextRestoredHandler)
+    }
+
+    this._contextLostHandler = (e: Event) => {
       e.preventDefault()
-      if (this.destroyed) return  // ★ 销毁中，忽略
+      if (this.destroyed) return
       console.warn('[Cubism5] ⚠️ WebGL 上下文丢失')
       this.contextLost = true
       if (this.animFrameId !== null) {
         cancelAnimationFrame(this.animFrameId)
         this.animFrameId = null
       }
-    })
+    }
 
-    this.canvas.addEventListener('webglcontextrestored', () => {
-      if (this.destroyed) return  // ★ 销毁中，忽略
+    this._contextRestoredHandler = () => {
+      if (this.destroyed) return
       console.log('[Cubism5] ✅ WebGL 上下文恢复')
       this.contextLost = false
       this.recoverFromContextLost()
-    })
+    }
+
+    this.canvas.addEventListener('webglcontextlost', this._contextLostHandler)
+    this.canvas.addEventListener('webglcontextrestored', this._contextRestoredHandler)
   }
 
   /**
@@ -685,8 +700,19 @@ class Cubism5Service {
       this.gl = null
     }
 
-    if (this.canvas?.parentNode) {
-      this.canvas.parentNode.removeChild(this.canvas)
+    if (this.canvas) {
+      // ★ 移除上下文事件监听器
+      if (this._contextLostHandler) {
+        this.canvas.removeEventListener('webglcontextlost', this._contextLostHandler)
+        this._contextLostHandler = null
+      }
+      if (this._contextRestoredHandler) {
+        this.canvas.removeEventListener('webglcontextrestored', this._contextRestoredHandler)
+        this._contextRestoredHandler = null
+      }
+      if (this.canvas.parentNode) {
+        this.canvas.parentNode.removeChild(this.canvas)
+      }
     }
     this.canvas = null
 

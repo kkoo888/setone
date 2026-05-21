@@ -98,6 +98,9 @@ export class AppModel extends CubismUserModel {
   // ★ 新增：WAV 音频处理器（用于 LipSync）
   private _wavFileHandler: WavFileHandler = new WavFileHandler()
 
+  // ★ 新增：shader 等待定时器（用于 destroy 时取消）
+  private _shaderWaitTimers: ReturnType<typeof setTimeout>[] = []
+
   // 帧内动作更新标志（与 Demo _motionUpdated 一致）
   private _motionUpdated: boolean = false
 
@@ -212,14 +215,24 @@ export class AppModel extends CubismUserModel {
       // 等待 shader 异步加载完成（最多 5 秒）
       const maxWait = 5000
       const startTime = Date.now()
-      while (Date.now() - startTime < maxWait) {
-        const shader = CubismShaderManager_WebGL.getInstance().getShader(gl)
-        if (shader?._isShaderLoaded) {
-          console.log('[AppModel] ✅ Shader 加载完成')
-          break
+      await new Promise<void>((resolve) => {
+        const check = () => {
+          const shader = CubismShaderManager_WebGL.getInstance().getShader(gl)
+          if (shader?._isShaderLoaded) {
+            console.log('[AppModel] ✅ Shader 加载完成')
+            resolve()
+            return
+          }
+          if (Date.now() - startTime >= maxWait) {
+            console.error('[AppModel] ❌ Shader 加载超时（5s），模型可能无法显示')
+            resolve()
+            return
+          }
+          const timer = setTimeout(check, 50)
+          this._shaderWaitTimers.push(timer)
         }
-        await new Promise(r => setTimeout(r, 50))
-      }
+        check()
+      })
 
       // ⑰ 验证 shader program 是否有效
       const shader = CubismShaderManager_WebGL.getInstance().getShader(gl)
@@ -874,6 +887,12 @@ export class AppModel extends CubismUserModel {
    * 释放资源
    */
   releaseAll(): void {
+    // ★ 清理 shader 等待定时器
+    for (const timer of this._shaderWaitTimers) {
+      clearTimeout(timer)
+    }
+    this._shaderWaitTimers = []
+
     if (this._look) {
       CubismLook.delete(this._look)
       this._look = null
