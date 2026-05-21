@@ -204,8 +204,13 @@ export class AppModel extends CubismUserModel {
     this.applyScale(scale)
 
     // 17. ★ 预热 shader（与 Demo 一致，避免首帧闪烁）
+    // ★ 修复：预热后检查 GL 错误，检测 shader 编译失败
     if (gl) {
       this.getRenderer().loadShaders()
+      const glError = gl.getError()
+      if (glError !== gl.NO_ERROR) {
+        console.warn(`[AppModel] ⚠️ Shader 预热后 GL 错误: 0x${glError.toString(16)}`)
+      }
     }
 
     // 18. 标记初始化完成
@@ -245,15 +250,39 @@ export class AppModel extends CubismUserModel {
   /** 加载纹理 */
   private async loadTextures(): Promise<void> {
     const count = this._setting.getTextureCount()
+    if (count === 0) {
+      console.warn('[AppModel] ⚠️ 没有纹理文件')
+      return
+    }
+
+    let loadedCount = 0
+    let failedCount = 0
+
     for (let i = 0; i < count; i++) {
       const texFile = this._setting.getTextureFileName(i)
       if (!texFile) continue // Demo: 空文件名跳过
 
       const texPath = this._modelDir + texFile
-      const texture = await this.loadTextureImage(texPath)
-      if (texture) {
-        this.getRenderer().bindTexture(i, texture)
+      try {
+        const texture = await this.loadTextureImage(texPath)
+        if (texture) {
+          this.getRenderer().bindTexture(i, texture)
+          loadedCount++
+        } else {
+          failedCount++
+        }
+      } catch {
+        failedCount++
       }
+    }
+
+    // ★ 修复：纹理全部失败时抛出异常，不能静默
+    if (loadedCount === 0 && failedCount > 0) {
+      throw new Error(`所有纹理加载失败（${failedCount} 个），模型无法显示`)
+    }
+
+    if (failedCount > 0) {
+      console.warn(`[AppModel] ⚠️ ${failedCount}/${count} 个纹理加载失败`)
     }
   }
 
@@ -359,6 +388,7 @@ export class AppModel extends CubismUserModel {
   /**
    * 初始化 ViewMatrix 逻辑坐标系
    * 用于设备坐标 → 模型空间坐标的变换
+   * ★ 修正：确保模型居中显示
    */
   private setupViewMatrix(canvasWidth: number, canvasHeight: number): void {
     this._viewMatrix = new CubismViewMatrix()
@@ -373,7 +403,7 @@ export class AppModel extends CubismUserModel {
     this._viewMatrix.setScreenRect(left, right, bottom, top)
     this._viewMatrix.scale(1.0, 1.0)
 
-    // ★ 新增：ViewMatrix 缩放边界（与 Demo 一致）
+    // ViewMatrix 缩放边界（与 Demo 一致）
     this._viewMatrix.setMaxScale(2.0)
     this._viewMatrix.setMinScale(0.8)
     this._viewMatrix.setMaxScreenRect(left * 2, right * 2, bottom * 2, top * 2)
@@ -738,7 +768,10 @@ export class AppModel extends CubismUserModel {
     const renderer = this.getRenderer()
     if (!renderer) return
 
-    renderer.startUp(gl)
+    // ★ 修复：不要每帧调用 startUp（这是初始化方法），只在 gl 不匹配时才调用
+    if (renderer.gl !== gl) {
+      renderer.startUp(gl)
+    }
     renderer.setMvpMatrix(mvpMatrix)
     renderer.drawModel()
   }

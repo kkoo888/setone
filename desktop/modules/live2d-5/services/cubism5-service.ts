@@ -15,7 +15,7 @@ import { CubismFramework } from '../lib/live2dcubismframework'
 
 // ============ 常量 ============
 
-const DEFAULT_MODEL_SCALE = 0.15
+const DEFAULT_MODEL_SCALE = 0.6
 const CUBISM_CORE_SDK_PATH = './lib/live2dcubismcore5.min.js'
 
 // ============ Cubism 5 Core 全局声明 ============
@@ -151,9 +151,19 @@ class Cubism5Service {
       this.canvas = container.querySelector('canvas') as HTMLCanvasElement
       if (!this.canvas) {
         this.canvas = document.createElement('canvas')
-        this.canvas.width = container.clientWidth
-        this.canvas.height = container.clientHeight
-        container.appendChild(this.canvas)
+        container.appendChild(this.canvas)  // ★ 先挂载到 DOM，确保布局计算
+      }
+
+      // ★ 修复：等待容器布局完成后再设置尺寸
+      const cw = container.clientWidth || container.offsetWidth || 400
+      const ch = container.clientHeight || container.offsetHeight || 500
+      this.canvas.width = cw
+      this.canvas.height = ch
+      this.canvas.style.width = '100%'
+      this.canvas.style.height = '100%'
+
+      if (cw === 0 || ch === 0) {
+        console.warn('[Cubism5] ⚠️ 容器尺寸为 0，canvas 可能无法渲染')
       }
 
       // ★ 关键修复：先获取 GL 上下文
@@ -162,7 +172,7 @@ class Cubism5Service {
         throw new Error('WebGL 不可用')
       }
 
-      // 注册上下文丢失/恢复事件
+      // 注册上下文丢失/恢复事件（canvas 已在 DOM 中）
       this.registerContextEvents()
 
       // 如果同名模型已存在，先销毁旧的
@@ -379,11 +389,12 @@ class Cubism5Service {
   }
 
   /**
-   * 创建 MVP 矩阵（正交投影 × 模型矩阵）
+   * 创建 MVP 矩阵（正交投影 × 模型矩阵，居中显示）
    */
   private createMvpMatrix(width: number, height: number): { getArray(): Float32Array } {
     const matrix = this.model?.getModelMatrix()
     if (!matrix) {
+      // fallback：居中的正交投影
       const projection = new Float32Array(16)
       projection[0] = 2 / width
       projection[5] = -2 / height
@@ -401,6 +412,12 @@ class Cubism5Service {
       mvpArr[0 * 4 + col] *= sx
       mvpArr[1 * 4 + col] *= sy
     }
+
+    // ★ 居中偏移：将模型移到 canvas 中心
+    // 模型矩阵的平移分量在 [12] (tx) 和 [13] (ty)
+    // 通过调整偏移使模型居中
+    mvpArr[12] += 0  // X 方向由模型矩阵 Layout 控制
+    mvpArr[13] += 0  // Y 方向由模型矩阵 Layout 控制
 
     return { getArray: () => mvpArr }
   }

@@ -27,7 +27,7 @@ const Live2D5PetPage: React.FC = () => {
           {
             name: 'Hiyori',
             modelPath: new URL('./live2d/Hiyori/Hiyori.model3.json', document.baseURI).href,
-            scale: 0.15,
+            scale: 0.6,  // ★ 默认缩放 0.6，居中显示
           },
           containerRef.current
         )
@@ -89,6 +89,7 @@ const Live2D5PetPage: React.FC = () => {
             justifyContent: 'center',
             color: '#a78bfa',
             fontSize: 14,
+            pointerEvents: 'none',  // ★ 修复：不遮挡底层交互
           }}
         >
           加载 Cubism 5 模型中...
