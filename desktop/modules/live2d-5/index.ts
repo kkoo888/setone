@@ -7,8 +7,9 @@
  */
 console.log('[Live2D5] 🔵 模块 index.ts 文件已加载')
 import type { Module, ModuleContext, Capability } from '../../src/main/types/module'
-import { BrowserWindow, ipcMain } from 'electron'
+import { BrowserWindow, ipcMain, app, dialog } from 'electron'
 import { join, dirname } from 'path'
+import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs'
 import { fileURLToPath } from 'url'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -26,18 +27,15 @@ export default class Live2D5Module implements Module {
 
   /** 模型注册表文件路径 */
   private getModelRegistryPath(): string {
-    const { app } = require('electron')
-    const path = require('path')
-    return path.join(app.getPath('userData'), 'live2d5-models.json')
+    return join(app.getPath('userData'), 'live2d5-models.json')
   }
 
   /** 读取模型注册表 */
   private readModelRegistry(): Array<{ name: string; path: string; addedAt: number }> {
     try {
-      const fs = require('fs')
       const filePath = this.getModelRegistryPath()
-      if (fs.existsSync(filePath)) {
-        return JSON.parse(fs.readFileSync(filePath, 'utf-8'))
+      if (existsSync(filePath)) {
+        return JSON.parse(readFileSync(filePath, 'utf-8'))
       }
     } catch {}
     return []
@@ -46,8 +44,7 @@ export default class Live2D5Module implements Module {
   /** 写入模型注册表 */
   private writeModelRegistry(models: Array<{ name: string; path: string; addedAt: number }>): void {
     try {
-      const fs = require('fs')
-      fs.writeFileSync(this.getModelRegistryPath(), JSON.stringify(models, null, 2))
+      writeFileSync(this.getModelRegistryPath(), JSON.stringify(models, null, 2))
     } catch (err) {
       console.error('[Live2D5] 写入模型注册表失败:', err)
     }
@@ -280,7 +277,6 @@ export default class Live2D5Module implements Module {
 
     // ★ 新增：打开文件夹选择对话框
     ipcMain.handle('live2d5_select_directory', async () => {
-      const { dialog } = await import('electron')
       const result = await dialog.showOpenDialog({
         properties: ['openDirectory'],
         title: '选择模型目录',
@@ -747,7 +743,6 @@ export default class Live2D5Module implements Module {
         },
         handler: {
           execute: async () => {
-            const { dialog } = await import('electron')
             const result = await dialog.showOpenDialog({
               properties: ['openDirectory'],
               title: '选择模型目录',
