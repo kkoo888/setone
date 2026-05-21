@@ -30,6 +30,7 @@ import { CubismPoseUpdater } from '../lib/motion/cubismposeupdater'
 import { CubismLipSyncUpdater } from '../lib/motion/cubismlipsyncupdater'
 import { CubismMotion } from '../lib/motion/cubismmotion'
 import { CubismExpressionMotion } from '../lib/motion/cubismexpressionmotion'
+import { ACubismMotion } from '../lib/motion/acubismmotion'
 import { CubismTargetPoint } from '../lib/math/cubismtargetpoint'
 import { CubismRenderer_WebGL } from '../lib/rendering/cubismrenderer_webgl'
 import { CubismFramework } from '../lib/live2dcubismframework'
@@ -38,11 +39,14 @@ import { CubismIdHandle } from '../lib/id/cubismid'
 import { CubismViewMatrix } from '../lib/math/cubismviewmatrix'
 import { CubismMatrix44 } from '../lib/math/cubismmatrix44'
 
-// ★ 新增 #14：动作优先级常量
+// ★ 动作优先级常量（与 Demo LAppDefine 一致）
 const PriorityNone = 0
 const PriorityIdle = 100
 const PriorityNormal = 200
 const PriorityForce = 300
+
+/** 动作回调类型 */
+type MotionCallback = () => void
 
 /** 模型配置 */
 export interface AppModelConfig {
@@ -68,7 +72,7 @@ export class AppModel extends CubismUserModel {
   private _modelPath: string = ''
   private _modelDir: string = ''
 
-  // ★ 新增 #12：ViewMatrix 逻辑坐标系
+  // ViewMatrix 逻辑坐标系
   private _viewMatrix: CubismViewMatrix | null = null
   private _deviceToScreen: CubismMatrix44 | null = null
 
@@ -81,9 +85,12 @@ export class AppModel extends CubismUserModel {
   private _expressionNames: string[] = []
   private _motionGroups: Array<{ group: string; names: string[] }> = []
 
-  // ★ 新增 #3：眨眼/唇动参数 ID 列表
+  // 眨眼/唇动参数 ID 列表
   private _eyeBlinkIds: CubismIdHandle[] = []
   private _lipSyncIds: CubismIdHandle[] = []
+
+  // ★ 新增：帧内动作更新标志（与 Demo _motionUpdated 一致）
+  private _motionUpdated: boolean = false
 
   /** 表情名称列表 */
   get expressionNames(): string[] {
@@ -98,10 +105,18 @@ export class AppModel extends CubismUserModel {
   /**
    * 加载模型资源（SDK 标准流程）
    *
+   * ★ 关键修复：接收 gl 参数，在 loadTextures 之前先 startUp(gl)
+   * Demo 的正确顺序：startUp(gl) → loadTextures → createRenderer → drawModel
+   *
    * @param model3Path model3.json 的完整路径
    * @param scale 缩放比例（默认 0.15）
+   * @param gl WebGL 上下文（必须传入，纹理加载需要）
    */
-  async loadAssets(model3Path: string, scale: number = 0.15): Promise<void> {
+  async loadAssets(
+    model3Path: string,
+    scale: number = 0.15,
+    gl?: WebGLRenderingContext | WebGL2RenderingContext
+  ): Promise<void> {
     this._modelPath = model3Path
     this._modelDir = model3Path.substring(0, model3Path.lastIndexOf('/') + 1)
 
@@ -116,46 +131,55 @@ export class AppModel extends CubismUserModel {
     // 2. 创建 CubismModelSettingJson（官方解析器）
     this._setting = new CubismModelSettingJson(buffer, size)
 
-    // 3. 加载 .moc3 → 创建模型（CubismUserModel.loadModel）
+    // 3. 加载 .moc3 → 创建模型
     await this.loadMoc()
 
-    // 4. ★ 新增 #13：读取 Layout 配置
+    // 4. 读取 Layout 配置
     this.setupLayout()
 
-    // 5. 加载纹理
-    await this.loadTextures()
-
-    // 6. 加载物理演算
-    await this.loadPhysicsData()
-
-    // 7. 加载 Pose
-    await this.loadPoseData()
-
-    // 8. 创建渲染器（CubismUserModel.createRenderer）
+    // 5. 创建渲染器（先创建，再 startUp）
     this.setupRenderer()
 
-    // 9. ★ 新增 #12：初始化 ViewMatrix
+    // 6. ★ 关键修复：注入 GL 上下文（Demo 顺序：startUp 在 loadTextures 之前）
+    if (gl) {
+      this.getRenderer().startUp(gl)
+      this.getRenderer().setIsPremultipliedAlpha(true)
+    }
+
+    // 7. 加载纹理（此时 renderer._gl 已就绪）
+    await this.loadTextures()
+
+    // 8. 加载物理演算
+    await this.loadPhysicsData()
+
+    // 9. 加载 Pose
+    await this.loadPoseData()
+
+    // 10. 初始化 ViewMatrix
     const model = this.getModel()
     const canvasW = model.getCanvasWidth() || 1024
     const canvasH = model.getCanvasHeight() || 1024
     this.setupViewMatrix(canvasW, canvasH)
 
-    // 10. 初始化所有效果 Updater
+    // 11. 初始化所有效果 Updater
     this.setupUpdaters()
 
-    // 11. ★ 新增 #3：读取眨眼/唇动参数 ID
+    // 12. 读取眨眼/唇动参数 ID
     this.setupEffectIds()
 
-    // 12. 预加载表情
+    // 13. 预加载表情
     await this.preloadExpressions()
 
-    // 13. 预加载动作
+    // 14. 预加载动作
     await this.preloadMotions()
 
-    // 14. 应用缩放
+    // 15. ★ 新增：预加载完毕后重置动作管理器状态（与 Demo 一致）
+    this._motionManager.stopAllMotions()
+
+    // 16. 应用缩放
     this.applyScale(scale)
 
-    // 15. 标记初始化完成
+    // 17. 标记初始化完成
     this.setInitialized(true)
   }
 
@@ -170,12 +194,12 @@ export class AppModel extends CubismUserModel {
     }
     const buffer = await response.arrayBuffer()
 
-    // ★ 修复 #9：启用 mocConsistency 检查
+    // 启用 mocConsistency 检查
     this.loadModel(buffer, true)
   }
 
   /**
-   * ★ 新增 #13：从 modelSetting 读取 Layout 配置并应用到模型矩阵
+   * 从 modelSetting 读取 Layout 配置并应用到模型矩阵
    */
   private setupLayout(): void {
     if (!this._setting) return
@@ -194,8 +218,9 @@ export class AppModel extends CubismUserModel {
     const count = this._setting.getTextureCount()
     for (let i = 0; i < count; i++) {
       const texFile = this._setting.getTextureFileName(i)
-      const texPath = this._modelDir + texFile
+      if (!texFile) continue // Demo: 空文件名跳过
 
+      const texPath = this._modelDir + texFile
       const texture = await this.loadTextureImage(texPath)
       if (texture) {
         this.getRenderer().bindTexture(i, texture)
@@ -209,8 +234,11 @@ export class AppModel extends CubismUserModel {
       const img = new Image()
       img.crossOrigin = 'anonymous'
       img.onload = () => {
-        const gl = (this.getRenderer() as any)._gl as WebGLRenderingContext
+        // ★ 修复：通过 renderer 正规渠道获取 gl，而非直接访问内部属性
+        const renderer = this.getRenderer() as any
+        const gl = renderer?._gl as WebGLRenderingContext | null
         if (!gl) {
+          console.warn(`[AppModel] ⚠️ GL 上下文不可用，跳过纹理: ${url}`)
           resolve(null)
           return
         }
@@ -238,15 +266,12 @@ export class AppModel extends CubismUserModel {
     if (!physicsFile) return
 
     const physicsPath = this._modelDir + physicsFile
-
     const response = await fetch(physicsPath)
     if (!response.ok) {
       console.warn(`[AppModel] ⚠️ 物理文件加载失败: ${response.status}`)
       return
     }
     const buffer = await response.arrayBuffer()
-
-    // CubismUserModel.loadPhysics
     this.loadPhysics(buffer, buffer.byteLength)
   }
 
@@ -256,22 +281,17 @@ export class AppModel extends CubismUserModel {
     if (!poseFile) return
 
     const posePath = this._modelDir + poseFile
-
     const response = await fetch(posePath)
     if (!response.ok) {
       console.warn(`[AppModel] ⚠️ Pose 文件加载失败: ${response.status}`)
       return
     }
     const buffer = await response.arrayBuffer()
-
-    // CubismUserModel.loadPose
     this.loadPose(buffer, buffer.byteLength)
   }
 
   /** 创建渲染器（CubismUserModel.createRenderer） */
   private setupRenderer(): void {
-    // 内部会调用 new CubismRenderer_WebGL(w, h) + initialize(model)
-    // 注意：这里先不传 gl，后续由 service 层调用 startUp(gl)
     const model = this.getModel()
     const width = model.getCanvasWidth() || 1024
     const height = model.getCanvasHeight() || 1024
@@ -279,7 +299,7 @@ export class AppModel extends CubismUserModel {
   }
 
   /**
-   * ★ 新增 #12：初始化 ViewMatrix 逻辑坐标系
+   * 初始化 ViewMatrix 逻辑坐标系
    * 用于设备坐标 → 模型空间坐标的变换
    */
   private setupViewMatrix(canvasWidth: number, canvasHeight: number): void {
@@ -295,6 +315,11 @@ export class AppModel extends CubismUserModel {
     this._viewMatrix.setScreenRect(left, right, bottom, top)
     this._viewMatrix.scale(1.0, 1.0)
 
+    // ★ 新增：ViewMatrix 缩放边界（与 Demo 一致）
+    this._viewMatrix.setMaxScale(2.0)
+    this._viewMatrix.setMinScale(0.8)
+    this._viewMatrix.setMaxScreenRect(left * 2, right * 2, bottom * 2, top * 2)
+
     this._deviceToScreen.loadIdentity()
     if (canvasWidth > canvasHeight) {
       const screenW = Math.abs(right - left)
@@ -306,17 +331,13 @@ export class AppModel extends CubismUserModel {
     this._deviceToScreen.translateRelative(-canvasWidth * 0.5, -canvasHeight * 0.5)
   }
 
-  /**
-   * ★ 新增 #12：设备坐标 → 逻辑 X 坐标
-   */
+  /** 设备坐标 → 逻辑 X 坐标 */
   transformViewX(deviceX: number): number {
     const screenX = this._deviceToScreen.transformX(deviceX)
     return this._viewMatrix.invertTransformX(screenX)
   }
 
-  /**
-   * ★ 新增 #12：设备坐标 → 逻辑 Y 坐标
-   */
+  /** 设备坐标 → 逻辑 Y 坐标 */
   transformViewY(deviceY: number): number {
     const screenY = this._deviceToScreen.transformY(deviceY)
     return this._viewMatrix.invertTransformY(screenY)
@@ -329,7 +350,7 @@ export class AppModel extends CubismUserModel {
     // 自动眨眼
     this._eyeBlink = CubismEyeBlink.create(this._setting)
     this._updateScheduler.addUpdatableList(
-      new CubismEyeBlinkUpdater(() => this.isUpdating(), this._eyeBlink)
+      new CubismEyeBlinkUpdater(() => this._motionUpdated, this._eyeBlink)
     )
 
     // 表情
@@ -337,7 +358,7 @@ export class AppModel extends CubismUserModel {
       new CubismExpressionUpdater(this._expressionManager)
     )
 
-    // ★ 修复 #1：鼠标注视 + 配置 LookParameterData
+    // 鼠标注视 + 配置 LookParameterData
     const look = CubismLook.create()
     const idManager = CubismFramework.getIdManager()
     look.setParameters([
@@ -353,7 +374,7 @@ export class AppModel extends CubismUserModel {
       new CubismLookUpdater(this._look, this._dragManager)
     )
 
-    // ★ 修复 #2：呼吸参数值修正（peak 从 0.01 改为 Demo 值）
+    // 呼吸（peak 值修正为 Demo 级别）
     this._breath = CubismBreath.create()
     this._breath.setParameters([
       new BreathParameterData(idManager.getId('ParamAngleX'), 0.0, 15.0, 6.5345, 0.5),
@@ -373,7 +394,7 @@ export class AppModel extends CubismUserModel {
       )
     }
 
-    // ★ 修复 #5：LipSync 初始化延迟到 setupEffectIds() 之后
+    // LipSync 延迟到 setupEffectIds() 之后
 
     // Pose
     if (this._pose) {
@@ -384,12 +405,10 @@ export class AppModel extends CubismUserModel {
   }
 
   /**
-   * ★ 新增 #3/#5：从 modelSetting 读取眨眼/唇动参数 ID，并初始化 LipSync Updater
+   * 从 modelSetting 读取眨眼/唇动参数 ID，并初始化 LipSync Updater
    */
   private setupEffectIds(): void {
     if (!this._setting) return
-
-    const idManager = CubismFramework.getIdManager()
 
     // 读取 eyeBlink 参数 ID
     const eyeBlinkCount = this._setting.getEyeBlinkParameterCount()
@@ -403,11 +422,14 @@ export class AppModel extends CubismUserModel {
       this._lipSyncIds.push(this._setting.getLipSyncParameterId(i))
     }
 
-    // ★ 修复 #5：使用配置读取的 LipSync ID 初始化 Updater
+    // 使用配置读取的 LipSync ID 初始化 Updater
     if (this._lipSyncIds.length > 0) {
       this._lipSyncUpdater = new CubismLipSyncUpdater(this._lipSyncIds, null)
       this._updateScheduler?.addUpdatableList(this._lipSyncUpdater)
     }
+
+    // ★ 新增：所有 Updater 添加完毕后排序（与 Demo finalizeUpdaters 一致）
+    this._updateScheduler?.sortUpdatableList()
   }
 
   /** 预加载所有表情 */
@@ -424,6 +446,11 @@ export class AppModel extends CubismUserModel {
         const buffer = await response.arrayBuffer()
         const motion = this.loadExpression(buffer, buffer.byteLength, name)
         if (motion) {
+          // ★ 修复：释放旧表情对象（与 Demo 一致，防止内存泄漏）
+          const existing = this._expressionCache.get(name)
+          if (existing) {
+            ACubismMotion.delete(existing)
+          }
           this._expressionCache.set(name, motion as unknown as CubismExpressionMotion)
           this._expressionNames.push(name)
         }
@@ -435,7 +462,7 @@ export class AppModel extends CubismUserModel {
 
   /**
    * 预加载所有动作
-   * ★ 修复 #3：加载后调用 setEffectIds 关联眨眼/唇动
+   * 加载后调用 setEffectIds 关联眨眼/唇动
    */
   private async preloadMotions(): Promise<void> {
     const groupCount = this._setting.getMotionGroupCount()
@@ -447,22 +474,27 @@ export class AppModel extends CubismUserModel {
       for (let i = 0; i < count; i++) {
         const file = this._setting.getMotionFileName(group, i)
         const path = this._modelDir + file
-        const name = file.split('/').pop()?.replace('.motion3.json', '') ?? `${group}_${i}`
+        const name = `${group}_${i}` // 与 Demo 命名规则一致：group_no
 
         try {
           const response = await fetch(path)
           if (!response.ok) continue
           const buffer = await response.arrayBuffer()
 
-          // 使用 CubismUserModel.loadMotion（支持 fadeIn/fadeOut 配置）
           const motion = this.loadMotion(
             buffer, buffer.byteLength, name,
             undefined, undefined,
             this._setting, group, i
           )
           if (motion) {
-            // ★ 修复 #3：关联眨眼/唇动参数 ID
             ;(motion as CubismMotion).setEffectIds(this._eyeBlinkIds, this._lipSyncIds)
+
+            // ★ 修复：释放旧动作对象（与 Demo 一致）
+            const existing = this._motionCache.get(name)
+            if (existing) {
+              ACubismMotion.delete(existing)
+            }
+
             this._motionCache.set(name, motion)
             names.push(name)
           }
@@ -499,25 +531,58 @@ export class AppModel extends CubismUserModel {
   }
 
   /**
-   * ★ 修复 #14：播放动作（带优先级系统）
+   * 播放动作（带优先级系统 + 回调支持）
    * @param name 动作名称
    * @param priority 优先级（默认 PriorityNormal = 200）
+   * @param onFinished 动作结束回调
+   * @param onBegan 动作开始回调
    */
-  playMotion(name: string, priority: number = PriorityNormal): void {
+  playMotion(
+    name: string,
+    priority: number = PriorityNormal,
+    onFinished?: MotionCallback,
+    onBegan?: MotionCallback
+  ): void {
     const motion = this._motionCache.get(name)
     if (!motion) {
       console.warn(`[AppModel] 动作 "${name}" 未找到`)
       return
     }
 
-    // 优先级调度逻辑
+    // 优先级调度逻辑（与 Demo startMotion 一致）
     if (priority === PriorityForce) {
       this._motionManager.setReservePriority(priority)
     } else if (!this._motionManager.reserveMotion(priority)) {
       return
     }
 
+    // 设置回调
+    if (onFinished) {
+      motion.setFinishedMotionHandler(onFinished)
+    }
+    if (onBegan) {
+      motion.setBeganMotionHandler(onBegan)
+    }
+
     this._motionManager.startMotionPriority(motion, false, priority)
+  }
+
+  /**
+   * ★ 新增：按组随机播放动作（与 Demo startRandomMotion 一致）
+   * @param group 动作组名
+   * @param priority 优先级
+   * @param onFinished 结束回调
+   */
+  startRandomMotion(
+    group: string,
+    priority: number = PriorityNormal,
+    onFinished?: MotionCallback
+  ): void {
+    const groupInfo = this._motionGroups.find(g => g.group === group)
+    if (!groupInfo || groupInfo.names.length === 0) return
+
+    const randomName = groupInfo.names[Math.floor(Math.random() * groupInfo.names.length)]
+    this.playMotion(randomName, priority, onFinished)
   }
 
   /**
@@ -530,9 +595,10 @@ export class AppModel extends CubismUserModel {
   }
 
   /**
-   * ★ 修复 #4/#6：更新模型（由渲染循环调用）
+   * 更新模型（由渲染循环调用）
    * - loadParameters / saveParameters 包裹参数状态
    * - 动作播完后自动播放待机动作
+   * - _motionUpdated 标志控制眨眼行为
    */
   updateModel(deltaTimeSeconds: number): void {
     const model = this.getModel()
@@ -540,22 +606,21 @@ export class AppModel extends CubismUserModel {
 
     this.setUpdating(true)
 
-    // ★ 修复 #4：加载上次保存的参数状态
+    // 加载上次保存的参数状态（与 Demo update 一致）
     model.loadParameters()
 
-    // ★ 修复 #6：待机动作循环
+    // ★ 修复：每帧重置动作更新标志
+    this._motionUpdated = false
+
+    // 待机动作循环
     if (this._motionManager.isFinished()) {
-      // 尝试播放待机动作（PriorityIdle = 100）
-      const idleGroup = this._motionGroups.find(g => g.group === 'Idle' || g.group === 'idle')
-      if (idleGroup && idleGroup.names.length > 0) {
-        const randomName = idleGroup.names[Math.floor(Math.random() * idleGroup.names.length)]
-        this.playMotion(randomName, PriorityIdle)
-      }
+      this.startRandomMotion('Idle', PriorityIdle)
     } else {
-      this._motionManager.updateMotion(model, deltaTimeSeconds)
+      // ★ 修复：捕获 updateMotion 返回值（与 Demo 一致）
+      this._motionUpdated = this._motionManager.updateMotion(model, deltaTimeSeconds)
     }
 
-    // ★ 修复 #4：保存当前参数状态
+    // 保存当前参数状态
     model.saveParameters()
 
     // UpdateScheduler 统一调度所有效果
@@ -577,21 +642,37 @@ export class AppModel extends CubismUserModel {
     const renderer = this.getRenderer()
     if (!renderer) return
 
-    // startUp 必须在每次渲染前调用（或至少调用一次）
     renderer.startUp(gl)
     renderer.setMvpMatrix(mvpMatrix)
     renderer.drawModel()
   }
 
+  /**
+   * ★ 新增：重建渲染器（用于 WebGL 上下文恢复）
+   */
+  reloadRenderer(gl?: WebGLRenderingContext | WebGL2RenderingContext): void {
+    this.deleteRenderer()
+    const model = this.getModel()
+    const width = model.getCanvasWidth() || 1024
+    const height = model.getCanvasHeight() || 1024
+    this.createRenderer(width, height)
+    if (gl) {
+      this.getRenderer().startUp(gl)
+      this.getRenderer().setIsPremultipliedAlpha(true)
+    }
+    // 重新绑定纹理
+    this.loadTextures()
+  }
+
   // ============================================================
-  // ★ 新增 #7：点击交互 hitTest
+  // 点击交互 hitTest
   // ============================================================
 
   /**
    * 命中检测
    * @param hitAreaName 命中区域名称（如 'Head', 'Body'）
-   * @param x 逻辑 X 坐标（设备坐标已通过 transformViewX 转换）
-   * @param y 逻辑 Y 坐标（设备坐标已通过 transformViewY 转换）
+   * @param x 逻辑 X 坐标
+   * @param y 逻辑 Y 坐标
    */
   hitTest(hitAreaName: string, x: number, y: number): boolean {
     if (this.getOpacity() < 1) return false
@@ -609,19 +690,12 @@ export class AppModel extends CubismUserModel {
 
   /**
    * 点击事件处理（使用逻辑坐标）
-   * @param x 逻辑 X 坐标（应先通过 transformViewX 转换）
-   * @param y 逻辑 Y 坐标（应先通过 transformViewY 转换）
    */
   onTap(x: number, y: number): void {
     if (this.hitTest('Head', x, y)) {
       this.setRandomExpression()
     } else if (this.hitTest('Body', x, y)) {
-      const tapBodyGroup = this._motionGroups.find(g => g.group === 'TapBody' || g.group === 'tap_body')
-      if (tapBodyGroup && tapBodyGroup.names.length > 0) {
-        const randomName = tapBodyGroup.names[Math.floor(Math.random() * tapBodyGroup.names.length)]
-        // ★ 修复 #14：点击动作用 PriorityNormal
-        this.playMotion(randomName, PriorityNormal)
-      }
+      this.startRandomMotion('TapBody', PriorityNormal)
     }
   }
 
@@ -638,13 +712,16 @@ export class AppModel extends CubismUserModel {
    * 释放资源
    */
   releaseAll(): void {
+    if (this._look) {
+      CubismLook.delete(this._look)
+      this._look = null
+    }
     if (this._updateScheduler) {
       this._updateScheduler.release()
       this._updateScheduler = null
     }
     this._eyeBlink = null
     this._breath = null
-    this._look = null
     this._lipSyncUpdater = null
     this._setting = null
     this._viewMatrix = null
@@ -656,7 +733,6 @@ export class AppModel extends CubismUserModel {
     this._eyeBlinkIds = []
     this._lipSyncIds = []
 
-    // CubismUserModel.release()
     this.release()
   }
 }

@@ -4,14 +4,12 @@
  * 基于 CubismUserModel 继承架构，使用 SDK 标准加载链路。
  * 所有效果（物理、眨眼、呼吸、注视、Pose、LipSync）由 UpdateScheduler 统一调度。
  *
- * 对外接口保持不变，Live2D5PetPage 无需改动。
- *
  * @see AppModel (./AppModel.ts)
  */
 
 import { AppModel } from './AppModel'
 import type { Cubism5ModelState, Cubism5ModelConfig, StateCallback, MotionGroup } from '../types'
-// ★ 修复 Vite 警告：静态导入 CubismFramework
+// 静态导入 CubismFramework（Vite 警告修复）
 import { CubismFramework } from '../lib/live2dcubismframework'
 
 // ============ 常量 ============
@@ -33,7 +31,7 @@ class Cubism5Service {
   private sdkLoaded = false
   private animFrameId: number | null = null
 
-  // ★ 修复 #11：多模型管理
+  // 多模型管理
   private _models: Map<string, AppModel> = new Map()
   private _activeModelName: string | null = null
 
@@ -51,7 +49,7 @@ class Cubism5Service {
   // 时间追踪
   private lastUpdateTime = 0
 
-  // 缓存的 modelPath（用于 context 恢复）
+  // 缓存
   private _modelPath = ''
   private _modelScale = DEFAULT_MODEL_SCALE
 
@@ -118,7 +116,7 @@ class Cubism5Service {
   }
 
   /**
-   * ★ Vite 警告修复：CubismFramework 已静态导入，直接使用
+   * 初始化 Cubism Framework（静态导入，直接调用）
    */
   private initFramework(): void {
     console.log('[Cubism5] 🔄 初始化 Cubism Framework...')
@@ -128,7 +126,7 @@ class Cubism5Service {
 
   /**
    * 加载模型（使用 AppModel 标准流程）
-   * ★ 修复 #11：支持多模型管理
+   * ★ 关键修复：先获取 GL → 再 loadAssets(gl) → 纹理加载时 _gl 已就绪
    */
   async loadModel(config: Cubism5ModelConfig, container: HTMLElement): Promise<void> {
     console.log('[Cubism5] 🚀 loadModel 开始, config:', JSON.stringify({ name: config.name, modelPath: config.modelPath, scale: config.scale }))
@@ -142,7 +140,7 @@ class Cubism5Service {
     this._modelScale = config.scale ?? DEFAULT_MODEL_SCALE
 
     try {
-      // 初始化 Framework（静态导入，直接调用）
+      // 初始化 Framework
       this.initFramework()
 
       // 获取或创建 canvas
@@ -154,7 +152,7 @@ class Cubism5Service {
         container.appendChild(this.canvas)
       }
 
-      // 获取 WebGL 上下文
+      // ★ 关键修复：先获取 GL 上下文
       this.gl = this.canvas.getContext('webgl2') || this.canvas.getContext('webgl')
       if (!this.gl) {
         throw new Error('WebGL 不可用')
@@ -163,27 +161,20 @@ class Cubism5Service {
       // 注册上下文丢失/恢复事件
       this.registerContextEvents()
 
-      // ★ 修复 #11：如果同名模型已存在，先销毁旧的
+      // 如果同名模型已存在，先销毁旧的
       if (this._models.has(config.name)) {
         const oldModel = this._models.get(config.name)!
         oldModel.releaseAll()
         this._models.delete(config.name)
       }
 
-      // 创建 AppModel 并加载所有资源
+      // ★ 关键修复：将 GL 传给 loadAssets，确保 startUp(gl) 在 loadTextures 之前
       const appModel = new AppModel()
-      await appModel.loadAssets(config.modelPath, this._modelScale)
+      await appModel.loadAssets(config.modelPath, this._modelScale, this.gl)
 
-      // ★ 修复 #11：存入模型管理 Map
+      // 存入模型管理 Map
       this._models.set(config.name, appModel)
       this._activeModelName = config.name
-
-      // 渲染器需要 GL 上下文 — 调用 startUp
-      const renderer = appModel.getRenderer()
-      if (renderer) {
-        renderer.startUp(this.gl)
-        renderer.setIsPremultipliedAlpha(true)
-      }
 
       // 重置时间
       this.lastUpdateTime = performance.now() / 1000
@@ -203,7 +194,7 @@ class Cubism5Service {
   }
 
   /**
-   * ★ 新增 #11：切换活跃模型
+   * 切换活跃模型
    */
   switchModel(name: string): boolean {
     if (!this._models.has(name)) {
@@ -212,7 +203,6 @@ class Cubism5Service {
     }
     this._activeModelName = name
     const appModel = this._models.get(name)!
-    // 重新绑定渲染器到当前 GL
     if (this.gl) {
       const renderer = appModel.getRenderer()
       if (renderer) {
@@ -248,6 +238,7 @@ class Cubism5Service {
 
   /**
    * 从 WebGL 上下文丢失中恢复
+   * ★ 修复：使用 reloadRenderer 重建渲染器（与 Demo 一致）
    */
   private async recoverFromContextLost(): Promise<void> {
     if (!this.canvas || !this.model) return
@@ -260,11 +251,8 @@ class Cubism5Service {
         return
       }
 
-      // 重新启动渲染器
-      const renderer = this.model.getRenderer()
-      if (renderer) {
-        renderer.startUp(this.gl)
-      }
+      // ★ 修复：使用 reloadRenderer 重建渲染器 + 重新绑定纹理
+      this.model.reloadRenderer(this.gl)
 
       this.lastUpdateTime = performance.now() / 1000
       this.startRenderLoop()
@@ -329,7 +317,6 @@ class Cubism5Service {
   private createMvpMatrix(width: number, height: number): { getArray(): Float32Array } {
     const matrix = this.model?.getModelMatrix()
     if (!matrix) {
-      // fallback
       const projection = new Float32Array(16)
       projection[0] = 2 / width
       projection[5] = -2 / height
@@ -340,10 +327,7 @@ class Cubism5Service {
       return { getArray: () => projection }
     }
 
-    // 复制模型矩阵
     const mvpArr = new Float32Array(matrix.getArray())
-
-    // 叠加正交投影
     const sx = 2 / width
     const sy = -2 / height
     for (let col = 0; col < 4; col++) {
@@ -379,44 +363,61 @@ class Cubism5Service {
   }
 
   /**
-   * ★ 新增 #7：点击事件（设备坐标 → 逻辑坐标 → hitTest）
+   * ★ 修复：点击事件（设备坐标 → HiDPI 适配 → 逻辑坐标 → hitTest）
+   * 与 Demo LAppView.onTouchesEnded 一致：乘以 devicePixelRatio
    */
   onTap(deviceX: number, deviceY: number): void {
     if (!this.model) return
-    const logicalX = this.model.transformViewX(deviceX)
-    const logicalY = this.model.transformViewY(deviceY)
+    const dpr = window.devicePixelRatio || 1
+    const logicalX = this.model.transformViewX(deviceX * dpr)
+    const logicalY = this.model.transformViewY(deviceY * dpr)
     this.model.onTap(logicalX, logicalY)
   }
 
   /**
-   * ★ 新增 #7：命中检测（设备坐标 → 逻辑坐标 → hitTest）
+   * 命中检测（设备坐标 → HiDPI 适配 → 逻辑坐标 → hitTest）
    */
   hitTest(hitAreaName: string, deviceX: number, deviceY: number): boolean {
     if (!this.model) return false
-    const logicalX = this.model.transformViewX(deviceX)
-    const logicalY = this.model.transformViewY(deviceY)
+    const dpr = window.devicePixelRatio || 1
+    const logicalX = this.model.transformViewX(deviceX * dpr)
+    const logicalY = this.model.transformViewY(deviceY * dpr)
     return this.model.hitTest(hitAreaName, logicalX, logicalY)
   }
 
   /**
+   * 设置拖拽（设备坐标 → HiDPI 适配 → 归一化 → setDragging）
+   * 与 Demo LAppView.onTouchesMoved 一致
+   */
+  setDragging(deviceX: number, deviceY: number): void {
+    if (!this.model || !this.canvas) return
+    const dpr = window.devicePixelRatio || 1
+    const viewX = this.model.transformViewX(deviceX * dpr)
+    const viewY = this.model.transformViewY(deviceY * dpr)
+    // 归一化到 -1 ~ 1
+    const canvasW = this.canvas.clientWidth
+    const canvasH = this.canvas.clientHeight
+    const ratio = canvasW / canvasH
+    const normX = viewX / ratio
+    const normY = viewY
+    this.model.setDragging(normX, normY)
+  }
+
+  /**
    * 销毁 — 释放所有资源
-   * ★ 修复 #11：释放所有模型
    */
   destroy(): void {
-    // 停止渲染循环
     if (this.animFrameId !== null) {
       cancelAnimationFrame(this.animFrameId)
       this.animFrameId = null
     }
 
-    // ★ 修复 #11：释放所有模型
-    for (const [name, appModel] of this._models) {
+    for (const [, appModel] of this._models) {
       appModel.releaseAll()
     }
     this._models.clear()
     this._activeModelName = null
 
-    // 释放 WebGL 上下文
     if (this.gl) {
       try {
         const ext = this.gl.getExtension('WEBGL_lose_context')
@@ -425,13 +426,11 @@ class Cubism5Service {
       this.gl = null
     }
 
-    // 清理 canvas
     if (this.canvas?.parentNode) {
       this.canvas.parentNode.removeChild(this.canvas)
     }
     this.canvas = null
 
-    // 重置状态
     this.sdkLoaded = false
     this.contextLost = false
     this.lastUpdateTime = 0
