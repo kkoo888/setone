@@ -1,6 +1,4 @@
 #!/usr/bin/env bash
-set -euo pipefail
-
 # ============================================
 # OpenClaw 开发环境一键初始化脚本
 # 用法: bash bootstrap.sh [项目目录]
@@ -11,6 +9,20 @@ GITHUB_REPO="git@github.com:kkoo888/setone.git"
 OC_SKILLS="$HOME/.openclaw/skills"
 WS_SKILLS="$PROJECT_DIR/skills"
 
+# 错误收集
+ERRORS=()
+WARNINGS=()
+
+log_error() { ERRORS+=("$1"); echo "  ❌ $1"; }
+log_warn()  { WARNINGS+=("$1"); echo "  ⚠️  $1"; }
+log_ok()    { echo "  ✅ $1"; }
+
+# 计时
+SCRIPT_START=$(date +%s)
+PHASE_START=$SCRIPT_START
+phase_start() { PHASE_START=$(date +%s); }
+phase_end()   { local s=$PHASE_START e=$(date +%s); echo "  ⏱  耗时 $((e - s))s"; }
+
 echo "🚀 OpenClaw 开发环境初始化"
 echo "=========================="
 echo "项目目录: $PROJECT_DIR"
@@ -20,69 +32,118 @@ echo ""
 # Phase 1: 安装基础技能 (clawhub)
 # ──────────────────────────────────────
 echo "📦 Phase 1: 安装基础技能..."
+phase_start
 for skill in skill-vetter self-improving-agent self-improving humanizer github ui-ux-pro-max; do
     echo -n "  安装 $skill... "
-    clawhub install "$skill" --force 2>/dev/null && echo "✅" || echo "❌"
+    claw_output=$(clawhub install "$skill" --force 2>&1)
+    if [ $? -eq 0 ]; then
+        # clawhub 可能装到 workspace/skills/ 而非 ~/.openclaw/skills/
+        if [ -d "$WS_SKILLS/$skill" ] && [ ! -d "$OC_SKILLS/$skill" ]; then
+            cp -r "$WS_SKILLS/$skill" "$OC_SKILLS/" 2>/dev/null
+            log_ok "$skill（已复制到 ~/.openclaw/skills/）"
+        elif [ -d "$OC_SKILLS/$skill" ]; then
+            log_ok "$skill"
+        else
+            log_warn "$skill 安装成功但路径未知，请检查"
+        fi
+    else
+        log_error "$skill 安装失败: $claw_output"
+    fi
 done
+phase_end
 echo ""
 
 # ──────────────────────────────────────
 # Phase 2: 生成 SSH 密钥
 # ──────────────────────────────────────
 echo "🔑 Phase 2: 生成 SSH 密钥..."
+phase_start
 if [ -f ~/.ssh/id_ed25519 ]; then
     echo "  SSH 密钥已存在，跳过"
 else
-    ssh-keygen -t ed25519 -C "$(whoami)@github" -f ~/.ssh/id_ed25519 -N ""
-    echo "  ✅ SSH 密钥已生成"
+    if ssh-keygen -t ed25519 -C "$(whoami)@github" -f ~/.ssh/id_ed25519 -N ""; then
+        log_ok "SSH 密钥已生成"
+    else
+        log_error "SSH 密钥生成失败"
+    fi
 fi
 echo ""
 echo "📋 请将以下公钥添加到 GitHub (Settings → SSH keys):"
 echo "-------------------------------------------"
-cat ~/.ssh/id_ed25519.pub
+cat ~/.ssh/id_ed25519.pub 2>/dev/null || log_error "无法读取公钥"
 echo "-------------------------------------------"
 echo ""
-read -p "👆 添加完成后按回车继续..."
+echo "  （30 秒后自动跳过，SSH 未验证则后续克隆可能失败）"
+if read -t 30 -p "👆 添加完成后按回车继续（30s）..."; then
+    echo ""
+else
+    echo ""
+    log_warn "SSH 公钥等待超时，已跳过。如后续克隆失败，请手动添加公钥后重新运行"
+fi
+echo ""
+phase_end
 echo ""
 
 # ──────────────────────────────────────
 # Phase 3: 克隆项目仓库
 # ──────────────────────────────────────
 echo "📂 Phase 3: 克隆项目仓库..."
+phase_start
 mkdir -p "$PROJECT_DIR"
 cd "$PROJECT_DIR"
 if [ -d "setone/.git" ]; then
     echo "  项目已存在，拉取最新代码..."
-    cd setone && git pull origin dev && cd ..
+    if git -C setone pull origin dev; then
+        log_ok "项目已更新"
+    else
+        log_error "git pull 失败"
+    fi
 else
-    git clone "$GITHUB_REPO" setone
-    cd setone && git checkout dev && cd ..
+    if git clone "$GITHUB_REPO" setone && git -C setone checkout dev; then
+        log_ok "项目已克隆: $PROJECT_DIR/setone"
+    else
+        log_error "克隆项目失败，请检查 SSH 密钥是否已添加到 GitHub"
+    fi
 fi
-echo "  ✅ 项目就绪: $PROJECT_DIR/setone"
+phase_end
 echo ""
 
 # ──────────────────────────────────────
 # Phase 4: 安装 GitHub 技能库
 # ──────────────────────────────────────
 echo "📚 Phase 4: 安装 GitHub 技能库..."
+phase_start
 mkdir -p "$PROJECT_DIR/setone/skills"
-cd "$PROJECT_DIR/setone/skills"
 for repo in "mattpocock/skills:mattpocock-skills" "vercel-labs/agent-skills:vercel-agent-skills" "obra/superpowers:superpowers"; do
     IFS=':' read -r github_repo local_name <<< "$repo"
     echo -n "  克隆 $github_repo... "
-    if [ -d "$local_name/.git" ]; then
+    if [ -d "$PROJECT_DIR/setone/skills/$local_name/.git" ]; then
         echo "已存在，跳过"
     else
-        git clone "https://github.com/$github_repo.git" "$local_name" 2>/dev/null && echo "✅" || echo "❌"
+        clone_ok=false
+        for attempt in 1 2 3; do
+            if git clone "https://github.com/$github_repo.git" "$PROJECT_DIR/setone/skills/$local_name" 2>/dev/null; then
+                clone_ok=true
+                break
+            else
+                [ $attempt -lt 3 ] && echo -n "重试($attempt/3)... "
+            fi
+        done
+        if $clone_ok; then
+            log_ok "$local_name"
+        else
+            log_warn "克隆 $github_repo 失败（已重试 3 次），跳过"
+        fi
     fi
 done
-cd "$PROJECT_DIR"
+phase_end
 echo ""
 
 # ──────────────────────────────────────
 # Phase 5: 注册 OpenClaw 原生开发技能
 # ──────────────────────────────────────
 echo "🛠️  Phase 5: 创建 OpenClaw 原生技能..."
+phase_start
 mkdir -p "$OC_SKILLS"
 
 # --- react-best-practices ---
@@ -122,7 +183,7 @@ description: React 组件开发最佳实践。在编写、审查或重构 React 
 - UI 打磨 → polish / colorize / arrange
 - 复杂架构 → architecture-review
 SKILLEOF
-echo "  ✅ react-best-practices"
+log_ok "react-best-practices"
 
 # --- typescript-best-practices ---
 mkdir -p "$OC_SKILLS/typescript-best-practices"
@@ -160,7 +221,7 @@ description: TypeScript 开发规范。在编写、审查或重构 TypeScript �
 - 代码审查 → code-review
 - 架构优化 → architecture-review
 SKILLEOF
-echo "  ✅ typescript-best-practices"
+log_ok "typescript-best-practices"
 
 # --- tdd-workflow ---
 mkdir -p "$OC_SKILLS/tdd-workflow"
@@ -196,7 +257,7 @@ description: 测试驱动开发流程。在编写测试、修复 bug、开发新
 - 多个任务 → planning-and-execution
 - 完成前 → verification-before-completion
 SKILLEOF
-echo "  ✅ tdd-workflow"
+log_ok "tdd-workflow"
 
 # --- systematic-debugging ---
 mkdir -p "$OC_SKILLS/systematic-debugging"
@@ -236,7 +297,7 @@ description: 系统化调试流程。遇到 bug、测试失败、意外行为时
 - 多个问题 → planning-and-execution
 - 完成前 → verification-before-completion
 SKILLEOF
-echo "  ✅ systematic-debugging"
+log_ok "systematic-debugging"
 
 # --- planning-and-execution ---
 mkdir -p "$OC_SKILLS/planning-and-execution"
@@ -275,7 +336,7 @@ description: 任务规划与执行流程。在制定开发计划、拆分任务�
 - 完成后 → code-review
 - 最终 → verification-before-completion
 SKILLEOF
-echo "  ✅ planning-and-execution"
+log_ok "planning-and-execution"
 
 # --- code-review ---
 mkdir -p "$OC_SKILLS/code-review"
@@ -314,7 +375,7 @@ description: 代码审查流程。在审查代码、PR review、完成开发任�
 - 发现架构问题 → architecture-review
 - 最终确认 → verification-before-completion
 SKILLEOF
-echo "  ✅ code-review"
+log_ok "code-review"
 
 # --- requirements-clarification ---
 mkdir -p "$OC_SKILLS/requirements-clarification"
@@ -352,7 +413,7 @@ description: 需求澄清流程。在需求不明确、用户描述模糊、需�
 - 涉及 React → react-best-practices
 - 涉及类型 → typescript-best-practices
 SKILLEOF
-echo "  ✅ requirements-clarification"
+log_ok "requirements-clarification"
 
 # --- architecture-review ---
 mkdir -p "$OC_SKILLS/architecture-review"
@@ -388,7 +449,405 @@ description: 代码架构审查与重构建议。在需要改善代码结构、�
 - 复杂重构 → planning-and-execution
 - Electron 架构 → 参考项目 dev-docs/
 SKILLEOF
-echo "  ✅ architecture-review"
+log_ok "architecture-review"
+
+# --- vercel-react-best-practices (from vercel-labs) ---
+mkdir -p "$OC_SKILLS/vercel-react-best-practices"
+cat > "$OC_SKILLS/vercel-react-best-practices/SKILL.md" << 'SKILLEOF'
+---
+name: vercel-react-best-practices
+description: Vercel 官方 React/Next.js 性能优化指南。40+ 条规则，8 个分类，按影响优先级排序。在编写 React 组件或 Next.js 页面时自动触发。
+---
+# Vercel React Best Practices
+参考来源：vercel-labs/agent-skills
+
+## 触发场景
+- 编写 React 组件 / Next.js 页面 / 实现数据获取 / 优化渲染性能
+
+## 核心规则（按优先级）
+
+### 1. 异步与数据获取（CRITICAL）
+- 并行获取，不要串行 await
+- Suspense boundaries 合理切分
+- Server Actions 优先于 API Routes
+- 用 useTransition 包裹非紧急更新
+
+### 2. 渲染优化
+- 条件渲染用 early return，不要嵌套三元
+- JSX 中避免内联函数和对象
+- 用 content-visibility: auto 优化长列表
+- SVG 组件加 width/height 防止 CLS
+
+### 3. Re-render 控制
+- useMemo 精确控制派生状态
+- useCallback 用于传递给子组件的回调
+- 避免在 render 中创建新对象/数组
+- 用 useRef 存储瞬时值（不触发 re-render）
+
+### 4. 包体积
+- 动态导入大型组件（next/dynamic）
+- 避免 barrel imports（index.ts 重导出）
+- 第三方库延迟加载
+- 用 conditional import 替代全量导入
+
+### 5. 客户端性能
+- passive event listeners
+- localStorage 读取加 schema 校验
+- SWR/React Query 去重请求
+- requestIdleCallback 做非紧急工作
+
+### 6. 服务端性能
+- LRU cache 缓存热数据
+- 静态 IO 提升到模块顶层
+- 共享模块状态要谨慎（Serverless 无状态）
+- Props 去重减少序列化
+
+## 详细规则
+完整规则见：~/.openclaw/workspace/setone/skills/vercel-agent-skills/skills/react-best-practices/rules/
+
+## 🔗 关联技能
+- 组件设计 → composition-patterns
+- 类型定义 → typescript-best-practices
+- UI 规范 → web-design-guidelines
+- 完成前 → code-review / verification-before-completion
+SKILLEOF
+log_ok "vercel-react-best-practices"
+
+# --- composition-patterns (from vercel-labs) ---
+mkdir -p "$OC_SKILLS/composition-patterns"
+cat > "$OC_SKILLS/composition-patterns/SKILL.md" << 'SKILLEOF'
+---
+name: composition-patterns
+description: React 组合模式最佳实践。在设计组件 API、处理组件嵌套、构建复合组件时自动触发。
+---
+# React 组合模式
+参考来源：vercel-labs/agent-skills
+
+## 触发场景
+- 设计组件 API / 构建复合组件 / 处理组件嵌套 / 状态共享
+
+## 核心规则
+
+### 1. Children > Render Props
+优先用 children 传递内容，不要用 render 函数 prop。
+```tsx
+// ✅ 好
+<Modal><Form /></Modal>
+// ❌ 不好
+<Modal render={() => <Form />} />
+```
+
+### 2. 避免 Boolean Prop 泛滥
+超过 2 个布尔 prop 就该用 compound components。
+```tsx
+// ❌ 不好
+<Card elevated shadow rounded />
+// ✅ 好
+<Card variant="elevated" />
+```
+
+### 3. 显式变体 > 布尔组合
+用 variant 字符串 prop 描述状态，不要用布尔 prop 组合。
+```tsx
+// ✅ 好
+<Button variant="primary-large" />
+// ❌ 不好
+<Button primary large />
+```
+
+### 4. Compound Components 模式
+用 Context 共享状态，子组件各自负责渲染。
+```tsx
+<Tabs>
+  <Tabs.List>
+    <Tabs.Tab>Tab 1</Tabs.Tab>
+  </Tabs.List>
+  <Tabs.Panel>Content 1</Tabs.Panel>
+</Tabs>
+```
+
+### 5. React 19 不需要 forwardRef
+直接接收 ref 作为普通 prop。
+
+### 6. 状态提升到合适的层级
+不要过早用 Context，先尝试 prop drilling。
+只在多层嵌套且频繁更新时用 Context。
+
+## 🔗 关联技能
+- React 规范 → vercel-react-best-practices
+- 类型定义 → typescript-best-practices
+- UI 规范 → web-design-guidelines
+SKILLEOF
+log_ok "composition-patterns"
+
+# --- web-design-guidelines (from vercel-labs) ---
+mkdir -p "$OC_SKILLS/web-design-guidelines"
+cat > "$OC_SKILLS/web-design-guidelines/SKILL.md" << 'SKILLEOF'
+---
+name: web-design-guidelines
+description: Web 界面设计规范。在设计 UI 布局、选择配色、处理排版、设计交互时自动触发。
+---
+# Web 设计规范
+参考来源：vercel-labs/agent-skills
+
+## 触发场景
+- 设计 UI 布局 / 选择配色 / 处理排版 / 设计交互反馈
+
+## 核心原则
+
+### 1. 视觉层次
+- 标题 > 正文 > 辅助文字，字号差至少 4px
+- 主色 > 辅助色 > 中性色，不要超过 3 种主色
+- 重要操作用高对比按钮，次要操作用低对比
+
+### 2. 间距系统
+- 用 4px 基准网格：4, 8, 12, 16, 24, 32, 48, 64
+- 相关元素间距小，不相关间距大
+- 容器内边距 > 元素间距
+
+### 3. 排版
+- 正文 14-16px，行高 1.5-1.7
+- 标题行高 1.2-1.3
+- 段落最大宽度 65-75 字符
+- 中英文混排加空格
+
+### 4. 颜色
+- 背景 #fff / #fafafa / #f5f5f5
+- 正文 #1a1a1a / #333 / #666
+- 交互色：主色、hover 态（深 10%）、active 态（深 20%）
+- 错误红 #ff4d4f / 成功绿 #52c41a / 警告橙 #faad14
+
+### 5. 交互反馈
+- 可点击元素加 cursor: pointer
+- hover 态变化明显（颜色/阴影/位移）
+- 加载状态用 skeleton 或 spinner
+- 操作成功/失败给 toast 提示
+
+### 6. 响应式
+- 断点：640 / 768 / 1024 / 1280 / 1536
+- 移动端优先，从小屏往上适配
+- 触摸目标至少 44x44px
+
+## 🔗 关联技能
+- React 实现 → vercel-react-best-practices / composition-patterns
+- 图标选择 → svg-draw
+- UI 打磨 → polish / colorize / arrange
+SKILLEOF
+log_ok "web-design-guidelines"
+
+# --- subagent-driven-development (from obra) ---
+mkdir -p "$OC_SKILLS/subagent-driven-development"
+cat > "$OC_SKILLS/subagent-driven-development/SKILL.md" << 'SKILLEOF'
+---
+name: subagent-driven-development
+description: 子代理驱动开发方法论。在执行复杂多步骤开发任务、需要并行处理多个模块时自动触发。
+---
+# 子代理驱动开发
+参考来源：obra/superpowers
+
+## 触发场景
+- 执行多步骤开发计划 / 并行开发多个模块 / 大型重构 / 复杂功能
+
+## 核心流程
+
+### 1. 准备阶段
+- 写好实现计划（参考 writing-plans）
+- 每个任务独立、可测试、有明确验收标准
+- 提供精确上下文：相关文件、类型定义、测试用例
+
+### 2. 派发阶段
+- 每个任务分配一个子代理
+- 提供：任务描述 + 相关代码 + 测试要求
+- 子代理不知道整体计划，只专注自己的任务
+
+### 3. 审查阶段（两阶段审查）
+- **阶段 1：Spec 合规性** — 是否按计划实现？有没有遗漏？
+- **阶段 2：代码质量** — 命名、错误处理、类型安全、测试覆盖
+
+### 4. 集成阶段
+- 合并所有子代理产出
+- 跑全量测试
+- 解决冲突和依赖问题
+
+## 关键约束
+- 子代理不要有全局上下文（防止污染）
+- 每个任务必须有测试验证
+- 审查不通过就打回重做，不要自己修
+- 连续执行，不要中途问"要继续吗？"
+
+## 🔗 关联技能
+- 计划 → planning-and-execution
+- 测试 → tdd-workflow
+- 审查 → code-review / verification-before-completion
+- 调度 → dispatching-parallel-agents
+SKILLEOF
+log_ok "subagent-driven-development"
+
+# --- dispatching-parallel-agents (from obra) ---
+mkdir -p "$OC_SKILLS/dispatching-parallel-agents"
+cat > "$OC_SKILLS/dispatching-parallel-agents/SKILL.md" << 'SKILLEOF'
+---
+name: dispatching-parallel-agents
+description: 并行子代理调度。当多个独立任务可以同时执行时自动触发，最大化开发效率。
+---
+# 并行子代理调度
+参考来源：obra/superpowers
+
+## 触发场景
+- 多个独立任务可并行执行 / 需要加速开发 / 模块间无依赖
+
+## 调度原则
+
+### 1. 识别可并行任务
+- 任务间无数据依赖 → 可并行
+- 任务间有依赖 → 必须串行
+- 共享资源（同一文件）→ 避免并行
+
+### 2. 分组策略
+- 按模块分组：UI 归 UI，逻辑归逻辑
+- 按层次分组：类型定义 → 业务逻辑 → UI 组件
+- 先做基础层（类型、接口），再做上层
+
+### 3. 上下文隔离
+- 每个子代理只给必要的上下文
+- 不要给完整的项目代码
+- 给相关文件 + 类型定义 + 测试用例
+
+### 4. 结果收集
+- 等所有子代理完成再合并
+- 按依赖顺序合并（基础层先）
+- 合并后跑全量测试
+
+## 常见模式
+```
+并行：[写类型] [写工具函数] [写测试数据]
+      ↓ 全部完成后
+串行：写业务逻辑 → 写 UI 组件 → 集成测试
+      ↓
+并行：[写单元测试] [写文档] [写 Storybook]
+```
+
+## 🔗 关联技能
+- 方法论 → subagent-driven-development
+- 计划 → planning-and-execution
+- 验证 → verification-before-completion
+SKILLEOF
+log_ok "dispatching-parallel-agents"
+
+# --- verification-before-completion (from obra) ---
+mkdir -p "$OC_SKILLS/verification-before-completion"
+cat > "$OC_SKILLS/verification-before-completion/SKILL.md" << 'SKILLEOF'
+---
+name: verification-before-completion
+description: 完成前验证流程。在声称任务完成前自动触发，确保有充分证据证明完成。
+---
+# 完成前验证
+参考来源：obra/superpowers
+
+## 触发场景
+- 声称"完成了"之前 / 提交代码之前 / 合并 PR 之前
+
+## 铁律：没有验证证据，就不能说"完成了"！
+
+## 验证清单
+
+### 1. 功能验证
+- [ ] 所有测试通过（unit + integration + e2e）
+- [ ] TypeScript 编译无错误
+- [ ] Lint 无警告
+- [ ] 手动验证关键路径
+
+### 2. 边界验证
+- [ ] 空输入处理
+- [ ] 极端输入处理
+- [ ] 错误路径覆盖
+- [ ] 网络异常处理
+
+### 3. 质量验证
+- [ ] 无 any 类型
+- [ ] 无 console.log 残留
+- [ ] 无 TODO/FIXME 遗留（除非有 issue 跟踪）
+- [ ] 命名清晰自解释
+
+### 4. 集成验证
+- [ ] 不破坏现有功能
+- [ ] 不引入新的 TypeScript 错误
+- [ ] 不增加 bundle size（或增加合理）
+- [ ] 相关文档已更新
+
+## 验证方法
+1. **跑测试** — 最基本的证据
+2. **构建** — `npm run build` 无错误
+3. **类型检查** — `tsc --noEmit` 无错误
+4. **Lint** — `npm run lint` 无警告
+5. **手动测试** — 关键路径走一遍
+
+## 🔗 关联技能
+- 代码审查 → code-review
+- 测试 → tdd-workflow
+- 调试 → systematic-debugging
+- 子代理审查 → subagent-driven-development
+SKILLEOF
+log_ok "verification-before-completion"
+
+# --- improve-codebase-architecture (from mattpocock) ---
+mkdir -p "$OC_SKILLS/improve-codebase-architecture"
+cat > "$OC_SKILLS/improve-codebase-architecture/SKILL.md" << 'SKILLEOF'
+---
+name: improve-codebase-architecture
+description: 代码库架构改进。在需要改善模块耦合、分析接口设计、寻找重构机会时自动触发。
+---
+# 代码库架构改进
+参考来源：mattpocock/skills
+
+## 触发场景
+- 模块耦合过紧 / 接口设计不佳 / 需要系统性重构 / 代码难以测试
+
+## 核心概念
+
+### 深模块 vs 浅模块
+- **深模块**：接口小，功能强（好）
+- **浅模块**：接口≈实现复杂度（需重构）
+- 目标：用最小的接口暴露最大的能力
+
+### 接缝分析
+- **接缝**：可以改变行为而不改代码的位置
+- 好的架构有很多接缝（容易扩展）
+- 紧耦合 = 接缝少（难改）
+
+## 审查流程
+
+### Step 1 — 探索
+漫游代码库，记录摩擦点：
+- 理解一个概念需要跳转很多文件？
+- 模块太浅？
+- 紧耦合跨越接缝？
+- 代码难测试？
+
+### Step 2 — 删除测试
+- 删掉它复杂度消失了？→ 只是透传，可以删
+- 删掉它复杂度分散到 N 个调用方？→ 它有价值，保留
+
+### Step 3 — 接口设计审查
+- 接口是否最小化？
+- 是否暴露了实现细节？
+- 类型是否足够精确？
+
+### Step 4 — 输出
+每个候选重构：
+- 涉及文件
+- 问题描述
+- 重构方案
+- 预期收益
+- 建议强度（高/中/低）
+
+## 🔗 关联技能
+- 重构保护 → tdd-workflow
+- 类型设计 → typescript-best-practices
+- 重构后审查 → code-review
+- 子代理重构 → subagent-driven-development
+SKILLEOF
+log_ok "improve-codebase-architecture"
 
 # --- dev-env-setup ---
 mkdir -p "$OC_SKILLS/dev-env-setup"
@@ -403,74 +862,184 @@ description: 开发环境一键初始化。在新机器上搭建 OpenClaw 开发
 2. 生成 SSH 密钥 → 暂停等用户添加到 GitHub
 3. 克隆 setone 仓库 dev 分支
 4. 克隆 GitHub 技能库（mattpocock, vercel-labs, obra）
-5. 创建 OpenClaw 原生开发技能（10 个）
+5. 创建 OpenClaw 原生开发技能（17 个）
 6. 同步到工作区
 7. 验证环境
 ## 使用：bash bootstrap.sh [项目目录]
 SKILLEOF
-cp "$OC_SKILLS/dev-env-setup/bootstrap.sh" "$OC_SKILLS/dev-env-setup/bootstrap.sh" 2>/dev/null || true
 echo "  ✅ dev-env-setup"
 
-# --- svg-draw ---
+# --- svg-draw (IconPark) ---
 mkdir -p "$OC_SKILLS/svg-draw"
 cat > "$OC_SKILLS/svg-draw/SKILL.md" << 'SKILLEOF'
 ---
 name: svg-draw
-description: 图标选择与SVG生成工具。需要图标、Logo、插图时自动触发。从 Iconify 图标库（200,000+ 图标，100+ 图标集）搜索选择合适图标，支持 SVG 和 PNG 输出。包含 Material Design、Tabler、Heroicons、Lucide、Solar、IconPark 等主流图标集。
+description: 图标与矢量图工具。需要 UI 图标、Logo、插图时自动触发。React 项目使用 @icon-park/react 组件库（2600+ 图标），非 React 项目使用 Iconify API 获取 SVG。
 ---
-# 图标选择与 SVG 生成
+# 图标与矢量图
+
 ## 触发场景
-- 需要 UI 图标 / Logo 设计 / 插图 / 装饰图形
-## 图标来源：Iconify API（免费，无需 Key）
-## 使用
+- 需要 UI 图标 / Logo 设计 / 插图 / 装饰图形 / 矢量图
+
+## React 项目：@icon-park/react（首选）
+
+### 安装
 ```bash
-# 搜索图标（英文关键词）
-curl -s "https://api.iconify.design/search?query=home&limit=20"
-# 获取 SVG（自定义尺寸和颜色）
-curl -s "https://api.iconify.design/mdi:home.svg?width=24&height=24&color=%23333"
-# 批量获取
-curl -s "https://api.iconify.design/mdi.svg?icons=home,settings,user"
+npm install @icon-park/react
+# 或
+yarn add @icon-park/react
 ```
-## 推荐图标集
+
+### 使用
+```tsx
+import { Home, Setting, User, Search, ArrowLeft, Close, Menu } from '@icon-park/react';
+
+// 基础用法
+<Home />
+
+// 自定义属性
+<Setting theme="filled" size="24" fill="#333" />
+
+// 主题模式
+<Home theme="outline" />     // 线框（默认）
+<Home theme="filled" />      // 填充
+<Home theme="two-tone" />    // 双色
+<Home theme="multi-color" /> // 多色
+```
+
+### 常用图标速查
+- 导航：Home, ArrowLeft, ArrowRight, Menu, Close, Search
+- 操作：Plus, Minus, Edit, Delete, Copy, Download, Upload, Refresh
+- 状态：Check, CloseOne, Warning, Info, Success
+- 媒体：Image, Camera, Play, Pause, VolumeNotice
+- 业务：ShoppingCart, User, Star, Heart, Bell, Mail, Calendar, Lock
+
+### 搜索图标
+```bash
+# 在线浏览：https://iconpark.oceanengine.com/official
+# 按分类找：线性/面性/多色/扁平
+# 搜索关键词用英文
+```
+
+## 非 React 项目：Iconify API
+
+适用于 Vue、原生 HTML、静态 SVG 等场景。
+
+```bash
+# 搜索图标
+curl -s "https://api.iconify.design/search?query=home&limit=20"
+
+# 获取 SVG（icon-park 图标集）
+curl -s "https://api.iconify.design/icon-park:home.svg?width=24&height=24&color=%23333"
+
+# 其他图标集
+curl -s "https://api.iconify.design/tabler:settings.svg"
+curl -s "https://api.iconify.design/lucide:user.svg"
+```
+
+### Iconify 推荐图标集
+- icon-park: 字节跳动 IconPark（2600+，中文友好）
 - material-symbols: Google Material Design
 - tabler: 圆润线条，轻量现代
-- heroicons: Tailwind 配套
 - lucide: 清晰线条
-- solar: 多风格
-- iconpark: 字节跳动，中文友好
-## 搜索技巧
-- 用英文关键词（不支持中文）
-- 常用：home, settings, user, search, arrow, close, menu, star, heart, check, plus, edit, delete, download, upload, bell, mail, calendar, clock, folder, file, image, lock, eye, trash, copy, refresh
-- prefix=图标集名 限定搜索
-## 转换 PNG
-```bash
-curl -s "https://api.iconify.design/tabler:settings.svg" > icon.svg
-/root/.openclaw/skills/svg-draw/scripts/svg_to_png.sh icon.svg icon.png 48 48
-```
-SKILLEOF
-echo "  ✅ svg-draw"
+- heroicons: Tailwind 配套
 
+## SVG 转 PNG
+```bash
+# 获取 SVG 文件后转换
+curl -s "https://api.iconify.design/icon-park:home.svg" > icon.svg
+~/.openclaw/skills/svg-draw/scripts/svg_to_png.sh icon.svg icon.png 48 48
+```
+
+## 选型指南
+| 场景 | 方案 |
+|------|------|
+| React + TypeScript 项目 | @icon-park/react（类型安全，tree-shake） |
+| Vue 项目 | @icon-park/vue 或 Iconify API |
+| 静态 HTML | Iconify API 获取 SVG |
+| 需要自定义 SVG | Iconify API 下载后编辑 |
+SKILLEOF
+log_ok "svg-draw (IconPark)"
+
+phase_end
 echo ""
 
 # ──────────────────────────────────────
 # Phase 6: 同步到工作区
 # ──────────────────────────────────────
 echo "📋 Phase 6: 同步技能到工作区..."
+phase_start
 mkdir -p "$WS_SKILLS"
-for skill in react-best-practices typescript-best-practices tdd-workflow systematic-debugging planning-and-execution code-review requirements-clarification architecture-review dev-env-setup svg-draw; do
-    cp -r "$OC_SKILLS/$skill" "$WS_SKILLS/" 2>/dev/null && echo "  ✅ $skill"
+for skill in react-best-practices typescript-best-practices tdd-workflow systematic-debugging planning-and-execution code-review requirements-clarification architecture-review vercel-react-best-practices composition-patterns web-design-guidelines subagent-driven-development dispatching-parallel-agents verification-before-completion improve-codebase-architecture dev-env-setup svg-draw; do
+    if cp -r "$OC_SKILLS/$skill" "$WS_SKILLS/" 2>/dev/null; then
+        echo "  ✅ $skill"
+    else
+        log_error "同步 $skill 失败"
+    fi
 done
+phase_end
 echo ""
 
 # ──────────────────────────────────────
 # Phase 7: 验证
 # ──────────────────────────────────────
 echo "✅ Phase 7: 验证环境..."
+phase_start
 echo -n "  clawhub: " && which clawhub >/dev/null 2>&1 && echo "✅" || echo "❌ 未安装"
 echo -n "  SSH: " && ssh -T git@github.com 2>&1 | grep -q "successfully" && echo "✅" || echo "⚠️ 需要添加公钥"
 echo -n "  项目: " && [ -d "$PROJECT_DIR/setone/.git" ] && echo "✅" || echo "❌"
-echo -n "  技能库: " && [ -d "$PROJECT_DIR/setone/skills/mattpocock-skills" ] && echo "✅" || echo "❌"
-skill_count=$(ls -d "$OC_SKILLS"/*/SKILL.md 2>/dev/null | wc -l)
-echo "  原生技能: $skill_count 个"
+echo -n "  技能库(mattpocock): " && [ -d "$PROJECT_DIR/setone/skills/mattpocock-skills" ] && echo "✅" || echo "❌"
+echo -n "  技能库(vercel): " && [ -d "$PROJECT_DIR/setone/skills/vercel-agent-skills" ] && echo "✅" || echo "❌"
+echo -n "  技能库(superpowers): " && [ -d "$PROJECT_DIR/setone/skills/superpowers" ] && echo "✅" || echo "❌"
+
 echo ""
-echo "🎉 初始化完成！"
+echo "  基础技能:"
+for skill in skill-vetter self-improving-agent self-improving humanizer github ui-ux-pro-max; do
+    [ -f "$OC_SKILLS/$skill/SKILL.md" ] && echo "    ✅ $skill" || echo "    ❌ $skill"
+done
+
+echo "  原生技能:"
+for skill in react-best-practices typescript-best-practices tdd-workflow systematic-debugging planning-and-execution code-review requirements-clarification architecture-review vercel-react-best-practices composition-patterns web-design-guidelines subagent-driven-development dispatching-parallel-agents verification-before-completion improve-codebase-architecture dev-env-setup svg-draw; do
+    [ -f "$OC_SKILLS/$skill/SKILL.md" ] && echo "    ✅ $skill" || echo "    ❌ $skill"
+done
+
+skill_count=$(ls -d "$OC_SKILLS"/*/SKILL.md 2>/dev/null | wc -l)
+echo "  技能总数: $skill_count 个"
+phase_end
+echo ""
+
+# ──────────────────────────────────────
+# 总耗时
+# ──────────────────────────────────────
+SCRIPT_END=$(date +%s)
+echo "⏱  总耗时: $((SCRIPT_END - SCRIPT_START))s"
+echo ""
+
+# ──────────────────────────────────────
+# 错误汇总
+# ──────────────────────────────────────
+if [ ${#ERRORS[@]} -gt 0 ]; then
+    echo "=========================================="
+    echo "❌ 执行过程中有 ${#ERRORS[@]} 个错误："
+    echo "=========================================="
+    for err in "${ERRORS[@]}"; do
+        echo "  • $err"
+    done
+    echo ""
+fi
+
+if [ ${#WARNINGS[@]} -gt 0 ]; then
+    echo "=========================================="
+    echo "⚠️  有 ${#WARNINGS[@]} 个警告："
+    echo "=========================================="
+    for warn in "${WARNINGS[@]}"; do
+        echo "  • $warn"
+    done
+    echo ""
+fi
+
+if [ ${#ERRORS[@]} -eq 0 ]; then
+    echo "🎉 初始化完成！无错误。"
+else
+    echo "🎉 初始化完成，但有错误需要处理。"
+fi
