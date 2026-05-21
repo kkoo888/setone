@@ -265,9 +265,14 @@ export class AppModel extends CubismUserModel {
       img.onload = () => {
         // ★ 修复：renderer 的 GL 属性是 gl（公开属性），不是 _gl
         const renderer = this.getRenderer()
-        const gl = renderer?.gl as WebGLRenderingContext | null
-        if (!gl) {
-          console.warn(`[AppModel] ⚠️ GL 上下文不可用，跳过纹理: ${url}`)
+        if (!renderer) {
+          console.warn(`[AppModel] ⚠️ 渲染器不可用，跳过纹理: ${url}`)
+          resolve(null)
+          return
+        }
+        const gl = renderer.gl as WebGLRenderingContext | null
+        if (!gl || gl.isContextLost()) {
+          console.warn(`[AppModel] ⚠️ GL 上下文不可用或已丢失，跳过纹理: ${url}`)
           resolve(null)
           return
         }

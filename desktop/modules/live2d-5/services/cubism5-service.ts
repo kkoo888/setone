@@ -289,19 +289,36 @@ class Cubism5Service {
   /**
    * 从 WebGL 上下文丢失中恢复
    * ★ 修复：使用 reloadRenderer 重建渲染器（与 Demo 一致）
+   * ★ 增强：验证上下文真正可用后再恢复，防止 null gl 导致 bindTexture 失败
    */
   private async recoverFromContextLost(): Promise<void> {
     if (!this.canvas || !this.model) return
 
     try {
-      this.gl = this.canvas.getContext('webgl2') || this.canvas.getContext('webgl')
-      if (!this.gl) {
-        console.error('[Cubism5] ❌ 恢复 WebGL 上下文失败')
-        this.updateState('error')
-        return
+      // 尝试从当前 canvas 获取上下文
+      let gl = this.canvas.getContext('webgl2') || this.canvas.getContext('webgl')
+
+      // 如果上下文仍然处于 lost 状态，等待浏览器恢复
+      if (!gl || gl.isContextLost()) {
+        console.log('[Cubism5] ⏳ 等待 WebGL 上下文恢复...')
+        gl = await new Promise<WebGLRenderingContext | WebGL2RenderingContext>((resolve, reject) => {
+          const timeout = setTimeout(() => reject(new Error('等待上下文恢复超时')), 5000)
+          const onRestored = () => {
+            clearTimeout(timeout)
+            this.canvas?.removeEventListener('webglcontextrestored', onRestored)
+            const newGl = this.canvas?.getContext('webgl2') || this.canvas?.getContext('webgl')
+            if (newGl && !newGl.isContextLost()) {
+              resolve(newGl)
+            } else {
+              reject(new Error('上下文恢复后仍不可用'))
+            }
+          }
+          this.canvas?.addEventListener('webglcontextrestored', onRestored)
+        })
       }
 
-      // ★ 修复：使用 reloadRenderer 重建渲染器 + 重新绑定纹理
+      this.gl = gl
+      this.contextLost = false
       this.model.reloadRenderer(this.gl)
 
       this.lastUpdateTime = performance.now() / 1000
@@ -562,16 +579,33 @@ class Cubism5Service {
       this.updateState('loading')
       this.initFramework()
 
-      // ★ 关键修复：重建 GL 上下文（旧 renderer.release() 已清除内部 GL 引用）
+      // ★ 关键修复：重建 GL 上下文
+      // 注意：不能调用 loseContext() 后立即 getContext()，因为 getContext() 会返回
+      // 同一个处于 lost 状态的上下文对象，导致后续 bindTexture 等操作失败（null 引用）
       if (this.canvas) {
-        // 先尝试释放旧上下文
-        try {
-          const ext = this.gl?.getExtension('WEBGL_lose_context')
-          ext?.loseContext()
-        } catch { /* ignore */ }
+        const existingCtx = this.canvas.getContext('webgl2') || this.canvas.getContext('webgl')
 
-        // 重新获取上下文
-        this.gl = this.canvas.getContext('webgl2') || this.canvas.getContext('webgl')
+        if (existingCtx && !existingCtx.isContextLost()) {
+          // 上下文仍然可用，直接复用
+          this.gl = existingCtx
+        } else {
+          // 上下文已丢失，需要通过替换 canvas 元素来获取全新的上下文
+          const oldCanvas = this.canvas
+          const parent = oldCanvas.parentElement
+          const newCanvas = document.createElement('canvas')
+          newCanvas.width = oldCanvas.width
+          newCanvas.height = oldCanvas.height
+          newCanvas.style.cssText = oldCanvas.style.cssText
+          newCanvas.className = oldCanvas.className
+
+          if (parent) {
+            parent.replaceChild(newCanvas, oldCanvas)
+          }
+          this.canvas = newCanvas
+          this.gl = newCanvas.getContext('webgl2') || newCanvas.getContext('webgl')
+
+          // 鼠标事件由宠物窗口层绑定，canvas 替换后不影响
+        }
 
         // 重新注册上下文事件
         this.registerContextEvents()
