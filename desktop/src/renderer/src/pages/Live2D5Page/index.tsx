@@ -372,14 +372,19 @@ export function Live2D5Page() {
     setLoadingModel(null)
   }, [status.windowOpen, refreshStatus, refreshModels])
 
-  /** 从模型库移除 */
+  /** 从模型库移除（同时卸载宠物窗口中的模型） */
   const handleRemoveRegistered = useCallback(async (modelPath: string) => {
     try {
+      // 如果是当前活跃模型，先提示
+      if (activeModelPath === modelPath) {
+        setScanError('不能移除当前正在使用的模型，请先切换到其他模型')
+        return
+      }
       await window.electronAPI.invoke('live2d5_unregister_model', { path: modelPath })
       await refreshRegisteredModels()
-      if (activeModelPath === modelPath) setActiveModelPath(null)
+      await refreshModels()
     } catch {}
-  }, [refreshRegisteredModels, activeModelPath])
+  }, [refreshRegisteredModels, refreshModels, activeModelPath])
 
   /** 关闭添加模型弹窗 */
   const handleCloseAddModel = useCallback(() => {

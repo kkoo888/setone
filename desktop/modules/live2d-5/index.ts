@@ -320,9 +320,24 @@ export default class Live2D5Module implements Module {
       }
     })
 
-    // ★ 新增：注销模型（从模型库移除）
+    // ★ 新增：注销模型（从模型库移除，同时卸载宠物窗口中的模型）
     ipcMain.handle('live2d5_unregister_model', async (_event, args: { path: string }) => {
       try {
+        // 先从宠物窗口卸载模型（如果已加载）
+        if (this.petWindow && !this.petWindow.isDestroyed()) {
+          await this.petWindow.webContents.executeJavaScript(
+            `(async () => {
+              const svc = window.__cubism5Service;
+              if (!svc) return;
+              const models = svc.getLoadedModels?.() ?? [];
+              const target = models.find(m => m.name === ${JSON.stringify(args.path.split('/').pop()?.replace('.model3.json', '') || '')});
+              if (target && !target.active) {
+                svc.unloadModel?.(target.name);
+              }
+            })().catch(() => {})`
+          ).catch(() => {})
+        }
+        // 从注册表移除
         const existing = this.readModelRegistry()
         const updated = existing.filter(m => m.path !== args.path)
         this.writeModelRegistry(updated)
