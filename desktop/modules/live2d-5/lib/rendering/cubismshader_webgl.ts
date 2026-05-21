@@ -209,7 +209,7 @@ export class CubismShader_WebGL {
     // + 1（コピー用のシェーダー）
     // + カラーブレンドの数（後方互換とNone除く） * アルファブレンドの数（None除く） * （通常 + マスク + 反転マスク）
 
-    this._defaultShaderPath = '../../Framework/Shaders/WebGL/';
+    this._defaultShaderPath = '/Framework/Shaders/WebGL/';
     this._shaderPath = this._defaultShaderPath;
   }
 
