@@ -186,7 +186,12 @@ export class AppModel extends CubismUserModel {
     // 16. 应用缩放
     this.applyScale(scale)
 
-    // 17. 标记初始化完成
+    // 17. ★ 预热 shader（与 Demo 一致，避免首帧闪烁）
+    if (gl) {
+      this.getRenderer().loadShaders()
+    }
+
+    // 18. 标记初始化完成
     this.setInitialized(true)
   }
 
@@ -715,6 +720,7 @@ export class AppModel extends CubismUserModel {
     if (gl) {
       this.getRenderer().startUp(gl)
       this.getRenderer().setIsPremultipliedAlpha(true)
+      this.getRenderer().loadShaders() // 预热 shader
     }
     // 重新绑定纹理
     this.loadTextures()
