@@ -48,6 +48,12 @@ interface ScannedModel {
   error?: string
 }
 
+interface RegisteredModel {
+  name: string
+  path: string
+  addedAt: number
+}
+
 const defaultLiveStatus: LiveStatus = {
   sdkLoaded: false,
   contextLost: false,
@@ -81,6 +87,12 @@ export function Live2D5Page() {
   const [scanSuccess, setScanSuccess] = useState<string | null>(null)
   const [loadingModel, setLoadingModel] = useState<string | null>(null)
 
+  // 模型库状态
+  const [registeredModels, setRegisteredModels] = useState<RegisteredModel[]>([])
+  const [selectedScans, setSelectedScans] = useState<Set<string>>(new Set())
+  const [activeModelPath, setActiveModelPath] = useState<string | null>(null)
+  const [registering, setRegistering] = useState(false)
+
   /** 查询状态 */
   const refreshStatus = useCallback(async () => {
     try {
@@ -102,11 +114,22 @@ export function Live2D5Page() {
     } catch {}
   }, [status.windowOpen])
 
+  /** 刷新已注册模型列表 */
+  const refreshRegisteredModels = useCallback(async () => {
+    try {
+      const result = await window.electronAPI.invoke('live2d5_get_registered_models')
+      if (result?.success && Array.isArray(result.data)) {
+        setRegisteredModels(result.data)
+      }
+    } catch {}
+  }, [])
+
   useEffect(() => {
     refreshStatus()
+    refreshRegisteredModels()
     const interval = setInterval(refreshStatus, 3000)
     return () => clearInterval(interval)
-  }, [refreshStatus])
+  }, [refreshStatus, refreshRegisteredModels])
 
   // 窗口打开后自动刷新模型列表
   useEffect(() => {
@@ -221,6 +244,7 @@ export function Live2D5Page() {
     setScanError(null)
     setScanSuccess(null)
     setScanResult(null)
+    setSelectedScans(new Set())
     try {
       const result = await window.electronAPI.invoke('live2d5_scan_model', { dirPath: scanPath.trim() })
       if (result?.success && Array.isArray(result.data)) {
@@ -235,23 +259,6 @@ export function Live2D5Page() {
     setScanning(false)
   }, [scanPath])
 
-  /** 加载扫描到的模型到宠物窗口 */
-  const handleLoadScannedModel = useCallback(async (modelPath: string, name: string) => {
-    setLoadingModel(name)
-    try {
-      const result = await window.electronAPI.invoke('live2d5_load_scanned_model', { modelPath, name })
-      if (result?.success) {
-        setScanSuccess(result.message || '模型加载成功')
-        await refreshModels()
-      } else {
-        setScanError(result?.error || '加载失败')
-      }
-    } catch (err) {
-      setScanError(err instanceof Error ? err.message : '加载出错')
-    }
-    setLoadingModel(null)
-  }, [refreshModels])
-
   /** 选择文件夹并自动扫描 */
   const handleSelectDirectory = useCallback(async () => {
     try {
@@ -263,6 +270,7 @@ export function Live2D5Page() {
         setScanError(null)
         setScanSuccess(null)
         setScanResult(null)
+        setSelectedScans(new Set())
         try {
           const scanRes = await window.electronAPI.invoke('live2d5_scan_model', { dirPath: result.filePath })
           if (scanRes?.success && Array.isArray(scanRes.data)) {
@@ -281,6 +289,91 @@ export function Live2D5Page() {
     }
   }, [])
 
+  /** 勾选/取消勾选扫描结果 */
+  const toggleScanSelection = useCallback((path: string) => {
+    setSelectedScans(prev => {
+      const next = new Set(prev)
+      if (next.has(path)) next.delete(path)
+      else next.add(path)
+      return next
+    })
+  }, [])
+
+  /** 全选/取消全选扫描结果 */
+  const toggleSelectAll = useCallback(() => {
+    if (!scanResult) return
+    if (selectedScans.size === scanResult.filter(m => !m.error).length) {
+      setSelectedScans(new Set())
+    } else {
+      setSelectedScans(new Set(scanResult.filter(m => !m.error).map(m => m.path)))
+    }
+  }, [scanResult, selectedScans])
+
+  /** 添加选中模型到模型库 */
+  const handleAddSelectedModels = useCallback(async () => {
+    if (!scanResult || selectedScans.size === 0) return
+    setRegistering(true)
+    try {
+      const toAdd = scanResult
+        .filter(m => selectedScans.has(m.path) && !m.error)
+        .map(m => ({ name: m.name, path: m.path }))
+      const result = await window.electronAPI.invoke('live2d5_register_models', { models: toAdd })
+      if (result?.success) {
+        setScanSuccess(`已添加 ${result.added ?? toAdd.length} 个模型到模型库`)
+        setSelectedScans(new Set())
+        await refreshRegisteredModels()
+      } else {
+        setScanError(result?.error || '添加失败')
+      }
+    } catch (err) {
+      setScanError(err instanceof Error ? err.message : '添加出错')
+    }
+    setRegistering(false)
+  }, [scanResult, selectedScans, refreshRegisteredModels])
+
+  /** 应用已注册的模型 */
+  const handleApplyModel = useCallback(async (model: RegisteredModel) => {
+    setLoadingModel(model.path)
+    try {
+      // 先打开宠物窗口（如果没开）
+      if (!status.windowOpen) {
+        await window.electronAPI.invoke('live2d5_open')
+        await refreshStatus()
+        // 等待窗口加载
+        await new Promise(r => setTimeout(r, 1500))
+      }
+      const result = await window.electronAPI.invoke('live2d5_load_scanned_model', { modelPath: model.path, name: model.name })
+      if (result?.success) {
+        setActiveModelPath(model.path)
+        await refreshModels()
+      } else {
+        setScanError(result?.error || '应用失败')
+      }
+    } catch (err) {
+      setScanError(err instanceof Error ? err.message : '应用出错')
+    }
+    setLoadingModel(null)
+  }, [status.windowOpen, refreshStatus, refreshModels])
+
+  /** 从模型库移除 */
+  const handleRemoveRegistered = useCallback(async (modelPath: string) => {
+    try {
+      await window.electronAPI.invoke('live2d5_unregister_model', { path: modelPath })
+      await refreshRegisteredModels()
+      if (activeModelPath === modelPath) setActiveModelPath(null)
+    } catch {}
+  }, [refreshRegisteredModels, activeModelPath])
+
+  /** 关闭添加模型弹窗 */
+  const handleCloseAddModel = useCallback(() => {
+    setShowAddModel(false)
+    setScanPath('')
+    setScanResult(null)
+    setScanError(null)
+    setScanSuccess(null)
+    setSelectedScans(new Set())
+  }, [])
+
   /** 提示信息自动消失 */
   useEffect(() => {
     if (scanError || scanSuccess) {
@@ -291,13 +384,6 @@ export function Live2D5Page() {
       return () => clearTimeout(timer)
     }
   }, [scanError, scanSuccess])
-
-  /** 进入模型管理 Tab 且宠物窗口未打开时，自动弹出添加模型弹窗 */
-  useEffect(() => {
-    if (activeTab === 'models' && !status.windowOpen) {
-      setShowAddModel(true)
-    }
-  }, [activeTab, status.windowOpen])
 
   return (
     <div className="mod-page">
@@ -487,7 +573,7 @@ export function Live2D5Page() {
         {/* ====== 模型管理 ====== */}
         {activeTab === 'models' && (
           <div className="live2d5-models-panel">
-            {/* 添加模型按钮 */}
+            {/* 顶部工具栏 */}
             <div className="live2d5-models-toolbar">
               <button
                 className="btn btn-primary"
@@ -495,113 +581,83 @@ export function Live2D5Page() {
               >
                 ＋ 添加模型
               </button>
+              <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-tertiary)' }}>
+                已注册 {registeredModels.length} 个模型
+              </span>
             </div>
 
-            {!status.windowOpen ? (
+            {/* 模型列表 */}
+            {registeredModels.length === 0 ? (
               <div className="live2d5-empty">
-                <span className="live2d5-empty-icon" style={{ fontSize: 32, opacity: 0.4 }}>🎭</span>
-                <p>请先打开宠物窗口</p>
-              </div>
-            ) : models.length === 0 ? (
-              <div className="live2d5-empty">
-                <span className="live2d5-empty-icon" style={{ fontSize: 32, opacity: 0.4 }}>📦</span>
-                <p>暂无已加载的模型</p>
+                <span style={{ fontSize: 32, opacity: 0.4 }}>📦</span>
+                <p>暂无已注册的模型，点击上方按钮添加</p>
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-sm)' }}>
-                <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-tertiary)', marginBottom: 'var(--spacing-xs)' }}>
-                  已加载 {models.length} 个模型，点击切换，卸载可释放 GPU 内存
-                </div>
-                {models.map(m => (
-                  <div
-                    key={m.name}
-                    className="live2d5-status-card"
-                    style={{
-                      flexDirection: 'column',
-                      alignItems: 'stretch',
-                      gap: 'var(--spacing-sm)',
-                      borderColor: m.active ? 'var(--color-primary)' : undefined,
-                      opacity: modelsLoading ? 0.6 : 1,
-                      pointerEvents: modelsLoading ? 'none' : 'auto',
-                    }}
-                  >
-                    {/* 模型名称 + 状态 */}
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
-                        <span className={`live2d5-status-dot ${m.active ? 'live2d5-status-dot--active' : ''}`} />
-                        <span style={{ fontSize: 'var(--font-size-sm)', fontWeight: 600, color: 'var(--color-text-primary)' }}>
+              <div className="live2d5-registered-list">
+                {registeredModels.map(m => {
+                  const isApplied = activeModelPath === m.path
+                  return (
+                    <div key={m.path} className={`live2d5-registered-card ${isApplied ? 'live2d5-registered-card--active' : ''}`}>
+                      <div className="live2d5-registered-info">
+                        <div className="live2d5-registered-name">
+                          {isApplied && <span className="live2d5-status-dot live2d5-status-dot--active" />}
                           {m.name}
-                        </span>
-                        {m.active && (
-                          <span style={{
-                            fontSize: 'var(--font-size-2xs)',
-                            background: 'var(--color-primary)',
-                            color: 'white',
-                            padding: '2px 8px',
-                            borderRadius: 'var(--radius-full)',
-                          }}>
-                            当前
-                          </span>
-                        )}
+                        </div>
+                        <div className="live2d5-registered-path" title={m.path}>{m.path}</div>
                       </div>
-                      <div style={{ display: 'flex', gap: 'var(--spacing-xs)' }}>
-                        {!m.active && (
+                      <div className="live2d5-registered-actions">
+                        {isApplied ? (
+                          <button className="btn btn-applied" disabled>✓ 已应用</button>
+                        ) : (
                           <button
                             className="btn btn-primary"
-                            style={{ padding: '4px 12px', fontSize: 'var(--font-size-xs)' }}
-                            onClick={() => handleSwitchModel(m.name)}
+                            onClick={() => handleApplyModel(m)}
+                            disabled={loadingModel === m.path}
                           >
-                            切换
+                            {loadingModel === m.path ? '应用中...' : '应用'}
                           </button>
                         )}
-                        {!m.active && (
-                          <button
-                            className="btn btn-danger"
-                            style={{ padding: '4px 12px', fontSize: 'var(--font-size-xs)' }}
-                            onClick={() => handleUnloadModel(m.name)}
-                          >
-                            卸载
-                          </button>
-                        )}
+                        <button
+                          className="btn btn-ghost"
+                          onClick={() => handleRemoveRegistered(m.path)}
+                          title="从模型库移除"
+                        >
+                          移除
+                        </button>
                       </div>
                     </div>
-
-                    {/* 模型详情 */}
-                    <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-tertiary)' }}>
-                      表情: {m.expressions.length > 0 ? m.expressions.join(', ') : '无'}
-                    </div>
-                    <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-tertiary)' }}>
-                      动作组: {m.motionGroups.length > 0 ? m.motionGroups.join(', ') : '无'}
-                    </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             )}
 
             {/* 添加模型弹窗 */}
             <Modal
               open={showAddModel}
-              onClose={() => {
-                setShowAddModel(false)
-                setScanPath('')
-                setScanResult(null)
-                setScanError(null)
-                setScanSuccess(null)
-              }}
+              onClose={handleCloseAddModel}
               title="添加模型"
               footer={
-                <button
-                  className="btn btn-secondary"
-                  onClick={() => {
-                    setShowAddModel(false)
-                    setScanPath('')
-                    setScanResult(null)
-                    setScanError(null)
-                    setScanSuccess(null)
-                  }}
-                >
-                  关闭
-                </button>
+                <div style={{ display: 'flex', gap: 'var(--spacing-sm)', justifyContent: 'space-between', width: '100%' }}>
+                  <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
+                    {scanResult && scanResult.length > 0 && (
+                      <>
+                        <button className="btn btn-ghost" onClick={toggleSelectAll}>
+                          {selectedScans.size === scanResult.filter(m => !m.error).length ? '取消全选' : '全选'}
+                        </button>
+                        <button
+                          className="btn btn-primary"
+                          onClick={handleAddSelectedModels}
+                          disabled={selectedScans.size === 0 || registering}
+                        >
+                          {registering ? '添加中...' : `添加到模型库 (${selectedScans.size})`}
+                        </button>
+                      </>
+                    )}
+                  </div>
+                  <button className="btn btn-secondary" onClick={handleCloseAddModel}>
+                    关闭
+                  </button>
+                </div>
               }
             >
               <div className="live2d5-scan-section">
@@ -648,7 +704,7 @@ export function Live2D5Page() {
                 {scanResult && scanResult.length > 0 && (
                   <div className="live2d5-scan-results">
                     {scanResult.map((model: ScannedModel, idx: number) => (
-                      <div key={idx} className="live2d5-scan-card">
+                      <div key={idx} className={`live2d5-scan-card ${selectedScans.has(model.path) ? 'live2d5-scan-card--selected' : ''}`}>
                         {model.error ? (
                           <div className="live2d5-scan-card-error">
                             <span className="live2d5-scan-card-name">{model.name}</span>
@@ -657,18 +713,16 @@ export function Live2D5Page() {
                         ) : (
                           <>
                             <div className="live2d5-scan-card-header">
-                              <span className="live2d5-scan-card-name">{model.name}</span>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)' }}>
-                                <span className="live2d5-scan-card-version">v{model.version}</span>
-                                <button
-                                  className="live2d5-scan-card-load"
-                                  onClick={() => handleLoadScannedModel(model.path, model.name)}
-                                  disabled={!status.windowOpen || loadingModel === model.name}
-                                  title={!status.windowOpen ? '请先打开宠物窗口' : '加载此模型'}
-                                >
-                                  {loadingModel === model.name ? '加载中...' : '加载'}
-                                </button>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
+                                <input
+                                  type="checkbox"
+                                  checked={selectedScans.has(model.path)}
+                                  onChange={() => toggleScanSelection(model.path)}
+                                  className="live2d5-scan-checkbox"
+                                />
+                                <span className="live2d5-scan-card-name">{model.name}</span>
                               </div>
+                              <span className="live2d5-scan-card-version">v{model.version}</span>
                             </div>
                             <div className="live2d5-scan-card-details">
                               <span>🎭 表情: {model.expressions}</span>

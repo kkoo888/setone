@@ -24,6 +24,35 @@ export default class Live2D5Module implements Module {
   private petWindow: import('electron').BrowserWindow | null = null
   private destroyResolve: (() => void) | null = null
 
+  /** 模型注册表文件路径 */
+  private getModelRegistryPath(): string {
+    const { app } = require('electron')
+    const path = require('path')
+    return path.join(app.getPath('userData'), 'live2d5-models.json')
+  }
+
+  /** 读取模型注册表 */
+  private readModelRegistry(): Array<{ name: string; path: string; addedAt: number }> {
+    try {
+      const fs = require('fs')
+      const filePath = this.getModelRegistryPath()
+      if (fs.existsSync(filePath)) {
+        return JSON.parse(fs.readFileSync(filePath, 'utf-8'))
+      }
+    } catch {}
+    return []
+  }
+
+  /** 写入模型注册表 */
+  private writeModelRegistry(models: Array<{ name: string; path: string; addedAt: number }>): void {
+    try {
+      const fs = require('fs')
+      fs.writeFileSync(this.getModelRegistryPath(), JSON.stringify(models, null, 2))
+    } catch (err) {
+      console.error('[Live2D5] 写入模型注册表失败:', err)
+    }
+  }
+
   async activate(context: ModuleContext): Promise<void> {
     this.context = context
     this.registerIPCHandlers()
@@ -267,6 +296,39 @@ export default class Live2D5Module implements Module {
       }
       return { success: false, error: '宠物窗口未打开' }
     })
+
+    // ★ 新增：获取已注册模型列表（模型库）
+    ipcMain.handle('live2d5_get_registered_models', async () => {
+      return { success: true, data: this.readModelRegistry() }
+    })
+
+    // ★ 新增：注册模型（添加到模型库）
+    ipcMain.handle('live2d5_register_models', async (_event, args: { models: Array<{ name: string; path: string }> }) => {
+      try {
+        const existing = this.readModelRegistry()
+        const existingPaths = new Set(existing.map(m => m.path))
+        const newModels = args.models
+          .filter(m => !existingPaths.has(m.path))
+          .map(m => ({ ...m, addedAt: Date.now() }))
+        const updated = [...existing, ...newModels]
+        this.writeModelRegistry(updated)
+        return { success: true, data: updated, added: newModels.length }
+      } catch (err) {
+        return { success: false, error: (err as Error).message }
+      }
+    })
+
+    // ★ 新增：注销模型（从模型库移除）
+    ipcMain.handle('live2d5_unregister_model', async (_event, args: { path: string }) => {
+      try {
+        const existing = this.readModelRegistry()
+        const updated = existing.filter(m => m.path !== args.path)
+        this.writeModelRegistry(updated)
+        return { success: true, data: updated }
+      } catch (err) {
+        return { success: false, error: (err as Error).message }
+      }
+    })
   }
 
   /** 注销 IPC handlers */
@@ -287,6 +349,9 @@ export default class Live2D5Module implements Module {
     ipcMain.removeHandler('live2d5_load_scanned_model')
     ipcMain.removeHandler('live2d5_select_directory')
     ipcMain.removeHandler('live2d5_reload_model')
+    ipcMain.removeHandler('live2d5_get_registered_models')
+    ipcMain.removeHandler('live2d5_register_models')
+    ipcMain.removeHandler('live2d5_unregister_model')
   }
 
   getCapabilities(): Capability[] {
@@ -703,6 +768,91 @@ export default class Live2D5Module implements Module {
               return { success: result }
             }
             return { success: false, error: '宠物窗口未打开' }
+          }
+        }
+      },
+      {
+        type: 'tool',
+        name: 'live2d5_get_registered_models',
+        description: '获取已注册的模型库列表（持久化存储）',
+        priority: 10,
+        moduleId: this.id,
+        parameters: {
+          type: 'object',
+          properties: {},
+          required: []
+        },
+        handler: {
+          execute: async () => {
+            return { success: true, data: this.readModelRegistry() }
+          }
+        }
+      },
+      {
+        type: 'tool',
+        name: 'live2d5_register_models',
+        description: '批量注册模型到模型库（持久化存储）',
+        priority: 10,
+        moduleId: this.id,
+        parameters: {
+          type: 'object',
+          properties: {
+            models: {
+              type: 'array',
+              description: '要注册的模型列表',
+              items: {
+                type: 'object',
+                properties: {
+                  name: { type: 'string', description: '模型名称' },
+                  path: { type: 'string', description: '模型文件路径' }
+                }
+              }
+            }
+          },
+          required: ['models']
+        },
+        handler: {
+          execute: async (p) => {
+            const { models } = p as { models: Array<{ name: string; path: string }> }
+            try {
+              const existing = this.readModelRegistry()
+              const existingPaths = new Set(existing.map(m => m.path))
+              const newModels = models
+                .filter(m => !existingPaths.has(m.path))
+                .map(m => ({ ...m, addedAt: Date.now() }))
+              const updated = [...existing, ...newModels]
+              this.writeModelRegistry(updated)
+              return { success: true, data: updated, added: newModels.length }
+            } catch (err) {
+              return { success: false, error: (err as Error).message }
+            }
+          }
+        }
+      },
+      {
+        type: 'tool',
+        name: 'live2d5_unregister_model',
+        description: '从模型库移除指定模型',
+        priority: 10,
+        moduleId: this.id,
+        parameters: {
+          type: 'object',
+          properties: {
+            path: { type: 'string', description: '要移除的模型文件路径' }
+          },
+          required: ['path']
+        },
+        handler: {
+          execute: async (p) => {
+            const { path: modelPath } = p as { path: string }
+            try {
+              const existing = this.readModelRegistry()
+              const updated = existing.filter(m => m.path !== modelPath)
+              this.writeModelRegistry(updated)
+              return { success: true, data: updated }
+            } catch (err) {
+              return { success: false, error: (err as Error).message }
+            }
           }
         }
       }
