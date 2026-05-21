@@ -354,6 +354,7 @@ export function Live2D5Page() {
       setScanError('宠物窗口运行中，请先关闭窗口再切换模型')
       return
     }
+    if (loadingModel) return  // 防止连点
     setLoadingModel(model.path)
     try {
       const result = await window.electronAPI.invoke('live2d5_apply_model', { path: model.path })
@@ -366,7 +367,7 @@ export function Live2D5Page() {
       setScanError(err instanceof Error ? err.message : '应用出错')
     }
     setLoadingModel(null)
-  }, [status.windowOpen, refreshRegisteredModels])
+  }, [status.windowOpen, refreshRegisteredModels, loadingModel])
 
   /** 从模型库移除（需先关闭宠物窗口，已应用的不能移除） */
   const handleRemoveRegistered = useCallback(async (modelPath: string) => {

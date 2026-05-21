@@ -74,6 +74,15 @@ export default class Live2D5Module implements Module {
   private registerDefaultModels(): void {
     try {
       const existing = this.readModelRegistry()
+
+      // 迁移：老数据没有 applied 字段时，给第一个模型补上
+      if (existing.length > 0 && !existing.some(m => m.applied !== undefined)) {
+        existing[0].applied = true
+        this.writeModelRegistry(existing)
+        console.log(`[Live2D5] 🔄 迁移：已为 "${existing[0].name}" 设置 applied: true`)
+        return
+      }
+
       if (existing.length > 0) return  // 已有数据，不重复注册
 
       const publicLive2dDir = join(app.getAppPath(), 'public', 'live2d')
