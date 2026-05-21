@@ -124,6 +124,47 @@ export default class Live2D5Module implements Module {
       }
       return { success: false, error: '宠物窗口未打开' }
     })
+
+    // ★ 新增：获取实时状态（供管理页面刷新按钮使用）
+    ipcMain.handle('live2d5_get_live_status', async () => {
+      if (this.petWindow && !this.petWindow.isDestroyed()) {
+        const result = await this.petWindow.webContents.executeJavaScript(
+          `window.__cubism5Service?.getLiveStatus?.() ?? null`
+        ).catch(() => null)
+        if (result) return { success: true, data: result }
+      }
+      return {
+        success: true,
+        data: {
+          sdkLoaded: false, contextLost: false,
+          mouseTracking: false, clickInteraction: false,
+          currentExpression: '默认', currentMotion: '默认',
+          lipSyncActive: false, bubbleText: '无',
+        }
+      }
+    })
+
+    // ★ 新增：获取 canvas 预览截图
+    ipcMain.handle('live2d5_get_preview', async () => {
+      if (this.petWindow && !this.petWindow.isDestroyed()) {
+        const result = await this.petWindow.webContents.executeJavaScript(
+          `window.__cubism5Service?.getPreviewImage?.() ?? null`
+        ).catch(() => null)
+        return { success: true, data: result }
+      }
+      return { success: true, data: null }
+    })
+
+    // ★ 新增：重新加载当前模型
+    ipcMain.handle('live2d5_reload_model', async () => {
+      if (this.petWindow && !this.petWindow.isDestroyed()) {
+        const result = await this.petWindow.webContents.executeJavaScript(
+          `window.__cubism5Service?.reloadModel?.() ?? false`
+        ).catch(() => false)
+        return { success: result }
+      }
+      return { success: false, error: '宠物窗口未打开' }
+    })
   }
 
   /** 注销 IPC handlers */
@@ -138,6 +179,9 @@ export default class Live2D5Module implements Module {
     ipcMain.removeHandler('live2d5_get_models')
     ipcMain.removeHandler('live2d5_switch_model')
     ipcMain.removeHandler('live2d5_unload_model')
+    ipcMain.removeHandler('live2d5_get_live_status')
+    ipcMain.removeHandler('live2d5_get_preview')
+    ipcMain.removeHandler('live2d5_reload_model')
   }
 
   getCapabilities(): Capability[] {
@@ -333,6 +377,83 @@ export default class Live2D5Module implements Module {
             if (this.petWindow && !this.petWindow.isDestroyed()) {
               const result = await this.petWindow.webContents.executeJavaScript(
                 `window.__cubism5Service?.unloadModel?.("${name}") ?? false`
+              ).catch(() => false)
+              return { success: result }
+            }
+            return { success: false, error: '宠物窗口未打开' }
+          }
+        }
+      },
+      {
+        type: 'tool',
+        name: 'live2d5_get_live_status',
+        description: '获取 Live2D 5 宠物实时运行状态',
+        priority: 10,
+        moduleId: this.id,
+        parameters: {
+          type: 'object',
+          properties: {},
+          required: []
+        },
+        handler: {
+          execute: async () => {
+            if (this.petWindow && !this.petWindow.isDestroyed()) {
+              const result = await this.petWindow.webContents.executeJavaScript(
+                `window.__cubism5Service?.getLiveStatus?.() ?? null`
+              ).catch(() => null)
+              if (result) return { success: true, data: result }
+            }
+            return {
+              success: true,
+              data: {
+                sdkLoaded: false, contextLost: false,
+                mouseTracking: false, clickInteraction: false,
+                currentExpression: '默认', currentMotion: '默认',
+                lipSyncActive: false, bubbleText: '无',
+              }
+            }
+          }
+        }
+      },
+      {
+        type: 'tool',
+        name: 'live2d5_get_preview',
+        description: '获取 Live2D 5 宠物窗口预览截图',
+        priority: 10,
+        moduleId: this.id,
+        parameters: {
+          type: 'object',
+          properties: {},
+          required: []
+        },
+        handler: {
+          execute: async () => {
+            if (this.petWindow && !this.petWindow.isDestroyed()) {
+              const result = await this.petWindow.webContents.executeJavaScript(
+                `window.__cubism5Service?.getPreviewImage?.() ?? null`
+              ).catch(() => null)
+              return { success: true, data: result }
+            }
+            return { success: true, data: null }
+          }
+        }
+      },
+      {
+        type: 'tool',
+        name: 'live2d5_reload_model',
+        description: '重新加载当前 Live2D 5 模型（用于模型异常时恢复）',
+        priority: 10,
+        moduleId: this.id,
+        parameters: {
+          type: 'object',
+          properties: {},
+          required: []
+        },
+        handler: {
+          execute: async () => {
+            if (this.petWindow && !this.petWindow.isDestroyed()) {
+              const result = await this.petWindow.webContents.executeJavaScript(
+                `window.__cubism5Service?.reloadModel?.() ?? false`
               ).catch(() => false)
               return { success: result }
             }

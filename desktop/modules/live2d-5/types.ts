@@ -115,4 +115,19 @@ export interface Live2D5IPCChannels {
   'live2d5_get_models': () => Promise<{ success: boolean; data: Array<{ name: string; active: boolean; expressions: string[]; motionGroups: string[] }> }>
   'live2d5_switch_model': (args: { name: string }) => Promise<{ success: boolean; error?: string }>
   'live2d5_unload_model': (args: { name: string }) => Promise<{ success: boolean; error?: string }>
+  'live2d5_get_live_status': () => Promise<{
+    success: boolean
+    data: {
+      sdkLoaded: boolean
+      contextLost: boolean
+      mouseTracking: boolean
+      clickInteraction: boolean
+      currentExpression: string
+      currentMotion: string
+      lipSyncActive: boolean
+      bubbleText: string
+    }
+  }>
+  'live2d5_get_preview': () => Promise<{ success: boolean; data: string | null }>
+  'live2d5_reload_model': () => Promise<{ success: boolean; error?: string }>
 }

@@ -23,12 +23,40 @@ interface LoadedModel {
   motionGroups: string[]
 }
 
+interface LiveStatus {
+  sdkLoaded: boolean
+  contextLost: boolean
+  mouseTracking: boolean
+  clickInteraction: boolean
+  currentExpression: string
+  currentMotion: string
+  lipSyncActive: boolean
+  bubbleText: string
+}
+
+const defaultLiveStatus: LiveStatus = {
+  sdkLoaded: false,
+  contextLost: false,
+  mouseTracking: false,
+  clickInteraction: false,
+  currentExpression: '默认',
+  currentMotion: '默认',
+  lipSyncActive: false,
+  bubbleText: '无',
+}
+
 export function Live2D5Page() {
   const [status, setStatus] = useState<Live2D5Status>({ windowOpen: false })
   const [loading, setLoading] = useState(false)
   const [activeTab, setActiveTab] = useState('control')
   const [models, setModels] = useState<LoadedModel[]>([])
   const [modelsLoading, setModelsLoading] = useState(false)
+
+  // 控制面板新增状态
+  const [liveStatus, setLiveStatus] = useState<LiveStatus>(defaultLiveStatus)
+  const [previewImage, setPreviewImage] = useState<string | null>(null)
+  const [refreshing, setRefreshing] = useState(false)
+  const [reloading, setReloading] = useState(false)
 
   /** 查询状态 */
   const refreshStatus = useCallback(async () => {
@@ -68,6 +96,32 @@ export function Live2D5Page() {
     }
   }, [status.windowOpen, refreshModels])
 
+  /** 刷新控制面板全部数据 */
+  const handleRefreshControl = useCallback(async () => {
+    setRefreshing(true)
+    try {
+      await refreshStatus()
+      const [statusRes, previewRes] = await Promise.all([
+        window.electronAPI.invoke('live2d5_get_live_status'),
+        window.electronAPI.invoke('live2d5_get_preview'),
+      ])
+      if (statusRes?.success && statusRes.data) {
+        setLiveStatus(statusRes.data)
+      }
+      if (previewRes?.success) {
+        setPreviewImage(previewRes.data)
+      }
+      // 同时刷新模型列表
+      if (status.windowOpen) {
+        const modelsRes = await window.electronAPI.invoke('live2d5_get_models')
+        if (modelsRes?.success && Array.isArray(modelsRes.data)) {
+          setModels(modelsRes.data)
+        }
+      }
+    } catch {}
+    setRefreshing(false)
+  }, [refreshStatus, status.windowOpen])
+
   /** 打开宠物窗口 */
   const handleOpen = useCallback(async () => {
     setLoading(true)
@@ -86,6 +140,8 @@ export function Live2D5Page() {
     try {
       await window.electronAPI.invoke('live2d5_close')
       await refreshStatus()
+      setLiveStatus(defaultLiveStatus)
+      setPreviewImage(null)
     } catch (err) {
       console.error('关闭 Live2D 5 窗口失败:', err)
     }
@@ -116,6 +172,22 @@ export function Live2D5Page() {
     setModelsLoading(false)
   }, [refreshModels])
 
+  /** 获取当前活跃模型 */
+  const activeModel = models.find(m => m.active)
+
+  /** 重新加载模型 */
+  const handleReloadModel = useCallback(async () => {
+    setReloading(true)
+    try {
+      await window.electronAPI.invoke('live2d5_reload_model')
+      // 重新加载后自动刷新数据
+      await handleRefreshControl()
+    } catch (err) {
+      console.error('重新加载模型失败:', err)
+    }
+    setReloading(false)
+  }, [handleRefreshControl])
+
   return (
     <div className="mod-page">
       <ModuleHeader
@@ -131,21 +203,10 @@ export function Live2D5Page() {
       />
 
       <div className="live2d5-content">
-        {/* ====== 控制面板 ====== */}
+        {/* ====== 控制面板（左右分栏） ====== */}
         {activeTab === 'control' && (
           <div className="live2d5-control-panel">
-            {/* 状态卡片 */}
-            <div className="live2d5-status-card">
-              <div className="live2d5-status-indicator">
-                <span className={`live2d5-status-dot ${status.windowOpen ? 'live2d5-status-dot--active' : ''}`} />
-                <span className="live2d5-status-text">
-                  {status.windowOpen ? '运行中' : '未启动'}
-                </span>
-              </div>
-              <span className="live2d5-version">Cubism 5 SDK R5 · 原生 WebGL</span>
-            </div>
-
-            {/* 操作按钮 */}
+            {/* 顶部操作栏 */}
             <div className="live2d5-actions">
               {status.windowOpen ? (
                 <button className="btn btn-danger" onClick={handleClose} disabled={loading}>
@@ -156,34 +217,158 @@ export function Live2D5Page() {
                   {loading ? '打开中...' : '打开宠物窗口'}
                 </button>
               )}
+              <button
+                className="btn btn-secondary"
+                onClick={handleRefreshControl}
+                disabled={refreshing || !status.windowOpen}
+              >
+                {refreshing ? '刷新中...' : '🔄 刷新'}
+              </button>
+              <button
+                className="btn btn-secondary"
+                onClick={handleReloadModel}
+                disabled={reloading || !status.windowOpen}
+              >
+                {reloading ? '重载中...' : '🔁 重载模型'}
+              </button>
             </div>
 
-            {/* 当前模型信息 */}
-            {status.windowOpen && models.length > 0 && (
-              <div className="live2d5-info">
-                <h4>当前模型</h4>
-                {models.filter(m => m.active).map(m => (
-                  <div key={m.name} style={{ marginTop: 8 }}>
-                    <div style={{ fontSize: 'var(--font-size-sm)', fontWeight: 600, color: 'var(--color-text-primary)' }}>
-                      {m.name}
+            {/* 左右分栏 */}
+            <div className="live2d5-control-layout">
+              {/* 左侧：模型预览 */}
+              <div className="live2d5-preview-side">
+                <div className="live2d5-preview-card">
+                  <div className="live2d5-preview-image">
+                    {previewImage ? (
+                      <img src={previewImage} alt="Live2D 预览" />
+                    ) : (
+                      <div className="live2d5-preview-placeholder">
+                        {status.windowOpen ? '点击刷新获取预览' : '宠物窗口未启动'}
+                      </div>
+                    )}
+                  </div>
+                  <div className="live2d5-preview-info">
+                    <span className="live2d5-preview-name">
+                      {activeModel?.name ?? '无模型'}
+                    </span>
+                    <span className="live2d5-preview-version">
+                      Live2D Cubism 5 模型
+                    </span>
+                    <span className="live2d5-preview-status">
+                      <span className={`live2d5-status-dot ${status.windowOpen ? 'live2d5-status-dot--active' : ''}`} />
+                      {status.windowOpen ? '模型就绪' : '未启动'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* 右侧：功能卡片 */}
+              <div className="live2d5-cards-side">
+                {/* 桌面宠物开关 */}
+                <div className="live2d5-feature-card">
+                  <div className="live2d5-card-header">
+                    <span className="live2d5-card-title">
+                      <span className="live2d5-card-icon">🖥️</span>
+                      桌面宠物
+                    </span>
+                    <button
+                      className={`live2d5-toggle ${status.windowOpen ? 'live2d5-toggle--active' : ''}`}
+                      onClick={status.windowOpen ? handleClose : handleOpen}
+                      disabled={loading}
+                      aria-label="切换桌面宠物"
+                    />
+                  </div>
+                  <div className="live2d5-card-desc">
+                    开启后将在桌面显示透明窗口的 Live2D 宠物
+                  </div>
+                </div>
+
+                {/* 模型信息 */}
+                <div className="live2d5-feature-card">
+                  <div className="live2d5-card-header">
+                    <span className="live2d5-card-title">
+                      <span className="live2d5-card-icon">📊</span>
+                      模型信息
+                    </span>
+                  </div>
+                  <div className="live2d5-info-grid">
+                    <div className="live2d5-info-item">
+                      <span className="live2d5-info-label">名称</span>
+                      <span className="live2d5-info-value">{activeModel?.name ?? '-'}</span>
                     </div>
-                    <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-tertiary)', marginTop: 4 }}>
-                      表情: {m.expressions.length} 个 · 动作组: {m.motionGroups.join(', ') || '无'}
+                    <div className="live2d5-info-item">
+                      <span className="live2d5-info-label">版本</span>
+                      <span className="live2d5-info-value">Cubism 5</span>
+                    </div>
+                    <div className="live2d5-info-item">
+                      <span className="live2d5-info-label">表情数</span>
+                      <span className="live2d5-info-value">{activeModel?.expressions.length ?? 0}</span>
+                    </div>
+                    <div className="live2d5-info-item">
+                      <span className="live2d5-info-label">动作数</span>
+                      <span className="live2d5-info-value">
+                        {activeModel?.motionGroups.reduce((sum, g) => sum + 1, 0) ?? 0}
+                      </span>
+                    </div>
+                    <div className="live2d5-info-item">
+                      <span className="live2d5-info-label">鼠标跟随</span>
+                      <span className="live2d5-info-value">{liveStatus.mouseTracking ? '开启' : '关闭'}</span>
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
+                </div>
 
-            {/* 说明 */}
-            <div className="live2d5-info" style={{ marginTop: 'var(--spacing-md)' }}>
-              <h4>关于 Live2D Cubism 5</h4>
-              <ul>
-                <li>基于 Cubism 5 SDK for Web R5</li>
-                <li>原生 WebGL 渲染，不依赖 pixi.js</li>
-                <li>独立窗口运行，与旧版 Live2D 完全隔离</li>
-                <li>支持表情切换、动作播放、鼠标跟随</li>
-              </ul>
+                {/* 宠物实时状态 */}
+                <div className="live2d5-feature-card">
+                  <div className="live2d5-card-header">
+                    <span className="live2d5-card-title">
+                      <span className="live2d5-card-icon">🐾</span>
+                      宠物实时状态
+                    </span>
+                  </div>
+                  <div className="live2d5-status-grid">
+                    <div className="live2d5-status-item">
+                      <span className="live2d5-status-label">库加载</span>
+                      <span className="live2d5-status-value">
+                        <span className={`live2d5-status-dot ${liveStatus.sdkLoaded ? 'live2d5-status-dot--active' : 'live2d5-status-dot--off'}`} />
+                        {liveStatus.sdkLoaded ? '已加载' : '等待中'}
+                      </span>
+                    </div>
+                    <div className="live2d5-status-item">
+                      <span className="live2d5-status-label">鼠标跟随</span>
+                      <span className="live2d5-status-value">
+                        <span className={`live2d5-status-dot ${liveStatus.mouseTracking ? 'live2d5-status-dot--active' : 'live2d5-status-dot--off'}`} />
+                        {liveStatus.mouseTracking ? '开启' : '关闭'}
+                      </span>
+                    </div>
+                    <div className="live2d5-status-item">
+                      <span className="live2d5-status-label">点击交互</span>
+                      <span className="live2d5-status-value">
+                        <span className={`live2d5-status-dot ${liveStatus.clickInteraction ? 'live2d5-status-dot--active' : 'live2d5-status-dot--off'}`} />
+                        {liveStatus.clickInteraction ? '开启' : '关闭'}
+                      </span>
+                    </div>
+                    <div className="live2d5-status-item">
+                      <span className="live2d5-status-label">当前表情</span>
+                      <span className="live2d5-status-value">{liveStatus.currentExpression}</span>
+                    </div>
+                    <div className="live2d5-status-item">
+                      <span className="live2d5-status-label">当前动作</span>
+                      <span className="live2d5-status-value">{liveStatus.currentMotion}</span>
+                    </div>
+                    <div className="live2d5-status-item">
+                      <span className="live2d5-status-label">嘴型同步</span>
+                      <span className="live2d5-status-value">
+                        <span className={`live2d5-status-dot ${liveStatus.lipSyncActive ? 'live2d5-status-dot--active' : 'live2d5-status-dot--off'}`} />
+                        {liveStatus.lipSyncActive ? '开启' : '关闭'}
+                      </span>
+                    </div>
+                    <div className="live2d5-status-item">
+                      <span className="live2d5-status-label">对话气泡</span>
+                      <span className="live2d5-status-value">{liveStatus.bubbleText}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         )}

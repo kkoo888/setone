@@ -496,6 +496,91 @@ class Cubism5Service {
   }
 
   /**
+   * 获取实时状态（供管理页面刷新按钮使用）
+   */
+  getLiveStatus(): {
+    sdkLoaded: boolean
+    contextLost: boolean
+    mouseTracking: boolean
+    clickInteraction: boolean
+    currentExpression: string
+    currentMotion: string
+    lipSyncActive: boolean
+    bubbleText: string
+  } {
+    return {
+      sdkLoaded: this.sdkLoaded,
+      contextLost: this.contextLost,
+      mouseTracking: this.model != null,
+      clickInteraction: this.model != null,
+      currentExpression: this.model?.getCurrentExpression?.() ?? '默认',
+      currentMotion: this.model?.getCurrentMotion?.() ?? '默认',
+      lipSyncActive: false,
+      bubbleText: '无',
+    }
+  }
+
+  /**
+   * 截取当前 canvas 为 base64 图片（供管理页面预览）
+   */
+  getPreviewImage(): string | null {
+    if (!this.canvas) return null
+    try {
+      return this.canvas.toDataURL('image/png')
+    } catch {
+      return null
+    }
+  }
+
+  /**
+   * 重新加载当前模型（用于模型异常时手动恢复）
+   */
+  async reloadModel(): Promise<boolean> {
+    if (!this._activeModelName || !this._modelPath) {
+      console.warn('[Cubism5] 无活跃模型，无法重新加载')
+      return false
+    }
+    const name = this._activeModelName
+    const path = this._modelPath
+    const scale = this._modelScale
+
+    // 销毁旧模型
+    const oldModel = this._models.get(name)
+    if (oldModel) {
+      oldModel.releaseAll()
+      this._models.delete(name)
+    }
+    this._activeModelName = null
+
+    // 停止渲染循环
+    if (this.animFrameId !== null) {
+      cancelAnimationFrame(this.animFrameId)
+      this.animFrameId = null
+    }
+
+    try {
+      this.updateState('loading')
+      this.initFramework()
+
+      const appModel = new AppModel()
+      await appModel.loadAssets(path, scale, this.gl)
+
+      this._models.set(name, appModel)
+      this._activeModelName = name
+      this.lastUpdateTime = performance.now() / 1000
+
+      this.updateState('loaded')
+      this.startRenderLoop()
+      console.log(`[Cubism5] ✅ 模型重新加载完成: ${name}`)
+      return true
+    } catch (err) {
+      console.error('[Cubism5] ❌ 模型重新加载失败:', err)
+      this.updateState('error')
+      return false
+    }
+  }
+
+  /**
    * 销毁 — 释放所有资源
    */
   destroy(): void {

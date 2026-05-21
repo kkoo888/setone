@@ -90,6 +90,10 @@ export class AppModel extends CubismUserModel {
   private _eyeBlinkIds: CubismIdHandle[] = []
   private _lipSyncIds: CubismIdHandle[] = []
 
+  // ★ 新增：当前播放状态追踪
+  private _currentExpression: string = ''
+  private _currentMotion: string = ''
+
   // ★ 新增：WAV 音频处理器（用于 LipSync）
   private _wavFileHandler: WavFileHandler = new WavFileHandler()
 
@@ -107,6 +111,16 @@ export class AppModel extends CubismUserModel {
   /** 动作分组列表 */
   get motionGroups(): Array<{ group: string; names: string[] }> {
     return this._motionGroups
+  }
+
+  /** 当前播放的表情名称 */
+  getCurrentExpression(): string {
+    return this._currentExpression || '默认'
+  }
+
+  /** 当前播放的动作名称 */
+  getCurrentMotion(): string {
+    return this._currentMotion || '默认'
   }
 
   /**
@@ -575,6 +589,7 @@ export class AppModel extends CubismUserModel {
     const motion = this._expressionCache.get(name)
     if (motion) {
       this._expressionManager.startMotion(motion, false)
+      this._currentExpression = name
     } else {
       console.warn(`[AppModel] 表情 "${name}" 未找到`)
     }
@@ -618,6 +633,7 @@ export class AppModel extends CubismUserModel {
     this.playMotionSound(name)
 
     this._motionManager.startMotionPriority(motion, false, priority)
+    this._currentMotion = name
   }
 
   /**
@@ -689,6 +705,7 @@ export class AppModel extends CubismUserModel {
     // 待机动作循环
     if (this._motionManager.isFinished()) {
       this.startRandomMotion('Idle', PriorityIdle)
+      this._currentMotion = 'Idle'
     } else {
       // ★ 修复：捕获 updateMotion 返回值（与 Demo 一致）
       this._motionUpdated = this._motionManager.updateMotion(model, deltaTimeSeconds)

@@ -7,6 +7,211 @@
   flex: 1;
 }
 
+/* === 控制面板左右分栏布局 === */
+.live2d5-control-layout {
+  display: flex;
+  gap: var(--spacing-lg);
+  align-items: flex-start;
+}
+
+.live2d5-preview-side {
+  flex: 0 0 280px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.live2d5-cards-side {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  min-width: 0;
+}
+
+/* === 模型预览卡片 === */
+.live2d5-preview-card {
+  background: linear-gradient(135deg, #fce4ec 0%, #e3f2fd 100%);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 320px;
+}
+
+.live2d5-preview-image {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-md);
+  min-height: 220px;
+}
+
+.live2d5-preview-image img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: var(--radius-md);
+}
+
+.live2d5-preview-placeholder {
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-sm);
+  text-align: center;
+}
+
+.live2d5-preview-info {
+  background: white;
+  padding: var(--spacing-md) var(--spacing-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.live2d5-preview-name {
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.live2d5-preview-version {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+}
+
+.live2d5-preview-status {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+}
+
+/* === 功能卡片通用样式 === */
+.live2d5-feature-card {
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-md) var(--spacing-lg);
+}
+
+.live2d5-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-sm);
+}
+
+.live2d5-card-title {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.live2d5-card-icon {
+  font-size: var(--font-size-md);
+}
+
+.live2d5-card-desc {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+  margin-bottom: var(--spacing-sm);
+}
+
+/* === Toggle 开关 === */
+.live2d5-toggle {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  background: var(--color-text-tertiary);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+  border: none;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.live2d5-toggle--active {
+  background: var(--color-primary);
+}
+
+.live2d5-toggle::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  background: white;
+  border-radius: var(--radius-full);
+  transition: transform var(--transition-fast);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.live2d5-toggle--active::after {
+  transform: translateX(20px);
+}
+
+/* === 信息网格 === */
+.live2d5-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-sm) var(--spacing-lg);
+}
+
+.live2d5-info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: var(--font-size-xs);
+}
+
+.live2d5-info-label {
+  color: var(--color-text-tertiary);
+}
+
+.live2d5-info-value {
+  color: var(--color-text-primary);
+  font-weight: 500;
+}
+
+/* === 状态网格 === */
+.live2d5-status-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-sm) var(--spacing-lg);
+}
+
+.live2d5-status-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: var(--font-size-xs);
+}
+
+.live2d5-status-label {
+  color: var(--color-text-tertiary);
+}
+
+.live2d5-status-value {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  color: var(--color-text-primary);
+  font-weight: 500;
+}
+
+/* === 状态指示灯 === */
+.live2d5-status-dot--off {
+  background: var(--color-error, #ef4444);
+  box-shadow: 0 0 6px rgba(239, 68, 68, 0.3);
+}
+
 /* === 状态卡片 === */
 .live2d5-status-card {
   display: flex;
@@ -130,7 +335,30 @@
   box-shadow: 0 0 8px rgba(34, 197, 94, 0.3);
 }
 
+[data-theme='dark'] .live2d5-preview-card {
+  background: linear-gradient(135deg, #2d1f2f 0%, #1f2d3d 100%);
+}
+
+[data-theme='dark'] .live2d5-preview-info {
+  background: var(--color-bg-secondary);
+}
+
+[data-theme='dark'] .live2d5-feature-card {
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
 /* === 响应式 === */
+@media (max-width: 768px) {
+  .live2d5-control-layout {
+    flex-direction: column;
+  }
+
+  .live2d5-preview-side {
+    flex: none;
+    width: 100%;
+  }
+}
+
 @media (max-width: 600px) {
   .live2d5-content {
     padding: var(--spacing-md);
@@ -140,6 +368,11 @@
     flex-direction: column;
     align-items: flex-start;
     gap: var(--spacing-sm);
+  }
+
+  .live2d5-info-grid,
+  .live2d5-status-grid {
+    grid-template-columns: 1fr;
   }
 }
 
