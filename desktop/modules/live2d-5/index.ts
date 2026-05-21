@@ -257,11 +257,17 @@ export default class Live2D5Module implements Module {
       }
       try {
         const result = await this.petWindow.webContents.executeJavaScript(
-          `window.__cubism5Service?.loadModel?.({
-            name: ${JSON.stringify(args.name)},
-            modelPath: ${JSON.stringify(args.modelPath)},
-            scale: 0.6
-          }, document.querySelector('div')).then(() => true).catch(e => e.message) ?? 'service 不可用'`
+          `(async () => {
+            const container = document.querySelector('canvas')?.parentElement || document.querySelector('div');
+            const svc = window.__cubism5Service;
+            if (!svc) return 'service 不可用';
+            await svc.loadModel({
+              name: ${JSON.stringify(args.name)},
+              modelPath: ${JSON.stringify(args.modelPath)},
+              scale: 0.6
+            }, container);
+            return true;
+          })().catch(e => e.message)`
         ).catch(() => '执行失败')
         if (result === true) {
           return { success: true, message: `模型 "${args.name}" 已加载` }
@@ -706,11 +712,17 @@ export default class Live2D5Module implements Module {
             }
             try {
               const result = await this.petWindow.webContents.executeJavaScript(
-                `window.__cubism5Service?.loadModel?.({
-                  name: ${JSON.stringify(name)},
-                  modelPath: ${JSON.stringify(modelPath)},
-                  scale: 0.6
-                }, document.querySelector('div')).then(() => true).catch(e => e.message) ?? 'service 不可用'`
+                `(async () => {
+                  const container = document.querySelector('canvas')?.parentElement || document.querySelector('div');
+                  const svc = window.__cubism5Service;
+                  if (!svc) return 'service 不可用';
+                  await svc.loadModel({
+                    name: ${JSON.stringify(name)},
+                    modelPath: ${JSON.stringify(modelPath)},
+                    scale: 0.6
+                  }, container);
+                  return true;
+                })().catch(e => e.message)`
               ).catch(() => '执行失败')
               if (result === true) {
                 return { success: true, message: `模型 "${name}" 已加载` }

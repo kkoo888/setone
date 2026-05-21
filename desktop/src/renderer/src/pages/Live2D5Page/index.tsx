@@ -8,7 +8,7 @@
 import React, { useState, useCallback, useEffect } from 'react'
 import { FolderOpen, SettingOne } from '../../utils/statusMessages'
 import { ModuleHeader } from '../../components/common/module/ModuleHeader'
-import { Modal } from '../../components/common/Modal'
+import { ModuleModal } from '../../components/common/module/ModuleList'
 
 const folderI = React.createElement(FolderOpen, { size: 14, fill: 'currentColor', theme: 'outline' })
 const settingI = React.createElement(SettingOne, { size: 14, fill: 'currentColor', theme: 'outline' })
@@ -632,8 +632,7 @@ export function Live2D5Page() {
             )}
 
             {/* 添加模型弹窗 */}
-            <Modal
-              open={showAddModel}
+            {showAddModel && <ModuleModal
               onClose={handleCloseAddModel}
               title="添加模型"
               footer={
@@ -746,7 +745,7 @@ export function Live2D5Page() {
                   </div>
                 )}
               </div>
-            </Modal>
+            </ModuleModal>}
           </div>
         )}
 
