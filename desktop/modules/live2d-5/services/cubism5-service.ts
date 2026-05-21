@@ -245,15 +245,6 @@ class Cubism5Service {
       // 加载动作和表情配置
       this.loadMotionAndExpressionConfig(this.cachedModelJson)
 
-      // 预加载 shader（等待完成再启动渲染，避免空跑循环）
-      console.log('[Cubism5] 🔄 预加载 shader...')
-      const shaderReady = await this.renderer.waitForShaders(10000)
-      if (shaderReady) {
-        console.log('[Cubism5] ✅ shader 加载完成')
-      } else {
-        console.warn('[Cubism5] ⚠️ shader 加载超时，渲染可能异常')
-      }
-
       // 通过 ModelMatrix 应用缩放
       const scale = config.scale ?? DEFAULT_MODEL_SCALE
       await this.applyModelScale(scale)
@@ -509,6 +500,9 @@ class Cubism5Service {
     renderer.initialize(this.model as unknown as import('../lib/model/cubismmodel').CubismModel)
     renderer.startUp(this.gl)
     renderer.setIsPremultipliedAlpha(true)
+
+    // 加载 shader（SDK 内部异步加载，渲染时自动等待就绪）
+    renderer.loadShaders()
 
     // 存储 renderer 引用（纹理绑定和渲染都需要）
     this.renderer = renderer
