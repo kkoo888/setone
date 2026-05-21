@@ -11,6 +11,8 @@
 
 import { AppModel } from './AppModel'
 import type { Cubism5ModelState, Cubism5ModelConfig, StateCallback, MotionGroup } from '../types'
+// ★ 修复 Vite 警告：静态导入 CubismFramework
+import { CubismFramework } from '../lib/live2dcubismframework'
 
 // ============ 常量 ============
 
@@ -31,8 +33,15 @@ class Cubism5Service {
   private sdkLoaded = false
   private animFrameId: number | null = null
 
-  // 核心对象
-  private model: AppModel | null = null
+  // ★ 修复 #11：多模型管理
+  private _models: Map<string, AppModel> = new Map()
+  private _activeModelName: string | null = null
+
+  // 当前活跃模型的便捷访问
+  private get model(): AppModel | null {
+    return this._activeModelName ? (this._models.get(this._activeModelName) ?? null) : null
+  }
+
   private gl: WebGLRenderingContext | WebGL2RenderingContext | null = null
   private canvas: HTMLCanvasElement | null = null
 
@@ -109,19 +118,17 @@ class Cubism5Service {
   }
 
   /**
-   * 初始化 Cubism 5 Framework
+   * ★ Vite 警告修复：CubismFramework 已静态导入，直接使用
    */
-  private async initFramework(): Promise<void> {
+  private initFramework(): void {
     console.log('[Cubism5] 🔄 初始化 Cubism Framework...')
-    const frameworkModule = await import('../lib/live2dcubismframework')
-    const CubismFramework = frameworkModule.CubismFramework ?? frameworkModule.default
-
     if (CubismFramework.startUp) CubismFramework.startUp()
     if (CubismFramework.initialize) CubismFramework.initialize()
   }
 
   /**
    * 加载模型（使用 AppModel 标准流程）
+   * ★ 修复 #11：支持多模型管理
    */
   async loadModel(config: Cubism5ModelConfig, container: HTMLElement): Promise<void> {
     console.log('[Cubism5] 🚀 loadModel 开始, config:', JSON.stringify({ name: config.name, modelPath: config.modelPath, scale: config.scale }))
@@ -135,8 +142,8 @@ class Cubism5Service {
     this._modelScale = config.scale ?? DEFAULT_MODEL_SCALE
 
     try {
-      // 初始化 Framework
-      await this.initFramework()
+      // 初始化 Framework（静态导入，直接调用）
+      this.initFramework()
 
       // 获取或创建 canvas
       this.canvas = container.querySelector('canvas') as HTMLCanvasElement
@@ -156,12 +163,23 @@ class Cubism5Service {
       // 注册上下文丢失/恢复事件
       this.registerContextEvents()
 
+      // ★ 修复 #11：如果同名模型已存在，先销毁旧的
+      if (this._models.has(config.name)) {
+        const oldModel = this._models.get(config.name)!
+        oldModel.releaseAll()
+        this._models.delete(config.name)
+      }
+
       // 创建 AppModel 并加载所有资源
-      this.model = new AppModel()
-      await this.model.loadAssets(config.modelPath, this._modelScale)
+      const appModel = new AppModel()
+      await appModel.loadAssets(config.modelPath, this._modelScale)
+
+      // ★ 修复 #11：存入模型管理 Map
+      this._models.set(config.name, appModel)
+      this._activeModelName = config.name
 
       // 渲染器需要 GL 上下文 — 调用 startUp
-      const renderer = this.model.getRenderer()
+      const renderer = appModel.getRenderer()
       if (renderer) {
         renderer.startUp(this.gl)
         renderer.setIsPremultipliedAlpha(true)
@@ -172,8 +190,8 @@ class Cubism5Service {
 
       this.updateState('loaded')
       console.log('[Cubism5] ✅ 模型加载完成:', config.name)
-      console.log('[Cubism5] 📋 表情:', this.model.expressionNames)
-      console.log('[Cubism5] 📋 动作组:', this.model.motionGroups)
+      console.log('[Cubism5] 📋 表情:', appModel.expressionNames)
+      console.log('[Cubism5] 📋 动作组:', appModel.motionGroups)
 
       // 开始渲染循环
       this.startRenderLoop()
@@ -182,6 +200,27 @@ class Cubism5Service {
       this.updateState('error')
       throw err
     }
+  }
+
+  /**
+   * ★ 新增 #11：切换活跃模型
+   */
+  switchModel(name: string): boolean {
+    if (!this._models.has(name)) {
+      console.warn(`[Cubism5] 模型 "${name}" 未找到`)
+      return false
+    }
+    this._activeModelName = name
+    const appModel = this._models.get(name)!
+    // 重新绑定渲染器到当前 GL
+    if (this.gl) {
+      const renderer = appModel.getRenderer()
+      if (renderer) {
+        renderer.startUp(this.gl)
+      }
+    }
+    console.log(`[Cubism5] ✅ 切换到模型: ${name}`)
+    return true
   }
 
   /**
@@ -316,7 +355,7 @@ class Cubism5Service {
   }
 
   /**
-   * 切换表情
+   * 切换表情（操作当前活跃模型）
    */
   async setExpression(expressionId: string): Promise<void> {
     if (!this.model) {
@@ -328,7 +367,7 @@ class Cubism5Service {
   }
 
   /**
-   * 播放动作
+   * 播放动作（操作当前活跃模型）
    */
   async playMotion(motionId: string): Promise<void> {
     if (!this.model) {
@@ -340,7 +379,28 @@ class Cubism5Service {
   }
 
   /**
+   * ★ 新增 #7：点击事件（设备坐标 → 逻辑坐标 → hitTest）
+   */
+  onTap(deviceX: number, deviceY: number): void {
+    if (!this.model) return
+    const logicalX = this.model.transformViewX(deviceX)
+    const logicalY = this.model.transformViewY(deviceY)
+    this.model.onTap(logicalX, logicalY)
+  }
+
+  /**
+   * ★ 新增 #7：命中检测（设备坐标 → 逻辑坐标 → hitTest）
+   */
+  hitTest(hitAreaName: string, deviceX: number, deviceY: number): boolean {
+    if (!this.model) return false
+    const logicalX = this.model.transformViewX(deviceX)
+    const logicalY = this.model.transformViewY(deviceY)
+    return this.model.hitTest(hitAreaName, logicalX, logicalY)
+  }
+
+  /**
    * 销毁 — 释放所有资源
+   * ★ 修复 #11：释放所有模型
    */
   destroy(): void {
     // 停止渲染循环
@@ -349,11 +409,12 @@ class Cubism5Service {
       this.animFrameId = null
     }
 
-    // 释放模型
-    if (this.model) {
-      this.model.releaseAll()
-      this.model = null
+    // ★ 修复 #11：释放所有模型
+    for (const [name, appModel] of this._models) {
+      appModel.releaseAll()
     }
+    this._models.clear()
+    this._activeModelName = null
 
     // 释放 WebGL 上下文
     if (this.gl) {
