@@ -130,7 +130,7 @@ class Cubism5Service {
 
   /**
    * 加载模型（使用 AppModel 标准流程）
-   * ★ 关键修复：先获取 GL → 再 loadAssets(gl) → 纹理加载时 _gl 已就绪
+   * ★ 关键修复：先获取 GL → 再 loadAssets(gl) → 纹理加载时 renderer.gl 已就绪
    */
   async loadModel(config: Cubism5ModelConfig, container: HTMLElement): Promise<void> {
     console.log('[Cubism5] 🚀 loadModel 开始, config:', JSON.stringify({ name: config.name, modelPath: config.modelPath, scale: config.scale }))
