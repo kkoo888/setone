@@ -167,7 +167,7 @@ export class AppModel extends CubismUserModel {
       this.getRenderer().setIsPremultipliedAlpha(true)
     }
 
-    // 7. 加载纹理（此时 renderer._gl 已就绪）
+    // 7. 加载纹理（此时 renderer.gl 已就绪）
     await this.loadTextures()
 
     // 8. 加载物理演算
