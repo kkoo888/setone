@@ -91,6 +91,39 @@ export default class Live2D5Module implements Module {
     ipcMain.handle('live2d5:request-drag', async () => {
       this.startWindowDrag()
     })
+
+    // ★ 新增：获取已加载模型列表
+    ipcMain.handle('live2d5_get_models', async () => {
+      if (this.petWindow && !this.petWindow.isDestroyed()) {
+        const result = await this.petWindow.webContents.executeJavaScript(
+          `window.__cubism5Service?.getLoadedModels?.() ?? []`
+        ).catch(() => [])
+        return { success: true, data: result }
+      }
+      return { success: true, data: [] }
+    })
+
+    // ★ 新增：切换模型
+    ipcMain.handle('live2d5_switch_model', async (_event, args: { name: string }) => {
+      if (this.petWindow && !this.petWindow.isDestroyed()) {
+        const result = await this.petWindow.webContents.executeJavaScript(
+          `window.__cubism5Service?.switchModel?.("${args.name}") ?? false`
+        ).catch(() => false)
+        return { success: result }
+      }
+      return { success: false, error: '宠物窗口未打开' }
+    })
+
+    // ★ 新增：卸载模型（释放 GPU 资源）
+    ipcMain.handle('live2d5_unload_model', async (_event, args: { name: string }) => {
+      if (this.petWindow && !this.petWindow.isDestroyed()) {
+        const result = await this.petWindow.webContents.executeJavaScript(
+          `window.__cubism5Service?.unloadModel?.("${args.name}") ?? false`
+        ).catch(() => false)
+        return { success: result }
+      }
+      return { success: false, error: '宠物窗口未打开' }
+    })
   }
 
   /** 注销 IPC handlers */
@@ -102,6 +135,9 @@ export default class Live2D5Module implements Module {
     ipcMain.removeHandler('live2d5_motion')
     ipcMain.removeHandler('live2d5_start_drag')
     ipcMain.removeHandler('live2d5:request-drag')
+    ipcMain.removeHandler('live2d5_get_models')
+    ipcMain.removeHandler('live2d5_switch_model')
+    ipcMain.removeHandler('live2d5_unload_model')
   }
 
   getCapabilities(): Capability[] {
@@ -226,6 +262,81 @@ export default class Live2D5Module implements Module {
             // 在主进程直接执行窗口拖拽
             this.startWindowDrag()
             return { success: true }
+          }
+        }
+      },
+      {
+        type: 'tool',
+        name: 'live2d5_get_models',
+        description: '获取已加载的 Live2D 5 模型列表',
+        priority: 10,
+        moduleId: this.id,
+        parameters: {
+          type: 'object',
+          properties: {},
+          required: []
+        },
+        handler: {
+          execute: async () => {
+            if (this.petWindow && !this.petWindow.isDestroyed()) {
+              const result = await this.petWindow.webContents.executeJavaScript(
+                `window.__cubism5Service?.getLoadedModels?.() ?? []`
+              ).catch(() => [])
+              return { success: true, data: result }
+            }
+            return { success: true, data: [] }
+          }
+        }
+      },
+      {
+        type: 'tool',
+        name: 'live2d5_switch_model',
+        description: '切换 Live2D 5 当前显示的模型',
+        priority: 10,
+        moduleId: this.id,
+        parameters: {
+          type: 'object',
+          properties: {
+            name: { type: 'string', description: '模型名称' }
+          },
+          required: ['name']
+        },
+        handler: {
+          execute: async (p) => {
+            const { name } = p as { name: string }
+            if (this.petWindow && !this.petWindow.isDestroyed()) {
+              const result = await this.petWindow.webContents.executeJavaScript(
+                `window.__cubism5Service?.switchModel?.("${name}") ?? false`
+              ).catch(() => false)
+              return { success: result }
+            }
+            return { success: false, error: '宠物窗口未打开' }
+          }
+        }
+      },
+      {
+        type: 'tool',
+        name: 'live2d5_unload_model',
+        description: '卸载指定 Live2D 5 模型并释放 GPU 资源',
+        priority: 10,
+        moduleId: this.id,
+        parameters: {
+          type: 'object',
+          properties: {
+            name: { type: 'string', description: '模型名称' }
+          },
+          required: ['name']
+        },
+        handler: {
+          execute: async (p) => {
+            const { name } = p as { name: string }
+            if (this.petWindow && !this.petWindow.isDestroyed()) {
+              const result = await this.petWindow.webContents.executeJavaScript(
+                `window.__cubism5Service?.unloadModel?.("${name}") ?? false`
+              ).catch(() => false)
+              return { success: result }
+            }
+            return { success: false, error: '宠物窗口未打开' }
           }
         }
       }

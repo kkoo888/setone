@@ -96,6 +96,9 @@ export class AppModel extends CubismUserModel {
   // 帧内动作更新标志（与 Demo _motionUpdated 一致）
   private _motionUpdated: boolean = false
 
+  // ★ 新增：点击身体时播放的动作组名（从 model3.json 动态检测）
+  private _tapMotionGroup: string = 'TapBody'
+
   /** 表情名称列表 */
   get expressionNames(): string[] {
     return this._expressionNames
@@ -544,6 +547,16 @@ export class AppModel extends CubismUserModel {
         this._motionGroups.push({ group, names })
       }
     }
+
+    // ★ 新增：动态检测点击动作组（优先 TapBody，不存在则用第一个非 Idle 组）
+    const tapCandidate = this._motionGroups.find(g => g.group === 'TapBody')
+    if (tapCandidate) {
+      this._tapMotionGroup = 'TapBody'
+    } else {
+      const firstNonIdle = this._motionGroups.find(g => g.group !== 'Idle')
+      this._tapMotionGroup = firstNonIdle?.group ?? ''
+    }
+    console.log(`[AppModel] 📋 点击动作组: ${this._tapMotionGroup || '(无)'}`)
   }
 
   /** 应用缩放 */
@@ -756,8 +769,8 @@ export class AppModel extends CubismUserModel {
   onTap(x: number, y: number): void {
     if (this.hitTest('Head', x, y)) {
       this.setRandomExpression()
-    } else if (this.hitTest('Body', x, y)) {
-      this.startRandomMotion('TapBody', PriorityNormal)
+    } else if (this.hitTest('Body', x, y) && this._tapMotionGroup) {
+      this.startRandomMotion(this._tapMotionGroup, PriorityNormal)
     }
   }
 

@@ -142,3 +142,32 @@
     gap: var(--spacing-sm);
   }
 }
+
+/* === 模型管理面板 === */
+.live2d5-models-panel .live2d5-status-card {
+  transition: border-color var(--transition-fast);
+}
+
+.live2d5-models-panel .live2d5-status-card:hover {
+  border-color: var(--color-primary);
+}
+
+.live2d5-models-panel .btn {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.live2d5-models-panel .btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.live2d5-models-panel .btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

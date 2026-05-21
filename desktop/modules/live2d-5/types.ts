@@ -106,4 +106,13 @@ export interface Live2D5IPCChannels {
   'live2d5:start-drag': () => Promise<void>
   'live2d5:request-drag': () => Promise<void>
   'live2d5:cleanup-done': () => void
+  'live2d5_open': () => Promise<{ success: boolean; message?: string; error?: string }>
+  'live2d5_close': () => Promise<{ success: boolean; message?: string; error?: string }>
+  'live2d5_status': () => Promise<{ success: boolean; data: { windowOpen: boolean } }>
+  'live2d5_expression': (args: { expressionId: string }) => Promise<{ success: boolean; message: string }>
+  'live2d5_motion': (args: { motionId: string }) => Promise<{ success: boolean; message: string }>
+  'live2d5_start_drag': () => Promise<{ success: boolean }>
+  'live2d5_get_models': () => Promise<{ success: boolean; data: Array<{ name: string; active: boolean; expressions: string[]; motionGroups: string[] }> }>
+  'live2d5_switch_model': (args: { name: string }) => Promise<{ success: boolean; error?: string }>
+  'live2d5_unload_model': (args: { name: string }) => Promise<{ success: boolean; error?: string }>
 }

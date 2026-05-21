@@ -218,6 +218,52 @@ class Cubism5Service {
   }
 
   /**
+   * 卸载指定模型并释放 GPU 资源
+   * 切换模型后调用此方法可释放不需要的模型内存
+   */
+  unloadModel(name: string): boolean {
+    const appModel = this._models.get(name)
+    if (!appModel) {
+      console.warn(`[Cubism5] 模型 "${name}" 未找到，无法卸载`)
+      return false
+    }
+
+    // 不能卸载当前活跃模型，需要先切换到其他模型
+    if (this._activeModelName === name) {
+      console.warn(`[Cubism5] 不能卸载当前活跃模型 "${name}"，请先切换到其他模型`)
+      return false
+    }
+
+    appModel.releaseAll()
+    this._models.delete(name)
+    console.log(`[Cubism5] ✅ 模型 "${name}" 已卸载，剩余模型: ${this._models.size}`)
+    return true
+  }
+
+  /**
+   * 获取已加载模型列表（名称 + 是否活跃）
+   */
+  getLoadedModels(): Array<{ name: string; active: boolean; expressions: string[]; motionGroups: string[] }> {
+    const result: Array<{ name: string; active: boolean; expressions: string[]; motionGroups: string[] }> = []
+    for (const [name, appModel] of this._models) {
+      result.push({
+        name,
+        active: name === this._activeModelName,
+        expressions: appModel.expressionNames,
+        motionGroups: appModel.motionGroups.map(g => g.group),
+      })
+    }
+    return result
+  }
+
+  /**
+   * 获取当前活跃模型名称
+   */
+  getActiveModelName(): string | null {
+    return this._activeModelName
+  }
+
+  /**
    * 注册 WebGL 上下文丢失/恢复事件
    */
   private registerContextEvents(): void {
@@ -492,3 +538,8 @@ class Cubism5Service {
 
 // 单例导出
 export const cubism5Service = new Cubism5Service()
+
+// 暴露到 window，供主进程 executeJavaScript 调用
+if (typeof window !== 'undefined') {
+  (window as unknown as Record<string, unknown>).__cubism5Service = cubism5Service
+}

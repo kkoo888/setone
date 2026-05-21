@@ -48,6 +48,24 @@
       "name": "live2d5_start_drag",
       "description": "开始拖拽 Live2D 5 宠物窗口",
       "priority": 10
+    },
+    {
+      "type": "tool",
+      "name": "live2d5_get_models",
+      "description": "获取已加载的 Live2D 5 模型列表",
+      "priority": 10
+    },
+    {
+      "type": "tool",
+      "name": "live2d5_switch_model",
+      "description": "切换 Live2D 5 当前显示的模型",
+      "priority": 10
+    },
+    {
+      "type": "tool",
+      "name": "live2d5_unload_model",
+      "description": "卸载指定 Live2D 5 模型并释放 GPU 资源",
+      "priority": 10
     }
   ],
   "consumes": []
