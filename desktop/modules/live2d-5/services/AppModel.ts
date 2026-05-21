@@ -263,9 +263,9 @@ export class AppModel extends CubismUserModel {
       const img = new Image()
       img.crossOrigin = 'anonymous'
       img.onload = () => {
-        // ★ 修复：通过 renderer 正规渠道获取 gl，而非直接访问内部属性
+        // ★ 修复：renderer 的 GL 属性是 gl（无下划线），不是 _gl
         const renderer = this.getRenderer() as any
-        const gl = renderer?._gl as WebGLRenderingContext | null
+        const gl = (renderer?.gl ?? renderer?._gl) as WebGLRenderingContext | null
         if (!gl) {
           console.warn(`[AppModel] ⚠️ GL 上下文不可用，跳过纹理: ${url}`)
           resolve(null)
