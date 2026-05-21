@@ -33,13 +33,6 @@ interface RegisteredModelEntry {
   hasPose?: boolean
 }
 
-// ★ 自定义协议：让 renderer 能通过 fetch() 加载本地绝对路径的模型文件
-// 必须在 app ready 之前注册 scheme
-protocol.registerSchemesAsPrivileged([{
-  scheme: 'local-file',
-  privileges: { standard: true, supportFetchAPI: true, corsEnabled: true }
-}])
-
 export default class Live2D5Module implements Module {
   id = 'live2d-5'
   meta!: import('../../src/main/types/module').ModuleMeta

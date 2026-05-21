@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog } from 'electron'
+import { app, BrowserWindow, dialog, protocol } from 'electron'
 import { join } from 'path'
 import { execSync } from 'child_process'
 import { existsSync } from 'fs'
@@ -96,6 +96,14 @@ function createWindow(config: ConfigManagerImpl | null): void {
     mainWindow = null
   })
 }
+
+/**
+ * 自定义协议 scheme 注册（必须在 app ready 之前）
+ * 模块可能需要自定义协议来加载本地文件，统一在这里注册
+ */
+protocol.registerSchemesAsPrivileged([
+  { scheme: 'local-file', privileges: { standard: true, supportFetchAPI: true, corsEnabled: true } }
+])
 
 /**
  * 应用主入口
