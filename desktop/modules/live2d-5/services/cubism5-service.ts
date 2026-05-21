@@ -50,6 +50,9 @@ class Cubism5Service {
   // WebGL 上下文丢失标志
   private contextLost = false
 
+  // ★ 新增：销毁标志，防止 destroy 后执行恢复逻辑
+  private destroyed = false
+
   // 时间追踪
   private lastUpdateTime = 0
 
@@ -142,6 +145,7 @@ class Cubism5Service {
     this.updateState('loading')
     this._modelPath = config.modelPath
     this._modelScale = config.scale ?? DEFAULT_MODEL_SCALE
+    this.destroyed = false  // ★ 重置销毁标志（支持重新加载）
 
     try {
       // 初始化 Framework
@@ -281,6 +285,7 @@ class Cubism5Service {
 
     this.canvas.addEventListener('webglcontextlost', (e) => {
       e.preventDefault()
+      if (this.destroyed) return  // ★ 销毁中，忽略
       console.warn('[Cubism5] ⚠️ WebGL 上下文丢失')
       this.contextLost = true
       if (this.animFrameId !== null) {
@@ -290,6 +295,7 @@ class Cubism5Service {
     })
 
     this.canvas.addEventListener('webglcontextrestored', () => {
+      if (this.destroyed) return  // ★ 销毁中，忽略
       console.log('[Cubism5] ✅ WebGL 上下文恢复')
       this.contextLost = false
       this.recoverFromContextLost()
@@ -344,7 +350,7 @@ class Cubism5Service {
    * 开始渲染循环
    */
   private startRenderLoop(): void {
-    if (this.animFrameId !== null) return
+    if (this.animFrameId !== null || this.destroyed) return
 
     const render = () => {
       this.renderFrame()
@@ -357,7 +363,7 @@ class Cubism5Service {
    * 渲染一帧
    */
   private renderFrame(): void {
-    if (!this.gl || !this.model || !this.canvas || this.contextLost) return
+    if (!this.gl || !this.model || !this.canvas || this.contextLost || this.destroyed) return
 
     const gl = this.gl
     const canvas = this.canvas
@@ -375,10 +381,12 @@ class Cubism5Service {
     gl.enable(gl.BLEND)
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 
-    // 计算 deltaTime
+    // 计算 deltaTime（★ 保护：钳制到合理范围，防止负值或过大跳帧）
     const now = performance.now() / 1000
-    const deltaTime = now - this.lastUpdateTime
+    let deltaTime = now - this.lastUpdateTime
     this.lastUpdateTime = now
+    if (deltaTime < 0) deltaTime = 0
+    if (deltaTime > 0.5) deltaTime = 0.5  // 最大 500ms，防止跳帧
 
     // 通过 AppModel.updateModel 统一调度所有效果
     this.model.updateModel(deltaTime)
@@ -653,8 +661,11 @@ class Cubism5Service {
 
   /**
    * 销毁 — 释放所有资源
+   * ★ 修复：先设 destroyed 标志，防止 loseContext 触发恢复逻辑
    */
   destroy(): void {
+    this.destroyed = true  // ★ 最先设置，防止后续任何恢复/渲染操作
+
     if (this.animFrameId !== null) {
       cancelAnimationFrame(this.animFrameId)
       this.animFrameId = null

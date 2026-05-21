@@ -33,6 +33,7 @@ import { CubismExpressionMotion } from '../lib/motion/cubismexpressionmotion'
 import { ACubismMotion } from '../lib/motion/acubismmotion'
 import { CubismTargetPoint } from '../lib/math/cubismtargetpoint'
 import { CubismRenderer_WebGL } from '../lib/rendering/cubismrenderer_webgl'
+import { CubismShaderManager_WebGL } from '../lib/rendering/cubismshader_webgl'
 import { CubismFramework } from '../lib/live2dcubismframework'
 import { CubismDefaultParameterId } from '../lib/cubismdefaultparameterid'
 import { CubismIdHandle } from '../lib/id/cubismid'
@@ -204,11 +205,42 @@ export class AppModel extends CubismUserModel {
     this.applyScale(scale)
 
     // 17. ★ 预热 shader（与 Demo 一致，避免首帧闪烁）
-    // ★ 修复：预热后检查 GL 错误，检测 shader 编译失败
+    // ★ 修复：等待 shader 异步加载完成后再继续，防止首帧空白
     if (gl) {
       this.getRenderer().loadShaders()
+
+      // 等待 shader 异步加载完成（最多 5 秒）
+      const maxWait = 5000
+      const startTime = Date.now()
+      while (Date.now() - startTime < maxWait) {
+        const shader = CubismShaderManager_WebGL.getInstance().getShader(gl)
+        if (shader?._isShaderLoaded) {
+          console.log('[AppModel] ✅ Shader 加载完成')
+          break
+        }
+        await new Promise(r => setTimeout(r, 50))
+      }
+
+      // ⑰ 验证 shader program 是否有效
+      const shader = CubismShaderManager_WebGL.getInstance().getShader(gl)
+      if (!shader?._isShaderLoaded) {
+        console.error('[AppModel] ❌ Shader 加载超时（5s），模型可能无法显示')
+      } else {
+        // 检查 shader program 是否编译成功
+        let failedPrograms = 0
+        for (const s of shader._shaderSets) {
+          if (s?.shaderProgram === 0 || s?.shaderProgram === null) {
+            failedPrograms++
+          }
+        }
+        if (failedPrograms > 0) {
+          console.error(`[AppModel] ❌ ${failedPrograms} 个 shader program 编译失败`)
+        }
+      }
+
+      // GL 错误检查
       const glError = gl.getError()
-      if (glError !== gl.NO_ERROR) {
+      if (glError !== gl.NO_ERROR && glError !== gl.CONTEXT_LOST_WEBGL) {
         console.warn(`[AppModel] ⚠️ Shader 预热后 GL 错误: 0x${glError.toString(16)}`)
       }
     }
