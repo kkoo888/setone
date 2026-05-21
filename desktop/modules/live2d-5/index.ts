@@ -221,6 +221,42 @@ export default class Live2D5Module implements Module {
       }
     })
 
+    // ★ 新增：加载扫描到的模型到宠物窗口
+    ipcMain.handle('live2d5_load_scanned_model', async (_event, args: { modelPath: string; name: string }) => {
+      if (!this.petWindow || this.petWindow.isDestroyed()) {
+        return { success: false, error: '宠物窗口未打开，请先打开宠物窗口' }
+      }
+      try {
+        const result = await this.petWindow.webContents.executeJavaScript(
+          `window.__cubism5Service?.loadModel?.({
+            name: ${JSON.stringify(args.name)},
+            modelPath: ${JSON.stringify(args.modelPath)},
+            scale: 0.6
+          }, document.querySelector('div')).then(() => true).catch(e => e.message) ?? 'service 不可用'`
+        ).catch(() => '执行失败')
+        if (result === true) {
+          return { success: true, message: `模型 "${args.name}" 已加载` }
+        }
+        return { success: false, error: typeof result === 'string' ? result : '加载失败' }
+      } catch (err) {
+        return { success: false, error: (err as Error).message }
+      }
+    })
+
+    // ★ 新增：打开文件夹选择对话框
+    ipcMain.handle('live2d5_select_directory', async () => {
+      const { dialog } = await import('electron')
+      const result = await dialog.showOpenDialog({
+        properties: ['openDirectory'],
+        title: '选择模型目录',
+        message: '选择包含 Live2D 模型的文件夹'
+      })
+      if (result.canceled || result.filePaths.length === 0) {
+        return { success: false, canceled: true }
+      }
+      return { success: true, filePath: result.filePaths[0] }
+    })
+
     // ★ 新增：重新加载当前模型
     ipcMain.handle('live2d5_reload_model', async () => {
       if (this.petWindow && !this.petWindow.isDestroyed()) {
@@ -248,6 +284,8 @@ export default class Live2D5Module implements Module {
     ipcMain.removeHandler('live2d5_get_live_status')
     ipcMain.removeHandler('live2d5_get_preview')
     ipcMain.removeHandler('live2d5_scan_model')
+    ipcMain.removeHandler('live2d5_load_scanned_model')
+    ipcMain.removeHandler('live2d5_select_directory')
     ipcMain.removeHandler('live2d5_reload_model')
   }
 
@@ -578,6 +616,70 @@ export default class Live2D5Module implements Module {
             } catch (err) {
               return { success: false, error: (err as Error).message }
             }
+          }
+        }
+      },
+      {
+        type: 'tool',
+        name: 'live2d5_load_scanned_model',
+        description: '加载扫描到的 Live2D5 模型到宠物窗口',
+        priority: 10,
+        moduleId: this.id,
+        parameters: {
+          type: 'object',
+          properties: {
+            modelPath: { type: 'string', description: '模型文件路径（model3.json）' },
+            name: { type: 'string', description: '模型名称' }
+          },
+          required: ['modelPath', 'name']
+        },
+        handler: {
+          execute: async (p) => {
+            const { modelPath, name } = p as { modelPath: string; name: string }
+            if (!this.petWindow || this.petWindow.isDestroyed()) {
+              return { success: false, error: '宠物窗口未打开，请先打开宠物窗口' }
+            }
+            try {
+              const result = await this.petWindow.webContents.executeJavaScript(
+                `window.__cubism5Service?.loadModel?.({
+                  name: ${JSON.stringify(name)},
+                  modelPath: ${JSON.stringify(modelPath)},
+                  scale: 0.6
+                }, document.querySelector('div')).then(() => true).catch(e => e.message) ?? 'service 不可用'`
+              ).catch(() => '执行失败')
+              if (result === true) {
+                return { success: true, message: `模型 "${name}" 已加载` }
+              }
+              return { success: false, error: typeof result === 'string' ? result : '加载失败' }
+            } catch (err) {
+              return { success: false, error: (err as Error).message }
+            }
+          }
+        }
+      },
+      {
+        type: 'tool',
+        name: 'live2d5_select_directory',
+        description: '打开文件夹选择对话框，选择包含 Live2D 模型的目录',
+        priority: 10,
+        moduleId: this.id,
+        parameters: {
+          type: 'object',
+          properties: {},
+          required: []
+        },
+        handler: {
+          execute: async () => {
+            const { dialog } = await import('electron')
+            const result = await dialog.showOpenDialog({
+              properties: ['openDirectory'],
+              title: '选择模型目录',
+              message: '选择包含 Live2D 模型的文件夹'
+            })
+            if (result.canceled || result.filePaths.length === 0) {
+              return { success: false, canceled: true }
+            }
+            return { success: true, filePath: result.filePaths[0] }
           }
         }
       },

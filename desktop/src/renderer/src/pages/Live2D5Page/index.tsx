@@ -35,6 +35,19 @@ interface LiveStatus {
   bubbleText: string
 }
 
+interface ScannedModel {
+  name: string
+  path: string
+  version?: number
+  textures?: number
+  expressions?: number
+  motions?: number
+  motionGroups?: string[]
+  hasPhysics?: boolean
+  hasPose?: boolean
+  error?: string
+}
+
 const defaultLiveStatus: LiveStatus = {
   sdkLoaded: false,
   contextLost: false,
@@ -63,9 +76,10 @@ export function Live2D5Page() {
   const [showAddModel, setShowAddModel] = useState(false)
   const [scanPath, setScanPath] = useState('')
   const [scanning, setScanning] = useState(false)
-  const [scanResult, setScanResult] = useState<any[] | null>(null)
+  const [scanResult, setScanResult] = useState<ScannedModel[] | null>(null)
   const [scanError, setScanError] = useState<string | null>(null)
   const [scanSuccess, setScanSuccess] = useState<string | null>(null)
+  const [loadingModel, setLoadingModel] = useState<string | null>(null)
 
   /** 查询状态 */
   const refreshStatus = useCallback(async () => {
@@ -221,6 +235,52 @@ export function Live2D5Page() {
     setScanning(false)
   }, [scanPath])
 
+  /** 加载扫描到的模型到宠物窗口 */
+  const handleLoadScannedModel = useCallback(async (modelPath: string, name: string) => {
+    setLoadingModel(name)
+    try {
+      const result = await window.electronAPI.invoke('live2d5_load_scanned_model', { modelPath, name })
+      if (result?.success) {
+        setScanSuccess(result.message || '模型加载成功')
+        await refreshModels()
+      } else {
+        setScanError(result?.error || '加载失败')
+      }
+    } catch (err) {
+      setScanError(err instanceof Error ? err.message : '加载出错')
+    }
+    setLoadingModel(null)
+  }, [refreshModels])
+
+  /** 选择文件夹并自动扫描 */
+  const handleSelectDirectory = useCallback(async () => {
+    try {
+      const result = await window.electronAPI.invoke('live2d5_select_directory')
+      if (result?.success && result.filePath) {
+        setScanPath(result.filePath)
+        // 选择后自动扫描
+        setScanning(true)
+        setScanError(null)
+        setScanSuccess(null)
+        setScanResult(null)
+        try {
+          const scanRes = await window.electronAPI.invoke('live2d5_scan_model', { dirPath: result.filePath })
+          if (scanRes?.success && Array.isArray(scanRes.data)) {
+            setScanResult(scanRes.data)
+            setScanSuccess(`扫描完成，找到 ${scanRes.data.length} 个模型`)
+          } else {
+            setScanError(scanRes?.error || '扫描失败')
+          }
+        } catch (err) {
+          setScanError(err instanceof Error ? err.message : '扫描出错')
+        }
+        setScanning(false)
+      }
+    } catch (err) {
+      console.error('选择目录失败:', err)
+    }
+  }, [])
+
   /** 提示信息自动消失 */
   useEffect(() => {
     if (scanError || scanSuccess) {
@@ -231,6 +291,13 @@ export function Live2D5Page() {
       return () => clearTimeout(timer)
     }
   }, [scanError, scanSuccess])
+
+  /** 进入模型管理 Tab 且宠物窗口未打开时，自动弹出添加模型弹窗 */
+  useEffect(() => {
+    if (activeTab === 'models' && !status.windowOpen) {
+      setShowAddModel(true)
+    }
+  }, [activeTab, status.windowOpen])
 
   return (
     <div className="mod-page">
@@ -543,12 +610,19 @@ export function Live2D5Page() {
                   <input
                     type="text"
                     className="live2d5-scan-input"
-                    placeholder="输入模型目录路径，如 /home/user/models"
+                    placeholder="输入或选择模型目录路径"
                     value={scanPath}
                     onChange={e => setScanPath(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && handleScanModel()}
                     disabled={scanning}
                   />
+                  <button
+                    className="btn btn-secondary"
+                    onClick={handleSelectDirectory}
+                    disabled={scanning}
+                  >
+                    📂 选择文件夹
+                  </button>
                   <button
                     className="btn btn-primary"
                     onClick={handleScanModel}
@@ -573,7 +647,7 @@ export function Live2D5Page() {
                 {/* 扫描结果 */}
                 {scanResult && scanResult.length > 0 && (
                   <div className="live2d5-scan-results">
-                    {scanResult.map((model: any, idx: number) => (
+                    {scanResult.map((model: ScannedModel, idx: number) => (
                       <div key={idx} className="live2d5-scan-card">
                         {model.error ? (
                           <div className="live2d5-scan-card-error">
@@ -584,7 +658,17 @@ export function Live2D5Page() {
                           <>
                             <div className="live2d5-scan-card-header">
                               <span className="live2d5-scan-card-name">{model.name}</span>
-                              <span className="live2d5-scan-card-version">v{model.version}</span>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)' }}>
+                                <span className="live2d5-scan-card-version">v{model.version}</span>
+                                <button
+                                  className="live2d5-scan-card-load"
+                                  onClick={() => handleLoadScannedModel(model.path, model.name)}
+                                  disabled={!status.windowOpen || loadingModel === model.name}
+                                  title={!status.windowOpen ? '请先打开宠物窗口' : '加载此模型'}
+                                >
+                                  {loadingModel === model.name ? '加载中...' : '加载'}
+                                </button>
+                              </div>
                             </div>
                             <div className="live2d5-scan-card-details">
                               <span>🎭 表情: {model.expressions}</span>
@@ -593,7 +677,7 @@ export function Live2D5Page() {
                               {model.hasPhysics && <span>⚙️ 物理演算</span>}
                               {model.hasPose && <span>🧍 姿态</span>}
                             </div>
-                            {model.motionGroups.length > 0 && (
+                            {model.motionGroups && model.motionGroups.length > 0 && (
                               <div className="live2d5-scan-card-groups">
                                 动作组: {model.motionGroups.join(', ')}
                               </div>

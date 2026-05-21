@@ -546,6 +546,24 @@
   color: var(--color-error, #ef4444);
 }
 
+/* === 扫描卡片加载按钮 === */
+.live2d5-scan-card-load {
+  flex-shrink: 0;
+  padding: 2px 10px;
+  font-size: var(--font-size-2xs);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  background: var(--color-primary);
+  color: white;
+  border: none;
+}
+
+.live2d5-scan-card-load:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 /* === 暗色主题适配（弹窗） === */
 [data-theme='dark'] .live2d5-scan-input {
   background: var(--color-bg-tertiary);
