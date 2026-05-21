@@ -147,6 +147,40 @@ description: 一句话描述。触发条件。
 - 原始文件路径
 ```
 
+### Phase 8 — 自动化任务
+
+初始化完成后自动触发：
+1. 通过 `openclaw system event` 触发 Agent 更新项目文档（聊天大记录、开发变更大记录、聊天详情大记录）
+2. 通过 `openclaw cron add --at +50m` 设置 50 分钟后自动提交 desktop 目录变更到 dev 分支
+
+```bash
+# 触发文档更新
+openclaw system event --text "[bootstrap 自动任务] ..." --mode now
+
+# 设置定时提交
+openclaw cron add --at "+50m" --name "setone-desktop-auto-commit" --session main --system-event "..." --delete-after-run
+```
+
+### Phase 9 — 应用新触发词
+
+创建完所有技能后，通过系统事件通知 Agent 应用新触发词：
+```bash
+openclaw system event --text "应用新触发词" --mode now
+```
+- 不需要重启 Gateway
+- Agent 收到后自动加载新技能触发词
+
+## 触发词机制
+
+每个 SKILL.md 的 `description` 字段包含触发词，OpenClaw 根据用户请求匹配：
+- "报错了" → systematic-debugging
+- "检查下" → code-review
+- "加个功能" → planning-and-execution
+- "改为" → architecture-review
+- 通用词（有问题、改一下等）→ 匹配最相关的技能
+
+触发词在 Phase 5 创建 SKILL.md 时写入，再次运行脚本会覆盖更新。
+
 ## 注意事项
 
 - SSH 密钥生成后需要用户手动添加到 GitHub
@@ -154,3 +188,5 @@ description: 一句话描述。触发条件。
 - GitHub 克隆的技能库在项目 skills/ 目录下（开发参考用）
 - 原生开发技能在 ~/.openclaw/skills/ 下（自动触发用）
 - 每个原生技能都包含「关联技能」章节，形成技能网络
+- Phase 8 需要 Gateway 运行中（openclaw system event / cron 依赖 Gateway）
+- Phase 9 发送系统事件后新触发词立即生效
