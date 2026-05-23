@@ -78,8 +78,9 @@ const Live2D5PetPage: React.FC = () => {
         width: '100vw',
         height: '100vh',
         overflow: 'hidden',
-        background: 'transparent',
+        background: 'rgba(30, 30, 50, 0.85)', // DEBUG: 临时背景色，验证窗口渲染
         position: 'relative',
+        borderRadius: 12,
       }}
     >
       {/* 模型渲染容器 */}
@@ -131,12 +132,30 @@ const Live2D5PetPage: React.FC = () => {
         </div>
       )}
 
+      {/* DEBUG: 状态指示器 */}
+      <div
+        style={{
+          position: 'absolute',
+          top: 8,
+          left: 8,
+          fontSize: 11,
+          color: state === 'error' ? '#ff6b6b' : state === 'ready' ? '#51cf66' : '#ffd43b',
+          pointerEvents: 'none',
+          background: 'rgba(0,0,0,0.5)',
+          padding: '2px 8px',
+          borderRadius: 4,
+          fontFamily: 'monospace',
+        }}
+      >
+        {state} {error ? `: ${error}` : ''}
+      </div>
+
       {/* Cubism 5 标识 */}
       <div
         style={{
           position: 'absolute',
-          top: 4,
-          right: 4,
+          top: 8,
+          right: 8,
           fontSize: 10,
           color: 'rgba(255,255,255,0.4)',
           pointerEvents: 'none',
