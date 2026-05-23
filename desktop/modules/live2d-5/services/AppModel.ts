@@ -872,15 +872,17 @@ export class AppModel extends CubismUserModel {
       // ★ 诊断：检查 drawable 状态
       const model = this.getModel()
       const count = model.getDrawableCount()
+      const renderOrders = model.getRenderOrders()
       console.log('[AppModel] 🔍 Drawable 数量:', count)
-      for (let i = 0; i < count; i++) {
+      for (let i = 0; i < Math.min(count, 10); i++) {
         const visible = model.getDrawableDynamicFlagIsVisible(i)
         const opacity = model.getDrawableOpacity(i)
         const vertexCount = model.getDrawableVertexCount(i)
         const indexCount = model.getDrawableVertexIndexCount(i)
-        const renderOrder = model.getRenderOrder(i)
-        console.log(`[AppModel] 🔍 Drawable[${i}]: visible=${visible}, opacity=${opacity}, verts=${vertexCount}, indices=${indexCount}, order=${renderOrder}`)
+        const order = renderOrders[i]
+        console.log(`[AppModel] 🔍 Drawable[${i}]: visible=${visible}, opacity=${opacity}, verts=${vertexCount}, indices=${indexCount}, order=${order}`)
       }
+      if (count > 10) console.log(`[AppModel] 🔍 ... 还有 ${count - 10} 个 drawable`)
     }
   }
 
