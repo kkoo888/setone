@@ -1,16 +1,19 @@
+#version 300 es
 /**
  * Copyright(c) Live2D Inc. All rights reserved.
  *
  * Use of this source code is governed by the Live2D Open Software license
  * that can be found at https://www.live2d.com/eula/live2d-open-software-license-agreement_en.html.
+ *
+ * WebGL 2 port — converted from GLSL 100 to GLSL 300 es
  */
 
 
-attribute vec4 a_position;
-attribute vec2 a_texCoord;
-varying vec2 v_texCoord;
-varying vec2 v_blendCoord;
-varying vec4 v_clipPos;
+in vec4 a_position;
+in vec2 a_texCoord;
+out vec2 v_texCoord;
+out vec2 v_blendCoord;
+out vec4 v_clipPos;
 uniform mat4 u_matrix;
 uniform mat4 u_clipMatrix;
 

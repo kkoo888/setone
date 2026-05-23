@@ -1,23 +1,27 @@
+#version 300 es
 /**
  * Copyright(c) Live2D Inc. All rights reserved.
  *
  * Use of this source code is governed by the Live2D Open Software license
  * that can be found at https://www.live2d.com/eula/live2d-open-software-license-agreement_en.html.
+ *
+ * WebGL 2 port — converted from GLSL 100 to GLSL 300 es
  */
 
-
 precision mediump float;
-varying vec2 v_texCoord; //v2f.texcoord
-uniform vec4 u_baseColor; //v2f.color
-uniform sampler2D s_texture0; //_MainTex
+
+in vec2 v_texCoord;
+out vec4 fragColor;
+uniform vec4 u_baseColor;
 uniform vec4 u_multiplyColor;
 uniform vec4 u_screenColor;
+uniform sampler2D s_texture0;
 
 void main()
 {
-  vec4 texColor = texture2D(s_texture0, v_texCoord);
+  vec4 texColor = texture(s_texture0, v_texCoord);
   texColor.rgb = texColor.rgb * u_multiplyColor.rgb;
   texColor.rgb = (texColor.rgb + u_screenColor.rgb * texColor.a) - (texColor.rgb * u_screenColor.rgb);
   vec4 color = texColor * u_baseColor;
-  gl_FragColor = vec4(color.rgb, color.a);
+  fragColor = vec4(color.rgb, color.a);
 }
