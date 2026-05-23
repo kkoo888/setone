@@ -183,9 +183,18 @@ class Cubism5Service {
       if (cw === 0 || ch === 0) {
         console.warn('[Cubism5] ⚠️ 容器尺寸为 0，canvas 可能无法渲染')
       }
+      console.log(`[Cubism5] 📐 Canvas 尺寸: ${cw}x${ch}, 容器: ${container.tagName}.${container.className}`)
 
       // ★ 关键修复：先获取 GL 上下文
-      this.gl = this.canvas.getContext('webgl2') || this.canvas.getContext('webgl')
+      // alpha: true → 透明背景（配合 transparent 窗口）
+      // premultipliedAlpha: false → 避免颜色被预乘导致透明度异常
+      const glOptions: WebGLContextAttributes = {
+        alpha: true,
+        premultipliedAlpha: false,
+        antialias: true,
+        preserveDrawingBuffer: false,
+      }
+      this.gl = this.canvas.getContext('webgl2', glOptions) || this.canvas.getContext('webgl', glOptions)
       if (!this.gl) {
         throw new Error('WebGL 不可用')
       }
@@ -427,6 +436,7 @@ class Cubism5Service {
     if (this.animFrameId !== null || this.destroyed) return
 
     this._lastFrameTime = performance.now()
+    console.log('[Cubism5] 🎬 渲染循环启动')
 
     const render = (currentTime: number) => {
       // 帧率限制逻辑
