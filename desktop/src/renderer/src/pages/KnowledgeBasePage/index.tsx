@@ -2,12 +2,13 @@ import React, { useState, useEffect, useCallback } from 'react'
 import { ModuleHeader } from '../../components/common/module/ModuleHeader'
 import { ModuleList, ModuleListItem, ModuleModal } from '../../components/common/module/ModuleList'
 import { KBDocument, KBSearchResult, KBAskResult } from '../types/knowledge-base'
-import { EMPTY_ICONS, STATUS_ICONS, ACTION_ICONS, Msg, BookOpen, Search, Tips, DownloadOne, FolderOpen } from '../../utils/statusMessages'
+import { EMPTY_ICONS, STATUS_ICONS, ACTION_ICONS, Msg, BookOpen, Search, Tips, DownloadOne, UploadOne, FolderOpen } from '../../utils/statusMessages'
 
 const bookIcon = React.createElement(BookOpen, { size: 16, fill: 'currentColor', theme: 'outline' })
 const searchIcon = React.createElement(Search, { size: 16, fill: 'currentColor', theme: 'outline' })
 const tipsIcon = React.createElement(Tips, { size: 16, fill: 'currentColor', theme: 'outline' })
 const downloadIcon = React.createElement(DownloadOne, { size: 16, fill: 'currentColor', theme: 'outline' })
+const uploadIcon = React.createElement(UploadOne, { size: 16, fill: 'currentColor', theme: 'outline' })
 const folderIcon = React.createElement(FolderOpen, { size: 12, fill: 'currentColor', theme: 'outline' })
 
 /** 数据集信息 */
@@ -159,6 +160,15 @@ export function KnowledgeBasePage() {
       if (progress.state === 'completed') {
         setMessage(Msg.downloadComplete(progress.datasetName))
         loadDatasets()
+        // 自动导入下载的数据集到文档管理
+        if (progress.savePath) {
+          window.electronAPI.invoke('kb_import', { path: progress.savePath }).then((res: { success?: boolean; data?: { success: number; failed: number } }) => {
+            if (res?.success) {
+              setMessage(Msg.downloadComplete(progress.datasetName) + '，' + Msg.importSuccess(res.data!.success, res.data!.failed))
+              loadDocuments()
+            }
+          }).catch(() => { /* 导入失败不影响下载完成提示 */ })
+        }
       } else if (progress.state === 'interrupted') {
         setMessage(Msg.downloadInterrupted(progress.datasetName))
       }
@@ -548,7 +558,7 @@ export function KnowledgeBasePage() {
             <input value={importPath} onChange={e => setImportPath(e.target.value)} placeholder="输入文件或目录路径，或点击浏览选择..." className="mod-search" style={{ maxWidth: 'none', flex: 1 }} />
             <button onClick={() => setShowImportDialog(true)} className="btn">📂 浏览</button>
             <button onClick={handleImport} disabled={loading || !importPath.trim()} className="btn btn-primary">
-              {loading ? '导入中...' : '{downloadIcon} 导入'}
+              {loading ? '导入中...' : <>{uploadIcon} 导入</>}
             </button>
           </div>
           <ModuleList emptyText="暂无文档，请导入文件" emptyIcon={EMPTY_ICONS.book}>
@@ -625,7 +635,7 @@ export function KnowledgeBasePage() {
           <>
             <button className="btn" onClick={() => setShowImportDialog(false)}>取消</button>
             <button className="btn btn-primary" onClick={handleImport} disabled={loading || !importPath.trim()}>
-              {loading ? '导入中...' : '确认导入'}
+              {loading ? '导入中...' : <>{uploadIcon} 确认导入</>}
             </button>
           </>
         }>

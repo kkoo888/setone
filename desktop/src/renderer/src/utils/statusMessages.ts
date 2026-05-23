@@ -56,6 +56,7 @@ import {
   Magic,
   DeleteOne,
   DownloadOne,
+  UploadOne,
   EditOne,
   Fire,
   RecycleBin,
