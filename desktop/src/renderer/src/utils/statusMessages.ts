@@ -336,6 +336,6 @@ export {
   Help, Tips, Attention, Plug, ChartHistogram, Data, Pic,
   Computer, Sun, Moon, Square, FullScreenPlay,
   // 扩展
-  Robot, Magic, DeleteOne, DownloadOne, EditOne,
+  Robot, Magic, DeleteOne, DownloadOne, UploadOne, EditOne,
   Fire, RecycleBin, Pushpin, LocalPin, DataServer, Camera,
 }
