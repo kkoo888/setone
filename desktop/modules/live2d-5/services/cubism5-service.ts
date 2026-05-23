@@ -529,24 +529,37 @@ class Cubism5Service {
   }
 
   /**
-   * 创建 VP 矩阵（仅正交投影，不含模型矩阵）
+   * 创建 MVP 矩阵（正交投影 × 模型矩阵）
    *
-   * ★ 关键修复：Cubism SDK 的 drawModel() 内部会自动乘以模型矩阵（modelMatrix），
-   * 如果这里传的是 MVP（Model × View × Projection），会导致模型矩阵被应用两次，
-   * 模型被缩放两次变得极小不可见。
-   *
-   * 正确做法：只传 VP（View × Projection），SDK 内部会自行乘以模型矩阵。
+   * Cubism SDK 的 drawModel() 不会内部乘模型矩阵，
+   * 它直接将此矩阵传给 shader 的 uniformMatrix4fv，
+   * shader 中：gl_Position = matrix * position
+   * 所以必须包含模型矩阵。
    */
   private createMvpMatrix(width: number, height: number): { getArray(): Float32Array } {
-    // 仅构建正交投影矩阵（View × Projection），不含模型矩阵
-    const projection = new Float32Array(16)
-    projection[0] = 2 / width    // sx
-    projection[5] = -2 / height  // sy（Y 轴翻转）
-    projection[10] = 1
-    projection[12] = -1          // tx（平移到中心）
-    projection[13] = 1           // ty
-    projection[15] = 1
-    return { getArray: () => projection }
+    const matrix = this.model?.getModelMatrix()
+    if (!matrix) {
+      // fallback：居中的正交投影
+      const projection = new Float32Array(16)
+      projection[0] = 2 / width
+      projection[5] = -2 / height
+      projection[10] = 1
+      projection[12] = -1
+      projection[13] = 1
+      projection[15] = 1
+      return { getArray: () => projection }
+    }
+
+    // 正交投影 × 模型矩阵 = MVP
+    const mvpArr = new Float32Array(matrix.getArray())
+    const sx = 2 / width
+    const sy = -2 / height
+    for (let col = 0; col < 4; col++) {
+      mvpArr[0 * 4 + col] *= sx
+      mvpArr[1 * 4 + col] *= sy
+    }
+
+    return { getArray: () => mvpArr }
   }
 
   /**
