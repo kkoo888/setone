@@ -862,6 +862,13 @@ export class AppModel extends CubismUserModel {
       this._firstFrameLogged = true
       const mvpArr = mvpMatrix.getArray()
       console.log('[AppModel] 🎨 首帧渲染完成, MVP[0,5,10,12,13]:', mvpArr[0].toFixed(4), mvpArr[5].toFixed(4), mvpArr[10].toFixed(4), mvpArr[12].toFixed(4), mvpArr[13].toFixed(4))
+      // GL 错误检查
+      const err = gl.getError()
+      if (err !== gl.NO_ERROR) {
+        console.error('[AppModel] ❌ 首帧 GL 错误:', '0x' + err.toString(16))
+      } else {
+        console.log('[AppModel] ✅ 首帧 GL 无错误')
+      }
     }
   }
 

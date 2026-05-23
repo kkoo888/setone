@@ -481,11 +481,31 @@ class Cubism5Service {
    * 渲染一帧
    * ★ 修复：canvas 尺寸更新已移至 ResizeObserver，此处不再每帧检查
    */
+  private _renderFrameCount = 0
+
   private renderFrame(): void {
-    if (!this.gl || !this.model || !this.canvas || this.contextLost || this.destroyed) return
+    if (!this.gl || !this.model || !this.canvas || this.contextLost || this.destroyed) {
+      if (this._renderFrameCount < 3) {
+        console.warn('[Cubism5] ⚠️ renderFrame 跳过:', {
+          gl: !!this.gl, model: !!this.model, canvas: !!this.canvas,
+          contextLost: this.contextLost, destroyed: this.destroyed,
+        })
+      }
+      this._renderFrameCount++
+      return
+    }
 
     const gl = this.gl
     const canvas = this.canvas
+
+    // 首帧诊断
+    if (this._renderFrameCount === 0) {
+      console.log('[Cubism5] 🎬 首帧渲染开始, canvas:', canvas.width, 'x', canvas.height)
+      console.log('[Cubism5] 🎬 GL version:', gl.getParameter(gl.VERSION))
+      console.log('[Cubism5] 🎬 GL viewport:', gl.getParameter(gl.VIEWPORT))
+      console.log('[Cubism5] 🎬 model opacity:', this.model.getOpacity())
+    }
+    this._renderFrameCount++
 
     // 清除画布
     gl.clearColor(0, 0, 0, 0)
