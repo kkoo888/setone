@@ -85,6 +85,10 @@ export function Live2D5Page() {
   const [previewImage, setPreviewImage] = useState<string | null>(null)
   const [refreshing, setRefreshing] = useState(false)
   const [reloading, setReloading] = useState(false)
+  // ★ 新增：动作队列状态
+  const [motionQueue, setMotionQueue] = useState<{ isFinished: boolean; queueLength: number; currentPriority: number } | null>(null)
+  // ★ 新增：帧率设置
+  const [targetFPS, setTargetFPS] = useState<number>(60)
 
   // 添加模型弹窗状态
   const [showAddModel, setShowAddModel] = useState(false)
@@ -154,15 +158,24 @@ export function Live2D5Page() {
     setRefreshing(true)
     try {
       await refreshStatus()
-      const [statusRes, previewRes] = await Promise.all([
+      const [statusRes, previewRes, motionQueueRes, fpsRes] = await Promise.all([
         window.electronAPI.invoke('live2d5_get_live_status'),
         window.electronAPI.invoke('live2d5_get_preview'),
+        window.electronAPI.invoke('live2d5_get_motion_queue'),
+        window.electronAPI.invoke('live2d5_get_fps'),  // ★ 新增：获取帧率设置
       ])
       if (statusRes?.success && statusRes.data) {
         setLiveStatus(statusRes.data)
       }
       if (previewRes?.success) {
         setPreviewImage(previewRes.data)
+      }
+      if (motionQueueRes?.success) {
+        setMotionQueue(motionQueueRes.data)
+      }
+      // ★ 新增：更新帧率设置
+      if (fpsRes?.success) {
+        setTargetFPS(fpsRes.data)
       }
       // 同时刷新模型列表
       if (status.windowOpen) {
@@ -240,6 +253,16 @@ export function Live2D5Page() {
     }
     setReloading(false)
   }, [handleRefreshControl])
+
+  /** ★ 新增：设置目标帧率 */
+  const handleSetFPS = useCallback(async (fps: number) => {
+    try {
+      await window.electronAPI.invoke('live2d5_set_fps', { fps })
+      setTargetFPS(fps)
+    } catch (err) {
+      console.error('设置帧率失败:', err)
+    }
+  }, [])
 
   /** 扫描模型目录 */
   const handleScanModel = useCallback(async () => {
@@ -583,6 +606,37 @@ export function Live2D5Page() {
                     <div className="live2d5-status-item">
                       <span className="live2d5-status-label">对话气泡</span>
                       <span className="live2d5-status-value">{liveStatus.bubbleText}</span>
+                    </div>
+                    {/* ★ 新增：动作队列状态 */}
+                    {motionQueue && (
+                      <>
+                        <div className="live2d5-status-item">
+                          <span className="live2d5-status-label">动作队列</span>
+                          <span className="live2d5-status-value">
+                            <span className={`live2d5-status-dot ${motionQueue.isFinished ? 'live2d5-status-dot--off' : 'live2d5-status-dot--active'}`} />
+                            {motionQueue.isFinished ? '空闲' : `播放中 (${motionQueue.queueLength})`}
+                          </span>
+                        </div>
+                        <div className="live2d5-status-item">
+                          <span className="live2d5-status-label">动作优先级</span>
+                          <span className="live2d5-status-value">{motionQueue.currentPriority}</span>
+                        </div>
+                      </>
+                    )}
+                    {/* ★ 新增：帧率设置 */}
+                    <div className="live2d5-status-item">
+                      <span className="live2d5-status-label">帧率限制</span>
+                      <div className="live2d5-fps-selector">
+                        {[30, 60, 120, 0].map(fps => (
+                          <button
+                            key={fps}
+                            className={`live2d5-fps-btn ${targetFPS === fps ? 'live2d5-fps-btn--active' : ''}`}
+                            onClick={() => handleSetFPS(fps)}
+                          >
+                            {fps === 0 ? '无限制' : `${fps} FPS`}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </div>

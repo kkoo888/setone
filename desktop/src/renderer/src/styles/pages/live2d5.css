@@ -688,3 +688,36 @@
 [data-theme='dark'] .live2d5-scan-card--selected {
   background: rgba(var(--color-primary-rgb, 99, 102, 241), 0.06);
 }
+
+/* === FPS 选择器 === */
+.live2d5-fps-selector {
+  display: flex;
+  gap: var(--spacing-xs);
+}
+
+.live2d5-fps-btn {
+  padding: 4px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-secondary);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.live2d5-fps-btn:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.live2d5-fps-btn--active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: white;
+}
+
+.live2d5-fps-btn--active:hover {
+  opacity: 0.9;
+  color: white;
+}

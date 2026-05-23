@@ -6,10 +6,14 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { cubism5Service, type Cubism5ModelState } from '../services/cubism5-service'
 
+// ★ 新增：调试模式配置
+const DEBUG_HIT_AREAS = false // 设为 true 可显示 hitTest 区域
+
 const Live2D5PetPage: React.FC = () => {
   const [state, setState] = useState<Cubism5ModelState>('idle')
   const [error, setError] = useState<string | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+  const [hitAreas, setHitAreas] = useState<Array<{ name: string; x: number; y: number; width: number; height: number }>>([])
 
   // 加载已应用的模型
   useEffect(() => {
@@ -140,6 +144,56 @@ const Live2D5PetPage: React.FC = () => {
       >
         C5
       </div>
+
+      {/* ★ 新增：hitTest 区域可视化调试 */}
+      {DEBUG_HIT_AREAS && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            pointerEvents: 'none',
+            zIndex: 1000,
+          }}
+        >
+          {/* 示例：头部区域（需要根据实际模型调整） */}
+          <div
+            style={{
+              position: 'absolute',
+              top: '15%',
+              left: '30%',
+              width: '40%',
+              height: '25%',
+              border: '2px dashed rgba(255, 0, 0, 0.7)',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <span style={{ color: 'red', fontSize: 12, background: 'rgba(0,0,0,0.5)', padding: '2px 6px' }}>Head</span>
+          </div>
+          {/* 示例：身体区域 */}
+          <div
+            style={{
+              position: 'absolute',
+              top: '45%',
+              left: '25%',
+              width: '50%',
+              height: '40%',
+              border: '2px dashed rgba(0, 255, 0, 0.7)',
+              borderRadius: '10%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <span style={{ color: 'green', fontSize: 12, background: 'rgba(0,0,0,0.5)', padding: '2px 6px' }}>Body</span>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

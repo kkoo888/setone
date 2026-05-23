@@ -129,5 +129,12 @@ export interface Live2D5IPCChannels {
     }
   }>
   'live2d5_get_preview': () => Promise<{ success: boolean; data: string | null }>
+  'live2d5_get_motion_queue': () => Promise<{ success: boolean; data: { isFinished: boolean; queueLength: number; currentPriority: number } | null }>
+  'live2d5_switch_to_microphone': () => Promise<{ success: boolean; error?: string }>
+  'live2d5_switch_to_wav': (args: { filePath: string }) => Promise<{ success: boolean; error?: string }>
+  'live2d5_stop_audio': () => Promise<{ success: boolean; error?: string }>
+  'live2d5_get_audio_type': () => Promise<{ success: boolean; data: 'microphone' | 'wav' | 'none' }>
+  'live2d5_set_fps': (args: { fps: number }) => Promise<{ success: boolean; error?: string }>
+  'live2d5_get_fps': () => Promise<{ success: boolean; data: number }>
   'live2d5_reload_model': () => Promise<{ success: boolean; error?: string }>
 }

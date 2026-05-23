@@ -57,12 +57,22 @@ class Cubism5Service {
   private _contextLostHandler: ((e: Event) => void) | null = null
   private _contextRestoredHandler: (() => void) | null = null
 
+  // ★ 新增：ResizeObserver（用于监听 canvas 尺寸变化，替代每帧检查）
+  private _resizeObserver: ResizeObserver | null = null
+
   // 时间追踪
   private lastUpdateTime = 0
 
   // 缓存
   private _modelPath = ''
   private _modelScale = DEFAULT_MODEL_SCALE
+
+  // ★ 新增：模型切换锁，防止快速切换导致竞态
+  private _switching = false
+
+  // ★ 新增：帧率限制
+  private _targetFPS: number = 60  // 默认 60 FPS
+  private _lastFrameTime: number = 0
 
   setStateCallback(cb: StateCallback | null): void {
     this.onStateChange = cb
@@ -180,6 +190,9 @@ class Cubism5Service {
         throw new Error('WebGL 不可用')
       }
 
+      // ★ 新增：使用 ResizeObserver 监听 canvas 尺寸变化（替代每帧检查）
+      this.setupResizeObserver()
+
       // 注册上下文丢失/恢复事件（canvas 已在 DOM 中）
       this.registerContextEvents()
 
@@ -217,22 +230,34 @@ class Cubism5Service {
 
   /**
    * 切换活跃模型
+   * ★ 修复：添加切换锁防止快速切换导致竞态
    */
   switchModel(name: string): boolean {
+    if (this._switching) {
+      console.warn('[Cubism5] 模型切换中，请稍后再试')
+      return false
+    }
+    
     if (!this._models.has(name)) {
       console.warn(`[Cubism5] 模型 "${name}" 未找到`)
       return false
     }
-    this._activeModelName = name
-    const appModel = this._models.get(name)!
-    if (this.gl) {
-      const renderer = appModel.getRenderer()
-      if (renderer) {
-        renderer.startUp(this.gl)
+
+    this._switching = true
+    try {
+      this._activeModelName = name
+      const appModel = this._models.get(name)!
+      if (this.gl) {
+        const renderer = appModel.getRenderer()
+        if (renderer) {
+          renderer.startUp(this.gl)
+        }
       }
+      console.debug(`[Cubism5] ✅ 切换到模型: ${name}`)
+      return true
+    } finally {
+      this._switching = false
     }
-    console.log(`[Cubism5] ✅ 切换到模型: ${name}`)
-    return true
   }
 
   /**
@@ -279,6 +304,39 @@ class Cubism5Service {
    */
   getActiveModelName(): string | null {
     return this._activeModelName
+  }
+
+  /**
+   * ★ 新增：设置 ResizeObserver 监听 canvas 尺寸变化
+   * 替代每帧检查 canvas.clientWidth，减少 reflow
+   */
+  private setupResizeObserver(): void {
+    if (!this.canvas || !this.gl) return
+
+    // 清理旧的 observer
+    if (this._resizeObserver) {
+      this._resizeObserver.disconnect()
+      this._resizeObserver = null
+    }
+
+    this._resizeObserver = new ResizeObserver((entries) => {
+      if (this.destroyed || !this.canvas || !this.gl) return
+      
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect
+        const newWidth = Math.floor(width)
+        const newHeight = Math.floor(height)
+        
+        if (newWidth > 0 && newHeight > 0 && 
+            (this.canvas.width !== newWidth || this.canvas.height !== newHeight)) {
+          this.canvas.width = newWidth
+          this.canvas.height = newHeight
+          this.gl.viewport(0, 0, newWidth, newHeight)
+        }
+      }
+    })
+
+    this._resizeObserver.observe(this.canvas)
   }
 
   /**
@@ -350,7 +408,7 @@ class Cubism5Service {
 
       this.gl = gl
       this.contextLost = false
-      this.model.reloadRenderer(this.gl)
+      await this.model.reloadRenderer(this.gl)
 
       this.lastUpdateTime = performance.now() / 1000
       this.startRenderLoop()
@@ -363,11 +421,29 @@ class Cubism5Service {
 
   /**
    * 开始渲染循环
+   * ★ 新增：支持帧率限制
    */
   private startRenderLoop(): void {
     if (this.animFrameId !== null || this.destroyed) return
 
-    const render = () => {
+    this._lastFrameTime = performance.now()
+
+    const render = (currentTime: number) => {
+      // 帧率限制逻辑
+      if (this._targetFPS > 0) {
+        const frameInterval = 1000 / this._targetFPS
+        const elapsed = currentTime - this._lastFrameTime
+
+        if (elapsed < frameInterval) {
+          // 还没到下一帧时间，跳过渲染
+          this.animFrameId = requestAnimationFrame(render)
+          return
+        }
+
+        // 更新上一帧时间（补偿超出的时间）
+        this._lastFrameTime = currentTime - (elapsed % frameInterval)
+      }
+
       this.renderFrame()
       this.animFrameId = requestAnimationFrame(render)
     }
@@ -375,20 +451,30 @@ class Cubism5Service {
   }
 
   /**
+   * ★ 新增：设置目标帧率
+   * @param fps 目标帧率（0 = 无限制）
+   */
+  setTargetFPS(fps: number): void {
+    this._targetFPS = Math.max(0, fps)
+    console.debug(`[Cubism5] 🎯 目标帧率: ${fps === 0 ? '无限制' : fps + ' FPS'}`)
+  }
+
+  /**
+   * ★ 新增：获取当前目标帧率
+   */
+  getTargetFPS(): number {
+    return this._targetFPS
+  }
+
+  /**
    * 渲染一帧
+   * ★ 修复：canvas 尺寸更新已移至 ResizeObserver，此处不再每帧检查
    */
   private renderFrame(): void {
     if (!this.gl || !this.model || !this.canvas || this.contextLost || this.destroyed) return
 
     const gl = this.gl
     const canvas = this.canvas
-
-    // 更新 canvas 尺寸
-    if (canvas.width !== canvas.clientWidth || canvas.height !== canvas.clientHeight) {
-      canvas.width = canvas.clientWidth
-      canvas.height = canvas.clientHeight
-      gl.viewport(0, 0, canvas.width, canvas.height)
-    }
 
     // 清除画布
     gl.clearColor(0, 0, 0, 0)
@@ -590,6 +676,46 @@ class Cubism5Service {
   }
 
   /**
+   * ★ 新增：获取动作队列状态（供管理页面显示）
+   */
+  getMotionQueueStatus(): { isFinished: boolean; queueLength: number; currentPriority: number } | null {
+    if (!this.model) return null
+    return this.model.getMotionQueueStatus()
+  }
+
+  /**
+   * ★ 新增：切换到麦克风输入（实时 LipSync）
+   */
+  async switchToMicrophone(): Promise<boolean> {
+    if (!this.model) return false
+    return await this.model.switchToMicrophone()
+  }
+
+  /**
+   * ★ 新增：切换到 WAV 文件输入
+   */
+  switchToWavFile(filePath: string): void {
+    if (!this.model) return
+    this.model.switchToWavFile(filePath)
+  }
+
+  /**
+   * ★ 新增：停止所有音频输入
+   */
+  stopAudio(): void {
+    if (!this.model) return
+    this.model.stopAudio()
+  }
+
+  /**
+   * ★ 新增：获取当前音频输入类型
+   */
+  getAudioInputType(): 'microphone' | 'wav' | 'none' {
+    if (!this.model) return 'none'
+    return this.model.getAudioInputType()
+  }
+
+  /**
    * 重新加载当前模型（用于模型异常时手动恢复）
    */
   async reloadModel(): Promise<boolean> {
@@ -684,6 +810,12 @@ class Cubism5Service {
     if (this.animFrameId !== null) {
       cancelAnimationFrame(this.animFrameId)
       this.animFrameId = null
+    }
+
+    // ★ 新增：清理 ResizeObserver
+    if (this._resizeObserver) {
+      this._resizeObserver.disconnect()
+      this._resizeObserver = null
     }
 
     for (const [, appModel] of this._models) {

@@ -319,4 +319,22 @@ export class WavFileHandler extends IParameterProvider {
     this._byteReader._fileByte = null
     this._byteReader._fileDataView = null
   }
+
+  /**
+   * ★ 新增：清理资源（公共方法）
+   * 用于 AppModel.releaseAll() 中调用
+   */
+  cleanup(): void {
+    this.releasePcmData()
+    this._sampleOffset = 0
+    this._userTimeSeconds = 0
+    this._lastRms = 0
+    this._wavFileInfo = {
+      _fileName: '',
+      _numberOfChannels: 0,
+      _samplingRate: 0,
+      _bitsPerSample: 0,
+      _samplesPerChannel: 0
+    }
+  }
 }

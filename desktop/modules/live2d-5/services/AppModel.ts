@@ -98,6 +98,10 @@ export class AppModel extends CubismUserModel {
   // ★ 新增：WAV 音频处理器（用于 LipSync）
   private _wavFileHandler: WavFileHandler = new WavFileHandler()
 
+  // ★ 新增：麦克风音频处理器（用于实时 LipSync）
+  private _microphoneHandler: MicrophoneHandler | null = null
+  private _useMicrophone: boolean = false
+
   // ★ 新增：shader 等待定时器（用于 destroy 时取消）
   private _shaderWaitTimers: ReturnType<typeof setTimeout>[] = []
 
@@ -215,7 +219,7 @@ export class AppModel extends CubismUserModel {
       // 等待 shader 异步加载完成（最多 5 秒）
       const maxWait = 5000
       const startTime = Date.now()
-      await new Promise<void>((resolve) => {
+      await new Promise<void>((resolve, reject) => {
         const check = () => {
           const shader = CubismShaderManager_WebGL.getInstance().getShader(gl)
           if (shader?._isShaderLoaded) {
@@ -224,8 +228,9 @@ export class AppModel extends CubismUserModel {
             return
           }
           if (Date.now() - startTime >= maxWait) {
-            console.error('[AppModel] ❌ Shader 加载超时（5s），模型可能无法显示')
-            resolve()
+            const err = new Error('Shader 加载超时（5s），模型无法显示')
+            console.error('[AppModel] ❌', err.message)
+            reject(err)  // ★ 修复：超时后抛出异常而非静默继续
             return
           }
           const timer = setTimeout(check, 50)
@@ -234,12 +239,9 @@ export class AppModel extends CubismUserModel {
         check()
       })
 
-      // ⑰ 验证 shader program 是否有效
+      // ⑰ 验证 shader program 是否编译成功
       const shader = CubismShaderManager_WebGL.getInstance().getShader(gl)
-      if (!shader?._isShaderLoaded) {
-        console.error('[AppModel] ❌ Shader 加载超时（5s），模型可能无法显示')
-      } else {
-        // 检查 shader program 是否编译成功
+      if (shader?._isShaderLoaded) {
         let failedPrograms = 0
         for (const s of shader._shaderSets) {
           if (s?.shaderProgram === 0 || s?.shaderProgram === null) {
@@ -350,9 +352,28 @@ export class AppModel extends CubismUserModel {
           resolve(null)
           return
         }
+
+        // ★ 新增：纹理尺寸优化
+        let source: HTMLImageElement | HTMLCanvasElement = img
+        const maxTextureSize = gl.getParameter(gl.MAX_TEXTURE_SIZE) || 4096
+        if (img.naturalWidth > maxTextureSize || img.naturalHeight > maxTextureSize) {
+          console.debug(`[AppModel] 📐 纹理过大 (${img.naturalWidth}x${img.naturalHeight})，自动缩放`)
+          const canvas = document.createElement('canvas')
+          const scale = Math.min(maxTextureSize / img.naturalWidth, maxTextureSize / img.naturalHeight, 1)
+          canvas.width = Math.floor(img.naturalWidth * scale)
+          canvas.height = Math.floor(img.naturalHeight * scale)
+          const ctx = canvas.getContext('2d')
+          if (ctx) {
+            ctx.imageSmoothingEnabled = true
+            ctx.imageSmoothingQuality = 'high'
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+            source = canvas
+          }
+        }
+
         const texture = gl.createTexture()
         gl.bindTexture(gl.TEXTURE_2D, texture)
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img)
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, source)
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR)
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
@@ -759,9 +780,13 @@ export class AppModel extends CubismUserModel {
    * 设置鼠标拖拽（用于注视效果）
    * @param x 归一化 X 坐标 (-1 ~ 1)
    * @param y 归一化 Y 坐标 (-1 ~ 1)
+   * ★ 修复：添加边界限制，防止超出可视范围
    */
   setDragging(x: number, y: number): void {
-    super.setDragging(x, y)
+    // 限制在 -1 到 1 范围内
+    const clampedX = Math.max(-1.0, Math.min(1.0, x))
+    const clampedY = Math.max(-1.0, Math.min(1.0, y))
+    super.setDragging(clampedX, clampedY)
   }
 
   /**
@@ -823,8 +848,9 @@ export class AppModel extends CubismUserModel {
 
   /**
    * ★ 新增：重建渲染器（用于 WebGL 上下文恢复）
+   * ★ 修复：改为 async，确保 loadTextures 完成后再返回
    */
-  reloadRenderer(gl?: WebGLRenderingContext | WebGL2RenderingContext): void {
+  async reloadRenderer(gl?: WebGLRenderingContext | WebGL2RenderingContext): Promise<void> {
     this.deleteRenderer()
     const model = this.getModel()
     const width = model.getCanvasWidth() || 1024
@@ -835,8 +861,8 @@ export class AppModel extends CubismUserModel {
       this.getRenderer().setIsPremultipliedAlpha(true)
       this.getRenderer().loadShaders() // 预热 shader
     }
-    // 重新绑定纹理
-    this.loadTextures()
+    // 重新绑定纹理（★ 修复：await 确保纹理加载完成）
+    await this.loadTextures()
   }
 
   // ============================================================
@@ -884,6 +910,83 @@ export class AppModel extends CubismUserModel {
   }
 
   /**
+   * ★ 新增：获取动作队列状态
+   * 用于管理页面显示当前动作队列
+   */
+  getMotionQueueStatus(): { isFinished: boolean; queueLength: number; currentPriority: number } {
+    return {
+      isFinished: this._motionManager.isFinished(),
+      queueLength: this._motionManager.getCubismMotionQueueEntries().length,
+      currentPriority: this._motionManager.getCurrentPriority()
+    }
+  }
+
+  /**
+   * ★ 新增：切换到麦克风输入（实时 LipSync）
+   * @returns 是否成功切换
+   */
+  async switchToMicrophone(): Promise<boolean> {
+    if (!this._microphoneHandler) {
+      this._microphoneHandler = new MicrophoneHandler()
+    }
+
+    const success = await this._microphoneHandler.start()
+    if (success) {
+      this._useMicrophone = true
+      // 更新 LipSync Updater 的音频源
+      if (this._lipSyncUpdater) {
+        this._lipSyncUpdater.setAudioProvider(this._microphoneHandler)
+      }
+    }
+    return success
+  }
+
+  /**
+   * ★ 新增：切换到 WAV 文件输入
+   * @param filePath WAV 文件路径
+   */
+  switchToWavFile(filePath: string): void {
+    this._useMicrophone = false
+    // 停止麦克风
+    if (this._microphoneHandler) {
+      this._microphoneHandler.stop()
+    }
+    // 播放 WAV 文件
+    this._wavFileHandler.start(filePath)
+    // 更新 LipSync Updater 的音频源
+    if (this._lipSyncUpdater) {
+      this._lipSyncUpdater.setAudioProvider(this._wavFileHandler)
+    }
+  }
+
+  /**
+   * ★ 新增：停止所有音频输入
+   */
+  stopAudio(): void {
+    this._useMicrophone = false
+    if (this._microphoneHandler) {
+      this._microphoneHandler.stop()
+    }
+    // 清除 LipSync 音频源
+    if (this._lipSyncUpdater) {
+      this._lipSyncUpdater.setAudioProvider(null)
+    }
+  }
+
+  /**
+   * ★ 新增：获取当前音频输入类型
+   */
+  getAudioInputType(): 'microphone' | 'wav' | 'none' {
+    if (this._useMicrophone && this._microphoneHandler?.isRunning) {
+      return 'microphone'
+    }
+    if (this._wavFileHandler) {
+      return 'wav'
+    }
+    return 'none'
+  }
+
+  /**
    * 释放资源
    */
   releaseAll(): void {
@@ -907,7 +1010,17 @@ export class AppModel extends CubismUserModel {
     this._setting = null
     this._viewMatrix = null
     this._deviceToScreen = null
-    this._wavFileHandler = null
+    // ★ 修复：调用 cleanup 而非直接置 null，确保资源正确释放
+    if (this._wavFileHandler) {
+      this._wavFileHandler.cleanup()
+      this._wavFileHandler = null
+    }
+    // ★ 新增：停止麦克风输入
+    if (this._microphoneHandler) {
+      this._microphoneHandler.stop()
+      this._microphoneHandler = null
+    }
+    this._useMicrophone = false
     this._motionCache.clear()
     this._expressionCache.clear()
     this._expressionNames = []
