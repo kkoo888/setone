@@ -187,10 +187,11 @@ class Cubism5Service {
 
       // ★ 关键修复：先获取 GL 上下文
       // alpha: true → 透明背景（配合 transparent 窗口）
-      // premultipliedAlpha: false → 避免颜色被预乘导致透明度异常
+      // ★ 修复：premultipliedAlpha 改为 true，与 Cubism SDK 的 setIsPremulipliedAlpha(true) 保持一致
+      // 否则 SDK shader 用预乘方式处理 alpha，但 WebGL 输出非预乘，导致模型全透明不可见
       const glOptions: WebGLContextAttributes = {
         alpha: true,
-        premultipliedAlpha: false,
+        premultipliedAlpha: true,
         antialias: true,
         preserveDrawingBuffer: false,
       }

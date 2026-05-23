@@ -104,6 +104,7 @@ export class AppModel extends CubismUserModel {
 
   // ★ 新增：shader 等待定时器（用于 destroy 时取消）
   private _shaderWaitTimers: ReturnType<typeof setTimeout>[] = []
+  private _firstFrameLogged = false
 
   // 帧内动作更新标志（与 Demo _motionUpdated 一致）
   private _motionUpdated: boolean = false
@@ -297,6 +298,7 @@ export class AppModel extends CubismUserModel {
   /** 加载纹理 */
   private async loadTextures(): Promise<void> {
     const count = this._setting.getTextureCount()
+    console.log(`[AppModel] 🖼️ 纹理数量: ${count}, 模型目录: ${this._modelDir}`)
     if (count === 0) {
       console.warn('[AppModel] ⚠️ 没有纹理文件')
       return
@@ -307,21 +309,30 @@ export class AppModel extends CubismUserModel {
 
     for (let i = 0; i < count; i++) {
       const texFile = this._setting.getTextureFileName(i)
-      if (!texFile) continue // Demo: 空文件名跳过
+      if (!texFile) {
+        console.warn(`[AppModel] ⚠️ 纹理 [${i}] 文件名为空，跳过`)
+        continue // Demo: 空文件名跳过
+      }
 
       const texPath = this._modelDir + texFile
+      console.log(`[AppModel] 🖼️ 加载纹理 [${i}/${count}]: ${texPath}`)
       try {
         const texture = await this.loadTextureImage(texPath)
         if (texture) {
           this.getRenderer().bindTexture(i, texture)
           loadedCount++
+          console.log(`[AppModel] ✅ 纹理 [${i}] 加载成功`)
         } else {
           failedCount++
+          console.warn(`[AppModel] ⚠️ 纹理 [${i}] 返回 null`)
         }
-      } catch {
+      } catch (err) {
         failedCount++
+        console.error(`[AppModel] ❌ 纹理 [${i}] 加载异常:`, err)
       }
     }
+
+    console.log(`[AppModel] 🖼️ 纹理加载完成: ${loadedCount}/${count} 成功, ${failedCount} 失败`)
 
     // ★ 修复：纹理全部失败时抛出异常，不能静默
     if (loadedCount === 0 && failedCount > 0) {
@@ -679,6 +690,8 @@ export class AppModel extends CubismUserModel {
     const matrix = this.getModelMatrix()
     if (matrix) {
       matrix.scale(scale, scale)
+      const arr = matrix.getArray()
+      console.log(`[AppModel] 📐 模型矩阵 (scale=${scale}): [${arr[0].toFixed(4)}, ${arr[5].toFixed(4)}, tx=${arr[12].toFixed(4)}, ty=${arr[13].toFixed(4)}]`)
     }
   }
 
@@ -844,6 +857,12 @@ export class AppModel extends CubismUserModel {
     }
     renderer.setMvpMatrix(mvpMatrix)
     renderer.drawModel()
+    // 首帧渲染日志（仅打印一次）
+    if (!this._firstFrameLogged) {
+      this._firstFrameLogged = true
+      const mvpArr = mvpMatrix.getArray()
+      console.log('[AppModel] 🎨 首帧渲染完成, MVP[0,5,10,12,13]:', mvpArr[0].toFixed(4), mvpArr[5].toFixed(4), mvpArr[10].toFixed(4), mvpArr[12].toFixed(4), mvpArr[13].toFixed(4))
+    }
   }
 
   /**
