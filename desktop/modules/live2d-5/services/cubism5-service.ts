@@ -529,37 +529,24 @@ class Cubism5Service {
   }
 
   /**
-   * 创建 MVP 矩阵（正交投影 × 模型矩阵，居中显示）
+   * 创建 VP 矩阵（仅正交投影，不含模型矩阵）
+   *
+   * ★ 关键修复：Cubism SDK 的 drawModel() 内部会自动乘以模型矩阵（modelMatrix），
+   * 如果这里传的是 MVP（Model × View × Projection），会导致模型矩阵被应用两次，
+   * 模型被缩放两次变得极小不可见。
+   *
+   * 正确做法：只传 VP（View × Projection），SDK 内部会自行乘以模型矩阵。
    */
   private createMvpMatrix(width: number, height: number): { getArray(): Float32Array } {
-    const matrix = this.model?.getModelMatrix()
-    if (!matrix) {
-      // fallback：居中的正交投影
-      const projection = new Float32Array(16)
-      projection[0] = 2 / width
-      projection[5] = -2 / height
-      projection[10] = 1
-      projection[12] = -1
-      projection[13] = 1
-      projection[15] = 1
-      return { getArray: () => projection }
-    }
-
-    const mvpArr = new Float32Array(matrix.getArray())
-    const sx = 2 / width
-    const sy = -2 / height
-    for (let col = 0; col < 4; col++) {
-      mvpArr[0 * 4 + col] *= sx
-      mvpArr[1 * 4 + col] *= sy
-    }
-
-    // ★ 居中偏移：将模型移到 canvas 中心
-    // 模型矩阵的平移分量在 [12] (tx) 和 [13] (ty)
-    // 通过调整偏移使模型居中
-    mvpArr[12] += 0  // X 方向由模型矩阵 Layout 控制
-    mvpArr[13] += 0  // Y 方向由模型矩阵 Layout 控制
-
-    return { getArray: () => mvpArr }
+    // 仅构建正交投影矩阵（View × Projection），不含模型矩阵
+    const projection = new Float32Array(16)
+    projection[0] = 2 / width    // sx
+    projection[5] = -2 / height  // sy（Y 轴翻转）
+    projection[10] = 1
+    projection[12] = -1          // tx（平移到中心）
+    projection[13] = 1           // ty
+    projection[15] = 1
+    return { getArray: () => projection }
   }
 
   /**
