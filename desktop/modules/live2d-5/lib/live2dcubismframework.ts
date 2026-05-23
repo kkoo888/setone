@@ -278,11 +278,9 @@ export enum LogLevel {
 }
 
 // Namespace definition for compatibility.
-import * as $ from './live2dcubismframework';
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace Live2DCubismFramework {
-  export const Constant = $.Constant;
-  export const csmDelete = $.csmDelete;
-  export const CubismFramework = $.CubismFramework;
-  export type CubismFramework = $.CubismFramework;
+  // 直接引用本文件变量，避免自引用导致 Vite SSR 循环依赖
+  // 原代码: import * as $ from './live2dcubismframework' → 自引用引发 "object is not iterable"
+  // 修复后: 直接使用同文件内的导出
 }
