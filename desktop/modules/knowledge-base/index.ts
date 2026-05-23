@@ -33,10 +33,12 @@ export default class KnowledgeBaseModule implements Module {
 
     // 从 module.json settings 读取默认值
     const defaults = this.meta.settings
+    // 优先读取用户在设置页配置的 ollama.embeddingModel
+    const userEmbeddingModel = await context.config.get<string>('ollama.embeddingModel')
     const settings: KBSettings = {
       chunkSize: (defaults.chunkSize as number) ?? 512,
       chunkOverlap: (defaults.chunkOverlap as number) ?? 64,
-      embeddingModel: (defaults.embeddingModel as string) ?? 'nomic-embed-text',
+      embeddingModel: userEmbeddingModel || (defaults.embeddingModel as string) || 'nomic-embed-text',
       maxDocuments: (defaults.maxDocuments as number) ?? 1000,
       supportedFormats: (defaults.supportedFormats as string[]) ?? ['.md', '.txt', '.pdf'],
       autoReindex: (defaults.autoReindex as boolean) ?? true,
