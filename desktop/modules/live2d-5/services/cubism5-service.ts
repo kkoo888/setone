@@ -507,13 +507,8 @@ class Cubism5Service {
     }
     this._renderFrameCount++
 
-    // 清除画布（前 3 帧用红色，验证 canvas 是否可见）
-    if (this._renderFrameCount <= 3) {
-      gl.clearColor(1, 0, 0, 1) // 红色
-      console.log('[Cubism5] 🔴 测试帧', this._renderFrameCount, '- 清除为红色')
-    } else {
-      gl.clearColor(0, 0, 0, 0)
-    }
+    // 清除画布
+    gl.clearColor(0.12, 0.12, 0.2, 1) // 不透明背景，防止 canvas 透明问题
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
     gl.enable(gl.BLEND)
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
