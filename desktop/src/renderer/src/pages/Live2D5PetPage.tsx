@@ -75,7 +75,7 @@ const Live2D5PetPage: React.FC = () => {
           {
             name: 'Hiyori',
             modelPath,
-            scale: 0.15,
+            scale: 0.85,
           },
           containerRef.current
         )

@@ -15,7 +15,7 @@ import { CubismFramework } from '../lib/live2dcubismframework'
 
 // ============ 常量 ============
 
-const DEFAULT_MODEL_SCALE = 0.6
+const DEFAULT_MODEL_SCALE = 0.85
 const CUBISM_CORE_SDK_PATH = './lib/live2dcubismcore5.min.js'
 
 // ============ Cubism 5 Core 全局声明 ============
