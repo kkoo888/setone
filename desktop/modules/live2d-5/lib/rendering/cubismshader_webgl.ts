@@ -121,16 +121,24 @@ export class CubismShader_WebGL {
     ];
 
     // シェーダーファイルを非同期で読み込み、結果をプロパティに設定
+    const errors: string[] = [];
     const results = await Promise.all(
       shaderFiles.map(file =>
         this.loadShader(file.path)
           .then(data => ({ prop: file.prop, data }))
           .catch(error => {
-            console.error(`Error loading ${file.path} shader:`, error);
+            const msg = `Error loading ${file.path} shader: ${error}`;
+            console.error(msg);
+            errors.push(msg);
             return { prop: file.prop, data: '' };
           })
       )
     );
+
+    // シェーダー読み込み失敗があれば例外を投げる
+    if (errors.length > 0) {
+      throw new Error(`Shader ファイル読み込み失敗:\n${errors.join('\n')}`);
+    }
 
     // 変数に内容を登録
     results.forEach(result => {
@@ -1144,6 +1152,15 @@ export class CubismShader_WebGL {
     this._shaderSets[8].shaderProgram = this._shaderSets[2].shaderProgram;
     this._shaderSets[9].shaderProgram = this._shaderSets[3].shaderProgram;
 
+    // ★ 校验：检查 shader program 是否编译成功
+    for (let i = 0; i < this._shaderSets.length; i++) {
+      const prog = this._shaderSets[i].shaderProgram;
+      if (prog === null || prog === undefined) {
+        CubismLogError(`Shader 登録中止: shader program[${i}] が null です`);
+        return;
+      }
+    }
+
     // SetupMask
     this._shaderSets[0].attributePositionLocation = this.gl.getAttribLocation(
       this._shaderSets[0].shaderProgram,
@@ -1535,6 +1552,13 @@ export class CubismShader_WebGL {
       vertShaderSrcCopy,
       fragShaderSrcCopy
     );
+
+    // ★ 校验 copy shader
+    if (!copyShaderSet.shaderProgram) {
+      CubismLogError('registerBlendShader: copy shader program が null です');
+      return;
+    }
+
     copyShaderSet.attributeTexCoordLocation = this.gl.getAttribLocation(
       copyShaderSet.shaderProgram,
       'a_texCoord'
@@ -1638,6 +1662,12 @@ export class CubismShader_WebGL {
       let vertexShaderSrc: string = '';
       let fragmentShaderStr: string = 'precision mediump float;\n';
 
+      // ★ WebGL2 需要 #version 300 es 声明在最前面
+      if (this.gl && this.gl instanceof WebGL2RenderingContext) {
+        vertexShaderSrc = '#version 300 es\n';
+        fragmentShaderStr = '#version 300 es\nprecision mediump float;\n';
+      }
+
       // シェーダの種類が変わるたびにインデックスを変更
       const shaderSetIndex = shaderSetBaseIndex + shaderTypeIndex;
 
@@ -1668,6 +1698,12 @@ export class CubismShader_WebGL {
         vertexShaderSrc,
         fragmentShaderStr
       );
+
+      // ★ 校验：shader program 编译失败则跳过
+      if (!this._shaderSets[shaderSetIndex].shaderProgram) {
+        CubismLogError(`generateBlendShader: shader program[${shaderSetIndex}] が null です`);
+        continue;
+      }
 
       // シェーダープログラムへの変数のリンク
       this._shaderSets[shaderSetIndex].attributePositionLocation =
@@ -1771,7 +1807,7 @@ export class CubismShader_WebGL {
 
     if (!vertShader) {
       CubismLogError('Vertex shader compile error!');
-      return 0;
+      return null;
     }
 
     let fragShader = this.compileShaderSource(
@@ -1780,7 +1816,7 @@ export class CubismShader_WebGL {
     );
     if (!fragShader) {
       CubismLogError('Fragment shader compile error!');
-      return 0;
+      return null;
     }
 
     // Attach vertex shader to program
@@ -1808,10 +1844,10 @@ export class CubismShader_WebGL {
 
       if (shaderProgram) {
         this.gl.deleteProgram(shaderProgram);
-        shaderProgram = 0;
+        shaderProgram = null;
       }
 
-      return 0;
+      return null;
     }
 
     // Release vertex and fragment shaders.

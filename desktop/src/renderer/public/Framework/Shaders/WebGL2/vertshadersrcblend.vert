@@ -5,9 +5,8 @@
  * Use of this source code is governed by the Live2D Open Software license
  * that can be found at https://www.live2d.com/eula/live2d-open-software-license-agreement_en.html.
  *
- * WebGL 2 port — converted from GLSL 100 to GLSL 300 es
+ * WebGL 2 port — GLSL 300 es
  */
-
 
 in vec4 a_position;
 in vec2 a_texCoord;
