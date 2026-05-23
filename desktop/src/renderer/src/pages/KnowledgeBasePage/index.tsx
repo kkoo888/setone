@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react'
 import { ModuleHeader } from '../../components/common/module/ModuleHeader'
 import { ModuleList, ModuleListItem, ModuleModal } from '../../components/common/module/ModuleList'
 import { KBDocument, KBSearchResult, KBAskResult } from '../types/knowledge-base'
-import { EMPTY_ICONS, STATUS_ICONS, ACTION_ICONS, Msg, BookOpen, Search, Tips, DownloadOne, UploadOne, FolderOpen } from '../../utils/statusMessages'
+import { EMPTY_ICONS, STATUS_ICONS, ACTION_ICONS, Msg, BookOpen, Search, Tips, DownloadOne, UploadOne, FolderOpen, DeleteOne } from '../../utils/statusMessages'
 
 const bookIcon = React.createElement(BookOpen, { size: 16, fill: 'currentColor', theme: 'outline' })
 const searchIcon = React.createElement(Search, { size: 16, fill: 'currentColor', theme: 'outline' })
