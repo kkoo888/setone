@@ -65,10 +65,10 @@ export class ChunkRepository {
   }
 
   async saveAll(chunks: KBChunk[]): Promise<void> {
-    await this.db.transaction(async () => {
+    this.db.transaction(() => {
       for (const chunk of chunks) {
         const embeddingBuffer = this.float32ArrayToBuffer(chunk.embedding)
-        await this.db.run(
+        this.db.run(
           `INSERT OR REPLACE INTO kb_chunks (id, document_id, chunk_index, content, embedding, created_at)
            VALUES (?, ?, ?, ?, ?, ?)`,
           [chunk.id, chunk.documentId, chunk.chunkIndex, chunk.content, embeddingBuffer, chunk.createdAt]
