@@ -1075,19 +1075,26 @@ export class CubismRenderer_WebGL extends CubismRenderer {
 
     this.gl.frontFace(this.gl.CCW); // Cubism SDK OpenGLはマスク・アートメッシュ共にCCWが表面
 
+    const shader = CubismShaderManager_WebGL.getInstance().getShader(this.gl);
+
     if (this.isGeneratingMask()) {
-      CubismShaderManager_WebGL.getInstance()
-        .getShader(this.gl)
-        .setupShaderProgramForMask(this, model, index);
+      shader.setupShaderProgramForMask(this, model, index);
     } else {
-      CubismShaderManager_WebGL.getInstance()
-        .getShader(this.gl)
-        .setupShaderProgramForDrawable(this, model, index);
+      shader.setupShaderProgramForDrawable(this, model, index);
+    }
+
+    // ★ 诊断：检查 shader program（前3个 drawable）
+    if (index < 3 && !this.isGeneratingMask()) {
+      const prog = this.gl.getParameter(this.gl.CURRENT_PROGRAM);
+      const masked = this.getClippingContextBufferForDrawable() != null;
+      const invertedMask = model.getDrawableInvertedMaskBit(index);
+      const offset = masked ? (invertedMask ? 2 : 1) : 0;
+      const setName = offset === 0 ? 'Normal' : offset === 1 ? 'Masked' : 'MaskedInverted';
+      console.log(`[Cubism5] 🔍 drawMesh[${index}] ${setName}: program=${prog ? '有效' : 'null'}, shaderLoaded=${shader._isShaderLoaded}, shaderSet[${1 + offset}].program=${shader._shaderSets[1 + offset]?.shaderProgram ? '有效' : 'null'}`);
     }
 
     if (
-      !CubismShaderManager_WebGL.getInstance().getShader(this.gl)
-        ._isShaderLoaded
+      !shader._isShaderLoaded
     ) {
       // シェーダーがロードされていない場合は描画を行わない
       // NOTE: Cubism 5.2 以前のモデル描画時にのみ、マスク無しのモデルが描画されてしまうためここで早期リターン
