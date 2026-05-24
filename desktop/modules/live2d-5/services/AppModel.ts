@@ -873,25 +873,21 @@ export class AppModel extends CubismUserModel {
       if (currentProgram) {
         const linkStatus = gl.getProgramParameter(currentProgram, gl.LINK_STATUS)
         console.log(`[AppModel] 🔍 program linkStatus: ${linkStatus}`)
-        const vertSrc = gl.getShaderSource(gl.getProgramParameter(currentProgram, gl.ATTACHED_SHADERS) > 0 ? gl.getAttachedShaders(currentProgram)[0] : null)
-        if (vertSrc) {
-          console.log(`[AppModel] 🔍 vertex shader 前50字符: ${vertSrc.substring(0, 50)}`)
+      } else {
+        // 检查 shader sets 的状态
+        try {
+          const shaderManager = (window as any).__cubism5ShaderManager
+          if (shaderManager) {
+            const shader = shaderManager.getShader(gl)
+            console.log(`[AppModel] 🔍 shader._isShaderLoaded: ${shader?._isShaderLoaded}`)
+            console.log(`[AppModel] 🔍 shader._shaderSets长度: ${shader?._shaderSets?.length}`)
+            if (shader?._shaderSets?.length > 1) {
+              console.log(`[AppModel] 🔍 shaderSets[1].shaderProgram: ${shader._shaderSets[1]?.shaderProgram ? '有效' : 'null'}`)
+            }
+          }
+        } catch (e) {
+          console.log(`[AppModel] 🔍 shaderManager 检查失败: ${e}`)
         }
-      }
-      // 检查顶点属性
-      const posLoc = gl.getAttribLocation(currentProgram, 'a_position')
-      const uvLoc = gl.getAttribLocation(currentProgram, 'a_texCoord')
-      console.log(`[AppModel] 🔍 a_position=${posLoc}, a_texCoord=${uvLoc}`)
-      // 检查当前绑定的 array buffer
-      const boundBuffer = gl.getParameter(gl.ARRAY_BUFFER_BINDING)
-      console.log(`[AppModel] 🔍 ARRAY_BUFFER_BINDING: ${boundBuffer ? '有' : 'null'}`)
-      // 检查顶点属性 0 的状态
-      if (posLoc >= 0) {
-        const enabled = gl.getVertexAttrib(posLoc, gl.VERTEX_ATTRIB_ARRAY_ENABLED)
-        const size = gl.getVertexAttrib(posLoc, gl.VERTEX_ATTRIB_ARRAY_SIZE)
-        const type = gl.getVertexAttrib(posLoc, gl.VERTEX_ATTRIB_ARRAY_TYPE)
-        const buffer = gl.getVertexAttrib(posLoc, gl.VERTEX_ATTRIB_ARRAY_BUFFER_BINDING)
-        console.log(`[AppModel] 🔍 attrib[${posLoc}]: enabled=${enabled}, size=${size}, type=${type}, buffer=${buffer ? '有' : 'null'}`)
       }
     }
 
