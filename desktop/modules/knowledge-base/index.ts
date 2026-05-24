@@ -76,6 +76,21 @@ export default class KnowledgeBaseModule implements Module {
     await this.datasetDownloader.init()
     this.datasetDownloader.setupSessionListener(session.defaultSession)
 
+    // 下载完成 → 自动导入知识库
+    this.datasetDownloader.setOnDownloadComplete(async (datasetId, datasetName, filePath) => {
+      context.logger.info(`数据集下载完成，自动导入知识库: ${datasetName}`)
+      try {
+        const result = await this.kbManager.importFile(filePath)
+        if (result.success) {
+          context.logger.info(`数据集 "${datasetName}" 已自动导入知识库，${result.chunkCount} 个片段`)
+        } else {
+          context.logger.warn(`数据集 "${datasetName}" 自动导入失败: ${result.error}`)
+        }
+      } catch (err) {
+        context.logger.error(`数据集 "${datasetName}" 自动导入异常: ${(err as Error).message}`)
+      }
+    })
+
     // 文件变更自动重新索引
     if (settings.autoReindex) {
       this.fileChangeHandler = async (data: unknown) => {

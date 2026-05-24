@@ -31,6 +31,9 @@ interface ActiveDownload {
   webContents: Electron.WebContents | null
 }
 
+/** 下载完成回调 */
+export type DownloadCompleteCallback = (datasetId: string, datasetName: string, filePath: string) => void
+
 /**
  * 数据集下载管理器
  * 使用 Electron 原生下载能力，支持暂停/恢复/取消
@@ -41,6 +44,7 @@ export class DatasetDownloader {
   private activeDownloads = new Map<string, ActiveDownload>()
   private readonly ipcCleanups: Array<() => void> = []
   private sessionCleanup?: () => void
+  private onDownloadComplete?: DownloadCompleteCallback
 
   constructor(logger: Logger, dataDir: string) {
     this.logger = logger
@@ -60,6 +64,13 @@ export class DatasetDownloader {
     this.registerIpcHandlers()
 
     this.logger.info(`数据集下载管理器已初始化，下载目录: ${this.downloadDir}`)
+  }
+
+  /**
+   * 注册下载完成回调（下载完自动导入知识库）
+   */
+  setOnDownloadComplete(callback: DownloadCompleteCallback): void {
+    this.onDownloadComplete = callback
   }
 
   /**
@@ -182,6 +193,10 @@ export class DatasetDownloader {
             savePath: item.getSavePath()
           })
           this.logger.info(`数据集下载完成: ${download.datasetName} → ${item.getSavePath()}`)
+          // 触发自动导入回调
+          if (this.onDownloadComplete) {
+            this.onDownloadComplete(matchedId!, download.datasetName, item.getSavePath())
+          }
         } else if (state === 'cancelled') {
           download.state = 'cancelled'
           this.sendProgress(webContents, {
