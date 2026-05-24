@@ -1091,6 +1091,26 @@ export class CubismRenderer_WebGL extends CubismRenderer {
       const offset = masked ? (invertedMask ? 2 : 1) : 0;
       const setName = offset === 0 ? 'Normal' : offset === 1 ? 'Masked' : 'MaskedInverted';
       console.log(`[Cubism5] 🔍 drawMesh[${index}] ${setName}: program=${prog ? '有效' : 'null'}, shaderLoaded=${shader._isShaderLoaded}, shaderSet[${1 + offset}].program=${shader._shaderSets[1 + offset]?.shaderProgram ? '有效' : 'null'}`);
+
+      // ★ 关键诊断：检查顶点坐标范围
+      const verts = model.getDrawableVertices(index);
+      let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+      for (let v = 0; v < verts.length; v += 2) {
+        if (verts[v] < minX) minX = verts[v];
+        if (verts[v] > maxX) maxX = verts[v];
+        if (verts[v + 1] < minY) minY = verts[v + 1];
+        if (verts[v + 1] > maxY) maxY = verts[v + 1];
+      }
+      console.log(`[Cubism5] 🔍 顶点[${index}] X:[${minX.toFixed(2)}, ${maxX.toFixed(2)}] Y:[${minY.toFixed(2)}, ${maxY.toFixed(2)}] 共${verts.length / 2}个顶点`);
+
+      // ★ 关键诊断：检查 MVP 矩阵变换后的顶点
+      const mvpArr = this.getMvpMatrix().getArray();
+      // 取第一个顶点，手动做 MVP 变换
+      const vx = verts[0], vy = verts[1];
+      const clipX = mvpArr[0] * vx + mvpArr[4] * vy + mvpArr[12];
+      const clipY = mvpArr[1] * vx + mvpArr[5] * vy + mvpArr[13];
+      console.log(`[Cubism5] 🔍 顶点[0] 世界:(${vx.toFixed(2)}, ${vy.toFixed(2)}) → 裁剪:(${clipX.toFixed(4)}, ${clipY.toFixed(4)})`);
+      console.log(`[Cubism5] 🔍 MVP对角: [${mvpArr[0].toFixed(4)}, ${mvpArr[5].toFixed(4)}, ${mvpArr[10].toFixed(4)}, ${mvpArr[15].toFixed(4)}]`);
     }
 
     if (
