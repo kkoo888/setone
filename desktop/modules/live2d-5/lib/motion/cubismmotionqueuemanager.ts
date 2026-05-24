@@ -31,6 +31,7 @@ export class CubismMotionQueueManager {
 
   /**
    * デストラクタ
+   * ★ 修复：不设 _motions = null，只清空数组。防止 release 后渲染循环访问 null.length 崩溃
    */
   public release(): void {
     for (let i = 0; i < this._motions.length; ++i) {
@@ -40,7 +41,7 @@ export class CubismMotionQueueManager {
       }
     }
 
-    this._motions = null;
+    this._motions.length = 0;
   }
 
   /**

@@ -473,7 +473,7 @@ export class CubismRendererProfile_WebGL {
   private _lastStencilTest: GLboolean; ///< モデル描画直前のGL_STENCIL_TESTパラメータ
   private _lastDepthTest: GLboolean; ///< モデル描画直前のGL_DEPTH_TESTパラメータ
   private _lastCullFace: GLboolean; ///< モデル描画直前のGL_CULL_FACEパラメータ
-  private _meshDiagDone: boolean = false; // drawMesh 诊断只打印一次
+
   private _lastFrontFace: GLint; ///< モデル描画直前のGL_CULL_FACEパラメータ
   private _lastColorMask: GLboolean[]; ///< モデル描画直前のGL_COLOR_WRITEMASKパラメータ
   private _lastBlending: GLint[]; ///< モデル描画直前のカラーブレンディングパラメータ
@@ -1082,103 +1082,6 @@ export class CubismRenderer_WebGL extends CubismRenderer {
       shader.setupShaderProgramForMask(this, model, index);
     } else {
       shader.setupShaderProgramForDrawable(this, model, index);
-    }
-
-    // ★ 诊断：检查 shader program（前3帧，前3个 drawable）
-    if (index < 3 && !this.isGeneratingMask() && !this._meshDiagDone) {
-      const prog = this.gl.getParameter(this.gl.CURRENT_PROGRAM);
-      const masked = this.getClippingContextBufferForDrawable() != null;
-      const invertedMask = model.getDrawableInvertedMaskBit(index);
-      const offset = masked ? (invertedMask ? 2 : 1) : 0;
-      const setName = offset === 0 ? 'Normal' : offset === 1 ? 'Masked' : 'MaskedInverted';
-      console.log(`[Cubism5] 🔍 drawMesh[${index}] ${setName}: program=${prog ? '有效' : 'null'}, shaderLoaded=${shader._isShaderLoaded}, shaderSet[${1 + offset}].program=${shader._shaderSets[1 + offset]?.shaderProgram ? '有效' : 'null'}`);
-
-      // ★ 关键诊断：检查顶点坐标范围
-      const verts = model.getDrawableVertices(index);
-      let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-      for (let v = 0; v < verts.length; v += 2) {
-        if (verts[v] < minX) minX = verts[v];
-        if (verts[v] > maxX) maxX = verts[v];
-        if (verts[v + 1] < minY) minY = verts[v + 1];
-        if (verts[v + 1] > maxY) maxY = verts[v + 1];
-      }
-      console.log(`[Cubism5] 🔍 顶点[${index}] X:[${minX.toFixed(2)}, ${maxX.toFixed(2)}] Y:[${minY.toFixed(2)}, ${maxY.toFixed(2)}] 共${verts.length / 2}个顶点`);
-
-      // ★ 关键诊断：检查 MVP 矩阵变换后的顶点
-      const mvpArr = this.getMvpMatrix().getArray();
-      const vx = verts[0], vy = verts[1];
-      const clipX = mvpArr[0] * vx + mvpArr[4] * vy + mvpArr[12];
-      const clipY = mvpArr[1] * vx + mvpArr[5] * vy + mvpArr[13];
-      console.log(`[Cubism5] 🔍 顶点[0] 世界:(${vx.toFixed(2)}, ${vy.toFixed(2)}) → 裁剪:(${clipX.toFixed(4)}, ${clipY.toFixed(4)})`);
-
-      // ★ 新增：检查 attribute locations 和 shader 编译状态
-      const posLoc = this.gl.getAttribLocation(prog, 'a_position');
-      const uvLoc = this.gl.getAttribLocation(prog, 'a_texCoord');
-      console.log(`[Cubism5] 🔍 attrib: a_position=${posLoc}, a_texCoord=${uvLoc}`);
-      if (posLoc === -1 || uvLoc === -1) {
-        console.error(`[Cubism5] ❌ attribute location 为 -1！shader 可能没有正确使用这些属性`);
-      }
-
-      // 检查 shader 编译状态
-      const shaders = this.gl.getAttachedShaders(prog);
-      console.log(`[Cubism5] 🔍 attached shaders: ${shaders?.length}`);
-      if (shaders && shaders.length > 0) {
-        for (const s of shaders) {
-          const compileStatus = this.gl.getShaderParameter(s, this.gl.COMPILE_STATUS);
-          const shaderType = this.gl.getShaderParameter(s, this.gl.SHADER_TYPE);
-          console.log(`[Cubism5] 🔍 shader type=${shaderType === this.gl.VERTEX_SHADER ? 'VERTEX' : 'FRAGMENT'}, compileStatus=${compileStatus}`);
-        }
-        const linkStatus = this.gl.getProgramParameter(prog, this.gl.LINK_STATUS);
-        console.log(`[Cubism5] 🔍 program linkStatus=${linkStatus}`);
-      }
-
-      // 检查顶点属性启用状态
-      if (posLoc >= 0) {
-        const enabled = this.gl.getVertexAttrib(posLoc, this.gl.VERTEX_ATTRIB_ARRAY_ENABLED);
-        const size = this.gl.getVertexAttrib(posLoc, this.gl.VERTEX_ATTRIB_ARRAY_SIZE);
-        const buf = this.gl.getVertexAttrib(posLoc, this.gl.VERTEX_ATTRIB_ARRAY_BUFFER_BINDING);
-        console.log(`[Cubism5] 🔍 attrib[${posLoc}]: enabled=${enabled}, size=${size}, buffer=${buf ? '有' : 'null'}`);
-      }
-
-      // ★ 新增：检查纹理绑定
-      const texUnit0 = this.gl.getParameter(this.gl.TEXTURE_BINDING_2D);
-      const activeTex = this.gl.getParameter(this.gl.ACTIVE_TEXTURE);
-      console.log(`[Cubism5] 🔍 纹理: activeTex=${activeTex}, bound=${texUnit0 ? '有效' : 'null'}`);
-
-      // ★ 新增：检查 culling 状态
-      const cullFaceEnabled = this.gl.isEnabled(this.gl.CULL_FACE);
-      const frontFaceMode = this.gl.getParameter(this.gl.FRONT_FACE);
-      console.log(`[Cubism5] 🔍 CullFace: ${cullFaceEnabled ? '开启' : '关闭'}, FrontFace: ${frontFaceMode === this.gl.CCW ? 'CCW' : 'CW'}`);
-
-      // ★ 新增：检查 blend 状态
-      const blendEnabled = this.gl.isEnabled(this.gl.BLEND);
-      const srcRgb = this.gl.getParameter(this.gl.BLEND_SRC_RGB);
-      const dstRgb = this.gl.getParameter(this.gl.BLEND_DST_RGB);
-      console.log(`[Cubism5] 🔍 Blend: ${blendEnabled ? '开启' : '关闭'}, src=${srcRgb}, dst=${dstRgb}`);
-
-      // ★ 新增：检查 index buffer
-      const indexCount = model.getDrawableVertexIndexCount(index);
-      const indices = model.getDrawableVertexIndices(index);
-      let maxIdx = 0;
-      for (let ii = 0; ii < indices.length; ii++) {
-        if (indices[ii] > maxIdx) maxIdx = indices[ii];
-      }
-      console.log(`[Cubism5] 🔍 Index[${index}]: count=${indexCount}, maxIdx=${maxIdx}, vertCount=${verts.length / 2}`);
-
-      // ★ 关键诊断：检查模型和 drawable 的 opacity
-      const modelOpacity = model.getOpacity();
-      const drawableOpacity = model.getDrawableOpacity(index);
-      const isVisible = model.getDrawableDynamicFlagIsVisible(index);
-      console.log(`[Cubism5] 🔍 模型opacity=${modelOpacity.toFixed(4)}, drawable[${index}] opacity=${drawableOpacity.toFixed(4)}, visible=${isVisible}`);
-
-      // ★ 关键诊断：在模型位置读像素（而非画布中心）
-      const testCx = Math.floor((clipX + 1) / 2 * this.gl.canvas.width);
-      const testCy = Math.floor((clipY + 1) / 2 * this.gl.canvas.height);
-      const testPixel = new Uint8Array(4);
-      this.gl.readPixels(testCx, testCy, 1, 1, this.gl.RGBA, this.gl.UNSIGNED_BYTE, testPixel);
-      console.log(`[Cubism5] 🔍 模型位置(${testCx},${testCy}) 像素: ${testPixel[0]},${testPixel[1]},${testPixel[2]},${testPixel[3]}`);
-
-      this._meshDiagDone = true;
     }
 
     if (
