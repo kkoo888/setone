@@ -512,7 +512,22 @@ class Cubism5Service {
     if (deltaTime > 0.5) deltaTime = 0.5
 
     // ③ 通过 AppModel.updateModel 统一调度所有效果（官方流程第 2 步）
-    this.model.updateModel(deltaTime)
+    try {
+      this.model.updateModel(deltaTime)
+    } catch (e) {
+      console.error('[Cubism5] ❌ updateModel 崩溃:', e)
+      console.error('[Cubism5] ❌ 堆栈:', (e as Error).stack)
+      // 诊断：检查关键对象状态
+      const m = this.model as any
+      console.error('[Cubism5] ❌ _motionManager:', m._motionManager)
+      console.error('[Cubism5] ❌ _expressionManager:', m._expressionManager)
+      console.error('[Cubism5] ❌ _updateScheduler:', m._updateScheduler)
+      if (m._motionManager) {
+        const entries = m._motionManager.getCubismMotionQueueEntries?.()
+        console.error('[Cubism5] ❌ _motions:', entries, 'typeof:', typeof entries)
+      }
+      throw e
+    }
 
     // ④ 创建 MVP 矩阵并渲染（官方流程第 3-4 步）
     const mvp = this.createMvpMatrix(canvas.width, canvas.height)
