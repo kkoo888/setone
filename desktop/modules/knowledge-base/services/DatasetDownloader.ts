@@ -244,8 +244,8 @@ export class DatasetDownloader {
     }
 
     // 查询文件列表，找到主数据文件
-    const downloadUrl = await this.resolveDownloadUrl(parsed.owner, parsed.name)
-    if (!downloadUrl) {
+    const resolved = await this.resolveDownloadUrl(parsed.owner, parsed.name)
+    if (!resolved) {
       this.logger.error(`无法找到数据集 ${datasetName} 的下载文件`)
       this.sendProgress(webContents, {
         datasetId,
@@ -259,10 +259,11 @@ export class DatasetDownloader {
       return
     }
 
-    const fileName = this.sanitizeFileName(datasetName) + '.zip'
+    // 使用 ModelScope 返回的真实文件名，而非硬编码的 datasetName.zip
+    const fileName = this.sanitizeFileName(resolved.fileName)
     const savePath = join(this.downloadDir, fileName)
 
-    this.logger.info(`开始下载数据集: ${datasetName} (${downloadUrl})`)
+    this.logger.info(`开始下载数据集: ${datasetName} (${resolved.url})`)
 
     // 标记为 pending（缓存 webContents 用于后续进度推送）
     const placeholder = { getSavePath: () => savePath } as unknown as Electron.DownloadItem
@@ -275,7 +276,7 @@ export class DatasetDownloader {
     })
 
     // 通过 Electron 下载（会触发 will-download 事件）
-    webContents.downloadURL(downloadUrl)
+    webContents.downloadURL(resolved.url)
   }
 
   /**
@@ -291,10 +292,10 @@ export class DatasetDownloader {
   }
 
   /**
-   * 查询 ModelScope 文件列表 API，找到主数据文件并返回下载 URL
+   * 查询 ModelScope 文件列表 API，找到主数据文件并返回下载 URL 和真实文件名
    * 优先选择 .zip / .tar.gz / .jsonl / .parquet 等数据文件
    */
-  private async resolveDownloadUrl(owner: string, name: string): Promise<string | null> {
+  private async resolveDownloadUrl(owner: string, name: string): Promise<{ url: string; fileName: string } | null> {
     try {
       const treeUrl = `${MODELSCOPE_API}/datasets/${owner}/${name}/repo/tree?Revision=master`
       this.logger.info(`查询文件列表: ${treeUrl}`)
@@ -315,8 +316,10 @@ export class DatasetDownloader {
 
       const files = data.Data.Files.filter(f => f.Type === 'blob')
 
-      // 优先级：.zip > .tar.gz > .jsonl > .parquet > .csv > 第一个非 py/md 文件
-      const priorityExts = ['.zip', '.tar.gz', '.jsonl', '.parquet', '.csv', '.json']
+      // 优先级：.zip > .tar.gz > .jsonl > .parquet > .csv > 第一个非 py/md/json 元数据文件
+      // 注意：.json 不能加入优先级，否则 dataset_infos.json 等元数据文件会被误选
+      const priorityExts = ['.zip', '.tar.gz', '.jsonl', '.parquet', '.csv']
+      const metaFileNames = ['dataset_infos.json', 'dataset_dict.json', 'state.json', 'README.md', 'LICENSE']
       let selectedFile: typeof files[0] | null = null
 
       for (const ext of priorityExts) {
@@ -327,9 +330,13 @@ export class DatasetDownloader {
         }
       }
 
-      // 兜底：选第一个非 py/md 的文件
+      // 兜底：选第一个非 py/md/元数据 的文件
       if (!selectedFile) {
-        selectedFile = files.find(f => !f.Name.endsWith('.py') && !f.Name.endsWith('.md')) ?? null
+        selectedFile = files.find(f =>
+          !f.Name.endsWith('.py') &&
+          !f.Name.endsWith('.md') &&
+          !metaFileNames.includes(f.Name)
+        ) ?? null
       }
 
       if (!selectedFile) {
@@ -339,7 +346,7 @@ export class DatasetDownloader {
 
       const downloadUrl = `${MODELSCOPE_API}/datasets/${owner}/${name}/repo?Revision=master&FilePath=${encodeURIComponent(selectedFile.Path)}`
       this.logger.info(`选定文件: ${selectedFile.Name} (${selectedFile.Size} bytes) → ${downloadUrl}`)
-      return downloadUrl
+      return { url: downloadUrl, fileName: selectedFile.Name }
     } catch (err) {
       this.logger.error(`查询文件列表失败: ${(err as Error).message}`)
       return null
