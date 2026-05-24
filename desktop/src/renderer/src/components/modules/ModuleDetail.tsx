@@ -2,10 +2,16 @@
  * 模块详情面板组件
  * 展示选中模块的详细信息和资源使用
  */
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import type { ModuleInfo } from '../../stores/useModulesStore'
 import { FolderOpen } from '../../utils/statusMessages'
 import { Button } from '../common/Button'
+
+/** 知识库路径配置 */
+interface KBPaths {
+  rawDir: string
+  indexDir: string
+}
 
 interface ModuleDetailProps {
   /** 模块信息 */
@@ -14,6 +20,39 @@ interface ModuleDetailProps {
   readonly onClose: () => void
   /** 启停切换回调 */
   readonly onToggle: (id: string) => void
+}
+
+/** 知识库模块：显示路径配置 */
+function KnowledgeBaseSettings() {
+  const [paths, setPaths] = useState<KBPaths | null>(null)
+
+  useEffect(() => {
+    // 通过 kb_network_status 获取当前路径配置
+    window.api?.invoke?.('kb_network_status', {}).then((res: any) => {
+      if (res?.success && res?.data) {
+        setPaths({ rawDir: res.data.rawDir, indexDir: res.data.indexDir })
+      }
+    }).catch(() => {})
+  }, [])
+
+  if (!paths) return null
+
+  return (
+    <div className="module-detail-section">
+      <h4>📁 存储路径</h4>
+      <div className="module-detail-paths">
+        <div className="path-item">
+          <span className="path-label">原始文件：</span>
+          <span className="path-value" title={paths.rawDir}>{paths.rawDir}</span>
+        </div>
+        <div className="path-item">
+          <span className="path-label">索引目录：</span>
+          <span className="path-value" title={paths.indexDir}>{paths.indexDir}</span>
+        </div>
+      </div>
+      <p className="path-hint">在模块设置中修改 rawDir / indexDir 配置项</p>
+    </div>
+  )
 }
 
 export function ModuleDetail({ module, onClose, onToggle }: ModuleDetailProps) {
@@ -44,6 +83,8 @@ export function ModuleDetail({ module, onClose, onToggle }: ModuleDetailProps) {
             </span>
           </div>
         </div>
+
+        {module.id === 'knowledge-base' && module.enabled && <KnowledgeBaseSettings />}
 
         <div className="module-detail-actions">
           <Button
