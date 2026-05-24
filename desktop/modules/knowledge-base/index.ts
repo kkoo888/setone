@@ -1,5 +1,6 @@
 import type { Module, ModuleContext, Capability } from '../../src/main/types/module'
 import type { KBSettings, KBImportResult, KBSearchResult, KBAskResult, KBNetworkStatus } from './types'
+import { join, resolve, isAbsolute } from 'path'
 import { session } from 'electron'
 import { VectorStore } from './services/VectorStore'
 import { KBManager } from './services/KBManager'
