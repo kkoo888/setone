@@ -13,6 +13,7 @@ import type { Cubism5ModelState, Cubism5ModelConfig, StateCallback, MotionGroup 
 // 静态导入 CubismFramework（Vite 警告修复）
 import { CubismFramework } from '../lib/live2dcubismframework'
 import { CubismMatrix44 } from '../lib/math/cubismmatrix44'
+import { CubismShaderManager_WebGL } from '../lib/rendering/cubismshader_webgl'
 
 // ============ 常量 ============
 
@@ -513,6 +514,12 @@ class Cubism5Service {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
     gl.enable(gl.BLEND)
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+
+    // ★ 诊断：检查 shader 加载状态（前5帧打印）
+    if (this._renderFrameCount <= 5) {
+      const shader = CubismShaderManager_WebGL.getInstance().getShader(gl)
+      console.log(`[Cubism5] 🔍 帧${this._renderFrameCount} shader: loaded=${shader._isShaderLoaded}, loading=${shader._isShaderLoading}, sets=${shader._shaderSets?.length}`)
+    }
 
     // 计算 deltaTime（★ 保护：钳制到合理范围，防止负值或过大跳帧）
     const now = performance.now() / 1000
