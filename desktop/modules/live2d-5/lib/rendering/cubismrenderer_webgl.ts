@@ -793,6 +793,12 @@ export class CubismRenderer_WebGL extends CubismRenderer {
    */
   public doDrawModel(shaderPath: string = null): void {
     this.loadShaders(shaderPath);
+
+    // ★ shader 未就绪时直接返回，避免任何 GL 操作污染状态
+    if (!CubismShaderManager_WebGL.getInstance().getShader(this.gl)._isShaderLoaded) {
+      return;
+    }
+
     this.beforeDrawModelRenderTarget();
 
     const lastFbo = this.gl.getParameter(
