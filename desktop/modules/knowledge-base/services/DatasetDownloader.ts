@@ -259,8 +259,10 @@ export class DatasetDownloader {
       return
     }
 
-    // 使用 ModelScope 返回的真实文件名，而非硬编码的 datasetName.zip
-    const fileName = this.sanitizeFileName(resolved.fileName)
+    // 用数据集名 + 原始文件名，防止不同数据集的同名文件互相覆盖
+    const rawFileName = this.sanitizeFileName(resolved.fileName)
+    const safeDatasetName = this.sanitizeFileName(datasetName)
+    const fileName = `${safeDatasetName}_${rawFileName}`
     const savePath = join(this.downloadDir, fileName)
 
     this.logger.info(`开始下载数据集: ${datasetName} (${resolved.url})`)
