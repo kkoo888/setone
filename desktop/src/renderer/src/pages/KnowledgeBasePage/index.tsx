@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react'
 import { ModuleHeader } from '../../components/common/module/ModuleHeader'
 import { ModuleList, ModuleListItem, ModuleModal } from '../../components/common/module/ModuleList'
 import { KBDocument, KBSearchResult, KBAskResult } from '../types/knowledge-base'
-import { EMPTY_ICONS, STATUS_ICONS, ACTION_ICONS, Msg, BookOpen, Search, Tips, DownloadOne, UploadOne, FolderOpen, DeleteOne } from '../../utils/statusMessages'
+import { EMPTY_ICONS, STATUS_ICONS, ACTION_ICONS, Msg, BookOpen, Search, Tips, DownloadOne, UploadOne, FolderOpen, DeleteOne, SettingOne } from '../../utils/statusMessages'
 
 const bookIcon = React.createElement(BookOpen, { size: 16, fill: 'currentColor', theme: 'outline' })
 const searchIcon = React.createElement(Search, { size: 16, fill: 'currentColor', theme: 'outline' })
@@ -10,6 +10,7 @@ const tipsIcon = React.createElement(Tips, { size: 16, fill: 'currentColor', the
 const downloadIcon = React.createElement(DownloadOne, { size: 16, fill: 'currentColor', theme: 'outline' })
 const uploadIcon = React.createElement(UploadOne, { size: 16, fill: 'currentColor', theme: 'outline' })
 const folderIcon = React.createElement(FolderOpen, { size: 12, fill: 'currentColor', theme: 'outline' })
+const settingIcon = React.createElement(SettingOne, { size: 16, fill: 'currentColor', theme: 'outline' })
 
 /** 数据集信息 */
 interface DatasetInfo {
@@ -101,6 +102,11 @@ export function KnowledgeBasePage() {
   const [downloads, setDownloads] = useState<Map<string, DownloadProgress>>(new Map())
   const [showDownloadConfirm, setShowDownloadConfirm] = useState<DatasetInfo | null>(null)
 
+  // ── 设置 ──
+  const [rawDir, setRawDir] = useState('')
+  const [indexDir, setIndexDir] = useState('')
+  const [savingSettings, setSavingSettings] = useState(false)
+
   // ── 加载数据 ──
   const loadDocuments = useCallback(async () => {
     try {
@@ -112,7 +118,11 @@ export function KnowledgeBasePage() {
   const loadNetworkStatus = useCallback(async () => {
     try {
       const res = await window.electronAPI.invoke('kb_network_status')
-      if (res?.success) setNetworkEnabled(res.data.networkEnabled ?? true)
+      if (res?.success) {
+        setNetworkEnabled(res.data.networkEnabled ?? true)
+        setRawDir(res.data.rawDir ?? '')
+        setIndexDir(res.data.indexDir ?? '')
+      }
     } catch { /* ignore */ }
   }, [])
 
@@ -261,6 +271,32 @@ export function KnowledgeBasePage() {
         setShowImportDialog(false)
       }
     } catch { /* ignore */ }
+  }
+
+  // ── 设置：选择文件夹 ──
+  const handlePickDir = async (field: 'rawDir' | 'indexDir') => {
+    try {
+      const result = await window.electronAPI.invoke('dialog:openFile', { properties: ['openDirectory'] }) as { canceled?: boolean; filePaths?: string[] }
+      if (!result?.canceled && result?.filePaths?.[0]) {
+        if (field === 'rawDir') setRawDir(result.filePaths[0])
+        else setIndexDir(result.filePaths[0])
+      }
+    } catch { /* ignore */ }
+  }
+
+  // ── 设置：保存路径 ──
+  const handleSaveSettings = async () => {
+    setSavingSettings(true)
+    try {
+      await window.electronAPI.invoke('module:saveSettings', {
+        moduleId: 'knowledge-base',
+        settings: { rawDir, indexDir }
+      })
+      setMessage('✅ 路径设置已保存，模块已重载')
+    } catch (e) {
+      setMessage(Msg.saveFailed((e as Error).message))
+    }
+    setSavingSettings(false)
   }
 
   // ── 远程加载数据集 ──
@@ -426,6 +462,7 @@ export function KnowledgeBasePage() {
           { key: 'docs', label: '📄 文档管理', count: documents.length },
           { key: 'search', label: <>{searchIcon} 语义搜索</> },
           { key: 'ask', label: <>{tipsIcon} RAG问答</> },
+          { key: 'settings', label: <>{settingIcon} 设置</> },
         ]}
         activeTab={activeTab}
         onTabChange={setActiveTab}
@@ -627,6 +664,70 @@ export function KnowledgeBasePage() {
             </div>
           )}
         </>
+      )}
+
+      {/* ══════════ 设置 ══════════ */}
+      {activeTab === 'settings' && (
+        <div style={{ padding: '16px 20px', maxWidth: 600 }}>
+          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-text-primary)', marginBottom: 16 }}>📁 存储路径配置</div>
+
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ display: 'block', fontSize: 12, color: 'var(--color-text-secondary)', marginBottom: 6 }}>原始文件目录（数据集下载位置）</label>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <input
+                type="text"
+                value={rawDir}
+                onChange={e => setRawDir(e.target.value)}
+                placeholder="留空使用默认目录"
+                style={{
+                  flex: 1, padding: '6px 10px', fontSize: 12,
+                  fontFamily: 'var(--font-mono, monospace)',
+                  background: 'var(--color-bg-primary, #fff)',
+                  border: '1px solid var(--color-border, #ddd)',
+                  borderRadius: 6, color: 'var(--color-text-primary)',
+                  outline: 'none',
+                }}
+              />
+              <button className="btn" onClick={() => handlePickDir('rawDir')} style={{ fontSize: 12, padding: '6px 10px' }}>
+                {React.createElement(FolderOpen, { size: 14, fill: 'currentColor', theme: 'outline' })} 选择
+              </button>
+            </div>
+          </div>
+
+          <div style={{ marginBottom: 20 }}>
+            <label style={{ display: 'block', fontSize: 12, color: 'var(--color-text-secondary)', marginBottom: 6 }}>索引目录（向量切片存储位置）</label>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <input
+                type="text"
+                value={indexDir}
+                onChange={e => setIndexDir(e.target.value)}
+                placeholder="留空使用默认目录"
+                style={{
+                  flex: 1, padding: '6px 10px', fontSize: 12,
+                  fontFamily: 'var(--font-mono, monospace)',
+                  background: 'var(--color-bg-primary, #fff)',
+                  border: '1px solid var(--color-border, #ddd)',
+                  borderRadius: 6, color: 'var(--color-text-primary)',
+                  outline: 'none',
+                }}
+              />
+              <button className="btn" onClick={() => handlePickDir('indexDir')} style={{ fontSize: 12, padding: '6px 10px' }}>
+                {React.createElement(FolderOpen, { size: 14, fill: 'currentColor', theme: 'outline' })} 选择
+              </button>
+            </div>
+          </div>
+
+          <button className="btn btn-primary" onClick={handleSaveSettings} disabled={savingSettings} style={{ fontSize: 13, padding: '8px 20px' }}>
+            {savingSettings ? '保存中...' : '💾 保存并重载模块'}
+          </button>
+
+          <div style={{ marginTop: 16, fontSize: 11, color: 'var(--color-text-tertiary)', lineHeight: 1.6 }}>
+            <div>• 原始文件目录：数据集下载保存的位置</div>
+            <div>• 索引目录：Vectra 向量数据库的切片和索引存储位置</div>
+            <div>• 留空则使用默认路径（应用数据目录下的 datasets / vectra-doc-index）</div>
+            <div>• 保存后模块会自动热重载，无需重启应用</div>
+          </div>
+        </div>
       )}
 
       {/* ══════════ 导入弹窗 ══════════ */}
