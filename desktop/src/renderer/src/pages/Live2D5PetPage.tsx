@@ -45,14 +45,30 @@ const Live2D5PetPage: React.FC = () => {
 
     const load = async () => {
       console.log('[Live2D5PetPage] 🚀 组件挂载, 开始加载流程...')
-      console.log('[Live2D5PetPage] containerRef.current:', !!containerRef.current)
-      console.log('[Live2D5PetPage] window.location.href:', window.location.href)
-      console.log('[Live2D5PetPage] window.electronAPI:', !!window.electronAPI)
-
       if (!containerRef.current) {
         console.error('[Live2D5PetPage] ❌ containerRef.current 为空, 无法加载')
         return
       }
+
+      // ★ 关键：等待容器有正确尺寸再加载模型（容器未布局时 clientWidth ≈ 1）
+      const container = containerRef.current
+      await new Promise<void>((resolve) => {
+        if (container.clientWidth > 10 && container.clientHeight > 10) {
+          resolve()
+          return
+        }
+        console.log('[Live2D5PetPage] ⏳ 等待容器布局...')
+        const observer = new ResizeObserver((entries) => {
+          for (const entry of entries) {
+            if (entry.contentRect.width > 10 && entry.contentRect.height > 10) {
+              observer.disconnect()
+              resolve()
+            }
+          }
+        })
+        observer.observe(container)
+      })
+      console.log('[Live2D5PetPage] ✅ 容器尺寸:', container.clientWidth, 'x', container.clientHeight)
 
       try {
         console.log('[Live2D5PetPage] 📦 开始动态导入 cubism5-service...')
