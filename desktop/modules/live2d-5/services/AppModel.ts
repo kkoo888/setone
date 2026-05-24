@@ -27,6 +27,7 @@ import { CubismBreathUpdater } from '../lib/motion/cubismbreathupdater'
 import { CubismLookUpdater } from '../lib/motion/cubismlookupdater'
 import { CubismPhysicsUpdater } from '../lib/motion/cubismphysicsupdater'
 import { CubismExpressionUpdater } from '../lib/motion/cubismexpressionupdater'
+import { CubismShaderManager_WebGL } from '../lib/rendering/cubismshader_webgl'
 import { CubismPoseUpdater } from '../lib/motion/cubismposeupdater'
 import { CubismLipSyncUpdater } from '../lib/motion/cubismlipsyncupdater'
 import { CubismMotion } from '../lib/motion/cubismmotion'
@@ -818,16 +819,22 @@ export class AppModel extends CubismUserModel {
     if (!model) { console.warn('[AppModel] ❌ model 为 null'); return }
     const drawableCount = model.getDrawableCount()
     const visibleCount = Array.from({ length: drawableCount }, (_, i) => model.getDrawableDynamicFlagIsVisible(i)).filter(Boolean).length
+
+    // ★ 诊断：检查 shader 加载状态
+    let shaderLoaded = false
+    try {
+      const sm = CubismShaderManager_WebGL.getInstance().getShader(renderer.gl)
+      shaderLoaded = sm?._isShaderLoaded ?? false
+    } catch { /* shader manager 未初始化 */ }
+
     if (drawableCount === 0) {
       console.warn('[AppModel] ⚠️ drawableCount = 0，模型无绘制对象')
+    } else if (!shaderLoaded) {
+      console.warn(`[AppModel] ⚠️ shader 未加载完成，跳过渲染 (${visibleCount}/${drawableCount} drawable 可见)`)
     } else if (visibleCount === 0) {
-      // 仅首帧打印，避免刷屏
-      if (!this._loggedVisibility) {
-        console.warn(`[AppModel] ⚠️ ${drawableCount} 个 drawable 全部不可见 (visible=0)`)
-        this._loggedVisibility = true
-      }
+      console.warn(`[AppModel] ⚠️ ${drawableCount} 个 drawable 全部不可见 (visible=0)`)
     } else if (!this._loggedRenderOK) {
-      console.log(`[AppModel] ✅ 渲染中: ${visibleCount}/${drawableCount} 个 drawable 可见`)
+      console.log(`[AppModel] ✅ 渲染中: ${visibleCount}/${drawableCount} 个 drawable 可见, shader=${shaderLoaded}`)
       this._loggedRenderOK = true
     }
 

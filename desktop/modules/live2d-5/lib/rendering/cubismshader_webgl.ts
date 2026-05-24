@@ -1100,13 +1100,14 @@ export class CubismShader_WebGL {
       .then(() => {
         // NOTE: ファイルの読み込みを待つ必要があるためこのようにする
         this.registerShader(); // 通常シェーダーの登録
-        this.registerBlendShader(); // ブレンドモードシェーダーの登録
+        this.registerBlendShader(); // ブレンドモード用シェーダーの登録
         this._isShaderLoading = false;
         this._isShaderLoaded = true;
+        console.log('[Cubism5] ✅ shader 加载完成，共', this._shaderSets.length, '个')
       })
       .catch(error => {
         this._isShaderLoading = false;
-        console.error('Failed to load shaders:', error);
+        console.error('[Cubism5] ❌ shader 加载失败！模型无法渲染:', error)
       });
   }
 
