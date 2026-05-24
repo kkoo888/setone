@@ -473,6 +473,7 @@ export class CubismRendererProfile_WebGL {
   private _lastStencilTest: GLboolean; ///< モデル描画直前のGL_STENCIL_TESTパラメータ
   private _lastDepthTest: GLboolean; ///< モデル描画直前のGL_DEPTH_TESTパラメータ
   private _lastCullFace: GLboolean; ///< モデル描画直前のGL_CULL_FACEパラメータ
+  private _meshDiagDone: boolean = false; // drawMesh 诊断只打印一次
   private _lastFrontFace: GLint; ///< モデル描画直前のGL_CULL_FACEパラメータ
   private _lastColorMask: GLboolean[]; ///< モデル描画直前のGL_COLOR_WRITEMASKパラメータ
   private _lastBlending: GLint[]; ///< モデル描画直前のカラーブレンディングパラメータ
@@ -1083,8 +1084,8 @@ export class CubismRenderer_WebGL extends CubismRenderer {
       shader.setupShaderProgramForDrawable(this, model, index);
     }
 
-    // ★ 诊断：检查 shader program（前3个 drawable）
-    if (index < 3 && !this.isGeneratingMask()) {
+    // ★ 诊断：检查 shader program（前3帧，前3个 drawable）
+    if (index < 3 && !this.isGeneratingMask() && !this._meshDiagDone) {
       const prog = this.gl.getParameter(this.gl.CURRENT_PROGRAM);
       const masked = this.getClippingContextBufferForDrawable() != null;
       const invertedMask = model.getDrawableInvertedMaskBit(index);
@@ -1163,6 +1164,21 @@ export class CubismRenderer_WebGL extends CubismRenderer {
         if (indices[ii] > maxIdx) maxIdx = indices[ii];
       }
       console.log(`[Cubism5] 🔍 Index[${index}]: count=${indexCount}, maxIdx=${maxIdx}, vertCount=${verts.length / 2}`);
+
+      // ★ 关键诊断：检查模型和 drawable 的 opacity
+      const modelOpacity = model.getOpacity();
+      const drawableOpacity = model.getDrawableOpacity(index);
+      const isVisible = model.getDrawableDynamicFlagIsVisible(index);
+      console.log(`[Cubism5] 🔍 模型opacity=${modelOpacity.toFixed(4)}, drawable[${index}] opacity=${drawableOpacity.toFixed(4)}, visible=${isVisible}`);
+
+      // ★ 关键诊断：在模型位置读像素（而非画布中心）
+      const testCx = Math.floor((clipX + 1) / 2 * this.gl.canvas.width);
+      const testCy = Math.floor((clipY + 1) / 2 * this.gl.canvas.height);
+      const testPixel = new Uint8Array(4);
+      this.gl.readPixels(testCx, testCy, 1, 1, this.gl.RGBA, this.gl.UNSIGNED_BYTE, testPixel);
+      console.log(`[Cubism5] 🔍 模型位置(${testCx},${testCy}) 像素: ${testPixel[0]},${testPixel[1]},${testPixel[2]},${testPixel[3]}`);
+
+      this._meshDiagDone = true;
     }
 
     if (
