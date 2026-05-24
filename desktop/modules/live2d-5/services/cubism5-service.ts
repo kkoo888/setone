@@ -13,7 +13,6 @@ import type { Cubism5ModelState, Cubism5ModelConfig, StateCallback, MotionGroup 
 // 静态导入 CubismFramework（Vite 警告修复）
 import { CubismFramework } from '../lib/live2dcubismframework'
 import { CubismMatrix44 } from '../lib/math/cubismmatrix44'
-import { CubismShaderManager_WebGL } from '../lib/rendering/cubismshader_webgl'
 
 // ============ 常量 ============
 
@@ -481,52 +480,21 @@ class Cubism5Service {
 
   /**
    * 渲染一帧
-   * ★ 修复：canvas 尺寸更新已移至 ResizeObserver，此处不再每帧检查
    */
-  private _renderFrameCount = 0
-
   private renderFrame(): void {
     if (!this.gl || !this.model || !this.canvas || this.contextLost || this.destroyed) {
-      if (this._renderFrameCount < 3) {
-        console.warn('[Cubism5] ⚠️ renderFrame 跳过:', {
-          gl: !!this.gl, model: !!this.model, canvas: !!this.canvas,
-          contextLost: this.contextLost, destroyed: this.destroyed,
-        })
-      }
-      this._renderFrameCount++
       return
     }
 
     const gl = this.gl
     const canvas = this.canvas
 
-    // 首帧诊断
-    if (this._renderFrameCount === 0) {
-      console.log('[Cubism5] 🎬 首帧渲染开始, canvas:', canvas.width, 'x', canvas.height)
-      console.log('[Cubism5] 🎬 GL version:', gl.getParameter(gl.VERSION))
-      console.log('[Cubism5] 🎬 GL viewport:', gl.getParameter(gl.VIEWPORT))
-      console.log('[Cubism5] 🎬 model opacity:', this.model.getOpacity())
-    }
-    this._renderFrameCount++
-
-    // 清除画布
-    gl.clearColor(0.12, 0.12, 0.2, 1) // 不透明背景，防止 canvas 透明问题
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-    gl.enable(gl.BLEND)
-    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
-
-    // ★ 诊断：检查 shader 加载状态（前5帧打印）
-    if (this._renderFrameCount <= 5) {
-      const shader = CubismShaderManager_WebGL.getInstance().getShader(gl)
-      console.log(`[Cubism5] 🔍 帧${this._renderFrameCount} shader: loaded=${shader._isShaderLoaded}, loading=${shader._isShaderLoading}, sets=${shader._shaderSets?.length}`)
-    }
-
-    // 计算 deltaTime（★ 保护：钳制到合理范围，防止负值或过大跳帧）
+    // 计算 deltaTime（钳制到合理范围，防止负值或过大跳帧）
     const now = performance.now() / 1000
     let deltaTime = now - this.lastUpdateTime
     this.lastUpdateTime = now
     if (deltaTime < 0) deltaTime = 0
-    if (deltaTime > 0.5) deltaTime = 0.5  // 最大 500ms，防止跳帧
+    if (deltaTime > 0.5) deltaTime = 0.5
 
     // 通过 AppModel.updateModel 统一调度所有效果
     this.model.updateModel(deltaTime)
@@ -537,41 +505,14 @@ class Cubism5Service {
   }
 
   /**
-   * 创建 MVP 矩阵（viewMatrix × modelMatrix）
-   *
-   * ★ 修复：对齐 Demo renderScene() 的 MVP 构建逻辑
-   * Demo 在构建 projection 时会根据 canvas 宽高比做校正：
-   *   - 竖长窗口：projection.scale(1.0, width/height)
-   *   - 横长窗口：projection.scale(height/width, 1.0)
-   * 然后再乘 viewMatrix 和 modelMatrix
-   *
-   * CubismMatrix44.multiplyByMatrix(m) 的语义是 this = m × this
-   * 所以正确的乘法顺序是：projection × viewMatrix × modelMatrix
+   * 创建 MVP 矩阵
+   * 构建链：projection × viewMatrix × modelMatrix
+   * CubismMatrix44.multiplyByMatrix(m) 语义：this = m × this（左乘）
    */
   private createMvpMatrix(width: number, height: number): { getArray(): Float32Array } {
     const modelMatrix = this.model?.getModelMatrix()
     const viewMatrix = this.model?.getViewMatrix()
 
-    // fallback：如果 modelMatrix 不存在，返回基础正交投影
-    if (!modelMatrix) {
-      const projection = new Float32Array(16)
-      projection[0] = 2 / width
-      projection[5] = -2 / height
-      projection[10] = 1
-      projection[12] = -1
-      projection[13] = 1
-      projection[15] = 1
-      return { getArray: () => projection }
-    }
-
-    // ★ 修复：对齐 Demo renderScene() 的 projection 构建
-    // Demo 的 multiplyByMatrix 语义：a.multiplyByMatrix(b) → a = b × a（左乘）
-    // Demo 链路：
-    //   projection = identity → projection.multiplyByMatrix(viewMatrix) → projection = viewMatrix
-    //   model.draw(projection) → matrix.multiplyByMatrix(modelMatrix) → matrix = modelMatrix × viewMatrix
-    // 所以正确顺序是：先设 viewMatrix，再左乘 modelMatrix
-
-    // 1. 创建 projection 矩阵，加画布宽高比校正（与 Demo 一致）
     const projection = new CubismMatrix44()
     if (width > height) {
       projection.scale(height / width, 1.0)
@@ -579,25 +520,11 @@ class Cubism5Service {
       projection.scale(1.0, width / height)
     }
 
-    // 2. projection = viewMatrix × projection（左乘）
     if (viewMatrix) {
       projection.multiplyByMatrix(viewMatrix)
     }
-
-    // 3. projection = modelMatrix × projection（左乘）
-    //    最终 MVP = modelMatrix × viewMatrix × aspectRatio
-    projection.multiplyByMatrix(modelMatrix)
-
-    // 首帧诊断
-    if (this._renderFrameCount <= 3) {
-      const arr = projection.getArray()
-      console.log(`[Cubism5] 🔍 MVP 诊断: [0]=${arr[0].toFixed(4)} [5]=${arr[5].toFixed(4)} [12]=${arr[12].toFixed(4)} [13]=${arr[13].toFixed(4)}`)
-      const modelArr = modelMatrix.getArray()
-      console.log(`[Cubism5] 🔍 ModelMatrix: [0]=${modelArr[0].toFixed(4)} [5]=${modelArr[5].toFixed(4)}`)
-      if (viewMatrix) {
-        const viewArr = viewMatrix.getArray()
-        console.log(`[Cubism5] 🔍 ViewMatrix: [0]=${viewArr[0].toFixed(4)} [5]=${viewArr[5].toFixed(4)}`)
-      }
+    if (modelMatrix) {
+      projection.multiplyByMatrix(modelMatrix)
     }
 
     return { getArray: () => projection.getArray() }

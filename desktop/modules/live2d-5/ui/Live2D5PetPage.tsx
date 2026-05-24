@@ -13,7 +13,6 @@ const Live2D5PetPage: React.FC = () => {
   const [state, setState] = useState<Cubism5ModelState>('idle')
   const [error, setError] = useState<string | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
-  const [hitAreas, setHitAreas] = useState<Array<{ name: string; x: number; y: number; width: number; height: number }>>([])
 
   // 加载已应用的模型
   useEffect(() => {

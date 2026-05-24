@@ -16,8 +16,8 @@
 import { CubismUserModel } from '../lib/model/cubismusermodel'
 import { CubismModelSettingJson } from '../lib/cubismmodelsettingjson'
 import { CubismEyeBlink } from '../lib/effect/cubismeyeblink'
-import { CubismBreath, BreathParameterData } from '../lib/effect/cubismbreath'
-import { CubismLook, LookParameterData } from '../lib/effect/cubismlook'
+import { CubismBreath } from '../lib/effect/cubismbreath'
+import { CubismLook } from '../lib/effect/cubismlook'
 import { CubismPose } from '../lib/effect/cubismpose'
 import { CubismPhysics } from '../lib/physics/cubismphysics'
 import { CubismUpdateScheduler } from '../lib/motion/cubismupdatescheduler'
@@ -32,10 +32,6 @@ import { CubismMotion } from '../lib/motion/cubismmotion'
 import { CubismExpressionMotion } from '../lib/motion/cubismexpressionmotion'
 import { ACubismMotion } from '../lib/motion/acubismmotion'
 import { CubismTargetPoint } from '../lib/math/cubismtargetpoint'
-import { CubismRenderer_WebGL } from '../lib/rendering/cubismrenderer_webgl'
-import { CubismShaderManager_WebGL } from '../lib/rendering/cubismshader_webgl'
-import { CubismFramework } from '../lib/live2dcubismframework'
-import { CubismDefaultParameterId } from '../lib/cubismdefaultparameterid'
 import { CubismIdHandle } from '../lib/id/cubismid'
 import { CubismViewMatrix } from '../lib/math/cubismviewmatrix'
 import { CubismMatrix44 } from '../lib/math/cubismmatrix44'
@@ -106,11 +102,6 @@ export class AppModel extends CubismUserModel {
   // ★ 新增：麦克风音频处理器（用于实时 LipSync）
   private _microphoneHandler: MicrophoneHandler | null = null
   private _useMicrophone: boolean = false
-
-  // ★ 新增：shader 等待定时器（用于 destroy 时取消）
-  private _shaderWaitTimers: ReturnType<typeof setTimeout>[] = []
-  private _firstFrameLogged = false
-  private _diagFrameCount = 0
 
   // 帧内动作更新标志（与 Demo _motionUpdated 一致）
   private _motionUpdated: boolean = false
@@ -217,55 +208,6 @@ export class AppModel extends CubismUserModel {
 
     // 16. 应用缩放
     this.applyScale(scale)
-
-    // 17. ★ 预热 shader（与 Demo 一致，避免首帧闪烁）
-    // ★ 修复：等待 shader 异步加载完成后再继续，防止首帧空白
-    if (gl) {
-      this.getRenderer().loadShaders()
-
-      // 等待 shader 异步加载完成（最多 5 秒）
-      const maxWait = 5000
-      const startTime = Date.now()
-      await new Promise<void>((resolve, reject) => {
-        const check = () => {
-          const shader = CubismShaderManager_WebGL.getInstance().getShader(gl)
-          if (shader?._isShaderLoaded) {
-            console.log('[AppModel] ✅ Shader 加载完成')
-            resolve()
-            return
-          }
-          if (Date.now() - startTime >= maxWait) {
-            const err = new Error('Shader 加载超时（5s），模型无法显示')
-            console.error('[AppModel] ❌', err.message)
-            reject(err)  // ★ 修复：超时后抛出异常而非静默继续
-            return
-          }
-          const timer = setTimeout(check, 50)
-          this._shaderWaitTimers.push(timer)
-        }
-        check()
-      })
-
-      // ⑰ 验证 shader program 是否编译成功
-      const shader = CubismShaderManager_WebGL.getInstance().getShader(gl)
-      if (shader?._isShaderLoaded) {
-        let failedPrograms = 0
-        for (const s of shader._shaderSets) {
-          if (s?.shaderProgram === 0 || s?.shaderProgram === null) {
-            failedPrograms++
-          }
-        }
-        if (failedPrograms > 0) {
-          console.error(`[AppModel] ❌ ${failedPrograms} 个 shader program 编译失败`)
-        }
-      }
-
-      // GL 错误检查
-      const glError = gl.getError()
-      if (glError !== gl.NO_ERROR && glError !== gl.CONTEXT_LOST_WEBGL) {
-        console.warn(`[AppModel] ⚠️ Shader 预热后 GL 错误: 0x${glError.toString(16)}`)
-      }
-    }
 
     // 18. 标记初始化完成
     this.setInitialized(true)
@@ -532,7 +474,7 @@ export class AppModel extends CubismUserModel {
   private setupUpdaters(): void {
     this._updateScheduler = new CubismUpdateScheduler()
 
-    // 自动眨眼
+    // 自动眨眼（官方 create 内部处理一切）
     this._eyeBlink = CubismEyeBlink.create(this._setting)
     this._updateScheduler.addUpdatableList(
       new CubismEyeBlinkUpdater(() => this._motionUpdated, this._eyeBlink)
@@ -543,31 +485,15 @@ export class AppModel extends CubismUserModel {
       new CubismExpressionUpdater(this._expressionManager)
     )
 
-    // 鼠标注视 + 配置 LookParameterData
+    // 鼠标注视（官方 create 内部配置默认参数）
     const look = CubismLook.create()
-    const idManager = CubismFramework.getIdManager()
-    look.setParameters([
-      new LookParameterData(idManager.getId('ParamAngleX'), 30.0, 0.0, 0.0),
-      new LookParameterData(idManager.getId('ParamAngleY'), 0.0, 30.0, 0.0),
-      new LookParameterData(idManager.getId('ParamAngleZ'), 0.0, 0.0, -30.0),
-      new LookParameterData(idManager.getId('ParamBodyAngleX'), 10.0, 0.0, 0.0),
-      new LookParameterData(idManager.getId(CubismDefaultParameterId.ParamEyeBallX), 1.0, 0.0, 0.0),
-      new LookParameterData(idManager.getId(CubismDefaultParameterId.ParamEyeBallY), 0.0, 1.0, 0.0),
-    ])
     this._look = look
     this._updateScheduler.addUpdatableList(
-      new CubismLookUpdater(this._look, this._dragManager)
+      new CubismLookUpdater(look, this._dragManager)
     )
 
-    // 呼吸（peak 值修正为 Demo 级别）
+    // 呼吸（官方 create 内部配置默认参数）
     this._breath = CubismBreath.create()
-    this._breath.setParameters([
-      new BreathParameterData(idManager.getId('ParamAngleX'), 0.0, 15.0, 6.5345, 0.5),
-      new BreathParameterData(idManager.getId('ParamAngleY'), 0.0, 8.0, 3.5345, 0.5),
-      new BreathParameterData(idManager.getId('ParamAngleZ'), 0.0, 10.0, 5.5345, 0.5),
-      new BreathParameterData(idManager.getId('ParamBodyAngleX'), 0.0, 4.0, 15.5345, 0.5),
-      new BreathParameterData(idManager.getId(CubismDefaultParameterId.ParamBreath), 0.5, 0.5, 3.2345, 1),
-    ])
     this._updateScheduler.addUpdatableList(
       new CubismBreathUpdater(this._breath)
     )
@@ -578,8 +504,6 @@ export class AppModel extends CubismUserModel {
         new CubismPhysicsUpdater(this._physics)
       )
     }
-
-    // LipSync 延迟到 setupEffectIds() 之后
 
     // Pose
     if (this._pose) {
@@ -612,9 +536,6 @@ export class AppModel extends CubismUserModel {
       this._lipSyncUpdater = new CubismLipSyncUpdater(this._lipSyncIds, this._wavFileHandler)
       this._updateScheduler?.addUpdatableList(this._lipSyncUpdater)
     }
-
-    // ★ 新增：所有 Updater 添加完毕后排序（与 Demo finalizeUpdaters 一致）
-    this._updateScheduler?.sortUpdatableList()
   }
 
   /** 预加载所有表情 */
@@ -871,108 +792,11 @@ export class AppModel extends CubismUserModel {
     const renderer = this.getRenderer()
     if (!renderer) return
 
-    // ★ 修复：不要每帧调用 startUp（这是初始化方法），只在 gl 不匹配时才调用
     if (renderer.gl !== gl) {
       renderer.startUp(gl)
     }
     renderer.setMvpMatrix(mvpMatrix)
-
-    // ★ 诊断：drawModel 前检查 shader program 和顶点绑定
-    if (this._diagFrameCount < 3) {
-      const currentProgram = gl.getParameter(gl.CURRENT_PROGRAM)
-      console.log(`[AppModel] 🔍 drawModel前 帧${this._diagFrameCount + 1}: program=${currentProgram ? '有效' : 'null'}`)
-      if (currentProgram) {
-        const linkStatus = gl.getProgramParameter(currentProgram, gl.LINK_STATUS)
-        console.log(`[AppModel] 🔍 program linkStatus: ${linkStatus}`)
-      } else {
-        // 检查 shader sets 的状态
-        try {
-          const shaderManager = (window as any).__cubism5ShaderManager
-          if (shaderManager) {
-            const shader = shaderManager.getShader(gl)
-            console.log(`[AppModel] 🔍 shader._isShaderLoaded: ${shader?._isShaderLoaded}`)
-            console.log(`[AppModel] 🔍 shader._shaderSets长度: ${shader?._shaderSets?.length}`)
-            // 检查关键 shader set (0=SetupMask, 1=Normal, 2=Masked, 3=MaskedInverted, 10=Copy)
-            for (const idx of [0, 1, 2, 3, 10]) {
-              const set = shader?._shaderSets?.[idx]
-              console.log(`[AppModel] 🔍 shaderSets[${idx}].shaderProgram: ${set?.shaderProgram ? '有效' : 'null'}`)
-            }
-          }
-        } catch (e) {
-          console.log(`[AppModel] 🔍 shaderManager 检查失败: ${e}`)
-        }
-      }
-    }
-
     renderer.drawModel()
-
-    // ★ 诊断：drawModel 后立即读取像素（前5帧）
-    if (!this._firstFrameLogged || this._diagFrameCount < 5) {
-      this._diagFrameCount = (this._diagFrameCount ?? 0) + 1
-      const diagCanvas = gl.canvas as HTMLCanvasElement
-      const diagCx = Math.floor(diagCanvas.width / 2)
-      const diagCy = Math.floor(diagCanvas.height / 2)
-      const diagPixels = new Uint8Array(4)
-      gl.readPixels(diagCx, diagCy, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, diagPixels)
-      console.log(`[AppModel] 🔍 drawModel后 帧${this._diagFrameCount} 中心像素: ${diagPixels[0]},${diagPixels[1]},${diagPixels[2]},${diagPixels[3]}`)
-      // 检查当前 FBO
-      const currentFbo = gl.getParameter(gl.FRAMEBUFFER_BINDING)
-      console.log(`[AppModel] 🔍 drawModel后 FBO: ${currentFbo ? '自定义FBO' : '默认(null)'}`)
-      // 检查 GL 错误
-      const diagErr = gl.getError()
-      if (diagErr !== gl.NO_ERROR) {
-        console.error(`[AppModel] ❌ drawModel后 GL错误: 0x${diagErr.toString(16)}`)
-      }
-    }
-
-    // 首帧渲染日志（仅打印一次）
-    if (!this._firstFrameLogged) {
-      this._firstFrameLogged = true
-      const mvpArr = mvpMatrix.getArray()
-      console.log('[AppModel] 🎨 首帧渲染完成, MVP[0,5,10,12,13]:', mvpArr[0].toFixed(4), mvpArr[5].toFixed(4), mvpArr[10].toFixed(4), mvpArr[12].toFixed(4), mvpArr[13].toFixed(4))
-      // GL 错误检查
-      const err = gl.getError()
-      if (err !== gl.NO_ERROR) {
-        console.error('[AppModel] ❌ 首帧 GL 错误:', '0x' + err.toString(16))
-      } else {
-        console.log('[AppModel] ✅ 首帧 GL 无错误')
-      }
-      // ★ 诊断：检查 canvas 和 GL 状态
-      const canvas = gl.canvas as HTMLCanvasElement
-      console.log('[AppModel] 🔍 Canvas 尺寸:', canvas.width, 'x', canvas.height)
-      console.log('[AppModel] 🔍 Canvas 在DOM中:', !!canvas.parentElement)
-      console.log('[AppModel] 🔍 Canvas clientSize:', canvas.clientWidth, 'x', canvas.clientHeight)
-      // 检查 framebuffer
-      const fbo = gl.getParameter(gl.FRAMEBUFFER_BINDING)
-      console.log('[AppModel] 🔍 Framebuffer:', fbo ? '自定义FBO' : '默认(null)')
-      // 检查 viewport
-      const viewport = gl.getParameter(gl.VIEWPORT)
-      console.log(`[AppModel] 🔍 Viewport: ${viewport[0]},${viewport[1]},${viewport[2]},${viewport[3]}`)
-      // ★ 关键诊断：读取中心像素，看是否有内容被渲染
-      const cx = Math.floor(canvas.width / 2)
-      const cy = Math.floor(canvas.height / 2)
-      const pixels = new Uint8Array(4)
-      gl.readPixels(cx, cy, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixels)
-      console.log(`[AppModel] 🔍 中心像素 RGBA: ${pixels[0]},${pixels[1]},${pixels[2]},${pixels[3]}`)
-      // 读取更多位置
-      const p1 = new Uint8Array(4)
-      gl.readPixels(cx - 50, cy - 50, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, p1)
-      console.log(`[AppModel] 🔍 偏移像素(-50,-50) RGBA: ${p1[0]},${p1[1]},${p1[2]},${p1[3]}`)
-      // ★ 诊断：检查 drawable 状态
-      const model = this.getModel()
-      const count = model.getDrawableCount()
-      const renderOrders = model.getRenderOrders()
-      console.log('[AppModel] 🔍 Drawable 数量:', count)
-      for (let i = 0; i < Math.min(count, 10); i++) {
-        const visible = model.getDrawableDynamicFlagIsVisible(i)
-        const opacity = model.getDrawableOpacity(i)
-        const vertexCount = model.getDrawableVertexCount(i)
-        const indexCount = model.getDrawableVertexIndexCount(i)
-        const order = renderOrders[i]
-        console.log(`[AppModel] 🔍 Drawable[${i}]: visible=${visible}, opacity=${opacity}, verts=${vertexCount}, indices=${indexCount}, order=${order}`)
-      }
-      if (count > 10) console.log(`[AppModel] 🔍 ... 还有 ${count - 10} 个 drawable`)
-    }
   }
 
   /**
@@ -1119,12 +943,6 @@ export class AppModel extends CubismUserModel {
    * 释放资源
    */
   releaseAll(): void {
-    // ★ 清理 shader 等待定时器
-    for (const timer of this._shaderWaitTimers) {
-      clearTimeout(timer)
-    }
-    this._shaderWaitTimers = []
-
     if (this._look) {
       CubismLook.delete(this._look)
       this._look = null
