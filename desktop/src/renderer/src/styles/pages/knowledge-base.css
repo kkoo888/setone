@@ -499,3 +499,106 @@
   color: var(--color-text-tertiary, #999);
   margin-top: 6px;
 }
+
+/* 路径编辑模式 */
+.module-detail-paths-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.path-edit-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.path-input {
+  flex: 1;
+  padding: 4px 8px;
+  font-size: 12px;
+  font-family: var(--font-mono, monospace);
+  background: var(--color-bg-primary, #fff);
+  border: 1px solid var(--color-border, #ddd);
+  border-radius: 4px;
+  color: var(--color-text-primary);
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.path-input:focus {
+  border-color: var(--color-primary, #4a90d9);
+}
+
+.path-pick-btn {
+  padding: 4px 8px;
+  cursor: pointer;
+  background: var(--color-bg-secondary, #f5f5f5);
+  border: 1px solid var(--color-border, #ddd);
+  border-radius: 4px;
+  font-size: 14px;
+  line-height: 1;
+  transition: background 0.15s;
+}
+
+.path-pick-btn:hover {
+  background: var(--color-bg-hover, #e8e8e8);
+}
+
+.path-edit-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.path-save-btn,
+.path-cancel-btn {
+  padding: 5px 14px;
+  font-size: 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  border: 1px solid var(--color-border, #ddd);
+  transition: all 0.15s;
+}
+
+.path-save-btn {
+  background: var(--color-primary, #4a90d9);
+  color: #fff;
+  border-color: var(--color-primary, #4a90d9);
+}
+
+.path-save-btn:hover {
+  opacity: 0.9;
+}
+
+.path-save-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.path-cancel-btn {
+  background: var(--color-bg-secondary, #f5f5f5);
+  color: var(--color-text-secondary);
+}
+
+.path-cancel-btn:hover {
+  background: var(--color-bg-hover, #e8e8e8);
+}
+
+.path-edit-btn {
+  margin-top: 6px;
+  padding: 3px 10px;
+  font-size: 11px;
+  cursor: pointer;
+  background: transparent;
+  border: 1px solid var(--color-border, #ddd);
+  border-radius: 4px;
+  color: var(--color-text-secondary);
+  transition: all 0.15s;
+}
+
+.path-edit-btn:hover {
+  background: var(--color-bg-secondary, #f5f5f5);
+  color: var(--color-text-primary);
+}
