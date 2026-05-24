@@ -1,6 +1,6 @@
 # Skills 协作工作流指南
 
-31 个技能按场景组合使用，效益最大化。
+32 个技能按场景组合使用，效益最大化。
 
 ---
 
@@ -26,8 +26,6 @@
 | 仔细查看、认真看、一行行看、逐行检查、仔细检查、review carefully、line by line、double check | `verification-before-completion` | 逐行验证 |
 | TDD、测试驱动、先写测试、red-green-refactor、test first、写单测 | `tdd` / `test-driven-development` | 先写测试再写代码 |
 | 重构、代码太乱、refactor、架构优化、解耦、模块化、可测试性 | `improve-codebase-architecture` | 架构分析 |
-| 重构计划、refactor plan、怎么重构 | `request-refactor-plan` | 大型重构用 |
-| 设计接口、API 设计、组件 API、interface design、component API | `design-an-interface` | 设计组件/模块接口 |
 | 交接、换 session、handoff、上下文太长、继续之前的工作 | `handoff` | 会话交接 |
 | 创建技能、写 skill、new skill、自定义技能 | `writing-skills` | 创建新技能 |
 | React 性能、优化渲染、re-render、bundle size、瀑布请求、waterfall | `react-best-practices` | React 性能规则 |
@@ -40,6 +38,7 @@
 | 学到了、记一下、教训、下次注意、lesson learned、mistake、搞错了 | `self-improving` / `self-improving-agent` | 自我改进 |
 | 安装技能、新 skill、审查技能安全、install skill、vet skill | `skill-vetter` | 安装前安全审查 |
 | GitHub、PR、Issue、CI、merge、gh CLI、workflow run | `github` | GitHub 操作 |
+| 简单点写、不要过度设计、太复杂了、太臃肿、别加没要求的、写太多了、太长了、过度封装、别过度封装、过度防御、不可能的场景、代码太多、能精简吗、别处理不可能的、加个功能、冗余、有没可优化的、不要乱改、别动其他的、没坏别修、别改格式、保持原样、保持原有风格、别顺手改、不要改其他的、只改这个、最小改动、改代码、修代码、重构下、优化下、surgical edit、先想清楚、别猜、别假设、不确定、搞不懂、有歧义、有没有更简单的、想清楚了吗、搞明白了吗、先搞清楚、搞明白再写、没想清楚、不明确、为什么不问、不对、搞清楚、确定吗、有没更好的、karpathy、surgical、精准改动、改动要有依据、fix bug、fix it、错误信息、核对下、检查下、逐行、认真、仔细、怎么验证、成功标准、验收标准、怎么算完成、目标是什么、先写测试、写测试复现、先说计划、搞好就行、符合预期吗、达到预期了吗、验证了吗 | `karpathy-guidelines` | 编码行为约束：最简优先、精准改动、目标驱动 |
 
 ---
 
@@ -54,6 +53,7 @@
 | 执行计划 | `executing-plans` | `subagent-driven-development` | 有子代理支持？→ subagent-driven-development；没有 → executing-plans |
 | 并行任务 | `subagent-driven-development` | `dispatching-parallel-agents` | 已有计划的系统性任务 → 前者；临时发现的独立任务 → 后者 |
 | 硬 bug | `systematic-debugging` | `diagnose` | 一般 bug → systematic-debugging；难复现/性能问题 → diagnose |
+| 仔细检查/逐行 | `karpathy-guidelines` + `verification-before-completion` | `systematic-debugging` | 有报错/异常？→ systematic-debugging；正常验证/写代码？→ karpathy + verification 叠加 |
 
 ---
 
@@ -64,9 +64,9 @@ brainstorming（需求澄清，分段展示验证）  ← 入口门控，拿到�
   → zoom-out（理解上下文）
   → grill-me / grill-with-docs（压力测试方案）
   → writing-plans（写实施计划）
-  → subagent-driven-development / executing-plans（执行）
+  → subagent-driven-development / executing-plans（执行，叠加 karpathy-guidelines）
     → dispatching-parallel-agents（多任务并行分发）
-  → requesting-code-review（代码审查）
+  → requesting-code-review（审查，叠加 karpathy-guidelines）
   → receiving-code-review（处理审查反馈）
   → verification-before-completion（验证后再提交）
   → finishing-a-development-branch（合并/PR/清理）  ← 出口收尾
@@ -77,6 +77,7 @@ brainstorming（需求澄清，分段展示验证）  ← 入口门控，拿到�
 - `grill-me` 和 `grill-with-docs` 二选一（见决策表）。
 - `subagent-driven-development` 和 `executing-plans` 二选一（见决策表）。
 - `finishing-a-development-branch` 是最后一步：验证测试 → 选择合并策略 → 清理分支。
+- 写代码和审查代码时自动叠加 `karpathy-guidelines`：先想再写、最简优先、精准改动。
 
 ---
 
@@ -85,7 +86,7 @@ brainstorming（需求澄清，分段展示验证）  ← 入口门控，拿到�
 ```
 systematic-debugging（先找根因，禁止直接修）
   → diagnose（硬 bug 深度诊断：复现→最小化→假设→插桩→修复→回归测试）
-  → tdd / test-driven-development（先写失败测试再修）
+  → tdd / test-driven-development（先写失败测试再修，karpathy Goal-Driven：定义成功标准）
   → verification-before-completion（验证通过才算完）
   → finishing-a-development-branch（收尾）
 ```
@@ -93,6 +94,7 @@ systematic-debugging（先找根因，禁止直接修）
 **要点**：
 - `systematic-debugging` 强制"先找根因再修"；`diagnose` 是它的加强版，适合难复现的 bug。
 - `tdd` 和 `test-driven-development` 二选一（见决策表）。
+- 修 bug 前先写复现测试（karpathy Goal-Driven）：写测试复现 → 让测试通过 → 确认符合预期。
 
 ---
 
@@ -101,11 +103,10 @@ systematic-debugging（先找根因，禁止直接修）
 ```
 improve-codebase-architecture（发现架构问题、找"浅模块"变"深"的机会）
   → zoom-out（确认改动影响范围）
-  → request-refactor-plan（请求重构计划）  ← 可选，大型重构用
   → writing-plans（写重构计划）
-  → executing-plans / subagent-driven-development（执行）
+  → executing-plans / subagent-driven-development（执行，叠加 karpathy-guidelines）
   → tdd（重构过程中用测试保护行为不变）
-  → requesting-code-review（审查重构质量）
+  → requesting-code-review（审查重构质量，叠加 karpathy-guidelines）
   → verification-before-completion
   → finishing-a-development-branch
 ```
@@ -134,7 +135,6 @@ brainstorming（需求澄清）  ← 入口
 ```
 brainstorming（需求澄清）
   → ui-ux-pro-max（设计方向、token 体系、组件规格）
-  → design-an-interface（接口设计）  ← 适合设计组件 API
   → web-design-guidelines（审查合规性）
   → composition-patterns（React 组件架构落地）
 ```
@@ -170,6 +170,7 @@ self-improving（出错/被纠正/发现更好方案时自动触发，记忆存�
   + humanizer（去除 AI 写作痕迹，文档/PR 描述/提交信息都用）
   + skill-vetter（安装新技能前必做安全审查）
   + writing-skills（创建新技能时遵循最佳实践）
+  + karpathy-guidelines（写代码/审查/重构时自动叠加：先想再写、最简优先、精准改动）
 ```
 
 ---
@@ -192,22 +193,22 @@ vercel-optimize（Vercel 项目成本/性能/缓存/函数用量审计，生成�
 
 ## 一句话总结
 
-`using-superpowers` 是元技能（告诉你怎么找技能），其余 30 个按场景组合：
+`using-superpowers` 是元技能（告诉你怎么找技能），其余 31 个按场景组合：
 
 - **新功能**：brainstorming → zoom-out → grill → plan → execute → review → verify → finish
-- **修 bug**：systematic-debugging → diagnose → tdd → verify → finish
+- **修 bug**：systematic-debugging → diagnose → tdd（先写复现测试，定义成功标准）→ verify → finish
 - **重构**：improve-codebase-architecture → zoom-out → plan → execute → review → verify → finish
 - **写 React**：brainstorming → 五件套同时叠（react-best-practices + composition-patterns + web-design-guidelines + ui-ux-pro-max + react-view-transitions）
-- **UI/UX 设计**：brainstorming → ui-ux-pro-max → design-an-interface → web-design-guidelines
+- **UI/UX 设计**：brainstorming → ui-ux-pro-max → web-design-guidelines
 - **Vercel 优化**：vercel-optimize
 - **结束**：handoff
-- **全程**：self-improving 兜底
+- **全程**：self-improving + karpathy-guidelines 兜底
 
 ---
 
-## 技能清单（31个）
+## 技能清单（32个）
 
-### 核心技能（日常开发必用，14个）
+### 核心技能（日常开发必用，15个）
 
 | 技能 | 来源 | 场景 |
 |------|------|------|
@@ -225,6 +226,7 @@ vercel-optimize（Vercel 项目成本/性能/缓存/函数用量审计，生成�
 | self-improving | clawhub | 自我反思与改进 |
 | humanizer | clawhub | 去除 AI 写作痕迹 |
 | github | clawhub | GitHub 操作 |
+| karpathy-guidelines | clawhub | 编码行为约束：最简优先、精准改动、目标驱动（全程生效） |
 
 ### React 专用（写 React 时叠加，5个）
 
@@ -236,15 +238,13 @@ vercel-optimize（Vercel 项目成本/性能/缓存/函数用量审计，生成�
 | react-view-transitions | vercel | View Transition API 动画 |
 | ui-ux-pro-max | clawhub | 设计系统 token、组件规格 |
 
-### 按需选用（特定场景，12个）
+### 按需选用（特定场景，11个）
 
 | 技能 | 来源 | 场景 |
 |------|------|------|
 | grill-with-docs | mattpocock | 方案压力测试 + 自动更新文档 |
 | diagnose | mattpocock | 硬 bug 深度诊断 |
 | improve-codebase-architecture | mattpocock | 架构分析、重构机会发现 |
-| request-refactor-plan | mattpocock | 请求重构计划 |
-| design-an-interface | mattpocock | 接口设计 |
 | executing-plans | superpowers | 执行计划（无子代理时用） |
 | dispatching-parallel-agents | superpowers | 并行任务分发 |
 | receiving-code-review | superpowers | 处理审查反馈 |
