@@ -47,10 +47,10 @@ export default class KnowledgeBaseModule implements Module {
 
     this.networkEnabled = settings.networkEnabled ?? true
 
-    // 解析原始文件目录和索引目录（空=用 dataDir 下的默认子目录）
+    // 解析原始文件目录和索引目录：优先从数据库读，fallback 到 module.json 默认值
     const dataDir = context.dataDir ?? '.'
-    const rawDirSetting = (defaults.rawDir as string) ?? ''
-    const indexDirSetting = (defaults.indexDir as string) ?? ''
+    const rawDirSetting = (await context.store.getPersist<string>('rawDir')) ?? (defaults.rawDir as string) ?? ''
+    const indexDirSetting = (await context.store.getPersist<string>('indexDir')) ?? (defaults.indexDir as string) ?? ''
     const rawDir = rawDirSetting
       ? (isAbsolute(rawDirSetting) ? rawDirSetting : resolve(dataDir, rawDirSetting))
       : join(dataDir, 'datasets')

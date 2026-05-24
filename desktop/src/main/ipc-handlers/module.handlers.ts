@@ -5,8 +5,6 @@
  * + eventBus 事件桥接（theme:changed, on_module_loaded, on_module_unloaded）
  */
 import { ipcMain, BrowserWindow } from 'electron'
-import { readFile, writeFile } from 'fs/promises'
-import { join } from 'path'
 import { toModuleInfo } from './helpers'
 import type { HandlerDeps } from './types'
 
@@ -135,19 +133,18 @@ export function registerModuleHandlers(deps: HandlerDeps): void {
     return moduleManager.reloadModule(args.moduleId)
   })
 
-  /** 保存模块设置（写入 module.json 并热重载） */
+  /** 保存模块设置（写入 ConfigManager 数据库并热重载） */
   ipcMain.handle('module:saveSettings', async (_event, args: { moduleId: string; settings: Record<string, unknown> }) => {
     if (!moduleManager) throw new Error('模块管理器未初始化')
     const reg = moduleManager.getModule(args.moduleId)
     if (!reg) throw new Error(`模块 "${args.moduleId}" 不存在`)
 
-    const moduleJsonPath = join(reg.path || reg.meta.path || '', 'module.json')
     try {
-      const raw = await readFile(moduleJsonPath, 'utf-8')
-      const meta = JSON.parse(raw)
-      meta.settings = { ...meta.settings, ...args.settings }
-      await writeFile(moduleJsonPath, JSON.stringify(meta, null, 2), 'utf-8')
-      logger.info(`模块 "${args.moduleId}" 设置已保存`)
+      // 逐个 key 写入 ConfigManager 模块配置数据库
+      for (const [key, value] of Object.entries(args.settings)) {
+        await config.setModuleConfig(args.moduleId, key, value)
+      }
+      logger.info(`模块 "${args.moduleId}" 设置已保存到数据库`, { keys: Object.keys(args.settings) })
 
       // 热重载模块使设置生效
       await moduleManager.reloadModule(args.moduleId)
