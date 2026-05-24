@@ -48,11 +48,19 @@ export interface KBSettings {
   networkEnabled: boolean
   /** 临时文件目录（用于 ZIP 解压等） */
   tempDir?: string
+  /** 原始文件存储目录（下载/导入的原始文件备份） */
+  rawDir?: string
+  /** 索引目录（Vectra 向量+BM25 索引） */
+  indexDir?: string
 }
 
 /** 联网状态信息 */
 export interface KBNetworkStatus {
   networkEnabled: boolean
+  /** 原始文件目录 */
+  rawDir: string
+  /** 索引目录 */
+  indexDir: string
   /** 联网功能列表 */
   networkFeatures: string[]
   /** 本地功能列表（不受联网开关影响） */

@@ -29,6 +29,8 @@
     "maxDocuments": 1000,
     "supportedFormats": [".md", ".txt", ".pdf", ".docx", ".json", ".csv", ".ts", ".js", ".py", ".jsonl", ".yaml", ".yml", ".html", ".htm", ".xml", ".parquet"],
     "autoReindex": true,
-    "networkEnabled": true
+    "networkEnabled": true,
+    "rawDir": "",
+    "indexDir": ""
   }
 }

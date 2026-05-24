@@ -1,5 +1,4 @@
 import { LocalDocumentIndex, OpenAIEmbeddings, LocalDocumentResult } from 'vectra'
-import { join } from 'path'
 import type { Logger } from '../../../src/main/types/logger'
 
 /** Vectra docType 映射：文件扩展名 → Vectra 切片提示 */
@@ -28,14 +27,14 @@ export class VectraStore {
   private readonly chunkOverlap: number
 
   constructor(
-    dataDir: string,
+    folderPath: string,
     logger: Logger,
     embeddingEndpoint: string = 'http://localhost:11434',
     embeddingModel: string = 'nomic-embed-text',
     chunkSize: number = 512,
     chunkOverlap: number = 64
   ) {
-    this.folderPath = join(dataDir, 'vectra-doc-index')
+    this.folderPath = folderPath
     this.logger = logger
     this.embeddingEndpoint = embeddingEndpoint
     this.embeddingModel = embeddingModel

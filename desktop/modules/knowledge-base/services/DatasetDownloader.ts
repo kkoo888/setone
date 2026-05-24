@@ -46,9 +46,9 @@ export class DatasetDownloader {
   private sessionCleanup?: () => void
   private onDownloadComplete?: DownloadCompleteCallback
 
-  constructor(logger: Logger, dataDir: string) {
+  constructor(logger: Logger, downloadDir: string) {
     this.logger = logger
-    this.downloadDir = join(dataDir, 'datasets')
+    this.downloadDir = downloadDir
   }
 
   /**

@@ -25,6 +25,8 @@ export default class KnowledgeBaseModule implements Module {
   private datasetDownloader!: DatasetDownloader
   private fileChangeHandler?: (data: unknown) => void
   private networkEnabled: boolean = true
+  private rawDir: string = ''
+  private indexDir: string = ''
 
   async activate(context: ModuleContext): Promise<void> {
     this.context = context
@@ -54,6 +56,8 @@ export default class KnowledgeBaseModule implements Module {
     const indexDir = indexDirSetting
       ? (isAbsolute(indexDirSetting) ? indexDirSetting : resolve(dataDir, indexDirSetting))
       : join(dataDir, 'vectra-doc-index')
+    this.rawDir = rawDir
+    this.indexDir = indexDir
     context.logger.info(`原始文件目录: ${rawDir}`)
     context.logger.info(`索引目录: ${indexDir}`)
 
@@ -151,6 +155,8 @@ export default class KnowledgeBaseModule implements Module {
             }
             const status: KBNetworkStatus = {
               networkEnabled: this.networkEnabled,
+              rawDir: this.rawDir,
+              indexDir: this.indexDir,
               networkFeatures: ['kb_import（导入时自动向量化+BM25索引）', 'kb_search（混合检索）', 'kb_ask（RAG 问答）'],
               localFeatures: ['kb_list（列出文档）', 'kb_delete（删除文档）', '本地文件读取']
             }
