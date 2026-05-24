@@ -1100,12 +1100,33 @@ export class CubismRenderer_WebGL extends CubismRenderer {
 
     {
       const indexCount: number = model.getDrawableVertexIndexCount(index);
+
+      // ★ 诊断：前 3 个 drawable 的 GL 状态（仅首帧）
+      if (!this._diagLogged) { this._diagLoggedCount = 0; this._diagLogged = this._diagLoggedCount >= 3; }
+      if (this._diagLoggedCount < 3) {
+        this._diagLoggedCount++
+        const prog = this.gl.getParameter(this.gl.CURRENT_PROGRAM)
+        const tex = this.gl.getParameter(this.gl.TEXTURE_BINDING_2D)
+        const fbo = this.gl.getParameter(this.gl.FRAMEBUFFER_BINDING)
+        const vp = this.gl.getParameter(this.gl.VIEWPORT)
+        const blend = this.gl.isEnabled(this.gl.BLEND)
+        console.log(`[Cubism5] 🔍 drawElements前 #${this._diagLoggedCount}: prog=${prog ? 'OK' : 'NULL'} tex=${tex ? 'OK' : 'NULL'} fbo=${fbo ? '自定义' : '默认'} viewport=${Array.from(vp)} blend=${blend} indexCount=${indexCount}`)
+      }
+
       this.gl.drawElements(
         this.gl.TRIANGLES,
         indexCount,
         this.gl.UNSIGNED_SHORT,
         0
       );
+
+      // ★ 诊断：drawElements 后 GL 错误
+      if (this._diagLoggedCount <= 3) {
+        const err = this.gl.getError()
+        if (err !== this.gl.NO_ERROR) {
+          console.error(`[Cubism5] ❌ drawElements后 GL错误: 0x${err.toString(16)}`)
+        }
+      }
     }
 
     // 後処理
