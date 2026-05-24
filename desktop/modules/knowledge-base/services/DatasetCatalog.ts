@@ -58,10 +58,10 @@ const BUILT_IN_DATASETS: DatasetInfo[] = [
     category: '百科评估',
     downloads: '89k',
     size: '64 KB',
-    description: 'BIG-Bench Hard，23 个高难度推理任务',
+    description: 'BIG-Bench Hard，23 个高难度推理任务（脚本型数据集，暂不支持直接下载）',
     url: 'https://modelscope.cn/datasets/modelscope/bbh',
-    relevance: 'medium',
-    tags: ['推理', '高难度', '小文件']
+    relevance: 'low',
+    tags: ['推理', '高难度', '脚本型']
   },
   {
     id: 'modelscope/wikitext',
@@ -69,10 +69,10 @@ const BUILT_IN_DATASETS: DatasetInfo[] = [
     category: '百科评估',
     downloads: '78k',
     size: '19 KB',
-    description: 'WikiText 百科文本语料，用于语言模型训练和知识库填充',
+    description: 'WikiText 百科文本语料（脚本型数据集，暂不支持直接下载）',
     url: 'https://modelscope.cn/datasets/modelscope/wikitext',
-    relevance: 'medium',
-    tags: ['百科', '文本', '小文件']
+    relevance: 'low',
+    tags: ['百科', '文本', '脚本型']
   },
 
   // ── 指令对话 ──

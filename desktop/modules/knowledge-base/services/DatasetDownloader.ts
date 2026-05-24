@@ -316,10 +316,10 @@ export class DatasetDownloader {
 
       const files = data.Data.Files.filter(f => f.Type === 'blob')
 
-      // 优先级：.zip > .tar.gz > .jsonl > .parquet > .csv > 第一个非 py/md/json 元数据文件
+      // 优先级：.zip > .tar.gz > .tar > .jsonl > .parquet > .csv > 第一个非 py/md/json 元数据文件
       // 注意：.json 不能加入优先级，否则 dataset_infos.json 等元数据文件会被误选
-      const priorityExts = ['.zip', '.tar.gz', '.jsonl', '.parquet', '.csv']
-      const metaFileNames = ['dataset_infos.json', 'dataset_dict.json', 'state.json', 'README.md', 'LICENSE']
+      const priorityExts = ['.zip', '.tar.gz', '.tar', '.jsonl', '.parquet', '.csv']
+      const metaFileNames = ['dataset_infos.json', 'dataset_dict.json', 'state.json', 'README.md', 'LICENSE', '.gitattributes']
       let selectedFile: typeof files[0] | null = null
 
       for (const ext of priorityExts) {
@@ -335,12 +335,19 @@ export class DatasetDownloader {
         selectedFile = files.find(f =>
           !f.Name.endsWith('.py') &&
           !f.Name.endsWith('.md') &&
+          !f.Name.endsWith('.json') &&
           !metaFileNames.includes(f.Name)
         ) ?? null
       }
 
+      // 最终兜底：如果只有 .py 脚本，说明是脚本型数据集（数据由脚本动态下载）
       if (!selectedFile) {
-        this.logger.warn(`数据集 ${owner}/${name} 中没有找到可下载的数据文件`)
+        const hasOnlyScripts = files.every(f => f.Name.endsWith('.py') || f.Name.endsWith('.md') || f.Name.endsWith('.json'))
+        if (hasOnlyScripts) {
+          this.logger.warn(`数据集 ${owner}/${name} 是脚本型数据集（数据由 Python 脚本动态下载），暂不支持`)
+        } else {
+          this.logger.warn(`数据集 ${owner}/${name} 中没有找到可下载的数据文件`)
+        }
         return null
       }
 
