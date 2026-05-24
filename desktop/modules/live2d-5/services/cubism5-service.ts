@@ -565,7 +565,13 @@ class Cubism5Service {
     }
 
     // ★ 修复：对齐 Demo renderScene() 的 projection 构建
-    // 1. 创建 projection 矩阵，加画布宽高比校正
+    // Demo 的 multiplyByMatrix 语义：a.multiplyByMatrix(b) → a = b × a（左乘）
+    // Demo 链路：
+    //   projection = identity → projection.multiplyByMatrix(viewMatrix) → projection = viewMatrix
+    //   model.draw(projection) → matrix.multiplyByMatrix(modelMatrix) → matrix = modelMatrix × viewMatrix
+    // 所以正确顺序是：先设 viewMatrix，再左乘 modelMatrix
+
+    // 1. 创建 projection 矩阵，加画布宽高比校正（与 Demo 一致）
     const projection = new CubismMatrix44()
     if (width > height) {
       projection.scale(height / width, 1.0)
@@ -573,12 +579,13 @@ class Cubism5Service {
       projection.scale(1.0, width / height)
     }
 
-    // 2. projection × viewMatrix
+    // 2. projection = viewMatrix × projection（左乘）
     if (viewMatrix) {
       projection.multiplyByMatrix(viewMatrix)
     }
 
-    // 3. (projection × viewMatrix) × modelMatrix
+    // 3. projection = modelMatrix × projection（左乘）
+    //    最终 MVP = modelMatrix × viewMatrix × aspectRatio
     projection.multiplyByMatrix(modelMatrix)
 
     // 首帧诊断
