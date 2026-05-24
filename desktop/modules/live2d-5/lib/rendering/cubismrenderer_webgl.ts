@@ -1110,6 +1110,35 @@ export class CubismRenderer_WebGL extends CubismRenderer {
       const clipY = mvpArr[1] * vx + mvpArr[5] * vy + mvpArr[13];
       console.log(`[Cubism5] 🔍 顶点[0] 世界:(${vx.toFixed(2)}, ${vy.toFixed(2)}) → 裁剪:(${clipX.toFixed(4)}, ${clipY.toFixed(4)})`);
 
+      // ★ 新增：检查 attribute locations 和 shader 编译状态
+      const posLoc = this.gl.getAttribLocation(prog, 'a_position');
+      const uvLoc = this.gl.getAttribLocation(prog, 'a_texCoord');
+      console.log(`[Cubism5] 🔍 attrib: a_position=${posLoc}, a_texCoord=${uvLoc}`);
+      if (posLoc === -1 || uvLoc === -1) {
+        console.error(`[Cubism5] ❌ attribute location 为 -1！shader 可能没有正确使用这些属性`);
+      }
+
+      // 检查 shader 编译状态
+      const shaders = this.gl.getAttachedShaders(prog);
+      console.log(`[Cubism5] 🔍 attached shaders: ${shaders?.length}`);
+      if (shaders && shaders.length > 0) {
+        for (const s of shaders) {
+          const compileStatus = this.gl.getShaderParameter(s, this.gl.COMPILE_STATUS);
+          const shaderType = this.gl.getShaderParameter(s, this.gl.SHADER_TYPE);
+          console.log(`[Cubism5] 🔍 shader type=${shaderType === this.gl.VERTEX_SHADER ? 'VERTEX' : 'FRAGMENT'}, compileStatus=${compileStatus}`);
+        }
+        const linkStatus = this.gl.getProgramParameter(prog, this.gl.LINK_STATUS);
+        console.log(`[Cubism5] 🔍 program linkStatus=${linkStatus}`);
+      }
+
+      // 检查顶点属性启用状态
+      if (posLoc >= 0) {
+        const enabled = this.gl.getVertexAttrib(posLoc, this.gl.VERTEX_ATTRIB_ARRAY_ENABLED);
+        const size = this.gl.getVertexAttrib(posLoc, this.gl.VERTEX_ATTRIB_ARRAY_SIZE);
+        const buf = this.gl.getVertexAttrib(posLoc, this.gl.VERTEX_ATTRIB_ARRAY_BUFFER_BINDING);
+        console.log(`[Cubism5] 🔍 attrib[${posLoc}]: enabled=${enabled}, size=${size}, buffer=${buf ? '有' : 'null'}`);
+      }
+
       // ★ 新增：检查纹理绑定
       const texUnit0 = this.gl.getParameter(this.gl.TEXTURE_BINDING_2D);
       const activeTex = this.gl.getParameter(this.gl.ACTIVE_TEXTURE);
