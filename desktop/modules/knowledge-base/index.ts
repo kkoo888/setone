@@ -1,7 +1,6 @@
 import type { Module, ModuleContext, Capability } from '../../src/main/types/module'
 import type { KBSettings, KBImportResult, KBSearchResult, KBAskResult, KBNetworkStatus } from './types'
 import { session } from 'electron'
-import { EmbeddingService } from './services/EmbeddingService'
 import { VectorStore } from './services/VectorStore'
 import { KBManager } from './services/KBManager'
 import { RAGEngine } from './services/RAGEngine'
@@ -12,14 +11,13 @@ import { DocumentRepository } from './repositories/document-repository'
 
 /**
  * 本地知识库模块
- * 文件导入、文本切片、向量化、语义检索、RAG 问答
+ * 文件导入 → Vectra（自动切片+嵌入+BM25索引）→ 混合检索 → LLM Reranker → RAG 问答
  */
 export default class KnowledgeBaseModule implements Module {
   id = 'knowledge-base'
   meta!: import('../../src/main/types/module').ModuleMeta
 
   private context!: ModuleContext
-  private embeddingService!: EmbeddingService
   private vectorStore!: VectorStore
   private kbManager!: KBManager
   private ragEngine!: RAGEngine
@@ -31,9 +29,7 @@ export default class KnowledgeBaseModule implements Module {
   async activate(context: ModuleContext): Promise<void> {
     this.context = context
 
-    // 从 module.json settings 读取默认值
     const defaults = this.meta.settings
-    // 优先读取用户在设置页配置的 ollama.embeddingModel
     const userEmbeddingModel = await context.config.get<string>('ollama.embeddingModel')
     const settings: KBSettings = {
       chunkSize: (defaults.chunkSize as number) ?? 512,
@@ -46,50 +42,41 @@ export default class KnowledgeBaseModule implements Module {
       tempDir: context.dataDir ?? '.',
     }
 
-    // 读取联网开关设置（默认开启）
     this.networkEnabled = settings.networkEnabled ?? true
 
-    // 初始化向量化服务
-    this.embeddingService = new EmbeddingService(
-      context.logger,
-      settings.embeddingModel ?? 'nomic-embed-text'
-    )
-    this.embeddingService.setNetworkEnabled(this.networkEnabled)
-
-    // 初始化存储层
+    // Vectra 存储层（官方 LocalDocumentIndex + OpenAIEmbeddings 兼容 Ollama）
+    const ollamaEndpoint = await context.config.get<string>('ollama.endpoint') || 'http://localhost:11434'
     const docRepo = new DocumentRepository(context.db)
-    const vectraStore = new VectraStore(context.dataDir ?? '.', context.logger)
+    const vectraStore = new VectraStore(
+      context.dataDir ?? '.',
+      context.logger,
+      ollamaEndpoint,
+      settings.embeddingModel ?? 'nomic-embed-text',
+      settings.chunkSize ?? 512,
+      settings.chunkOverlap ?? 64
+    )
     this.vectorStore = new VectorStore(docRepo, vectraStore, context.logger)
     await this.vectorStore.init()
 
-    // 初始化知识库管理器
+    // 知识库管理器（文本提取 → Vectra 自动切片+嵌入）
     this.kbManager = new KBManager(
       context.logger,
-      this.embeddingService,
       this.vectorStore,
-      settings
+      settings,
+      this.networkEnabled
     )
 
-    // 初始化 RAG 引擎
-    this.ragEngine = new RAGEngine(
-      context.logger,
-      this.embeddingService,
-      this.vectorStore,
-      context.ai
-    )
+    // RAG 引擎（混合检索 → LLM Reranker → AI 回答）
+    this.ragEngine = new RAGEngine(context.logger, this.vectorStore, context.ai)
     this.ragEngine.setNetworkEnabled(this.networkEnabled)
 
-    // 初始化数据集目录
+    // 数据集广场
     this.datasetCatalog = new DatasetCatalog(context.logger)
-
-    // 初始化数据集下载管理器
     this.datasetDownloader = new DatasetDownloader(context.logger, context.dataDir ?? '.')
     await this.datasetDownloader.init()
-
-    // 注册 Electron session 下载监听（关键！没有这个 will-download 事件不会触发）
     this.datasetDownloader.setupSessionListener(session.defaultSession)
 
-    // 监听文件变更事件（自动重新索引）
+    // 文件变更自动重新索引
     if (settings.autoReindex) {
       this.fileChangeHandler = async (data: unknown) => {
         const { path: filePath } = data as { path: string }
@@ -99,19 +86,15 @@ export default class KnowledgeBaseModule implements Module {
       context.eventBus.on('file:changed', this.fileChangeHandler)
     }
 
-    context.logger.info('本地知识库模块已激活')
+    context.logger.info('本地知识库模块已激活（Vectra 混合检索 + LLM Reranker）')
   }
 
   async deactivate(): Promise<void> {
-    // 取消 eventBus 监听
     if (this.fileChangeHandler) {
       this.context.eventBus.off('file:changed', this.fileChangeHandler)
       this.fileChangeHandler = undefined
     }
-
-    // 清理下载管理器
     this.datasetDownloader.dispose()
-
     this.context.logger.info('本地知识库模块已停用')
   }
 
@@ -121,122 +104,78 @@ export default class KnowledgeBaseModule implements Module {
       {
         type: 'tool',
         name: 'kb_network_status',
-        description: '查看/切换知识库联网状态（控制 Embedding 向量化和 RAG AI 调用）',
+        description: '查看/切换知识库联网状态',
         priority: 5,
         moduleId: this.id,
         parameters: {
           type: 'object',
           properties: {
-            enabled: {
-              type: 'boolean',
-              description: '设置联网开关（true=开启，false=关闭）。不传则仅查询当前状态'
-            }
+            enabled: { type: 'boolean', description: '设置联网开关（true=开启，false=关闭）。不传则仅查询当前状态' }
           }
         },
         handler: {
           execute: async (p) => {
             const { enabled } = p as { enabled?: boolean }
-
-            // 如果传了 enabled 参数，切换状态
             if (typeof enabled === 'boolean') {
               this.networkEnabled = enabled
-              this.embeddingService.setNetworkEnabled(enabled)
               this.ragEngine.setNetworkEnabled(enabled)
               this.context.logger.info(`知识库联网功能已${enabled ? '开启' : '关闭'}`)
             }
-
             const status: KBNetworkStatus = {
               networkEnabled: this.networkEnabled,
-              networkFeatures: [
-                'kb_import（导入时自动向量化）',
-                'kb_search（语义搜索需要向量）',
-                'kb_ask（RAG 问答需要 AI 调用）'
-              ],
-              localFeatures: [
-                'kb_list（列出文档）',
-                'kb_delete（删除文档）',
-                '本地文件读取与文本切片',
-                'Vectra 本地向量索引（含内容检索）'
-              ]
+              networkFeatures: ['kb_import（导入时自动向量化+BM25索引）', 'kb_search（混合检索）', 'kb_ask（RAG 问答）'],
+              localFeatures: ['kb_list（列出文档）', 'kb_delete（删除文档）', '本地文件读取']
             }
             return { success: true, data: status }
           }
         }
       },
 
-      // --- 导入文件/目录到知识库 ---
+      // --- 导入文件/目录 ---
       {
         type: 'tool',
         name: 'kb_import',
-        description: '导入文件/目录到知识库（联网开启时自动向量化，关闭时仅提取文本存储）',
+        description: '导入文件/目录到知识库（自动切片+嵌入+BM25索引）',
         priority: 10,
         moduleId: this.id,
         handler: {
           execute: async (p) => {
             const { path } = p as { path: string }
-            if (!path) {
-              return { success: false, error: '请提供文件或目录路径' }
-            }
+            if (!path) return { success: false, error: '请提供文件或目录路径' }
             try {
-              // 联网关闭时，kb_import 仍然可以导入文件（本地操作），
-              // 但 EmbeddingService 会抛错，所以需要临时跳过向量化
-              // 或者直接用本地模式导入（只存储文本，不生成向量）
               const results = await this.kbManager.importPath(path)
               const successCount = results.filter(r => r.success).length
-              const failCount = results.filter(r => !r.success).length
-
-              const networkNote = this.networkEnabled
-                ? ''
-                : '（注意：联网已关闭，文件已导入但未向量化。开启联网后重新导入可生成向量。）'
-
               return {
                 success: true,
                 data: {
-                  total: results.length,
-                  success: successCount,
-                  failed: failCount,
-                  networkEnabled: this.networkEnabled,
-                  results,
-                  networkNote
+                  total: results.length, success: successCount, failed: results.length - successCount,
+                  networkEnabled: this.networkEnabled, results
                 }
               }
-            } catch (err) {
-              return { success: false, error: (err as Error).message }
-            }
+            } catch (err) { return { success: false, error: (err as Error).message } }
           }
         }
       },
 
-      // --- 语义搜索知识库 ---
+      // --- 混合检索（向量 + BM25） ---
       {
         type: 'tool',
         name: 'kb_search',
-        description: '语义搜索知识库（本地向量搜索，但联网关闭时无法为新文档生成向量）',
+        description: '语义搜索知识库（默认混合检索：向量+BM25，Vectra 官方实现）',
         priority: 10,
         moduleId: this.id,
         handler: {
           execute: async (p) => {
             const { query, topK } = p as { query: string; topK?: number }
-            if (!query) {
-              return { success: false, error: '请提供搜索查询' }
-            }
+            if (!query) return { success: false, error: '请提供搜索查询' }
             try {
-              const queryEmbedding = await this.embeddingService.embed(query)
-              const results = await this.vectorStore.search(queryEmbedding, topK ?? 5)
-              return {
-                success: true,
-                data: results,
-                networkEnabled: this.networkEnabled
-              }
+              // Vectra 内部自动嵌入查询 + BM25 混合搜索
+              const results = await this.vectorStore.searchHybrid(query, topK ?? 5)
+              return { success: true, data: results, meta: { mode: 'hybrid', count: results.length } }
             } catch (err) {
               const errorMsg = (err as Error).message
-              // 联网关闭时给出友好提示
-              if (!this.networkEnabled && errorMsg.includes('联网功能已关闭')) {
-                return {
-                  success: false,
-                  error: '语义搜索需要生成查询向量，请先开启联网功能。已有向量的文档仍可搜索。',
-                  networkEnabled: false
-                }
+              if (errorMsg.includes('ECONNREFUSED') || errorMsg.includes('fetch')) {
+                return { success: false, error: `搜索失败：无法连接 Ollama 嵌入服务，请确认 Ollama 正在运行（${errorMsg}）` }
               }
               return { success: false, error: errorMsg }
             }
@@ -244,7 +183,7 @@ export default class KnowledgeBaseModule implements Module {
         }
       },
 
-      // --- 列出知识库文档 ---
+      // --- 列出文档 ---
       {
         type: 'tool',
         name: 'kb_list',
@@ -253,12 +192,8 @@ export default class KnowledgeBaseModule implements Module {
         moduleId: this.id,
         handler: {
           execute: async () => {
-            try {
-              const documents = await this.vectorStore.listDocuments()
-              return { success: true, data: documents }
-            } catch (err) {
-              return { success: false, error: (err as Error).message }
-            }
+            try { return { success: true, data: await this.vectorStore.listDocuments() } }
+            catch (err) { return { success: false, error: (err as Error).message } }
           }
         }
       },
@@ -273,98 +208,63 @@ export default class KnowledgeBaseModule implements Module {
         handler: {
           execute: async (p) => {
             const { documentId } = p as { documentId: string }
-            if (!documentId) {
-              return { success: false, error: '请提供文档 ID' }
-            }
+            if (!documentId) return { success: false, error: '请提供文档 ID' }
             try {
               const deleted = await this.vectorStore.deleteDocument(documentId)
-              return {
-                success: deleted,
-                data: deleted ? { documentId } : undefined,
-                error: deleted ? undefined : '文档不存在'
-              }
-            } catch (err) {
-              return { success: false, error: (err as Error).message }
-            }
+              return { success: deleted, data: deleted ? { documentId } : undefined, error: deleted ? undefined : '文档不存在' }
+            } catch (err) { return { success: false, error: (err as Error).message } }
           }
         }
       },
 
-      // --- 重建索引（换模型后重新向量化） ---
+      // --- 重建索引 ---
       {
         type: 'tool',
         name: 'kb_reindex',
-        description: '重建知识库索引（用当前模型重新向量化所有文档，适用于更换嵌入模型后）',
+        description: '重建知识库索引（用当前模型重新向量化所有文档）',
         priority: 10,
         moduleId: this.id,
         handler: {
           execute: async () => {
-            if (!this.networkEnabled) {
-              return { success: false, error: '重建索引需要联网生成向量，请先开启联网功能。' }
-            }
+            if (!this.networkEnabled) return { success: false, error: '重建索引需要联网，请先开启。' }
             try {
               const documents = await this.vectorStore.listDocuments()
-              if (documents.length === 0) {
-                return { success: true, data: { message: '知识库为空，无需重建', reindexed: 0 } }
-              }
+              if (documents.length === 0) return { success: true, data: { message: '知识库为空', reindexed: 0 } }
 
               let reindexed = 0
               const errors: string[] = []
-
               for (const doc of documents) {
                 try {
-                  // 删除旧向量
                   await this.vectorStore.deleteDocument(doc.id)
-                  // 重新导入（用新模型重新向量化）
                   const result = await this.kbManager.importFile(doc.filePath)
                   if (result.success) reindexed++
                   else errors.push(`${doc.fileName}: ${result.error}`)
-                } catch (err) {
-                  errors.push(`${doc.fileName}: ${(err as Error).message}`)
-                }
+                } catch (err) { errors.push(`${doc.fileName}: ${(err as Error).message}`) }
               }
-
-              return {
-                success: true,
-                data: {
-                  total: documents.length,
-                  reindexed,
-                  failed: documents.length - reindexed,
-                  errors: errors.length > 0 ? errors : undefined,
-                  model: this.embeddingService.getModel()
-                }
-              }
-            } catch (err) {
-              return { success: false, error: (err as Error).message }
-            }
+              return { success: true, data: { total: documents.length, reindexed, failed: documents.length - reindexed, errors: errors.length > 0 ? errors : undefined } }
+            } catch (err) { return { success: false, error: (err as Error).message } }
           }
         }
       },
 
-      // --- 基于知识库问答（RAG） ---
+      // --- RAG 问答 ---
       {
         type: 'tool',
         name: 'kb_ask',
-        description: '基于知识库问答（RAG，需要联网调用 AI）',
+        description: '基于知识库问答（混合检索 → LLM Reranker → AI 回答）',
         priority: 10,
         moduleId: this.id,
         handler: {
           execute: async (p) => {
             const { question, topK } = p as { question: string; topK?: number }
-            if (!question) {
-              return { success: false, error: '请提供问题' }
-            }
+            if (!question) return { success: false, error: '请提供问题' }
             try {
               const result = await this.ragEngine.ask(question, topK ?? 5)
               return { success: true, data: result }
             } catch (err) {
               const errorMsg = (err as Error).message
               if (!this.networkEnabled && errorMsg.includes('联网功能已关闭')) {
-                return {
-                  success: false,
-                  error: 'RAG 问答需要联网调用 AI，请先开启联网功能。',
-                  networkEnabled: false
-                }
+                return { success: false, error: 'RAG 问答需要联网，请先开启。', networkEnabled: false }
               }
               return { success: false, error: errorMsg }
             }
@@ -372,87 +272,40 @@ export default class KnowledgeBaseModule implements Module {
         }
       },
 
-      // --- 数据集广场：列出数据集 ---
+      // --- 数据集广场 ---
       {
-        type: 'tool',
-        name: 'kb_dataset_list',
-        description: '列出数据集广场中的所有数据集（内置 + 远程加载的）',
-        priority: 5,
-        moduleId: this.id,
-        parameters: {
-          type: 'object',
-          properties: {
-            category: { type: 'string', description: '按分类筛选（如"百科评估"、"指令对话"等），不传则返回全部' }
-          }
-        },
+        type: 'tool', name: 'kb_dataset_list', description: '列出数据集广场中的所有数据集', priority: 5, moduleId: this.id,
+        parameters: { type: 'object', properties: { category: { type: 'string', description: '按分类筛选' } } },
         handler: {
           execute: async (p) => {
             const { category } = p as { category?: string }
             try {
               const datasets = this.datasetCatalog.getDatasets(category)
-              const categories = this.datasetCatalog.getCategories()
-              return {
-                success: true,
-                data: { datasets, categories, total: datasets.length }
-              }
-            } catch (err) {
-              return { success: false, error: (err as Error).message }
-            }
+              return { success: true, data: { datasets, categories: this.datasetCatalog.getCategories(), total: datasets.length } }
+            } catch (err) { return { success: false, error: (err as Error).message } }
           }
         }
       },
-
-      // --- 数据集广场：从远程 Markdown 加载数据集列表 ---
       {
-        type: 'tool',
-        name: 'kb_dataset_fetch_remote',
-        description: '从远程 Markdown 文件解析并加载数据集列表（支持 GitHub URL）',
-        priority: 5,
-        moduleId: this.id,
-        parameters: {
-          type: 'object',
-          properties: {
-            url: { type: 'string', description: 'Markdown 文件地址（GitHub blob URL 或 raw URL）' }
-          },
-          required: ['url']
-        },
+        type: 'tool', name: 'kb_dataset_fetch_remote', description: '从远程 Markdown 加载数据集列表', priority: 5, moduleId: this.id,
+        parameters: { type: 'object', properties: { url: { type: 'string', description: 'Markdown 文件地址' } }, required: ['url'] },
         handler: {
           execute: async (p) => {
             const { url } = p as { url: string }
-            if (!url) {
-              return { success: false, error: '请提供 Markdown 文件地址' }
-            }
+            if (!url) return { success: false, error: '请提供地址' }
             try {
               const result = await this.datasetCatalog.fetchFromMarkdown(url)
-              return {
-                success: true,
-                data: {
-                  ...result,
-                  message: `成功加载 ${result.added} 个远程数据集，当前共 ${result.total} 个数据集`
-                }
-              }
-            } catch (err) {
-              return { success: false, error: (err as Error).message }
-            }
+              return { success: true, data: { ...result, message: `加载 ${result.added} 个远程数据集，当前共 ${result.total} 个` } }
+            } catch (err) { return { success: false, error: (err as Error).message } }
           }
         }
       },
-
-      // --- 数据集广场：获取下载状态 ---
       {
-        type: 'tool',
-        name: 'kb_dataset_download_status',
-        description: '获取当前所有活跃下载的状态',
-        priority: 5,
-        moduleId: this.id,
+        type: 'tool', name: 'kb_dataset_download_status', description: '获取下载状态', priority: 5, moduleId: this.id,
         handler: {
           execute: async () => {
-            try {
-              const downloads = this.datasetDownloader.getActiveDownloads()
-              return { success: true, data: { downloads, downloadDir: this.datasetDownloader.getDownloadDir() } }
-            } catch (err) {
-              return { success: false, error: (err as Error).message }
-            }
+            try { return { success: true, data: { downloads: this.datasetDownloader.getActiveDownloads(), downloadDir: this.datasetDownloader.getDownloadDir() } } }
+            catch (err) { return { success: false, error: (err as Error).message } }
           }
         }
       }

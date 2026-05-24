@@ -11,7 +11,7 @@
   "resourceLimits": { "maxMemoryMB": 1024, "maxCpuPercent": 25 },
   "provides": [
     { "type": "tool", "name": "kb_import", "description": "导入文件/目录到知识库", "priority": 10 },
-    { "type": "tool", "name": "kb_search", "description": "语义搜索知识库", "priority": 10 },
+    { "type": "tool", "name": "kb_search", "description": "语义搜索知识库（默认混合检索：向量+BM25）", "priority": 10 },
     { "type": "tool", "name": "kb_list", "description": "列出知识库文档", "priority": 10 },
     { "type": "tool", "name": "kb_delete", "description": "删除文档", "priority": 10 },
     { "type": "tool", "name": "kb_reindex", "description": "重建索引（换模型后重新向量化）", "priority": 10 },
