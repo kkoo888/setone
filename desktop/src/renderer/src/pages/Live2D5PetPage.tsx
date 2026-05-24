@@ -84,12 +84,12 @@ const Live2D5PetPage: React.FC = () => {
           }
         })
 
-        const modelPath = new URL('./live2d/Hiyori/Hiyori.model3.json', window.location.href).href
+        const modelPath = new URL('./live2d/Ren/Ren.model3.json', window.location.href).href
         console.log('[Live2D5PetPage] 📦 开始加载模型, modelPath:', modelPath)
 
         await service.loadModel(
           {
-            name: 'Hiyori',
+            name: 'Ren',
             modelPath,
             scale: 0.85,
           },
