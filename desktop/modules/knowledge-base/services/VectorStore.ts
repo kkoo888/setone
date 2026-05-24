@@ -25,10 +25,17 @@ export class VectorStore {
   async init(): Promise<void> {
     await this.docRepo.init()
     await this.vectra.init()
+    // 同步检查：Vectra 索引为空但 SQLite 有记录 → 说明 indexDir 被更换，清理孤立记录
+    const vectraStats = await this.vectra.getStats()
+    const docCount = await this.docRepo.count()
+    if (vectraStats.chunks === 0 && docCount > 0) {
+      this.logger.warn(`索引目录已更换（Vectra 为空，SQLite 有 ${docCount} 条记录），清理孤立数据`)
+      await this.docRepo.clearAll()
+    }
   }
 
-  async saveDocument(id: string, fileName: string, filePath: string, fileType: string, fileSize: number, chunkCount: number): Promise<void> {
-    await this.docRepo.save({ id, fileName, filePath, fileType, fileSize, chunkCount, createdAt: Date.now(), updatedAt: Date.now() })
+  async saveDocument(id: string, fileName: string, filePath: string, fileType: string, fileSize: number, chunkCount: number, datasetId?: string, datasetName?: string): Promise<void> {
+    await this.docRepo.save({ id, fileName, filePath, fileType, fileSize, chunkCount, createdAt: Date.now(), updatedAt: Date.now(), datasetId, datasetName })
   }
 
   /**

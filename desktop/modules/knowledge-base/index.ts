@@ -94,11 +94,11 @@ export default class KnowledgeBaseModule implements Module {
     await this.datasetDownloader.init()
     this.datasetDownloader.setupSessionListener(session.defaultSession)
 
-    // 下载完成 → 自动导入知识库
+    // 下载完成 → 自动导入知识库（带数据集来源信息）
     this.datasetDownloader.setOnDownloadComplete(async (datasetId, datasetName, filePath) => {
       context.logger.info(`数据集下载完成，自动导入知识库: ${datasetName}`)
       try {
-        const result = await this.kbManager.importFile(filePath)
+        const result = await this.kbManager.importFile(filePath, datasetId, datasetName)
         if (result.success) {
           context.logger.info(`数据集 "${datasetName}" 已自动导入知识库，${result.chunkCount} 个片段`)
         } else {

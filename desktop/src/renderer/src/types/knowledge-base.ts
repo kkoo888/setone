@@ -8,6 +8,10 @@ export interface KBDocument {
   chunkCount: number
   createdAt: number
   updatedAt: number
+  /** 来源数据集 ID */
+  datasetId?: string
+  /** 来源数据集名称 */
+  datasetName?: string
 }
 
 /** 语义搜索结果 */

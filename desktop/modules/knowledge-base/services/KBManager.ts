@@ -79,7 +79,7 @@ export class KBManager {
    * 导入单个文件
    * 流程：提取文本 → 存元数据 → Vectra 索引（切片+嵌入+BM25）
    */
-  async importFile(filePath: string): Promise<KBImportResult> {
+  async importFile(filePath: string, datasetId?: string, datasetName?: string): Promise<KBImportResult> {
     const fileName = basename(filePath)
     const ext = extname(filePath).toLowerCase()
 
@@ -101,10 +101,10 @@ export class KBManager {
       if (this.networkEnabled) {
         await this.vectorStore.saveToVectra(documentId, content, ext)
         const stats = await this.vectorStore.getStats()
-        await this.vectorStore.saveDocument(documentId, fileName, filePath, ext, fileSize, stats.chunks)
+        await this.vectorStore.saveDocument(documentId, fileName, filePath, ext, fileSize, stats.chunks, datasetId, datasetName)
         this.logger.info(`文件导入成功: ${fileName}, Vectra 总计 ${stats.chunks} 片段`)
       } else {
-        await this.vectorStore.saveDocument(documentId, fileName, filePath, ext, fileSize, 0)
+        await this.vectorStore.saveDocument(documentId, fileName, filePath, ext, fileSize, 0, datasetId, datasetName)
         this.logger.warn(`联网已关闭，文件 "${fileName}" 仅存元数据，未索引`)
       }
 

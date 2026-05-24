@@ -11,6 +11,8 @@ interface DocumentRow {
   chunk_count: number
   created_at: number
   updated_at: number
+  dataset_id: string | null
+  dataset_name: string | null
 }
 
 export class DocumentRepository {
@@ -30,9 +32,14 @@ export class DocumentRepository {
         file_size INTEGER NOT NULL,
         chunk_count INTEGER NOT NULL DEFAULT 0,
         created_at INTEGER NOT NULL,
-        updated_at INTEGER NOT NULL
+        updated_at INTEGER NOT NULL,
+        dataset_id TEXT,
+        dataset_name TEXT
       )
     `)
+    // 迁移：添加 dataset_id / dataset_name 列（已有则跳过）
+    try { await this.db.run(`ALTER TABLE kb_documents ADD COLUMN dataset_id TEXT`) } catch { /* 已存在 */ }
+    try { await this.db.run(`ALTER TABLE kb_documents ADD COLUMN dataset_name TEXT`) } catch { /* 已存在 */ }
   }
 
   async findById(id: string): Promise<KBDocument | undefined> {
@@ -52,9 +59,9 @@ export class DocumentRepository {
 
   async save(doc: KBDocument): Promise<void> {
     await this.db.run(
-      `INSERT OR REPLACE INTO kb_documents (id, file_name, file_path, file_type, file_size, chunk_count, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [doc.id, doc.fileName, doc.filePath, doc.fileType, doc.fileSize, doc.chunkCount, doc.createdAt, doc.updatedAt]
+      `INSERT OR REPLACE INTO kb_documents (id, file_name, file_path, file_type, file_size, chunk_count, created_at, updated_at, dataset_id, dataset_name)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [doc.id, doc.fileName, doc.filePath, doc.fileType, doc.fileSize, doc.chunkCount, doc.createdAt, doc.updatedAt, doc.datasetId ?? null, doc.datasetName ?? null]
     )
   }
 
@@ -77,6 +84,10 @@ export class DocumentRepository {
     return row?.count ?? 0
   }
 
+  async clearAll(): Promise<void> {
+    await this.db.run(`DELETE FROM kb_documents`)
+  }
+
   private toEntity(row: DocumentRow): KBDocument {
     return {
       id: row.id,
@@ -86,7 +97,9 @@ export class DocumentRepository {
       fileSize: row.file_size,
       chunkCount: row.chunk_count,
       createdAt: row.created_at,
-      updatedAt: row.updated_at
+      updatedAt: row.updated_at,
+      datasetId: row.dataset_id ?? undefined,
+      datasetName: row.dataset_name ?? undefined,
     }
   }
 }

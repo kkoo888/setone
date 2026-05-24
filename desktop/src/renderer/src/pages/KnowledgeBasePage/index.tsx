@@ -611,7 +611,7 @@ export function KnowledgeBasePage() {
                 id={doc.id}
                 icon="📄"
                 title={doc.fileName}
-                subtitle={`${doc.fileType} · ${doc.chunkCount} 片段`}
+                subtitle={`${doc.fileType} · ${doc.chunkCount} 片段${doc.datasetName ? ` · 来源: ${doc.datasetName}` : ''}`}
                 actions={<button onClick={() => handleDelete(doc.id)} className="btn-icon-lg" title="删除">{React.createElement(DeleteOne, { size: 14, fill: 'currentColor', theme: 'outline' })}</button>}
               />
             ))}
