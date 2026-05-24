@@ -812,7 +812,7 @@ export class AppModel extends CubismUserModel {
     if (gl) {
       this.getRenderer().startUp(gl)
       this.getRenderer().setIsPremultipliedAlpha(true)
-      this.getRenderer().loadShaders() // 预热 shader
+      this.getRenderer().loadShaders()
     }
     // 重新绑定纹理（★ 修复：await 确保纹理加载完成）
     await this.loadTextures()
