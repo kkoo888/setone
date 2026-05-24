@@ -10,16 +10,6 @@ export interface KBDocument {
   updatedAt: number
 }
 
-/** 知识库文本片段 */
-export interface KBChunk {
-  id: string
-  documentId: string
-  chunkIndex: number
-  content: string
-  embedding: number[]
-  createdAt: number
-}
-
 /** 语义搜索结果 */
 export interface KBSearchResult {
   chunkId: string
