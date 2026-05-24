@@ -140,6 +140,10 @@ export class DatasetDownloader {
       download.item = item
       download.state = 'downloading'
 
+      // 设置保存路径（防止弹出系统保存对话框）
+      const expectedPath = join(this.downloadDir, this.sanitizeFileName(download.datasetName) + '_' + item.getFilename())
+      item.setSavePath(expectedPath)
+
       // 优先使用缓存的 webContents，兜底用 findWebContents
       const webContents = download.webContents ?? this.findWebContents()
 

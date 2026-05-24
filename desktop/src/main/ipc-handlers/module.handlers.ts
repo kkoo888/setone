@@ -93,6 +93,7 @@ export function registerModuleHandlers(deps: HandlerDeps): void {
   registeredModuleIpc.add('module:disable')
   registeredModuleIpc.add('module:reload')
   registeredModuleIpc.add('module:saveSettings')
+  registeredModuleIpc.add('notify:send')
 
   /** 获取所有模块列表 */
   ipcMain.handle('module:list', async () => {
@@ -153,6 +154,11 @@ export function registerModuleHandlers(deps: HandlerDeps): void {
       logger.error(`保存模块 "${args.moduleId}" 设置失败`, err as Error)
       throw err
     }
+  })
+
+  /** 发送通知（通过 eventBus 桥接到通知模块） */
+  ipcMain.handle('notify:send', async (_event, args: { title: string; body: string; level?: string }) => {
+    eventBus?.emit('notify', { title: args.title, body: args.body, level: args.level ?? 'info' })
   })
 
   // 监听模块卸载事件，自动注销 IPC

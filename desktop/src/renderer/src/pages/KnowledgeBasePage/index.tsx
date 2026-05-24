@@ -88,7 +88,6 @@ export function KnowledgeBasePage() {
   const [importPath, setImportPath] = useState('')
   const [activeTab, setActiveTab] = useState('datasets')
   const [loading, setLoading] = useState(false)
-  const [message, setMessage] = useState('')
   const [showImportDialog, setShowImportDialog] = useState(false)
   const [importMode, setImportMode] = useState<'file' | 'folder'>('file')
   const [networkEnabled, setNetworkEnabled] = useState(true)
@@ -108,6 +107,11 @@ export function KnowledgeBasePage() {
   const [savingSettings, setSavingSettings] = useState(false)
   const [settingsLoaded, setSettingsLoaded] = useState(false)
 
+  // ── 通知（通过 IPC 发送到通知模块） ──
+  const notify = (title: string, body: string, level: string = 'info') => {
+    window.electronAPI.invoke('notify:send', { title, body, level }).catch(() => {})
+  }
+
   // ── 加载数据 ──
   const loadDocuments = useCallback(async () => {
     try {
@@ -122,8 +126,11 @@ export function KnowledgeBasePage() {
       const res = await window.electronAPI.invoke('kb_network_status')
       if (res?.success) {
         setNetworkEnabled(res.data.networkEnabled ?? true)
-        setRawDir(res.data.rawDir ?? '')
-        setIndexDir(res.data.indexDir ?? '')
+        const rd = res.data.rawDir ?? ''
+        const id = res.data.indexDir ?? ''
+        setRawDir(rd)
+        setIndexDir(id)
+        setImportPath(rd)  // 默认导入路径 = rawDir
         setSettingsLoaded(true)
       }
     } catch { /* ignore */ }
@@ -161,7 +168,7 @@ export function KnowledgeBasePage() {
           next.delete(progress.datasetId)
           return next
         })
-        setMessage(`"${progress.datasetName}" 下载已取消`)
+        notify("下载取消", `"${progress.datasetName}" 下载已取消`)
         return
       }
 
@@ -171,19 +178,19 @@ export function KnowledgeBasePage() {
         return next
       })
       if (progress.state === 'completed') {
-        setMessage(Msg.downloadComplete(progress.datasetName))
+        notify("下载完成", Msg.downloadComplete(progress.datasetName))
         loadDatasets()
         // 自动导入下载的数据集到文档管理
         if (progress.savePath) {
           window.electronAPI.invoke('kb_import', { path: progress.savePath }).then((res: { success?: boolean; data?: { success: number; failed: number } }) => {
             if (res?.success) {
-              setMessage(Msg.downloadComplete(progress.datasetName) + '，' + Msg.importSuccess(res.data!.success, res.data!.failed))
+              notify("下载完成", Msg.downloadComplete(progress.datasetName) + '，' + Msg.importSuccess(res.data!.success, res.data!.failed))
               loadDocuments()
             }
           }).catch(() => { /* 导入失败不影响下载完成提示 */ })
         }
       } else if (progress.state === 'interrupted') {
-        setMessage(Msg.downloadInterrupted(progress.datasetName))
+        notify("下载中断", Msg.downloadInterrupted(progress.datasetName))
       }
     }
 
@@ -202,9 +209,9 @@ export function KnowledgeBasePage() {
       const res = await window.electronAPI.invoke('kb_network_status', { enabled: newState })
       if (res?.success) {
         setNetworkEnabled(newState)
-        setMessage(newState ? Msg.networkOn : Msg.networkOff)
+        notify("联网状态", newState ? Msg.networkOn : Msg.networkOff)
       }
-    } catch (e) { setMessage(`切换失败：${(e as Error).message}`) }
+    } catch (e) { notify("切换失败", `切换失败：${(e as Error).message}`) }
   }
 
   // ── 文档导入 ──
@@ -213,20 +220,20 @@ export function KnowledgeBasePage() {
     // 网络地址需要联网，本地路径不需要
     const isRemotePath = /^https?:\/\//i.test(importPath.trim())
     if (isRemotePath && !networkEnabled) {
-      setMessage(Msg.offlineImport)
+      notify("离线", Msg.offlineImport)
       return
     }
     setLoading(true)
     try {
       const res = await window.electronAPI.invoke('kb_import', { path: importPath })
       if (res?.success) {
-        setMessage(Msg.importSuccess(res.data.success, res.data.failed))
+        notify("导入完成", Msg.importSuccess(res.data.success, res.data.failed))
         setImportPath('')
         loadDocuments()
       } else {
-        setMessage(Msg.importFailed(res?.error))
+        notify("导入失败", Msg.importFailed(res?.error))
       }
-    } catch (e) { setMessage(Msg.error((e as Error).message)) }
+    } catch (e) { notify("错误", Msg.error((e as Error).message)) }
     setLoading(false)
   }
 
@@ -298,9 +305,9 @@ export function KnowledgeBasePage() {
       // 保存成功后重新从后端加载（确保与 module.json 同步）
       setSettingsLoaded(false)
       await loadNetworkStatus()
-      setMessage('✅ 路径设置已保存，模块已重载')
+      notify('设置保存', '路径设置已保存，模块已重载')
     } catch (e) {
-      setMessage(Msg.saveFailed((e as Error).message))
+      notify("保存失败", Msg.saveFailed((e as Error).message))
     }
     setSavingSettings(false)
   }
@@ -309,19 +316,19 @@ export function KnowledgeBasePage() {
   const handleFetchRemote = async () => {
     if (!remoteUrl.trim()) return
     if (!networkEnabled) {
-      setMessage(Msg.offlineDataset)
+      notify("离线", Msg.offlineDataset)
       return
     }
     setLoadingDatasets(true)
     try {
       const res = await window.electronAPI.invoke('kb_dataset_fetch_remote', { url: remoteUrl })
       if (res?.success) {
-        setMessage(`✅ ${res.data.message}`)
+        notify("加载完成", res.data.message)
         loadDatasets()
       } else {
-        setMessage(Msg.loadFailed(res?.error))
+        notify("加载失败", Msg.loadFailed(res?.error))
       }
-    } catch (e) { setMessage(Msg.error((e as Error).message)) }
+    } catch (e) { notify("错误", Msg.error((e as Error).message)) }
     setLoadingDatasets(false)
   }
 
@@ -338,7 +345,7 @@ export function KnowledgeBasePage() {
   const handleConfirmDownload = () => {
     if (!showDownloadConfirm) return
     if (!networkEnabled) {
-      setMessage(Msg.offlineDownload)
+      notify("离线", Msg.offlineDownload)
       setShowDownloadConfirm(null)
       return
     }
@@ -473,15 +480,6 @@ export function KnowledgeBasePage() {
         activeTab={activeTab}
         onTabChange={setActiveTab}
       />
-
-      {/* 消息提示 */}
-      {message && (
-        <div style={{ padding: '0 12px', animation: 'scSlideDown 0.2s ease' }}>
-          <div style={{ padding: '10px 16px', borderRadius: 8, fontSize: 13, background: message.includes('失败') || message.includes('错误') || message.includes('❌') ? 'rgba(239,68,68,0.1)' : 'rgba(34,197,94,0.1)', color: message.includes('失败') || message.includes('错误') || message.includes('❌') ? 'var(--color-error)' : 'var(--color-success)', border: `1px solid ${message.includes('失败') || message.includes('错误') || message.includes('❌') ? 'rgba(239,68,68,0.2)' : 'rgba(34,197,94,0.2)'}` }}>
-            {message}
-          </div>
-        </div>
-      )}
 
       {/* ══════════ 数据集广场 ══════════ */}
       {activeTab === 'datasets' && (
