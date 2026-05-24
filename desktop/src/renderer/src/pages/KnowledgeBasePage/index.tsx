@@ -106,6 +106,7 @@ export function KnowledgeBasePage() {
   const [rawDir, setRawDir] = useState('')
   const [indexDir, setIndexDir] = useState('')
   const [savingSettings, setSavingSettings] = useState(false)
+  const [settingsLoaded, setSettingsLoaded] = useState(false)
 
   // ── 加载数据 ──
   const loadDocuments = useCallback(async () => {
@@ -116,15 +117,17 @@ export function KnowledgeBasePage() {
   }, [])
 
   const loadNetworkStatus = useCallback(async () => {
+    if (settingsLoaded) return
     try {
       const res = await window.electronAPI.invoke('kb_network_status')
       if (res?.success) {
         setNetworkEnabled(res.data.networkEnabled ?? true)
         setRawDir(res.data.rawDir ?? '')
         setIndexDir(res.data.indexDir ?? '')
+        setSettingsLoaded(true)
       }
     } catch { /* ignore */ }
-  }, [])
+  }, [settingsLoaded])
 
   const loadDatasets = useCallback(async () => {
     setLoadingDatasets(true)
@@ -292,6 +295,9 @@ export function KnowledgeBasePage() {
         moduleId: 'knowledge-base',
         settings: { rawDir, indexDir }
       })
+      // 保存成功后重新从后端加载（确保与 module.json 同步）
+      setSettingsLoaded(false)
+      await loadNetworkStatus()
       setMessage('✅ 路径设置已保存，模块已重载')
     } catch (e) {
       setMessage(Msg.saveFailed((e as Error).message))
