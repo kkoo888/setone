@@ -96,6 +96,8 @@ export class AppModel extends CubismUserModel {
   // ★ 新增：当前播放状态追踪
   private _currentExpression: string = ''
   private _currentMotion: string = ''
+  private _loggedVisibility: boolean = false
+  private _loggedRenderOK: boolean = false
 
   // ★ 新增：WAV 音频处理器（用于 LipSync）
   private _wavFileHandler: WavFileHandler = new WavFileHandler()
@@ -804,12 +806,31 @@ export class AppModel extends CubismUserModel {
    */
   render(gl: WebGLRenderingContext | WebGL2RenderingContext, mvpMatrix: { getArray(): Float32Array }): void {
     const renderer = this.getRenderer()
-    if (!renderer) return
+    if (!renderer) { console.warn('[AppModel] ❌ renderer 为 null'); return }
 
     // 确保 GL 绑定（官方流程：startUp 在 loadTextures 之前，这里做兜底）
     if (renderer.gl !== gl) {
       renderer.startUp(gl)
     }
+
+    // ★ 诊断：检查模型状态
+    const model = this.getModel()
+    if (!model) { console.warn('[AppModel] ❌ model 为 null'); return }
+    const drawableCount = model.getDrawableCount()
+    const visibleCount = Array.from({ length: drawableCount }, (_, i) => model.getDrawableDynamicFlagIsVisible(i)).filter(Boolean).length
+    if (drawableCount === 0) {
+      console.warn('[AppModel] ⚠️ drawableCount = 0，模型无绘制对象')
+    } else if (visibleCount === 0) {
+      // 仅首帧打印，避免刷屏
+      if (!this._loggedVisibility) {
+        console.warn(`[AppModel] ⚠️ ${drawableCount} 个 drawable 全部不可见 (visible=0)`)
+        this._loggedVisibility = true
+      }
+    } else if (!this._loggedRenderOK) {
+      console.log(`[AppModel] ✅ 渲染中: ${visibleCount}/${drawableCount} 个 drawable 可见`)
+      this._loggedRenderOK = true
+    }
+
     renderer.setMvpMatrix(mvpMatrix)
     renderer.drawModel()
   }

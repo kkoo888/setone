@@ -73,6 +73,7 @@ class Cubism5Service {
 
   // ★ 新增：帧率限制
   private _targetFPS: number = 60  // 默认 60 FPS
+  private _loggedFirstFrame: boolean = false
   private _lastFrameTime: number = 0
 
   setStateCallback(cb: StateCallback | null): void {
@@ -517,6 +518,16 @@ class Cubism5Service {
 
     // ④ 创建 MVP 矩阵并渲染（官方流程第 3-4 步）
     const mvp = this.createMvpMatrix(canvas.width, canvas.height)
+
+    // ★ 诊断：首帧打印 MVP 矩阵和 canvas 尺寸
+    if (!this._loggedFirstFrame) {
+      const arr = mvp.getArray()
+      console.log(`[Cubism5] 🖼️ 首帧渲染: canvas=${canvas.width}x${canvas.height}`)
+      console.log(`[Cubism5] 🖼️ MVP=[${arr[0].toFixed(4)}, ${arr[5].toFixed(4)}, ${arr[10].toFixed(4)}, ${arr[15].toFixed(4)}]`)
+      console.log(`[Cubism5] 🖼️ translate=[${arr[12].toFixed(4)}, ${arr[13].toFixed(4)}, ${arr[14].toFixed(4)}]`)
+      this._loggedFirstFrame = true
+    }
+
     this.model.render(gl, mvp)
   }
 
