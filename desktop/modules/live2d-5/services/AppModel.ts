@@ -99,6 +99,7 @@ export class AppModel extends CubismUserModel {
   private _currentMotion: string = ''
   private _loggedVisibility: boolean = false
   private _loggedRenderOK: boolean = false
+  private _diagFrameCount: number = 0
 
   // ★ 新增：WAV 音频处理器（用于 LipSync）
   private _wavFileHandler: WavFileHandler = new WavFileHandler()
@@ -840,6 +841,16 @@ export class AppModel extends CubismUserModel {
 
     renderer.setMvpMatrix(mvpMatrix)
     renderer.drawModel()
+
+    // ★ 诊断：drawModel 后读取中心像素（仅前 5 帧）
+    if (!this._loggedRenderOK && this._diagFrameCount < 5) {
+      this._diagFrameCount++
+      const pixels = new Uint8Array(4)
+      gl.readPixels(Math.floor(gl.canvas.width / 2), Math.floor(gl.canvas.height / 2), 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixels)
+      const fbo = gl.getParameter(gl.FRAMEBUFFER_BINDING)
+      const err = gl.getError()
+      console.log(`[AppModel] 🔍 帧${this._diagFrameCount} 中心像素: ${pixels[0]},${pixels[1]},${pixels[2]},${pixels[3]} FBO=${fbo ? '自定义' : '默认'} GL错误=${err === 0 ? '无' : '0x' + err.toString(16)}`)
+    }
   }
 
   /**
