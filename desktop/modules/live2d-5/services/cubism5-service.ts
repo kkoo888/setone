@@ -12,6 +12,7 @@ import { TouchManager } from './TouchManager'
 import type { Cubism5ModelState, Cubism5ModelConfig, StateCallback, MotionGroup } from '../types'
 // 静态导入 CubismFramework（Vite 警告修复）
 import { CubismFramework } from '../lib/live2dcubismframework'
+import { CubismMatrix44 } from '../lib/math/cubismmatrix44'
 
 // ============ 常量 ============
 
@@ -529,17 +530,25 @@ class Cubism5Service {
   }
 
   /**
-   * 创建 MVP 矩阵（正交投影 × 模型矩阵）
+   * 创建 MVP 矩阵（viewMatrix × modelMatrix）
+   *
+   * Cubism SDK 标准坐标变换链路：
+   *   模型顶点(逻辑坐标) → [modelMatrix] → 世界坐标 → [viewMatrix] → 裁剪空间
+   *
+   * - modelMatrix: 模型自身的缩放/位移（由 setupLayout + applyScale 设置）
+   * - viewMatrix: 定义可视范围（逻辑坐标 → 裁剪空间），内含正交投影
+   * - deviceToScreen: 仅用于触摸/拖拽坐标转换，**不参与渲染**
    *
    * Cubism SDK 的 drawModel() 不会内部乘模型矩阵，
    * 它直接将此矩阵传给 shader 的 uniformMatrix4fv，
    * shader 中：gl_Position = matrix * position
-   * 所以必须包含模型矩阵。
    */
   private createMvpMatrix(width: number, height: number): { getArray(): Float32Array } {
-    const matrix = this.model?.getModelMatrix()
-    if (!matrix) {
-      // fallback：居中的正交投影
+    const modelMatrix = this.model?.getModelMatrix()
+    const viewMatrix = this.model?.getViewMatrix()
+
+    // fallback：如果 modelMatrix 不存在，返回基础正交投影
+    if (!modelMatrix) {
       const projection = new Float32Array(16)
       projection[0] = 2 / width
       projection[5] = -2 / height
@@ -550,16 +559,26 @@ class Cubism5Service {
       return { getArray: () => projection }
     }
 
-    // 正交投影 × 模型矩阵 = MVP
-    const mvpArr = new Float32Array(matrix.getArray())
-    const sx = 2 / width
-    const sy = -2 / height
-    for (let col = 0; col < 4; col++) {
-      mvpArr[0 * 4 + col] *= sx
-      mvpArr[1 * 4 + col] *= sy
+    // ★ 标准 Cubism SDK MVP 构建：viewMatrix × modelMatrix
+    // viewMatrix 已包含正交投影（setScreenRect 定义逻辑坐标到裁剪空间的映射）
+    // deviceToScreen 不参与渲染，只用于触摸坐标转换（transformViewX/Y）
+    const mvp = new CubismMatrix44()
+    mvp.setMatrix(new Float32Array(modelMatrix.getArray()))
+
+    if (viewMatrix) {
+      mvp.multiplyByMatrix(viewMatrix)
+    } else {
+      // fallback：没有 viewMatrix 时用正交投影
+      const mvpArr = mvp.getArray()
+      const sx = 2 / width
+      const sy = -2 / height
+      for (let col = 0; col < 4; col++) {
+        mvpArr[0 * 4 + col] *= sx
+        mvpArr[1 * 4 + col] *= sy
+      }
     }
 
-    return { getArray: () => mvpArr }
+    return { getArray: () => mvp.getArray() }
   }
 
   /**
