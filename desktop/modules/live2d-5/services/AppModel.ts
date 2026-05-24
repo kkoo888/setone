@@ -14,9 +14,10 @@
  */
 
 import { CubismUserModel } from '../lib/model/cubismusermodel'
+import { CubismFramework } from '../lib/live2dcubismframework'
 import { CubismModelSettingJson } from '../lib/cubismmodelsettingjson'
 import { CubismEyeBlink } from '../lib/effect/cubismeyeblink'
-import { CubismBreath } from '../lib/effect/cubismbreath'
+import { CubismBreath, BreathParameterData } from '../lib/effect/cubismbreath'
 import { CubismLook } from '../lib/effect/cubismlook'
 import { CubismPose } from '../lib/effect/cubismpose'
 import { CubismPhysics } from '../lib/physics/cubismphysics'
@@ -492,8 +493,15 @@ export class AppModel extends CubismUserModel {
       new CubismLookUpdater(look, this._dragManager)
     )
 
-    // 呼吸（官方 create 内部配置默认参数）
+    // 呼吸（官方 Demo: create → setParameters 注册默认呼吸参数）
     this._breath = CubismBreath.create()
+    this._breath.setParameters([
+      new BreathParameterData(CubismFramework.getIdManager().getId('ParamAngleX'), 0.0, 0.01, 6.5345, 0.5),
+      new BreathParameterData(CubismFramework.getIdManager().getId('ParamAngleY'), 0.0, 0.01, 3.5345, 0.5),
+      new BreathParameterData(CubismFramework.getIdManager().getId('ParamAngleZ'), 0.0, 0.01, 5.5345, 0.5),
+      new BreathParameterData(CubismFramework.getIdManager().getId('ParamBodyAngleX'), 0.0, 0.008, 4.5345, 0.5),
+      new BreathParameterData(CubismFramework.getIdManager().getId('ParamBreath'), 0.0, 0.5, 3.2345, 0.5),
+    ])
     this._updateScheduler.addUpdatableList(
       new CubismBreathUpdater(this._breath)
     )
