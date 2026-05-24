@@ -865,6 +865,36 @@ export class AppModel extends CubismUserModel {
       renderer.startUp(gl)
     }
     renderer.setMvpMatrix(mvpMatrix)
+
+    // ★ 诊断：drawModel 前检查 shader program 和顶点绑定
+    if (this._diagFrameCount < 3) {
+      const currentProgram = gl.getParameter(gl.CURRENT_PROGRAM)
+      console.log(`[AppModel] 🔍 drawModel前 帧${this._diagFrameCount + 1}: program=${currentProgram ? '有效' : 'null'}`)
+      if (currentProgram) {
+        const linkStatus = gl.getProgramParameter(currentProgram, gl.LINK_STATUS)
+        console.log(`[AppModel] 🔍 program linkStatus: ${linkStatus}`)
+        const vertSrc = gl.getShaderSource(gl.getProgramParameter(currentProgram, gl.ATTACHED_SHADERS) > 0 ? gl.getAttachedShaders(currentProgram)[0] : null)
+        if (vertSrc) {
+          console.log(`[AppModel] 🔍 vertex shader 前50字符: ${vertSrc.substring(0, 50)}`)
+        }
+      }
+      // 检查顶点属性
+      const posLoc = gl.getAttribLocation(currentProgram, 'a_position')
+      const uvLoc = gl.getAttribLocation(currentProgram, 'a_texCoord')
+      console.log(`[AppModel] 🔍 a_position=${posLoc}, a_texCoord=${uvLoc}`)
+      // 检查当前绑定的 array buffer
+      const boundBuffer = gl.getParameter(gl.ARRAY_BUFFER_BINDING)
+      console.log(`[AppModel] 🔍 ARRAY_BUFFER_BINDING: ${boundBuffer ? '有' : 'null'}`)
+      // 检查顶点属性 0 的状态
+      if (posLoc >= 0) {
+        const enabled = gl.getVertexAttrib(posLoc, gl.VERTEX_ATTRIB_ARRAY_ENABLED)
+        const size = gl.getVertexAttrib(posLoc, gl.VERTEX_ATTRIB_ARRAY_SIZE)
+        const type = gl.getVertexAttrib(posLoc, gl.VERTEX_ATTRIB_ARRAY_TYPE)
+        const buffer = gl.getVertexAttrib(posLoc, gl.VERTEX_ATTRIB_ARRAY_BUFFER_BINDING)
+        console.log(`[AppModel] 🔍 attrib[${posLoc}]: enabled=${enabled}, size=${size}, type=${type}, buffer=${buffer ? '有' : 'null'}`)
+      }
+    }
+
     renderer.drawModel()
 
     // ★ 诊断：drawModel 后立即读取像素（前5帧）
