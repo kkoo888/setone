@@ -92,21 +92,28 @@ class Cubism5Service {
   }
 
   /**
+   * 获取动作组名称列表（供日志/UI 显示，避免 [object Object]）
+   */
+  getMotionGroupNames(): string[] {
+    return (this.model?.motionGroups ?? []).map(g => g.group)
+  }
+
+  /**
    * 加载 Cubism 5 Core SDK
    */
   async loadSDK(): Promise<void> {
     if (this.sdkLoaded) {
-      console.log('[Cubism5] ⏭️ SDK 已加载, 跳过')
+      console.debug('[Cubism5] ⏭️ SDK 已加载, 跳过')
       return
     }
 
-    console.log('[Cubism5] 🔄 开始加载 SDK...')
+    console.debug('[Cubism5] 🔄 开始加载 SDK...')
     this.updateState('loading')
 
     try {
       const win = window as WindowWithCubism
       if (win.Live2DCubismCore && (win.Live2DCubismCore as Record<string, unknown>).Memory) {
-        console.log('[Cubism5] Core SDK 已存在 (Cubism 5)')
+        console.debug('[Cubism5] Core SDK 已存在 (Cubism 5)')
         this.sdkLoaded = true
         this.updateState('idle')
         return
@@ -141,7 +148,7 @@ class Cubism5Service {
    * 初始化 Cubism Framework（静态导入，直接调用）
    */
   private initFramework(): void {
-    console.log('[Cubism5] 🔄 初始化 Cubism Framework...')
+    console.debug('[Cubism5] 🔄 初始化 Cubism Framework...')
     if (CubismFramework.startUp) CubismFramework.startUp()
     if (CubismFramework.initialize) CubismFramework.initialize()
   }
@@ -151,7 +158,7 @@ class Cubism5Service {
    * ★ 关键修复：先获取 GL → 再 loadAssets(gl) → 纹理加载时 renderer.gl 已就绪
    */
   async loadModel(config: Cubism5ModelConfig, container: HTMLElement): Promise<void> {
-    console.log('[Cubism5] 🚀 loadModel 开始, config:', JSON.stringify({ name: config.name, modelPath: config.modelPath, scale: config.scale }))
+    console.debug('[Cubism5] 🚀 loadModel 开始, config:', JSON.stringify({ name: config.name, modelPath: config.modelPath, scale: config.scale }))
 
     if (!this.sdkLoaded) {
       await this.loadSDK()
@@ -184,7 +191,7 @@ class Cubism5Service {
       if (cw === 0 || ch === 0) {
         console.warn('[Cubism5] ⚠️ 容器尺寸为 0，canvas 可能无法渲染')
       }
-      console.log(`[Cubism5] 📐 Canvas 尺寸: ${cw}x${ch}, 容器: ${container.tagName}.${container.className}`)
+      console.debug(`[Cubism5] 📐 Canvas 尺寸: ${cw}x${ch}, 容器: ${container.tagName}.${container.className}`)
 
       // ★ 关键修复：先获取 GL 上下文
       // alpha: true → 透明背景（配合 transparent 窗口）
@@ -228,7 +235,7 @@ class Cubism5Service {
       this.updateState('loaded')
       console.log('[Cubism5] ✅ 模型加载完成:', config.name)
       console.log('[Cubism5] 📋 表情:', appModel.expressionNames)
-      console.log('[Cubism5] 📋 动作组:', appModel.motionGroups)
+      console.log('[Cubism5] 📋 动作组:', appModel.motionGroups.map(g => g.group))
 
       // 开始渲染循环
       this.startRenderLoop()
@@ -438,7 +445,7 @@ class Cubism5Service {
     if (this.animFrameId !== null || this.destroyed) return
 
     this._lastFrameTime = performance.now()
-    console.log('[Cubism5] 🎬 渲染循环启动')
+    console.debug('[Cubism5] 🎬 渲染循环启动')
 
     const render = (currentTime: number) => {
       // 帧率限制逻辑
@@ -480,6 +487,8 @@ class Cubism5Service {
 
   /**
    * 渲染一帧
+   * 按 Cubism 5 官方渲染流程：clear → updateModel → createMvpMatrix → render
+   * @see Cubism5渲染流程.md
    */
   private renderFrame(): void {
     if (!this.gl || !this.model || !this.canvas || this.contextLost || this.destroyed) {
@@ -489,17 +498,23 @@ class Cubism5Service {
     const gl = this.gl
     const canvas = this.canvas
 
-    // 计算 deltaTime（钳制到合理范围，防止负值或过大跳帧）
+    // ① 清除画布（官方流程第 1 步）
+    gl.clearColor(0.0, 0.0, 0.0, 0.0)
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+    gl.enable(gl.BLEND)
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+
+    // ② 计算 deltaTime（钳制到合理范围，防止负值或过大跳帧）
     const now = performance.now() / 1000
     let deltaTime = now - this.lastUpdateTime
     this.lastUpdateTime = now
     if (deltaTime < 0) deltaTime = 0
     if (deltaTime > 0.5) deltaTime = 0.5
 
-    // 通过 AppModel.updateModel 统一调度所有效果
+    // ③ 通过 AppModel.updateModel 统一调度所有效果（官方流程第 2 步）
     this.model.updateModel(deltaTime)
 
-    // 创建 MVP 矩阵并渲染
+    // ④ 创建 MVP 矩阵并渲染（官方流程第 3-4 步）
     const mvp = this.createMvpMatrix(canvas.width, canvas.height)
     this.model.render(gl, mvp)
   }
@@ -675,11 +690,16 @@ class Cubism5Service {
   }
 
   /**
-   * ★ 新增：获取动作队列状态（供管理页面显示）
+   * 获取动作队列状态（供管理页面显示）
+   * ★ 修复：null 安全 — release() 后 _motions 为 null，需要保护
    */
   getMotionQueueStatus(): { isFinished: boolean; queueLength: number; currentPriority: number } | null {
     if (!this.model) return null
-    return this.model.getMotionQueueStatus()
+    try {
+      return this.model.getMotionQueueStatus()
+    } catch {
+      return null
+    }
   }
 
   /**

@@ -274,13 +274,13 @@ export class AppModel extends CubismUserModel {
       }
 
       const texPath = this._modelDir + texFile
-      console.log(`[AppModel] 🖼️ 加载纹理 [${i}/${count}]: ${texPath}`)
+      console.debug(`[AppModel] 🖼️ 加载纹理 [${i}/${count}]: ${texPath}`)
       try {
         const texture = await this.loadTextureImage(texPath)
         if (texture) {
           this.getRenderer().bindTexture(i, texture)
           loadedCount++
-          console.log(`[AppModel] ✅ 纹理 [${i}] 加载成功`)
+          console.debug(`[AppModel] ✅ 纹理 [${i}] 加载成功`)
         } else {
           failedCount++
           console.warn(`[AppModel] ⚠️ 纹理 [${i}] 返回 null`)
@@ -632,13 +632,12 @@ export class AppModel extends CubismUserModel {
     if (matrix) {
       matrix.scale(scale, scale)
       const arr = matrix.getArray()
-      console.log(`[AppModel] 📐 模型矩阵 (scale=${scale}): [${arr[0].toFixed(4)}, ${arr[5].toFixed(4)}, tx=${arr[12].toFixed(4)}, ty=${arr[13].toFixed(4)}]`)
+      console.debug(`[AppModel] 📐 模型矩阵 (scale=${scale}): [${arr[0].toFixed(4)}, ${arr[5].toFixed(4)}, tx=${arr[12].toFixed(4)}, ty=${arr[13].toFixed(4)}]`)
     }
   }
 
   /**
-   * 切换表情
-   * @param name 表情名称
+   * 切换表情（按官方 Demo 的 startMotion 模式）
    */
   playExpression(name: string): void {
     const motion = this._expressionCache.get(name)
@@ -652,10 +651,7 @@ export class AppModel extends CubismUserModel {
 
   /**
    * 播放动作（带优先级系统 + 回调支持 + 声音播放）
-   * @param name 动作名称（格式：group_no）
-   * @param priority 优先级（默认 PriorityNormal = 200）
-   * @param onFinished 动作结束回调
-   * @param onBegan 动作开始回调
+   * 按 Cubism 5 官方 Demo 的 startMotion 模式
    */
   playMotion(
     name: string,
@@ -669,7 +665,12 @@ export class AppModel extends CubismUserModel {
       return
     }
 
-    // 优先级调度逻辑（与 Demo startMotion 一致）
+    if (!this._motionManager) {
+      console.warn('[AppModel] 动作管理器未初始化')
+      return
+    }
+
+    // 优先级调度逻辑（与官方 Demo startMotion 一致）
     if (priority === PriorityForce) {
       this._motionManager.setReservePriority(priority)
     } else if (!this._motionManager.reserveMotion(priority)) {
@@ -684,7 +685,7 @@ export class AppModel extends CubismUserModel {
       motion.setBeganMotionHandler(onBegan)
     }
 
-    // ★ 新增：播放关联声音（与 Demo startMotion voice 部分一致）
+    // 播放关联声音（与官方 Demo startMotion voice 部分一致）
     this.playMotionSound(name)
 
     this._motionManager.startMotionPriority(motion, false, priority)
@@ -713,10 +714,7 @@ export class AppModel extends CubismUserModel {
   }
 
   /**
-   * ★ 新增：按组随机播放动作（与 Demo startRandomMotion 一致）
-   * @param group 动作组名
-   * @param priority 优先级
-   * @param onFinished 结束回调
+   * 按组随机播放动作（与官方 Demo startRandomMotion 一致）
    */
   startRandomMotion(
     group: string,
@@ -745,9 +743,8 @@ export class AppModel extends CubismUserModel {
 
   /**
    * 更新模型（由渲染循环调用）
-   * - loadParameters / saveParameters 包裹参数状态
-   * - 动作播完后自动播放待机动作
-   * - _motionUpdated 标志控制眨眼行为
+   * 按 Cubism 5 官方流程：loadParameters → motionManager.updateMotion → saveParameters → updateScheduler → model.update
+   * @see Cubism5渲染流程.md 第 2 步
    */
   updateModel(deltaTimeSeconds: number): void {
     const model = this.getModel()
@@ -755,29 +752,30 @@ export class AppModel extends CubismUserModel {
 
     this.setUpdating(true)
 
-    // 加载上次保存的参数状态（与 Demo update 一致）
+    // 加载上次保存的参数状态（官方流程）
     model.loadParameters()
 
-    // ★ 修复：每帧重置动作更新标志
+    // 每帧重置动作更新标志（控制眨眼行为）
     this._motionUpdated = false
 
     // 待机动作循环
-    if (this._motionManager.isFinished()) {
+    if (this._motionManager && this._motionManager.isFinished()) {
       this.startRandomMotion('Idle', PriorityIdle)
       this._currentMotion = 'Idle'
-    } else {
-      // ★ 修复：捕获 updateMotion 返回值（与 Demo 一致）
+    } else if (this._motionManager) {
+      // 捕获 updateMotion 返回值（与官方 Demo 一致）
       this._motionUpdated = this._motionManager.updateMotion(model, deltaTimeSeconds)
     }
 
-    // 保存当前参数状态
+    // 保存当前参数状态（官方流程）
     model.saveParameters()
 
-    // UpdateScheduler 统一调度所有效果
+    // UpdateScheduler 统一调度所有效果（官方流程）
     if (this._updateScheduler) {
       this._updateScheduler.onLateUpdate(model, deltaTimeSeconds)
     }
 
+    // 应用参数到模型（官方流程）
     model.update()
 
     this.setUpdating(false)
@@ -785,13 +783,14 @@ export class AppModel extends CubismUserModel {
 
   /**
    * 渲染模型
-   * @param gl WebGL 上下文
-   * @param mvpMatrix MVP 矩阵
+   * 按 Cubism 5 官方流程：确保 GL 绑定 → setMvpMatrix → drawModel
+   * @see Cubism5渲染流程.md 第 4-5 步
    */
   render(gl: WebGLRenderingContext | WebGL2RenderingContext, mvpMatrix: { getArray(): Float32Array }): void {
     const renderer = this.getRenderer()
     if (!renderer) return
 
+    // 确保 GL 绑定（官方流程：startUp 在 loadTextures 之前，这里做兜底）
     if (renderer.gl !== gl) {
       renderer.startUp(gl)
     }
@@ -863,13 +862,17 @@ export class AppModel extends CubismUserModel {
   }
 
   /**
-   * ★ 新增：获取动作队列状态
-   * 用于管理页面显示当前动作队列
+   * 获取动作队列状态
+   * ★ 修复：release() 后 _motionManager 为 null，需要保护
    */
   getMotionQueueStatus(): { isFinished: boolean; queueLength: number; currentPriority: number } {
+    if (!this._motionManager) {
+      return { isFinished: true, queueLength: 0, currentPriority: 0 }
+    }
+    const entries = this._motionManager.getCubismMotionQueueEntries()
     return {
       isFinished: this._motionManager.isFinished(),
-      queueLength: this._motionManager.getCubismMotionQueueEntries().length,
+      queueLength: entries ? entries.length : 0,
       currentPriority: this._motionManager.getCurrentPriority()
     }
   }
