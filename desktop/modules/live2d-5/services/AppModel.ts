@@ -110,6 +110,7 @@ export class AppModel extends CubismUserModel {
   // ★ 新增：shader 等待定时器（用于 destroy 时取消）
   private _shaderWaitTimers: ReturnType<typeof setTimeout>[] = []
   private _firstFrameLogged = false
+  private _diagFrameCount = 0
 
   // 帧内动作更新标志（与 Demo _motionUpdated 一致）
   private _motionUpdated: boolean = false
@@ -865,6 +866,26 @@ export class AppModel extends CubismUserModel {
     }
     renderer.setMvpMatrix(mvpMatrix)
     renderer.drawModel()
+
+    // ★ 诊断：drawModel 后立即读取像素（前5帧）
+    if (!this._firstFrameLogged || this._diagFrameCount < 5) {
+      this._diagFrameCount = (this._diagFrameCount ?? 0) + 1
+      const diagCanvas = gl.canvas as HTMLCanvasElement
+      const diagCx = Math.floor(diagCanvas.width / 2)
+      const diagCy = Math.floor(diagCanvas.height / 2)
+      const diagPixels = new Uint8Array(4)
+      gl.readPixels(diagCx, diagCy, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, diagPixels)
+      console.log(`[AppModel] 🔍 drawModel后 帧${this._diagFrameCount} 中心像素: ${diagPixels[0]},${diagPixels[1]},${diagPixels[2]},${diagPixels[3]}`)
+      // 检查当前 FBO
+      const currentFbo = gl.getParameter(gl.FRAMEBUFFER_BINDING)
+      console.log(`[AppModel] 🔍 drawModel后 FBO: ${currentFbo ? '自定义FBO' : '默认(null)'}`)
+      // 检查 GL 错误
+      const diagErr = gl.getError()
+      if (diagErr !== gl.NO_ERROR) {
+        console.error(`[AppModel] ❌ drawModel后 GL错误: 0x${diagErr.toString(16)}`)
+      }
+    }
+
     // 首帧渲染日志（仅打印一次）
     if (!this._firstFrameLogged) {
       this._firstFrameLogged = true
