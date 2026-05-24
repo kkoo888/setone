@@ -506,6 +506,31 @@ class Cubism5Service {
     // ★ Cubism 5 SDK 输出预乘 alpha，必须用 ONE / ONE_MINUS_SRC_ALPHA
     gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA)
 
+    // ★ 诊断：在 canvas 左下角画一个红色三角形，验证 canvas 是否可见
+    if (!this._drawTestTriangle) {
+      this._drawTestTriangle = true
+      const vs = gl.createShader(gl.VERTEX_SHADER)!
+      gl.shaderSource(vs, 'attribute vec2 p;void main(){gl_Position=vec4(p,0,1);}')
+      gl.compileShader(vs)
+      const fs = gl.createShader(gl.FRAGMENT_SHADER)!
+      gl.shaderSource(fs, 'precision mediump float;void main(){gl_FragColor=vec4(1,0,0,1);}')
+      gl.compileShader(fs)
+      const prog = gl.createProgram()!
+      gl.attachShader(prog, vs)
+      gl.attachShader(prog, fs)
+      gl.linkProgram(prog)
+      gl.useProgram(prog)
+      const buf = gl.createBuffer()
+      gl.bindBuffer(gl.ARRAY_BUFFER, buf)
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-0.5,-0.5, 0.5,-0.5, 0,0.5]), gl.STATIC_DRAW)
+      const loc = gl.getAttribLocation(prog, 'p')
+      gl.enableVertexAttribArray(loc)
+      gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0)
+      gl.drawArrays(gl.TRIANGLES, 0, 3)
+      gl.useProgram(null)
+      console.log('[Cubism5] 🔴 测试三角形已绘制，检查 canvas 左下角是否有红色三角')
+    }
+
     // ② 计算 deltaTime（钳制到合理范围，防止负值或过大跳帧）
     const now = performance.now() / 1000
     let deltaTime = now - this.lastUpdateTime
