@@ -1105,12 +1105,35 @@ export class CubismRenderer_WebGL extends CubismRenderer {
 
       // ★ 关键诊断：检查 MVP 矩阵变换后的顶点
       const mvpArr = this.getMvpMatrix().getArray();
-      // 取第一个顶点，手动做 MVP 变换
       const vx = verts[0], vy = verts[1];
       const clipX = mvpArr[0] * vx + mvpArr[4] * vy + mvpArr[12];
       const clipY = mvpArr[1] * vx + mvpArr[5] * vy + mvpArr[13];
       console.log(`[Cubism5] 🔍 顶点[0] 世界:(${vx.toFixed(2)}, ${vy.toFixed(2)}) → 裁剪:(${clipX.toFixed(4)}, ${clipY.toFixed(4)})`);
-      console.log(`[Cubism5] 🔍 MVP对角: [${mvpArr[0].toFixed(4)}, ${mvpArr[5].toFixed(4)}, ${mvpArr[10].toFixed(4)}, ${mvpArr[15].toFixed(4)}]`);
+
+      // ★ 新增：检查纹理绑定
+      const texUnit0 = this.gl.getParameter(this.gl.TEXTURE_BINDING_2D);
+      const activeTex = this.gl.getParameter(this.gl.ACTIVE_TEXTURE);
+      console.log(`[Cubism5] 🔍 纹理: activeTex=${activeTex}, bound=${texUnit0 ? '有效' : 'null'}`);
+
+      // ★ 新增：检查 culling 状态
+      const cullFaceEnabled = this.gl.isEnabled(this.gl.CULL_FACE);
+      const frontFaceMode = this.gl.getParameter(this.gl.FRONT_FACE);
+      console.log(`[Cubism5] 🔍 CullFace: ${cullFaceEnabled ? '开启' : '关闭'}, FrontFace: ${frontFaceMode === this.gl.CCW ? 'CCW' : 'CW'}`);
+
+      // ★ 新增：检查 blend 状态
+      const blendEnabled = this.gl.isEnabled(this.gl.BLEND);
+      const srcRgb = this.gl.getParameter(this.gl.BLEND_SRC_RGB);
+      const dstRgb = this.gl.getParameter(this.gl.BLEND_DST_RGB);
+      console.log(`[Cubism5] 🔍 Blend: ${blendEnabled ? '开启' : '关闭'}, src=${srcRgb}, dst=${dstRgb}`);
+
+      // ★ 新增：检查 index buffer
+      const indexCount = model.getDrawableVertexIndexCount(index);
+      const indices = model.getDrawableVertexIndices(index);
+      let maxIdx = 0;
+      for (let ii = 0; ii < indices.length; ii++) {
+        if (indices[ii] > maxIdx) maxIdx = indices[ii];
+      }
+      console.log(`[Cubism5] 🔍 Index[${index}]: count=${indexCount}, maxIdx=${maxIdx}, vertCount=${verts.length / 2}`);
     }
 
     if (
