@@ -881,8 +881,10 @@ export class AppModel extends CubismUserModel {
             const shader = shaderManager.getShader(gl)
             console.log(`[AppModel] 🔍 shader._isShaderLoaded: ${shader?._isShaderLoaded}`)
             console.log(`[AppModel] 🔍 shader._shaderSets长度: ${shader?._shaderSets?.length}`)
-            if (shader?._shaderSets?.length > 1) {
-              console.log(`[AppModel] 🔍 shaderSets[1].shaderProgram: ${shader._shaderSets[1]?.shaderProgram ? '有效' : 'null'}`)
+            // 检查关键 shader set (0=SetupMask, 1=Normal, 2=Masked, 3=MaskedInverted, 10=Copy)
+            for (const idx of [0, 1, 2, 3, 10]) {
+              const set = shader?._shaderSets?.[idx]
+              console.log(`[AppModel] 🔍 shaderSets[${idx}].shaderProgram: ${set?.shaderProgram ? '有效' : 'null'}`)
             }
           }
         } catch (e) {
