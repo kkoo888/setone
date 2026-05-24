@@ -18,7 +18,7 @@ import { CubismFramework } from '../lib/live2dcubismframework'
 import { CubismModelSettingJson } from '../lib/cubismmodelsettingjson'
 import { CubismEyeBlink } from '../lib/effect/cubismeyeblink'
 import { CubismBreath, BreathParameterData } from '../lib/effect/cubismbreath'
-import { CubismLook } from '../lib/effect/cubismlook'
+import { CubismLook, LookParameterData } from '../lib/effect/cubismlook'
 import { CubismPose } from '../lib/effect/cubismpose'
 import { CubismPhysics } from '../lib/physics/cubismphysics'
 import { CubismUpdateScheduler } from '../lib/motion/cubismupdatescheduler'
@@ -486,9 +486,17 @@ export class AppModel extends CubismUserModel {
       new CubismExpressionUpdater(this._expressionManager)
     )
 
-    // 鼠标注视（官方 create 内部配置默认参数）
+    // 鼠标注视（官方 Demo: create → setParameters 注册注视参数）
     const look = CubismLook.create()
     this._look = look
+    look.setParameters([
+      new LookParameterData(CubismFramework.getIdManager().getId('ParamAngleX'), 30.0, 0.0, 0.0),
+      new LookParameterData(CubismFramework.getIdManager().getId('ParamAngleY'), 30.0, 0.0, 0.0),
+      new LookParameterData(CubismFramework.getIdManager().getId('ParamAngleZ'), 10.0, 0.0, 0.0),
+      new LookParameterData(CubismFramework.getIdManager().getId('ParamBodyAngleX'), 10.0, 0.0, 0.0),
+      new LookParameterData(CubismFramework.getIdManager().getId('ParamEyeBallX'), 1.0, 0.0, 0.0),
+      new LookParameterData(CubismFramework.getIdManager().getId('ParamEyeBallY'), 1.0, 0.0, 0.0),
+    ])
     this._updateScheduler.addUpdatableList(
       new CubismLookUpdater(look, this._dragManager)
     )
