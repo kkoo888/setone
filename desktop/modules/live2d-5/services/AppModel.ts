@@ -877,6 +877,27 @@ export class AppModel extends CubismUserModel {
       } else {
         console.log('[AppModel] ✅ 首帧 GL 无错误')
       }
+      // ★ 诊断：检查 canvas 和 GL 状态
+      const canvas = gl.canvas as HTMLCanvasElement
+      console.log('[AppModel] 🔍 Canvas 尺寸:', canvas.width, 'x', canvas.height)
+      console.log('[AppModel] 🔍 Canvas 在DOM中:', !!canvas.parentElement)
+      console.log('[AppModel] 🔍 Canvas clientSize:', canvas.clientWidth, 'x', canvas.clientHeight)
+      // 检查 framebuffer
+      const fbo = gl.getParameter(gl.FRAMEBUFFER_BINDING)
+      console.log('[AppModel] 🔍 Framebuffer:', fbo ? '自定义FBO' : '默认(null)')
+      // 检查 viewport
+      const viewport = gl.getParameter(gl.VIEWPORT)
+      console.log('[AppModel] 🔍 Viewport:', Array.from(viewport))
+      // ★ 关键诊断：读取中心像素，看是否有内容被渲染
+      const cx = Math.floor(canvas.width / 2)
+      const cy = Math.floor(canvas.height / 2)
+      const pixels = new Uint8Array(4)
+      gl.readPixels(cx, cy, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixels)
+      console.log('[AppModel] 🔍 中心像素 RGBA:', Array.from(pixels))
+      // 读取更多位置
+      const p1 = new Uint8Array(4)
+      gl.readPixels(cx - 50, cy - 50, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, p1)
+      console.log('[AppModel] 🔍 偏移像素(-50,-50) RGBA:', Array.from(p1))
       // ★ 诊断：检查 drawable 状态
       const model = this.getModel()
       const count = model.getDrawableCount()
