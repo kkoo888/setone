@@ -539,16 +539,14 @@ class Cubism5Service {
   /**
    * 创建 MVP 矩阵（viewMatrix × modelMatrix）
    *
-   * Cubism SDK 标准坐标变换链路：
-   *   模型顶点(逻辑坐标) → [modelMatrix] → 世界坐标 → [viewMatrix] → 裁剪空间
+   * ★ 修复：对齐 Demo renderScene() 的 MVP 构建逻辑
+   * Demo 在构建 projection 时会根据 canvas 宽高比做校正：
+   *   - 竖长窗口：projection.scale(1.0, width/height)
+   *   - 横长窗口：projection.scale(height/width, 1.0)
+   * 然后再乘 viewMatrix 和 modelMatrix
    *
-   * - modelMatrix: 模型自身的缩放/位移（由 setupLayout + applyScale 设置）
-   * - viewMatrix: 定义可视范围（逻辑坐标 → 裁剪空间），内含正交投影
-   * - deviceToScreen: 仅用于触摸/拖拽坐标转换，**不参与渲染**
-   *
-   * Cubism SDK 的 drawModel() 不会内部乘模型矩阵，
-   * 它直接将此矩阵传给 shader 的 uniformMatrix4fv，
-   * shader 中：gl_Position = matrix * position
+   * CubismMatrix44.multiplyByMatrix(m) 的语义是 this = m × this
+   * 所以正确的乘法顺序是：projection × viewMatrix × modelMatrix
    */
   private createMvpMatrix(width: number, height: number): { getArray(): Float32Array } {
     const modelMatrix = this.model?.getModelMatrix()
@@ -566,26 +564,36 @@ class Cubism5Service {
       return { getArray: () => projection }
     }
 
-    // ★ 标准 Cubism SDK MVP 构建：viewMatrix × modelMatrix
-    // viewMatrix 已包含正交投影（setScreenRect 定义逻辑坐标到裁剪空间的映射）
-    // deviceToScreen 不参与渲染，只用于触摸坐标转换（transformViewX/Y）
-    const mvp = new CubismMatrix44()
-    mvp.setMatrix(new Float32Array(modelMatrix.getArray()))
-
-    if (viewMatrix) {
-      mvp.multiplyByMatrix(viewMatrix)
+    // ★ 修复：对齐 Demo renderScene() 的 projection 构建
+    // 1. 创建 projection 矩阵，加画布宽高比校正
+    const projection = new CubismMatrix44()
+    if (width > height) {
+      projection.scale(height / width, 1.0)
     } else {
-      // fallback：没有 viewMatrix 时用正交投影
-      const mvpArr = mvp.getArray()
-      const sx = 2 / width
-      const sy = -2 / height
-      for (let col = 0; col < 4; col++) {
-        mvpArr[0 * 4 + col] *= sx
-        mvpArr[1 * 4 + col] *= sy
+      projection.scale(1.0, width / height)
+    }
+
+    // 2. projection × viewMatrix
+    if (viewMatrix) {
+      projection.multiplyByMatrix(viewMatrix)
+    }
+
+    // 3. (projection × viewMatrix) × modelMatrix
+    projection.multiplyByMatrix(modelMatrix)
+
+    // 首帧诊断
+    if (this._renderFrameCount <= 3) {
+      const arr = projection.getArray()
+      console.log(`[Cubism5] 🔍 MVP 诊断: [0]=${arr[0].toFixed(4)} [5]=${arr[5].toFixed(4)} [12]=${arr[12].toFixed(4)} [13]=${arr[13].toFixed(4)}`)
+      const modelArr = modelMatrix.getArray()
+      console.log(`[Cubism5] 🔍 ModelMatrix: [0]=${modelArr[0].toFixed(4)} [5]=${modelArr[5].toFixed(4)}`)
+      if (viewMatrix) {
+        const viewArr = viewMatrix.getArray()
+        console.log(`[Cubism5] 🔍 ViewMatrix: [0]=${viewArr[0].toFixed(4)} [5]=${viewArr[5].toFixed(4)}`)
       }
     }
 
-    return { getArray: () => mvp.getArray() }
+    return { getArray: () => projection.getArray() }
   }
 
   /**

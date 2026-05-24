@@ -293,11 +293,22 @@ export class AppModel extends CubismUserModel {
     if (!this._setting) return
     const layout = new Map<string, number>()
     this._setting.getLayoutMap(layout)
+
+    const modelMatrix = this.getModelMatrix()
+    if (!modelMatrix) return
+
     if (layout.size > 0) {
-      const modelMatrix = this.getModelMatrix()
-      if (modelMatrix) {
-        modelMatrix.setupFromLayout(layout)
-      }
+      modelMatrix.setupFromLayout(layout)
+      console.log('[AppModel] 📐 Layout 已从 model3.json 应用')
+    } else {
+      // ★ 修复：没有 Layout 段时，确保模型矩阵正确映射到可视范围
+      // CubismModelMatrix 构造函数已调用 setHeight(2.0)，理论上模型应在 -1~1 范围
+      // 但如果没有 Layout，模型可能不在正确位置，这里加日志确认
+      const model = this.getModel()
+      const canvasW = model.getCanvasWidth()
+      const canvasH = model.getCanvasHeight()
+      console.log(`[AppModel] ⚠️ 无 Layout 段，Canvas: ${canvasW.toFixed(2)} x ${canvasH.toFixed(2)}`)
+      console.log(`[AppModel] ⚠️ 模型矩阵: [${modelMatrix.getArray()[0].toFixed(4)}, ${modelMatrix.getArray()[5].toFixed(4)}]`)
     }
   }
 
