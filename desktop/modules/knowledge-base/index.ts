@@ -44,11 +44,24 @@ export default class KnowledgeBaseModule implements Module {
 
     this.networkEnabled = settings.networkEnabled ?? true
 
+    // 解析原始文件目录和索引目录（空=用 dataDir 下的默认子目录）
+    const dataDir = context.dataDir ?? '.'
+    const rawDirSetting = (defaults.rawDir as string) ?? ''
+    const indexDirSetting = (defaults.indexDir as string) ?? ''
+    const rawDir = rawDirSetting
+      ? (isAbsolute(rawDirSetting) ? rawDirSetting : resolve(dataDir, rawDirSetting))
+      : join(dataDir, 'datasets')
+    const indexDir = indexDirSetting
+      ? (isAbsolute(indexDirSetting) ? indexDirSetting : resolve(dataDir, indexDirSetting))
+      : join(dataDir, 'vectra-doc-index')
+    context.logger.info(`原始文件目录: ${rawDir}`)
+    context.logger.info(`索引目录: ${indexDir}`)
+
     // Vectra 存储层（官方 LocalDocumentIndex + OpenAIEmbeddings 兼容 Ollama）
     const ollamaEndpoint = await context.config.get<string>('ollama.endpoint') || 'http://localhost:11434'
     const docRepo = new DocumentRepository(context.db)
     const vectraStore = new VectraStore(
-      context.dataDir ?? '.',
+      indexDir,
       context.logger,
       ollamaEndpoint,
       settings.embeddingModel ?? 'nomic-embed-text',
@@ -72,7 +85,7 @@ export default class KnowledgeBaseModule implements Module {
 
     // 数据集广场
     this.datasetCatalog = new DatasetCatalog(context.logger)
-    this.datasetDownloader = new DatasetDownloader(context.logger, context.dataDir ?? '.')
+    this.datasetDownloader = new DatasetDownloader(context.logger, rawDir)
     await this.datasetDownloader.init()
     this.datasetDownloader.setupSessionListener(session.defaultSession)
 
