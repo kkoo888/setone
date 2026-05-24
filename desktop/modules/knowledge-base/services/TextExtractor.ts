@@ -91,11 +91,13 @@ export class TextExtractor {
       case '.parquet':
         return await this.extractParquet(filePath)
 
-      // ── PDF / DOCX（暂不支持，留 TODO）──
+      // ── PDF ──
       case '.pdf':
+        return await this.extractPdf(filePath)
+
+      // ── DOCX ──
       case '.docx':
-        this.logger.warn(`暂不支持 ${ext} 格式的文本提取，跳过: ${filePath}`)
-        return ''
+        return await this.extractDocx(filePath)
 
       // ── 兜底：尝试当纯文本读取 ──
       default:
@@ -338,6 +340,40 @@ export class TextExtractor {
   }
 
   // ═══════════════════════════════════════════
+  //  PDF / DOCX 提取
+  // ═══════════════════════════════════════════
+
+  /**
+   * PDF → 纯文本（pdf-parse）
+   */
+  private async extractPdf(filePath: string): Promise<string> {
+    try {
+      const pdfParse = (await import('pdf-parse')).default
+      const buffer = await readFile(filePath)
+      const data = await pdfParse(buffer)
+      return data.text.trim()
+    } catch (err) {
+      this.logger.error(`PDF 解析失败: ${(err as Error).message}`)
+      return ''
+    }
+  }
+
+  /**
+   * DOCX → 纯文本（mammoth）
+   */
+  private async extractDocx(filePath: string): Promise<string> {
+    try {
+      const mammoth = await import('mammoth')
+      const buffer = await readFile(filePath)
+      const result = await mammoth.extractRawText({ buffer })
+      return result.value.trim()
+    } catch (err) {
+      this.logger.error(`DOCX 解析失败: ${(err as Error).message}`)
+      return ''
+    }
+  }
+
+  // ═══════════════════════════════════════════
   //  工具方法
   // ═══════════════════════════════════════════
 
@@ -416,7 +452,7 @@ export class TextExtractor {
       '.ts', '.js', '.py',
       '.jsonl', '.yaml', '.yml',
       '.html', '.htm', '.xml',
-      '.parquet'
+      '.parquet', '.pdf', '.docx'
     ]
   }
 }

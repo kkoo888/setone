@@ -14,6 +14,7 @@
     { "type": "tool", "name": "kb_search", "description": "语义搜索知识库", "priority": 10 },
     { "type": "tool", "name": "kb_list", "description": "列出知识库文档", "priority": 10 },
     { "type": "tool", "name": "kb_delete", "description": "删除文档", "priority": 10 },
+    { "type": "tool", "name": "kb_reindex", "description": "重建索引（换模型后重新向量化）", "priority": 10 },
     { "type": "tool", "name": "kb_ask", "description": "基于知识库问答（RAG）", "priority": 10 },
     { "type": "tool", "name": "kb_network_status", "description": "查看知识库联网状态", "priority": 5 },
     { "type": "tool", "name": "kb_dataset_list", "description": "列出数据集广场的数据集", "priority": 5 },

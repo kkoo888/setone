@@ -7,43 +7,39 @@ interface OllamaEmbeddingResponse {
 
 /**
  * 向量化服务
- * 调用 Ollama nomic-embed-text 模型生成文本嵌入向量
- * 支持联网开关：关闭后拒绝所有网络请求
+ * 调用 Ollama 生成文本嵌入向量
+ * 支持联网开关、并发控制
  */
 export class EmbeddingService {
   private readonly model: string
   private readonly baseUrl: string
   private readonly logger: Logger
+  private readonly concurrency: number
   private networkEnabled: boolean
 
   constructor(logger: Logger, model: string = 'nomic-embed-text', baseUrl: string = 'http://localhost:11434') {
     this.logger = logger
     this.model = model
     this.baseUrl = baseUrl
+    this.concurrency = 5
     this.networkEnabled = true
   }
 
-  /**
-   * 设置联网开关
-   * @param enabled - 是否允许联网
-   */
+  /** 获取当前嵌入模型名 */
+  getModel(): string {
+    return this.model
+  }
+
   setNetworkEnabled(enabled: boolean): void {
     this.networkEnabled = enabled
     this.logger.info(`EmbeddingService 联网状态: ${enabled ? '已开启' : '已关闭'}`)
   }
 
-  /**
-   * 获取当前联网状态
-   */
   isNetworkEnabled(): boolean {
     return this.networkEnabled
   }
 
-  /**
-   * 生成单个文本的嵌入向量
-   * @param text - 输入文本
-   * @returns 嵌入向量
-   */
+  /** 生成单个文本的嵌入向量 */
   async embed(text: string): Promise<number[]> {
     if (!this.networkEnabled) {
       throw new Error('联网功能已关闭，无法生成嵌入向量。请在知识库设置中开启联网后重试。')
@@ -56,25 +52,37 @@ export class EmbeddingService {
     })
 
     if (!response.ok) {
-      const errorText = await response.text()
-      throw new Error(`Ollama embedding 请求失败: ${response.status} ${errorText}`)
+      throw new Error(`Ollama embedding 请求失败: ${response.status} ${await response.text()}`)
     }
 
-    const data = (await response.json()) as OllamaEmbeddingResponse
-    return data.embedding
+    return ((await response.json()) as OllamaEmbeddingResponse).embedding
   }
 
   /**
-   * 批量生成嵌入向量
-   * @param texts - 文本数组
-   * @returns 嵌入向量数组
+   * 批量生成嵌入向量（并发控制）
+   * 默认 5 并发，避免打爆 Ollama
    */
   async embedBatch(texts: string[]): Promise<number[][]> {
-    const results: number[][] = []
-    for (const text of texts) {
-      const embedding = await this.embed(text)
-      results.push(embedding)
+    if (!this.networkEnabled) {
+      throw new Error('联网功能已关闭，无法生成嵌入向量。')
     }
+
+    const results: number[][] = new Array(texts.length)
+    let index = 0
+
+    const worker = async () => {
+      while (index < texts.length) {
+        const i = index++
+        results[i] = await this.embed(texts[i])
+      }
+    }
+
+    const workers = Array.from(
+      { length: Math.min(this.concurrency, texts.length) },
+      () => worker()
+    )
+
+    await Promise.all(workers)
     return results
   }
 }

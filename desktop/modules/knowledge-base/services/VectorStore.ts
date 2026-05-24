@@ -1,152 +1,74 @@
 import type { Logger } from '../../../src/main/types/logger'
 import type { KBChunk, KBSearchResult, KBDocument } from '../types'
 import type { DocumentRepository } from '../repositories/document-repository'
-import type { ChunkRepository } from '../repositories/chunk-repository'
+import { VectraStore } from './VectraStore'
 
 /**
- * 向量存储服务（Service 层）
- * 协调 Repository 完成业务逻辑，保留向量相似度搜索核心能力
+ * 向量存储服务
+ * 文档元数据 → SQLite，片段向量+内容 → Vectra
  */
 export class VectorStore {
   private readonly docRepo: DocumentRepository
-  private readonly chunkRepo: ChunkRepository
+  private readonly vectra: VectraStore
   private readonly logger: Logger
 
-  constructor(docRepo: DocumentRepository, chunkRepo: ChunkRepository, logger: Logger) {
+  constructor(docRepo: DocumentRepository, vectra: VectraStore, logger: Logger) {
     this.docRepo = docRepo
-    this.chunkRepo = chunkRepo
+    this.vectra = vectra
     this.logger = logger
   }
 
-  /**
-   * 初始化：委托两个 Repository 建表
-   */
   async init(): Promise<void> {
     await this.docRepo.init()
-    await this.chunkRepo.init()
-    this.logger.info('知识库数据库表已初始化')
+    await this.vectra.init()
   }
 
-  /**
-   * 存储文档（委托 DocumentRepository）
-   */
-  async saveDocument(
-    id: string,
-    fileName: string,
-    filePath: string,
-    fileType: string,
-    fileSize: number,
-    chunkCount: number
-  ): Promise<void> {
-    const now = Date.now()
-    const doc: KBDocument = {
-      id,
-      fileName,
-      filePath,
-      fileType,
-      fileSize,
-      chunkCount,
-      createdAt: now,
-      updatedAt: now
-    }
-    await this.docRepo.save(doc)
+  async saveDocument(id: string, fileName: string, filePath: string, fileType: string, fileSize: number, chunkCount: number): Promise<void> {
+    await this.docRepo.save({ id, fileName, filePath, fileType, fileSize, chunkCount, createdAt: Date.now(), updatedAt: Date.now() })
   }
 
-  /**
-   * 存储文本片段（委托 ChunkRepository）
-   */
   async saveChunks(chunks: KBChunk[]): Promise<void> {
-    await this.chunkRepo.saveAll(chunks)
+    const items = chunks.filter(c => c.embedding.length > 0).map(c => ({
+      id: c.id, vector: c.embedding, content: c.content, documentId: c.documentId, chunkIndex: c.chunkIndex
+    }))
+    if (items.length > 0) await this.vectra.upsertChunks(items)
   }
 
-  /**
-   * 语义搜索：从 chunkRepo 获取向量 + 计算余弦相似度
-   */
   async search(queryEmbedding: number[], topK: number = 5): Promise<KBSearchResult[]> {
-    const chunksWithEmbedding = await this.chunkRepo.findAllWithEmbedding()
+    const results = await this.vectra.search(queryEmbedding, topK)
+    const docCache = new Map<string, KBDocument>()
 
-    const scored: KBSearchResult[] = []
-    for (const chunk of chunksWithEmbedding) {
-      const score = this.cosineSimilarity(queryEmbedding, Array.from(chunk.embedding))
-      scored.push({
-        chunkId: chunk.id,
-        documentId: chunk.documentId,
-        fileName: '',   // JOIN 字段不在 chunk 实体中，需从 docRepo 补
-        filePath: '',
-        content: chunk.content,
-        score,
-        chunkIndex: chunk.chunkIndex
-      })
-    }
-
-    // 按相似度降序排列，取 Top-K
-    scored.sort((a, b) => b.score - a.score)
-    const topResults = scored.slice(0, topK)
-
-    // 补充文档信息
-    const docIds = [...new Set(topResults.map(r => r.documentId))]
-    const docMap = new Map<string, KBDocument>()
-    for (const docId of docIds) {
-      const doc = await this.docRepo.findById(docId)
-      if (doc) docMap.set(docId, doc)
-    }
-    for (const result of topResults) {
-      const doc = docMap.get(result.documentId)
-      if (doc) {
-        result.fileName = doc.fileName
-        result.filePath = doc.filePath
+    return Promise.all(results.map(async r => {
+      if (!docCache.has(r.documentId)) {
+        const doc = await this.docRepo.findById(r.documentId)
+        if (doc) docCache.set(r.documentId, doc)
       }
-    }
-
-    return topResults
+      const doc = docCache.get(r.documentId)
+      return {
+        chunkId: r.chunkId,
+        documentId: r.documentId,
+        fileName: doc?.fileName ?? '',
+        filePath: doc?.filePath ?? '',
+        content: r.content,
+        score: r.score,
+        chunkIndex: r.chunkIndex
+      }
+    }))
   }
 
-  /**
-   * 获取所有文档（委托 DocumentRepository）
-   */
   async listDocuments(): Promise<KBDocument[]> {
     return this.docRepo.findAll()
   }
 
-  /**
-   * 删除文档及其所有片段（事务内删除）
-   */
   async deleteDocument(documentId: string): Promise<boolean> {
     const doc = await this.docRepo.findById(documentId)
     if (!doc) return false
-
-    await this.chunkRepo.removeByDocumentId(documentId)
+    await this.vectra.deleteByDocumentId(documentId)
     await this.docRepo.removeById(documentId)
     return true
   }
 
-  /**
-   * 获取文档片段数
-   */
   async getChunkCount(documentId: string): Promise<number> {
-    const chunks = await this.chunkRepo.findByDocumentId(documentId)
-    return chunks.length
-  }
-
-  /**
-   * 计算余弦相似度
-   */
-  private cosineSimilarity(a: number[], b: number[]): number {
-    if (a.length !== b.length) return 0
-
-    let dotProduct = 0
-    let normA = 0
-    let normB = 0
-
-    for (let i = 0; i < a.length; i++) {
-      dotProduct += a[i] * b[i]
-      normA += a[i] * a[i]
-      normB += b[i] * b[i]
-    }
-
-    const denominator = Math.sqrt(normA) * Math.sqrt(normB)
-    if (denominator === 0) return 0
-
-    return dotProduct / denominator
+    return (await this.vectra.listByDocumentId(documentId)).length
   }
 }

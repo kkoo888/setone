@@ -7,8 +7,8 @@ import { KBManager } from './services/KBManager'
 import { RAGEngine } from './services/RAGEngine'
 import { DatasetCatalog } from './services/DatasetCatalog'
 import { DatasetDownloader } from './services/DatasetDownloader'
+import { VectraStore } from './services/VectraStore'
 import { DocumentRepository } from './repositories/document-repository'
-import { ChunkRepository } from './repositories/chunk-repository'
 
 /**
  * 本地知识库模块
@@ -56,12 +56,10 @@ export default class KnowledgeBaseModule implements Module {
     )
     this.embeddingService.setNetworkEnabled(this.networkEnabled)
 
-    // 初始化 Repository 层
+    // 初始化存储层
     const docRepo = new DocumentRepository(context.db)
-    const chunkRepo = new ChunkRepository(context.db)
-
-    // 初始化向量存储（注入 Repository）
-    this.vectorStore = new VectorStore(docRepo, chunkRepo, context.logger)
+    const vectraStore = new VectraStore(context.dataDir ?? '.', context.logger)
+    this.vectorStore = new VectorStore(docRepo, vectraStore, context.logger)
     await this.vectorStore.init()
 
     // 初始化知识库管理器
@@ -158,8 +156,7 @@ export default class KnowledgeBaseModule implements Module {
                 'kb_list（列出文档）',
                 'kb_delete（删除文档）',
                 '本地文件读取与文本切片',
-                'SQLite 向量存储',
-                '已有向量的余弦相似度搜索'
+                'Vectra 本地向量索引（含内容检索）'
               ]
             }
             return { success: true, data: status }
@@ -285,6 +282,57 @@ export default class KnowledgeBaseModule implements Module {
                 success: deleted,
                 data: deleted ? { documentId } : undefined,
                 error: deleted ? undefined : '文档不存在'
+              }
+            } catch (err) {
+              return { success: false, error: (err as Error).message }
+            }
+          }
+        }
+      },
+
+      // --- 重建索引（换模型后重新向量化） ---
+      {
+        type: 'tool',
+        name: 'kb_reindex',
+        description: '重建知识库索引（用当前模型重新向量化所有文档，适用于更换嵌入模型后）',
+        priority: 10,
+        moduleId: this.id,
+        handler: {
+          execute: async () => {
+            if (!this.networkEnabled) {
+              return { success: false, error: '重建索引需要联网生成向量，请先开启联网功能。' }
+            }
+            try {
+              const documents = await this.vectorStore.listDocuments()
+              if (documents.length === 0) {
+                return { success: true, data: { message: '知识库为空，无需重建', reindexed: 0 } }
+              }
+
+              let reindexed = 0
+              const errors: string[] = []
+
+              for (const doc of documents) {
+                try {
+                  // 删除旧向量
+                  await this.vectorStore.deleteDocument(doc.id)
+                  // 重新导入（用新模型重新向量化）
+                  const result = await this.kbManager.importFile(doc.filePath)
+                  if (result.success) reindexed++
+                  else errors.push(`${doc.fileName}: ${result.error}`)
+                } catch (err) {
+                  errors.push(`${doc.fileName}: ${(err as Error).message}`)
+                }
+              }
+
+              return {
+                success: true,
+                data: {
+                  total: documents.length,
+                  reindexed,
+                  failed: documents.length - reindexed,
+                  errors: errors.length > 0 ? errors : undefined,
+                  model: this.embeddingService.getModel()
+                }
               }
             } catch (err) {
               return { success: false, error: (err as Error).message }
