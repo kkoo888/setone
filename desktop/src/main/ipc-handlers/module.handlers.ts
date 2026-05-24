@@ -163,9 +163,9 @@ export function registerModuleHandlers(deps: HandlerDeps): void {
     unregisterModuleCapabilities(data.moduleId, deps)
   })
 
-  // 监听模块激活事件，自动注册 IPC
+  // 监听模块激活事件，立即注册 IPC（模块 activate 完成后才能调用，无需延迟）
   eventBus?.on('on_module_loaded', (data: { moduleId: string }) => {
-    setTimeout(() => registerModuleCapabilities(deps), 500)
+    registerModuleCapabilities(deps)
   })
 
   // 桥接主题变更事件到渲染进程 + 同步窗口背景色
