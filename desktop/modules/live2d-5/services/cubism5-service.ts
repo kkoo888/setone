@@ -83,8 +83,6 @@ class Cubism5Service {
   private _shaderReadyNotified: boolean = false
   // ★ 新增：渲染验证标志（首帧验证用）
   private _renderVerified: boolean = false
-  // ★ 新增：测试三角形已绘制标志
-  private _testTriangleDrawn: boolean = false
 
   setStateCallback(cb: StateCallback | null): void {
     this.onStateChange = cb
@@ -311,7 +309,6 @@ class Cubism5Service {
       this.lastUpdateTime = performance.now() / 1000
       this._shaderReadyNotified = false  // 重置 shader 就绪通知标志
       this._renderVerified = false  // 重置渲染验证标志
-      this._testTriangleDrawn = false  // 重置测试三角形标志
 
       this.updateState('loaded')
       console.log('[Cubism5] ✅ 模型加载完成:', config.name)
@@ -634,31 +631,28 @@ class Cubism5Service {
     const mvp = this.createMvpMatrix(canvas.width, canvas.height)
     this.model.render(gl, mvp)
 
-    // ★ 诊断：shader 就绪后，读取像素验证渲染是否生效（每帧检查直到成功）
+    // ★ 诊断：每帧检查 FBO 纹理内容（直到渲染成功）
     if (this._shaderReadyNotified && !this._renderVerified) {
-      const pixels = new Uint8Array(4)
-      gl.readPixels(canvas.width / 2, canvas.height / 2, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixels)
+      const renderer = this.model.getRenderer()
+      const rt0 = renderer?._modelRenderTargets?.[0]
+      const fboTex = rt0?.getColorBuffer?.()
 
-      // ★ 关键测试：绕过 Cubism copy shader，直接用简单 shader 把 FBO 纹理画到 canvas
-      if (!this._testTriangleDrawn) {
-        this._testTriangleDrawn = true
-        const renderer = this.model.getRenderer()
-        const rt0 = renderer?._modelRenderTargets?.[0]
-        const fboTex = rt0?.getColorBuffer?.()
+      if (fboTex) {
+        // 读取 FBO 纹理像素
+        const tempFbo = gl.createFramebuffer()
+        gl.bindFramebuffer(gl.FRAMEBUFFER, tempFbo)
+        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, fboTex, 0)
+        const fboPixels = new Uint8Array(4)
+        gl.readPixels(200, 250, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, fboPixels)
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null)
+        gl.deleteFramebuffer(tempFbo)
 
-        if (fboTex) {
-          // 读取 FBO 纹理像素（通过临时 FBO）
-          const tempFbo = gl.createFramebuffer()
-          gl.bindFramebuffer(gl.FRAMEBUFFER, tempFbo)
-          gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, fboTex, 0)
-          const fboPixels = new Uint8Array(4)
-          gl.readPixels(canvas.width / 2, canvas.height / 2, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, fboPixels)
-          console.log('[Cubism5] 🔍 FBO 纹理中心像素 RGBA:', Array.from(fboPixels),
-            fboPixels[3] > 0 ? '(有内容!)' : '(透明)')
-          gl.bindFramebuffer(gl.FRAMEBUFFER, null)
-          gl.deleteFramebuffer(tempFbo)
+        if (fboPixels[3] > 0) {
+          // FBO 有内容！复制到 canvas
+          this._renderVerified = true
+          console.log('[Cubism5] ✅ FBO 有内容！RGBA:', Array.from(fboPixels))
 
-          // 用最简单的 shader 把 FBO 纹理画到 canvas
+          // 用简单 shader 复制到 canvas
           const vs = gl.createShader(gl.VERTEX_SHADER)!
           gl.shaderSource(vs, 'attribute vec2 a;varying vec2 v;void main(){gl_Position=vec4(a,0,1);v=(a+1.0)*0.5;}')
           gl.compileShader(vs)
@@ -666,62 +660,37 @@ class Cubism5Service {
           gl.shaderSource(fs, 'precision mediump float;varying vec2 v;uniform sampler2D t;void main(){gl_FragColor=texture2D(t,v);}')
           gl.compileShader(fs)
           const prog = gl.createProgram()!
-          gl.attachShader(prog, vs)
-          gl.attachShader(prog, fs)
-          gl.linkProgram(prog)
+          gl.attachShader(prog, vs); gl.attachShader(prog, fs); gl.linkProgram(prog)
           gl.useProgram(prog)
           const buf = gl.createBuffer()
           gl.bindBuffer(gl.ARRAY_BUFFER, buf)
           gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1,1,-1,-1,1,1,1]), gl.STATIC_DRAW)
           const loc = gl.getAttribLocation(prog, 'a')
-          gl.enableVertexAttribArray(loc)
-          gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0)
-          gl.activeTexture(gl.TEXTURE0)
-          gl.bindTexture(gl.TEXTURE_2D, fboTex)
+          gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0)
+          gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, fboTex)
           gl.uniform1i(gl.getUniformLocation(prog, 't'), 0)
           gl.bindFramebuffer(gl.FRAMEBUFFER, null)
           gl.viewport(0, 0, canvas.width, canvas.height)
           gl.disable(gl.BLEND)
           gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)
-
-          // 读取结果
-          const resultPixels = new Uint8Array(4)
-          gl.readPixels(canvas.width / 2, canvas.height / 2, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, resultPixels)
-          console.log('[Cubism5] 🧪 简单 shader 复制 FBO → canvas 中心像素:', Array.from(resultPixels),
-            resultPixels[3] > 0 ? '✅ FBO 有内容且可复制!' : '❌ FBO 内容为空或复制失败')
-
-          gl.useProgram(null)
-          gl.deleteProgram(prog)
-          gl.deleteShader(vs)
-          gl.deleteShader(fs)
-          gl.deleteBuffer(buf)
+          gl.useProgram(null); gl.deleteProgram(prog); gl.deleteShader(vs); gl.deleteShader(fs); gl.deleteBuffer(buf)
+          console.log('[Cubism5] ✅ 已用简单 shader 复制 FBO → canvas')
         } else {
-          console.warn('[Cubism5] ⚠️ FBO 纹理不存在!')
+          // FBO 透明 — 每帧打印诊断直到有内容
+          const model = this.model.getModel()
+          const dc = model?.getDrawableCount?.() ?? 0
+          let visCount = 0
+          for (let i = 0; i < dc; i++) {
+            if (model?.getDrawableDynamicFlagIsVisible?.(i)) visCount++
+          }
+          // 检查当前 viewport
+          const vp = gl.getParameter(gl.VIEWPORT)
+          // 检查当前 FBO
+          const boundFbo = gl.getParameter(gl.FRAMEBUFFER_BINDING)
+          // 检查 shader program
+          const curProg = gl.getParameter(gl.CURRENT_PROGRAM)
+          console.warn(`[Cubism5] ⚠️ FBO 透明 — viewport=${Array.from(vp)} boundFbo=${boundFbo === null ? 'canvas' : 'FBO'} prog=${curProg === null ? 'null' : 'OK'} vis=${visCount}/${dc} rt0=${rt0?.getBufferWidth?.()}x${rt0?.getBufferHeight?.()}`)
         }
-      }
-
-      if (pixels[3] > 0) {
-        this._renderVerified = true
-        console.log('[Cubism5] ✅ 渲染验证通过 — canvas 中心像素 RGBA:', Array.from(pixels))
-      } else {
-        const renderer = this.model.getRenderer()
-        const model = this.model.getModel()
-        const dc = model?.getDrawableCount?.() ?? 0
-        let visibleCount = 0
-        for (let i = 0; i < dc; i++) {
-          if (model?.getDrawableDynamicFlagIsVisible?.(i)) visibleCount++
-        }
-        const rt = renderer?._modelRenderTargets
-        const diag = {
-          pixels: Array.from(pixels),
-          canvasSize: `${canvas.width}x${canvas.height}`,
-          rt0Size: `${rt?.[0]?.getBufferWidth?.()}x${rt?.[0]?.getBufferHeight?.()}`,
-          rt0Valid: rt?.[0]?.isValid?.() ?? false,
-          visibleCount,
-          drawableCount: dc,
-          glType: gl instanceof WebGL2RenderingContext ? 'WebGL2' : 'WebGL1',
-        }
-        console.warn('[Cubism5] ⚠️ 渲染失败 — ' + JSON.stringify(diag))
       }
     }
   }
