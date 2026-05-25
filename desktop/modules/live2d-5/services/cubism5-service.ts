@@ -81,6 +81,8 @@ class Cubism5Service {
 
   // ★ 新增：shader 就绪通知标志（防止重复触发）
   private _shaderReadyNotified: boolean = false
+  // ★ 新增：渲染验证标志（首帧验证用）
+  private _renderVerified: boolean = false
 
   setStateCallback(cb: StateCallback | null): void {
     this.onStateChange = cb
@@ -289,6 +291,7 @@ class Cubism5Service {
       // 重置时间
       this.lastUpdateTime = performance.now() / 1000
       this._shaderReadyNotified = false  // 重置 shader 就绪通知标志
+      this._renderVerified = false  // 重置渲染验证标志
 
       this.updateState('loaded')
       console.log('[Cubism5] ✅ 模型加载完成:', config.name)
@@ -578,9 +581,15 @@ class Cubism5Service {
     }
 
     // ★ 新增：shader 就绪后通知 UI 层（仅触发一次）
-    if (!this._shaderReadyNotified && this.isShaderLoaded()) {
-      this._shaderReadyNotified = true
-      this._onShaderReady?.()
+    // 在 model.render() 之后检查，确保 doDrawModel 已经真正执行过
+    if (!this._shaderReadyNotified) {
+      try {
+        const shader = CubismShaderManager_WebGL.getInstance().getShader(this.gl)
+        if (shader?._isShaderLoaded) {
+          this._shaderReadyNotified = true
+          this._onShaderReady?.()
+        }
+      } catch { /* ignore */ }
     }
 
     // ② 计算 deltaTime（钳制到合理范围，防止负值或过大跳帧）
@@ -596,6 +605,35 @@ class Cubism5Service {
     // ④ 创建 MVP 矩阵并渲染（官方流程第 3-4 步）
     const mvp = this.createMvpMatrix(canvas.width, canvas.height)
     this.model.render(gl, mvp)
+
+    // ★ 诊断：shader 就绪后，读取像素验证渲染是否生效（每帧检查直到成功）
+    if (this._shaderReadyNotified && !this._renderVerified) {
+      const pixels = new Uint8Array(4)
+      gl.readPixels(canvas.width / 2, canvas.height / 2, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixels)
+      if (pixels[3] > 0) {
+        this._renderVerified = true
+        console.log('[Cubism5] ✅ 渲染验证通过 — canvas 中心像素 RGBA:', Array.from(pixels))
+      } else {
+        // 还是透明，打印更多诊断
+        const glErr = gl.getError()
+        const fbStatus = gl.checkFramebufferStatus(gl.FRAMEBUFFER)
+        const renderer = this.model.getRenderer()
+        const model = this.model.getModel()
+        const drawableCount = model?.getDrawableCount?.() ?? 'N/A'
+        const visibleCount = model ? Array.from({ length: drawableCount as number }, (_, i) =>
+          model.getDrawableDynamicFlagIsVisible?.(i) ? 1 : 0
+        ).reduce((a, b) => a + b, 0) : 'N/A'
+        console.warn('[Cubism5] ⚠️ 渲染验证失败 — canvas 中心透明', {
+          pixels: Array.from(pixels),
+          glError: glErr !== 0 ? glErr : 'none',
+          framebufferStatus: fbStatus === gl.FRAMEBUFFER_COMPLETE ? 'complete' : fbStatus,
+          drawableCount,
+          visibleCount,
+          mvpArray: Array.from(mvp.getArray().slice(0, 4)),
+          modelRenderTargets: renderer?._modelRenderTargets?.length ?? 0,
+        })
+      }
+    }
   }
 
   /**
