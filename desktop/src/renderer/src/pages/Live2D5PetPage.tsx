@@ -225,7 +225,7 @@ const Live2D5PetPage: React.FC = () => {
         width: '100vw',
         height: '100vh',
         overflow: 'hidden',
-        background: 'rgba(30, 30, 50, 0.85)', // DEBUG: 临时背景色，验证窗口渲染
+        background: 'transparent',
         position: 'relative',
         borderRadius: 12,
       }}
