@@ -599,3 +599,9 @@ export type { AppSettings, AISettings } from './useSettingsStore'
   ```
 
 ---
+
+---
+
+## 实现状态
+
+✅ **已实现** — 代码位于 `desktop/` 目录，与本文档描述基本一致。

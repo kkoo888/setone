@@ -1112,3 +1112,9 @@ export const AssistantView: React.FC = () => {
 10. **无障碍**：降级组件使用 `role="alert"`，控制按钮提供可访问标签
 
 ---
+
+---
+
+## 实现状态
+
+✅ **已实现** — 代码位于 `desktop/` 目录，与本文档描述基本一致。

@@ -1279,3 +1279,9 @@ describe('DatabaseManager', () => {
 - **大小监控**：`getDatabaseSize()` 使用 `PRAGMA page_count × page_size` 计算，返回字节数及可读格式；`checkDatabaseSize()` 超过阈值（默认 500MB）时输出警告日志
 
 ---
+
+---
+
+## 实现状态
+
+✅ **已实现** — 代码位于 `desktop/` 目录，与本文档描述基本一致。
