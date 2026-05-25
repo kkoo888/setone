@@ -83,6 +83,8 @@ class Cubism5Service {
   private _shaderReadyNotified: boolean = false
   // ★ 新增：渲染验证标志（首帧验证用）
   private _renderVerified: boolean = false
+  // ★ 新增：测试三角形已绘制标志
+  private _testTriangleDrawn: boolean = false
 
   setStateCallback(cb: StateCallback | null): void {
     this.onStateChange = cb
@@ -256,7 +258,7 @@ class Cubism5Service {
         alpha: true,
         premultipliedAlpha: true,
         antialias: true,
-        preserveDrawingBuffer: false,
+        preserveDrawingBuffer: true,  // ★ 改为 true，确保 readPixels 和截图可靠
       }
       this.gl = this.canvas.getContext('webgl2', glOptions) || this.canvas.getContext('webgl', glOptions)
       if (!this.gl) {
@@ -309,6 +311,7 @@ class Cubism5Service {
       this.lastUpdateTime = performance.now() / 1000
       this._shaderReadyNotified = false  // 重置 shader 就绪通知标志
       this._renderVerified = false  // 重置渲染验证标志
+      this._testTriangleDrawn = false  // 重置测试三角形标志
 
       this.updateState('loaded')
       console.log('[Cubism5] ✅ 模型加载完成:', config.name)
@@ -633,8 +636,43 @@ class Cubism5Service {
 
     // ★ 诊断：shader 就绪后，读取像素验证渲染是否生效（每帧检查直到成功）
     if (this._shaderReadyNotified && !this._renderVerified) {
+      // 先读取当前 canvas 像素
       const pixels = new Uint8Array(4)
       gl.readPixels(canvas.width / 2, canvas.height / 2, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixels)
+
+      // ★ 关键测试：直接画一个红色三角形到 canvas（绕过整个 Cubism 管线）
+      // 如果红色三角形可见 → canvas 正常，问题是 Cubism copy shader
+      // 如果红色三角形不可见 → canvas/GL 本身有问题
+      if (!this._testTriangleDrawn) {
+        this._testTriangleDrawn = true
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null)  // 确保画到 canvas
+        const testVs = gl.createShader(gl.VERTEX_SHADER)!
+        gl.shaderSource(testVs, 'attribute vec2 a_pos; void main(){gl_Position=vec4(a_pos,0,1);}')
+        gl.compileShader(testVs)
+        const testFs = gl.createShader(gl.FRAGMENT_SHADER)!
+        gl.shaderSource(testFs, 'precision mediump float; void main(){gl_FragColor=vec4(1,0,0,1);}')
+        gl.compileShader(testFs)
+        const testProg = gl.createProgram()!
+        gl.attachShader(testProg, testVs)
+        gl.attachShader(testProg, testFs)
+        gl.linkProgram(testProg)
+        gl.useProgram(testProg)
+        const buf = gl.createBuffer()
+        gl.bindBuffer(gl.ARRAY_BUFFER, buf)
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-0.5,-0.5, 0.5,-0.5, 0,0.5]), gl.STATIC_DRAW)
+        const loc = gl.getAttribLocation(testProg, 'a_pos')
+        gl.enableVertexAttribArray(loc)
+        gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0)
+        gl.drawArrays(gl.TRIANGLES, 0, 3)
+        gl.useProgram(null)
+
+        // 读取测试三角形像素
+        const testPixels = new Uint8Array(4)
+        gl.readPixels(canvas.width / 2, canvas.height / 2, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, testPixels)
+        console.log('[Cubism5] 🧪 红色测试三角形 — canvas 中心像素 RGBA:', Array.from(testPixels),
+          testPixels[0] > 0 ? '✅ canvas 可渲染!' : '❌ canvas 无法渲染!')
+      }
+
       if (pixels[3] > 0) {
         this._renderVerified = true
         console.log('[Cubism5] ✅ 渲染验证通过 — canvas 中心像素 RGBA:', Array.from(pixels))
@@ -646,7 +684,6 @@ class Cubism5Service {
         for (let i = 0; i < dc; i++) {
           if (model?.getDrawableDynamicFlagIsVisible?.(i)) visibleCount++
         }
-        // 检查 offscreen FBO 实际尺寸
         const rt = renderer?._modelRenderTargets
         const rt0W = rt?.[0]?.getBufferWidth?.() ?? 'N/A'
         const rt0H = rt?.[0]?.getBufferHeight?.() ?? 'N/A'
@@ -654,7 +691,6 @@ class Cubism5Service {
         const rt0Tex = rt?.[0]?.getColorBuffer?.() ?? null
         const rt1W = rt?.[1]?.getBufferWidth?.() ?? 'N/A'
         const rt1H = rt?.[1]?.getBufferHeight?.() ?? 'N/A'
-        // 检查当前 FBO
         const boundFbo = gl.getParameter(gl.FRAMEBUFFER_BINDING)
         const diag = {
           pixels: Array.from(pixels),
@@ -668,7 +704,7 @@ class Cubism5Service {
           visibleCount,
           drawableCount: dc,
           mvp: Array.from(mvp.getArray().slice(0, 8)),
-          isBlendMode: model?.isBlendModeEnabled?.() ?? 'N/A',
+          blendMode: typeof model?.isBlendModeEnabled === 'function' ? model.isBlendModeEnabled() : 'no method',
           glType: gl instanceof WebGL2RenderingContext ? 'WebGL2' : 'WebGL1',
         }
         console.warn('[Cubism5] ⚠️ 渲染失败 — ' + JSON.stringify(diag))
