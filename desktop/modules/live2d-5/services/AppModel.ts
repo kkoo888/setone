@@ -27,7 +27,6 @@ import { CubismBreathUpdater } from '../lib/motion/cubismbreathupdater'
 import { CubismLookUpdater } from '../lib/motion/cubismlookupdater'
 import { CubismPhysicsUpdater } from '../lib/motion/cubismphysicsupdater'
 import { CubismExpressionUpdater } from '../lib/motion/cubismexpressionupdater'
-import { CubismShaderManager_WebGL } from '../lib/rendering/cubismshader_webgl'
 import { CubismPoseUpdater } from '../lib/motion/cubismposeupdater'
 import { CubismLipSyncUpdater } from '../lib/motion/cubismlipsyncupdater'
 import { CubismMotion } from '../lib/motion/cubismmotion'
@@ -94,12 +93,9 @@ export class AppModel extends CubismUserModel {
   private _eyeBlinkIds: CubismIdHandle[] = []
   private _lipSyncIds: CubismIdHandle[] = []
 
-  // ★ 新增：当前播放状态追踪
+  // 当前播放状态追踪
   private _currentExpression: string = ''
   private _currentMotion: string = ''
-  private _loggedVisibility: boolean = false
-  private _loggedRenderOK: boolean = false
-  private _diagFrameCount: number = 0
 
   // ★ 新增：WAV 音频处理器（用于 LipSync）
   private _wavFileHandler: WavFileHandler = new WavFileHandler()
@@ -508,11 +504,11 @@ export class AppModel extends CubismUserModel {
     // 呼吸（官方 Demo: create → setParameters 注册默认呼吸参数）
     this._breath = CubismBreath.create()
     this._breath.setParameters([
-      new BreathParameterData(CubismFramework.getIdManager().getId('ParamAngleX'), 0.0, 0.01, 6.5345, 0.5),
-      new BreathParameterData(CubismFramework.getIdManager().getId('ParamAngleY'), 0.0, 0.01, 3.5345, 0.5),
-      new BreathParameterData(CubismFramework.getIdManager().getId('ParamAngleZ'), 0.0, 0.01, 5.5345, 0.5),
-      new BreathParameterData(CubismFramework.getIdManager().getId('ParamBodyAngleX'), 0.0, 0.008, 4.5345, 0.5),
-      new BreathParameterData(CubismFramework.getIdManager().getId('ParamBreath'), 0.0, 0.5, 3.2345, 0.5),
+      new BreathParameterData(CubismFramework.getIdManager().getId('ParamAngleX'), 0.0, 15.0, 6.5345, 0.5),
+      new BreathParameterData(CubismFramework.getIdManager().getId('ParamAngleY'), 0.0, 8.0, 3.5345, 0.5),
+      new BreathParameterData(CubismFramework.getIdManager().getId('ParamAngleZ'), 0.0, 10.0, 5.5345, 0.5),
+      new BreathParameterData(CubismFramework.getIdManager().getId('ParamBodyAngleX'), 0.0, 4.0, 15.5345, 0.5),
+      new BreathParameterData(CubismFramework.getIdManager().getId('ParamBreath'), 0.5, 0.5, 3.2345, 1.0),
     ])
     this._updateScheduler.addUpdatableList(
       new CubismBreathUpdater(this._breath)
@@ -808,49 +804,18 @@ export class AppModel extends CubismUserModel {
    */
   render(gl: WebGLRenderingContext | WebGL2RenderingContext, mvpMatrix: { getArray(): Float32Array }): void {
     const renderer = this.getRenderer()
-    if (!renderer) { console.warn('[AppModel] ❌ renderer 为 null'); return }
+    if (!renderer) return
 
     // 确保 GL 绑定（官方流程：startUp 在 loadTextures 之前，这里做兜底）
     if (renderer.gl !== gl) {
       renderer.startUp(gl)
     }
 
-    // ★ 诊断：检查模型状态
     const model = this.getModel()
-    if (!model) { console.warn('[AppModel] ❌ model 为 null'); return }
-    const drawableCount = model.getDrawableCount()
-    const visibleCount = Array.from({ length: drawableCount }, (_, i) => model.getDrawableDynamicFlagIsVisible(i)).filter(Boolean).length
-
-    // ★ 诊断：检查 shader 加载状态
-    let shaderLoaded = false
-    try {
-      const sm = CubismShaderManager_WebGL.getInstance().getShader(renderer.gl)
-      shaderLoaded = sm?._isShaderLoaded ?? false
-    } catch { /* shader manager 未初始化 */ }
-
-    if (drawableCount === 0) {
-      console.warn('[AppModel] ⚠️ drawableCount = 0，模型无绘制对象')
-    } else if (!shaderLoaded) {
-      console.warn(`[AppModel] ⚠️ shader 未加载完成，跳过渲染 (${visibleCount}/${drawableCount} drawable 可见)`)
-    } else if (visibleCount === 0) {
-      console.warn(`[AppModel] ⚠️ ${drawableCount} 个 drawable 全部不可见 (visible=0)`)
-    } else if (!this._loggedRenderOK) {
-      console.log(`[AppModel] ✅ 渲染中: ${visibleCount}/${drawableCount} 个 drawable 可见, shader=${shaderLoaded}`)
-      this._loggedRenderOK = true
-    }
+    if (!model) return
 
     renderer.setMvpMatrix(mvpMatrix)
     renderer.drawModel()
-
-    // ★ 诊断：drawModel 后读取中心像素（仅前 5 帧）
-    if (!this._loggedRenderOK && this._diagFrameCount < 5) {
-      this._diagFrameCount++
-      const pixels = new Uint8Array(4)
-      gl.readPixels(Math.floor(gl.canvas.width / 2), Math.floor(gl.canvas.height / 2), 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixels)
-      const fbo = gl.getParameter(gl.FRAMEBUFFER_BINDING)
-      const err = gl.getError()
-      console.log(`[AppModel] 🔍 帧${this._diagFrameCount} 中心像素: ${pixels[0]},${pixels[1]},${pixels[2]},${pixels[3]} FBO=${fbo ? '自定义' : '默认'} GL错误=${err === 0 ? '无' : '0x' + err.toString(16)}`)
-    }
   }
 
   /**

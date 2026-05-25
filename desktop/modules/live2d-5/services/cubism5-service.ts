@@ -71,9 +71,8 @@ class Cubism5Service {
   // ★ 新增：模型切换锁，防止快速切换导致竞态
   private _switching = false
 
-  // ★ 新增：帧率限制
+  // 帧率限制
   private _targetFPS: number = 60  // 默认 60 FPS
-  private _loggedFirstFrame: boolean = false
   private _lastFrameTime: number = 0
 
   setStateCallback(cb: StateCallback | null): void {
@@ -209,7 +208,11 @@ class Cubism5Service {
         throw new Error('WebGL 不可用')
       }
 
-      // ★ 新增：使用 ResizeObserver 监听 canvas 尺寸变化（替代每帧检查）
+      // ★ 关键：设置 viewport（与官方 Demo LAppSubdelegate.resizeCanvas() 一致）
+      // viewport 设置后持久生效，不需要每帧调用
+      this.gl.viewport(0, 0, this.canvas.width, this.canvas.height)
+
+      // 使用 ResizeObserver 监听 canvas 尺寸变化
       this.setupResizeObserver()
 
       // 注册上下文丢失/恢复事件（canvas 已在 DOM 中）
@@ -503,33 +506,7 @@ class Cubism5Service {
     gl.clearColor(0.0, 0.0, 0.0, 0.0)
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
     gl.enable(gl.BLEND)
-    // ★ Cubism 5 SDK 输出预乘 alpha，必须用 ONE / ONE_MINUS_SRC_ALPHA
     gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA)
-
-    // ★ 诊断：在 canvas 左下角画一个红色三角形，验证 canvas 是否可见
-    if (!this._drawTestTriangle) {
-      this._drawTestTriangle = true
-      const vs = gl.createShader(gl.VERTEX_SHADER)!
-      gl.shaderSource(vs, 'attribute vec2 p;void main(){gl_Position=vec4(p,0,1);}')
-      gl.compileShader(vs)
-      const fs = gl.createShader(gl.FRAGMENT_SHADER)!
-      gl.shaderSource(fs, 'precision mediump float;void main(){gl_FragColor=vec4(1,0,0,1);}')
-      gl.compileShader(fs)
-      const prog = gl.createProgram()!
-      gl.attachShader(prog, vs)
-      gl.attachShader(prog, fs)
-      gl.linkProgram(prog)
-      gl.useProgram(prog)
-      const buf = gl.createBuffer()
-      gl.bindBuffer(gl.ARRAY_BUFFER, buf)
-      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-0.5,-0.5, 0.5,-0.5, 0,0.5]), gl.STATIC_DRAW)
-      const loc = gl.getAttribLocation(prog, 'p')
-      gl.enableVertexAttribArray(loc)
-      gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0)
-      gl.drawArrays(gl.TRIANGLES, 0, 3)
-      gl.useProgram(null)
-      console.log('[Cubism5] 🔴 测试三角形已绘制，检查 canvas 左下角是否有红色三角')
-    }
 
     // ② 计算 deltaTime（钳制到合理范围，防止负值或过大跳帧）
     const now = performance.now() / 1000
@@ -543,16 +520,6 @@ class Cubism5Service {
 
     // ④ 创建 MVP 矩阵并渲染（官方流程第 3-4 步）
     const mvp = this.createMvpMatrix(canvas.width, canvas.height)
-
-    // ★ 诊断：首帧打印 MVP 矩阵和 canvas 尺寸
-    if (!this._loggedFirstFrame) {
-      const arr = mvp.getArray()
-      console.log(`[Cubism5] 🖼️ 首帧渲染: canvas=${canvas.width}x${canvas.height}`)
-      console.log(`[Cubism5] 🖼️ MVP=[${arr[0].toFixed(4)}, ${arr[5].toFixed(4)}, ${arr[10].toFixed(4)}, ${arr[15].toFixed(4)}]`)
-      console.log(`[Cubism5] 🖼️ translate=[${arr[12].toFixed(4)}, ${arr[13].toFixed(4)}, ${arr[14].toFixed(4)}]`)
-      this._loggedFirstFrame = true
-    }
-
     this.model.render(gl, mvp)
   }
 
