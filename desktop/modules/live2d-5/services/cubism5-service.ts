@@ -508,6 +508,21 @@ class Cubism5Service {
     gl.enable(gl.BLEND)
     gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA)
 
+    // ★ 诊断：首帧打印关键状态
+    if (!this._debugLogged) {
+      this._debugLogged = true
+      const renderer = this.model.getRenderer()
+      const shader = renderer ? (renderer as any)._shaderManager ?? null : null
+      const shaderLoaded = shader ? shader._isShaderLoaded : 'no shader manager'
+      console.log('[Cubism5] 🔍 渲染诊断:', {
+        canvasSize: `${canvas.width}x${canvas.height}`,
+        glContext: gl ? `${gl instanceof WebGL2RenderingContext ? 'WebGL2' : 'WebGL1'}` : 'null',
+        drawableCount: this.model.getModel()?.getDrawableCount?.() ?? 'unknown',
+        shaderLoaded,
+        rendererExists: !!renderer,
+      })
+    }
+
     // ② 计算 deltaTime（钳制到合理范围，防止负值或过大跳帧）
     const now = performance.now() / 1000
     let deltaTime = now - this.lastUpdateTime

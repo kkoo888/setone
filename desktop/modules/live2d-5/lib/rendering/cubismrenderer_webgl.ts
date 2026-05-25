@@ -796,6 +796,7 @@ export class CubismRenderer_WebGL extends CubismRenderer {
 
     // ★ shader 未就绪时直接返回，避免任何 GL 操作污染状态
     if (!CubismShaderManager_WebGL.getInstance().getShader(this.gl)._isShaderLoaded) {
+      console.warn('[Cubism5] ⚠️ doDrawModel 跳过：shader 未加载完成！模型不可见！')
       return;
     }
 
