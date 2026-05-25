@@ -287,13 +287,18 @@ class Cubism5Service {
       // ★ 关键修复：设置 renderer 的 offscreen render target 尺寸为 canvas 实际像素尺寸
       // setupRenderer() 使用的是模型内部坐标（很小），导致 offscreen FBO 尺寸不匹配
       const renderer = appModel.getRenderer()
+      console.log('[Cubism5] 🔍 renderer 存在:', !!renderer, 'canvas:', this.canvas?.width, 'x', this.canvas?.height)
       if (renderer) {
         const oldW = (renderer as any)._modelRenderTargetWidth ?? 'N/A'
         const oldH = (renderer as any)._modelRenderTargetHeight ?? 'N/A'
+        const rtLen = renderer._modelRenderTargets?.length ?? 0
+        const rt0W = renderer._modelRenderTargets?.[0]?.getBufferWidth?.() ?? 'N/A'
+        const rt0H = renderer._modelRenderTargets?.[0]?.getBufferHeight?.() ?? 'N/A'
+        console.log(`[Cubism5] 🔧 setRenderState 前: rendererTarget=${oldW}x${oldH}, rtCount=${rtLen}, rt0Size=${rt0W}x${rt0H}`)
         renderer.setRenderState(null, [0, 0, this.canvas.width, this.canvas.height])
         const newW = (renderer as any)._modelRenderTargetWidth
         const newH = (renderer as any)._modelRenderTargetHeight
-        console.log(`[Cubism5] 🔧 setRenderState: ${oldW}x${oldH} → ${newW}x${newH} (canvas: ${this.canvas.width}x${this.canvas.height})`)
+        console.log(`[Cubism5] 🔧 setRenderState 后: rendererTarget=${newW}x${newH}, rt0Size 仍=${rt0W}x${rt0H} (下次渲染时重建)`)
       }
 
       // 存入模型管理 Map
@@ -634,40 +639,39 @@ class Cubism5Service {
         this._renderVerified = true
         console.log('[Cubism5] ✅ 渲染验证通过 — canvas 中心像素 RGBA:', Array.from(pixels))
       } else {
-        // 还是透明，打印更多诊断
-        const glErr = gl.getError()
-        const fbStatus = gl.checkFramebufferStatus(gl.FRAMEBUFFER)
         const renderer = this.model.getRenderer()
         const model = this.model.getModel()
         const dc = model?.getDrawableCount?.() ?? 0
-        const visibles: number[] = []
+        let visibleCount = 0
         for (let i = 0; i < dc; i++) {
-          if (model?.getDrawableDynamicFlagIsVisible?.(i)) visibles.push(i)
+          if (model?.getDrawableDynamicFlagIsVisible?.(i)) visibleCount++
         }
         // 检查 offscreen FBO 实际尺寸
-        const rt0 = renderer?._modelRenderTargets?.[0]
-        const rtW = rt0?.getBufferWidth?.() ?? 'N/A'
-        const rtH = rt0?.getBufferHeight?.() ?? 'N/A'
-        const rtTex = rt0?.getColorBuffer?.() ?? 'null'
-        const rtValid = rt0?.isValid?.() ?? false
-        // 当前绑定的 FBO
-        const currentFbo = gl.getParameter(gl.FRAMEBUFFER_BINDING)
+        const rt = renderer?._modelRenderTargets
+        const rt0W = rt?.[0]?.getBufferWidth?.() ?? 'N/A'
+        const rt0H = rt?.[0]?.getBufferHeight?.() ?? 'N/A'
+        const rt0Valid = rt?.[0]?.isValid?.() ?? false
+        const rt0Tex = rt?.[0]?.getColorBuffer?.() ?? null
+        const rt1W = rt?.[1]?.getBufferWidth?.() ?? 'N/A'
+        const rt1H = rt?.[1]?.getBufferHeight?.() ?? 'N/A'
+        // 检查当前 FBO
+        const boundFbo = gl.getParameter(gl.FRAMEBUFFER_BINDING)
         const diag = {
           pixels: Array.from(pixels),
-          glError: glErr !== 0 ? glErr : 'none',
-          fbStatus: fbStatus === gl.FRAMEBUFFER_COMPLETE ? 'complete' : fbStatus,
-          drawableCount: dc,
-          visibleCount: visibles.length,
-          mvpArray: Array.from(mvp.getArray().slice(0, 4)),
           canvasSize: `${canvas.width}x${canvas.height}`,
-          renderTargetSize: `${rtW}x${rtH}`,
-          renderTargetValid: rtValid,
-          renderTargetTextureNull: rtTex === 'null',
-          currentFboNull: currentFbo === null,
-          rendererTargetW: (renderer as any)?._modelRenderTargetWidth ?? 'N/A',
-          rendererTargetH: (renderer as any)?._modelRenderTargetHeight ?? 'N/A',
+          rendererTargetWH: `${(renderer as any)?._modelRenderTargetWidth}x${(renderer as any)?._modelRenderTargetHeight}`,
+          rt0Size: `${rt0W}x${rt0H}`,
+          rt0Valid,
+          rt0TexNull: rt0Tex === null,
+          rt1Size: `${rt1W}x${rt1H}`,
+          boundFboNull: boundFbo === null,
+          visibleCount,
+          drawableCount: dc,
+          mvp: Array.from(mvp.getArray().slice(0, 8)),
+          isBlendMode: model?.isBlendModeEnabled?.() ?? 'N/A',
+          glType: gl instanceof WebGL2RenderingContext ? 'WebGL2' : 'WebGL1',
         }
-        console.warn('[Cubism5] ⚠️ 渲染验证失败 — ' + JSON.stringify(diag))
+        console.warn('[Cubism5] ⚠️ 渲染失败 — ' + JSON.stringify(diag))
       }
     }
   }
