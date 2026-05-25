@@ -554,14 +554,32 @@ class Cubism5Service {
       projection.scale(1.0, width / height)
     }
 
+    // 目标：构建 projection × view × model
+    // 注意：CubismMatrix44.multiplyByMatrix(m) 实现为 this = m × this（左乘），
+    // 直接链式调用会导致顺序颠倒（变成 model × view × projection）。
+    // 这里使用静态 multiply 来按正确顺序计算结果数组，再封装回 CubismMatrix44。
+
+    const a = projection.getArray()
+    const tmp = new Float32Array(16)
+    const tmp2 = new Float32Array(16)
+
+    // tmp = projection × view (or projection if no view)
     if (viewMatrix) {
-      projection.multiplyByMatrix(viewMatrix)
-    }
-    if (modelMatrix) {
-      projection.multiplyByMatrix(modelMatrix)
+      CubismMatrix44.multiply(a, viewMatrix.getArray(), tmp)
+    } else {
+      tmp.set(a)
     }
 
-    return { getArray: () => projection.getArray() }
+    // tmp2 = tmp × model (or tmp if no model)
+    if (modelMatrix) {
+      CubismMatrix44.multiply(tmp, modelMatrix.getArray(), tmp2)
+    } else {
+      tmp2.set(tmp)
+    }
+
+    const mvp = new CubismMatrix44()
+    mvp.setMatrix(tmp2)
+    return { getArray: () => mvp.getArray() }
   }
 
   /**
