@@ -619,19 +619,25 @@ class Cubism5Service {
         const fbStatus = gl.checkFramebufferStatus(gl.FRAMEBUFFER)
         const renderer = this.model.getRenderer()
         const model = this.model.getModel()
-        const drawableCount = model?.getDrawableCount?.() ?? 'N/A'
-        const visibleCount = model ? Array.from({ length: drawableCount as number }, (_, i) =>
-          model.getDrawableDynamicFlagIsVisible?.(i) ? 1 : 0
-        ).reduce((a, b) => a + b, 0) : 'N/A'
-        console.warn('[Cubism5] ⚠️ 渲染验证失败 — canvas 中心透明', {
+        const dc = model?.getDrawableCount?.() ?? 0
+        const visibles: number[] = []
+        for (let i = 0; i < dc; i++) {
+          if (model?.getDrawableDynamicFlagIsVisible?.(i)) visibles.push(i)
+        }
+        const diag = {
           pixels: Array.from(pixels),
           glError: glErr !== 0 ? glErr : 'none',
-          framebufferStatus: fbStatus === gl.FRAMEBUFFER_COMPLETE ? 'complete' : fbStatus,
-          drawableCount,
-          visibleCount,
+          fbStatus: fbStatus === gl.FRAMEBUFFER_COMPLETE ? 'complete' : fbStatus,
+          drawableCount: dc,
+          visibleIndices: visibles,
+          visibleCount: visibles.length,
+          modelMatrix: this.model.getModelMatrix()?.getArray()?.slice(0, 4) ?? 'null',
+          viewMatrix: this.model.getViewMatrix()?.getArray()?.slice(0, 4) ?? 'null',
           mvpArray: Array.from(mvp.getArray().slice(0, 4)),
-          modelRenderTargets: renderer?._modelRenderTargets?.length ?? 0,
-        })
+          renderTargets: renderer?._modelRenderTargets?.length ?? 0,
+          canvasSize: `${canvas.width}x${canvas.height}`,
+        }
+        console.warn('[Cubism5] ⚠️ 渲染验证失败 — ' + JSON.stringify(diag))
       }
     }
   }
