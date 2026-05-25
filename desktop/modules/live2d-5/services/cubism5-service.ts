@@ -284,6 +284,13 @@ class Cubism5Service {
       const appModel = new AppModel()
       await appModel.loadAssets(config.modelPath, this._modelScale, this.gl)
 
+      // ★ 关键修复：设置 renderer 的 offscreen render target 尺寸为 canvas 实际像素尺寸
+      // setupRenderer() 使用的是模型内部坐标（很小），导致 offscreen FBO 尺寸不匹配
+      const renderer = appModel.getRenderer()
+      if (renderer) {
+        renderer.setRenderState(null, [0, 0, this.canvas.width, this.canvas.height])
+      }
+
       // 存入模型管理 Map
       this._models.set(config.name, appModel)
       this._activeModelName = config.name
@@ -411,6 +418,14 @@ class Cubism5Service {
           this.canvas.width = newWidth
           this.canvas.height = newHeight
           this.gl.viewport(0, 0, newWidth, newHeight)
+
+          // ★ 同步更新 renderer 的 offscreen render target 尺寸
+          if (this.model) {
+            const renderer = this.model.getRenderer()
+            if (renderer) {
+              renderer.setRenderState(null, [0, 0, newWidth, newHeight])
+            }
+          }
         }
       }
     })
@@ -944,6 +959,12 @@ class Cubism5Service {
 
       const appModel = new AppModel()
       await appModel.loadAssets(path, scale, this.gl)
+
+      // ★ 关键修复：设置 renderer 的 offscreen render target 尺寸
+      const renderer = appModel.getRenderer()
+      if (renderer && this.canvas) {
+        renderer.setRenderState(null, [0, 0, this.canvas.width, this.canvas.height])
+      }
 
       this._models.set(name, appModel)
       this._activeModelName = name
