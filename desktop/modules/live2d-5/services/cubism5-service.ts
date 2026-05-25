@@ -288,7 +288,12 @@ class Cubism5Service {
       // setupRenderer() 使用的是模型内部坐标（很小），导致 offscreen FBO 尺寸不匹配
       const renderer = appModel.getRenderer()
       if (renderer) {
+        const oldW = (renderer as any)._modelRenderTargetWidth ?? 'N/A'
+        const oldH = (renderer as any)._modelRenderTargetHeight ?? 'N/A'
         renderer.setRenderState(null, [0, 0, this.canvas.width, this.canvas.height])
+        const newW = (renderer as any)._modelRenderTargetWidth
+        const newH = (renderer as any)._modelRenderTargetHeight
+        console.log(`[Cubism5] 🔧 setRenderState: ${oldW}x${oldH} → ${newW}x${newH} (canvas: ${this.canvas.width}x${this.canvas.height})`)
       }
 
       // 存入模型管理 Map
@@ -639,18 +644,28 @@ class Cubism5Service {
         for (let i = 0; i < dc; i++) {
           if (model?.getDrawableDynamicFlagIsVisible?.(i)) visibles.push(i)
         }
+        // 检查 offscreen FBO 实际尺寸
+        const rt0 = renderer?._modelRenderTargets?.[0]
+        const rtW = rt0?.getBufferWidth?.() ?? 'N/A'
+        const rtH = rt0?.getBufferHeight?.() ?? 'N/A'
+        const rtTex = rt0?.getColorBuffer?.() ?? 'null'
+        const rtValid = rt0?.isValid?.() ?? false
+        // 当前绑定的 FBO
+        const currentFbo = gl.getParameter(gl.FRAMEBUFFER_BINDING)
         const diag = {
           pixels: Array.from(pixels),
           glError: glErr !== 0 ? glErr : 'none',
           fbStatus: fbStatus === gl.FRAMEBUFFER_COMPLETE ? 'complete' : fbStatus,
           drawableCount: dc,
-          visibleIndices: visibles,
           visibleCount: visibles.length,
-          modelMatrix: this.model.getModelMatrix()?.getArray()?.slice(0, 4) ?? 'null',
-          viewMatrix: this.model.getViewMatrix()?.getArray()?.slice(0, 4) ?? 'null',
           mvpArray: Array.from(mvp.getArray().slice(0, 4)),
-          renderTargets: renderer?._modelRenderTargets?.length ?? 0,
           canvasSize: `${canvas.width}x${canvas.height}`,
+          renderTargetSize: `${rtW}x${rtH}`,
+          renderTargetValid: rtValid,
+          renderTargetTextureNull: rtTex === 'null',
+          currentFboNull: currentFbo === null,
+          rendererTargetW: (renderer as any)?._modelRenderTargetWidth ?? 'N/A',
+          rendererTargetH: (renderer as any)?._modelRenderTargetHeight ?? 'N/A',
         }
         console.warn('[Cubism5] ⚠️ 渲染验证失败 — ' + JSON.stringify(diag))
       }
