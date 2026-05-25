@@ -13,6 +13,7 @@ import type { Cubism5ModelState, Cubism5ModelConfig, StateCallback, MotionGroup 
 // 静态导入 CubismFramework（Vite 警告修复）
 import { CubismFramework } from '../lib/live2dcubismframework'
 import { CubismMatrix44 } from '../lib/math/cubismmatrix44'
+import { CubismShaderManager_WebGL } from '../lib/rendering/cubismshader_webgl'
 
 // ============ 常量 ============
 
@@ -68,12 +69,18 @@ class Cubism5Service {
   private _modelPath = ''
   private _modelScale = DEFAULT_MODEL_SCALE
 
+  // ★ 新增：shader 就绪回调（供 UI 层监听）
+  private _onShaderReady: (() => void) | null = null
+
   // ★ 新增：模型切换锁，防止快速切换导致竞态
   private _switching = false
 
   // 帧率限制
   private _targetFPS: number = 60  // 默认 60 FPS
   private _lastFrameTime: number = 0
+
+  // ★ 新增：shader 就绪通知标志（防止重复触发）
+  private _shaderReadyNotified: boolean = false
 
   setStateCallback(cb: StateCallback | null): void {
     this.onStateChange = cb
@@ -96,6 +103,52 @@ class Cubism5Service {
    */
   getMotionGroupNames(): string[] {
     return (this.model?.motionGroups ?? []).map(g => g.group)
+  }
+
+  /**
+   * 设置 shader 就绪回调（UI 层用于隐藏 loading）
+   */
+  setOnShaderReady(cb: (() => void) | null): void {
+    this._onShaderReady = cb
+  }
+
+  /**
+   * 查询 shader 是否已加载完成
+   */
+  isShaderLoaded(): boolean {
+    if (!this.gl) return false
+    try {
+      const shader = CubismShaderManager_WebGL.getInstance().getShader(this.gl)
+      return shader?._isShaderLoaded ?? false
+    } catch {
+      return false
+    }
+  }
+
+  /**
+   * 等待 shader 加载完成（返回 Promise，UI 层可 await）
+   */
+  waitForShaderReady(timeoutMs = 15000): Promise<boolean> {
+    return new Promise((resolve) => {
+      if (this.isShaderLoaded()) { resolve(true); return }
+
+      const start = Date.now()
+      const poll = () => {
+        if (this.destroyed) { resolve(false); return }
+        if (this.isShaderLoaded()) {
+          this._onShaderReady?.()
+          resolve(true)
+          return
+        }
+        if (Date.now() - start > timeoutMs) {
+          console.warn('[Cubism5] ⏰ 等待 shader 超时')
+          resolve(false)
+          return
+        }
+        requestAnimationFrame(poll)
+      }
+      requestAnimationFrame(poll)
+    })
   }
 
   /**
@@ -235,6 +288,7 @@ class Cubism5Service {
 
       // 重置时间
       this.lastUpdateTime = performance.now() / 1000
+      this._shaderReadyNotified = false  // 重置 shader 就绪通知标志
 
       this.updateState('loaded')
       console.log('[Cubism5] ✅ 模型加载完成:', config.name)
@@ -521,6 +575,12 @@ class Cubism5Service {
         shaderLoaded,
         rendererExists: !!renderer,
       })
+    }
+
+    // ★ 新增：shader 就绪后通知 UI 层（仅触发一次）
+    if (!this._shaderReadyNotified && this.isShaderLoaded()) {
+      this._shaderReadyNotified = true
+      this._onShaderReady?.()
     }
 
     // ② 计算 deltaTime（钳制到合理范围，防止负值或过大跳帧）
@@ -908,6 +968,8 @@ class Cubism5Service {
     this.contextLost = false
     this.lastUpdateTime = 0
     this._modelPath = ''
+    this._shaderReadyNotified = false
+    this._onShaderReady = null
     this.updateState('idle')
   }
 

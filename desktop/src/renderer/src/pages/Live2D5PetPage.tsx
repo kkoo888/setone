@@ -30,6 +30,7 @@ const Live2D5PetPage: React.FC = () => {
   const [state, setState] = useState<PetState>('idle')
   const [error, setError] = useState<string | null>(null)
   const [contextLost, setContextLost] = useState(false)
+  const [shaderReady, setShaderReady] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const serviceRef = useRef<Awaited<ReturnType<typeof loadCubism5Service>> | null>(null)
 
@@ -84,6 +85,14 @@ const Live2D5PetPage: React.FC = () => {
           }
         })
 
+        // ★ 新增：监听 shader 就绪事件
+        service.setOnShaderReady(() => {
+          if (!cancelled) {
+            console.log('[Live2D5PetPage] ✅ shader 就绪，隐藏 loading')
+            setShaderReady(true)
+          }
+        })
+
         const modelPath = new URL('./live2d/Ren/Ren.model3.json', window.location.href).href
         console.log('[Live2D5PetPage] 📦 开始加载模型, modelPath:', modelPath)
 
@@ -112,6 +121,7 @@ const Live2D5PetPage: React.FC = () => {
 
     return () => {
       cancelled = true
+      serviceRef.current?.setOnShaderReady(null)
       serviceRef.current?.destroy()
       serviceRef.current = null
     }
@@ -171,6 +181,7 @@ const Live2D5PetPage: React.FC = () => {
     cleanups.push(
       window.electronAPI.on('live2d5:destroy', () => {
         // 清理 WebGL 资源
+        serviceRef.current?.setOnShaderReady(null)
         serviceRef.current?.destroy()
         serviceRef.current = null
         // 通知主进程清理完成
@@ -209,6 +220,7 @@ const Live2D5PetPage: React.FC = () => {
   const handleRetry = useCallback(async () => {
     setError(null)
     setState('idle')
+    setShaderReady(false)
     if (serviceRef.current) {
       serviceRef.current.destroy()
       serviceRef.current = null
@@ -261,8 +273,8 @@ const Live2D5PetPage: React.FC = () => {
         }}
       />
 
-      {/* 加载状态 */}
-      {state === 'loading' && (
+      {/* ★ 加载中 / shader 编译中 — 显示转圈动画 */}
+      {(state === 'loading' || (state === 'loaded' && !shaderReady)) && (
         <div
           style={{
             position: 'absolute',
@@ -270,11 +282,34 @@ const Live2D5PetPage: React.FC = () => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: '#a78bfa',
-            fontSize: 14,
+            flexDirection: 'column',
+            gap: 12,
+            background: 'transparent',
+            zIndex: 100,
           }}
         >
-          加载 Cubism 5 模型中...
+          {/* CSS 转圈动画 */}
+          <div
+            style={{
+              width: 32,
+              height: 32,
+              border: '3px solid rgba(167,139,250,0.2)',
+              borderTopColor: '#a78bfa',
+              borderRadius: '50%',
+              animation: 'spin 0.8s linear infinite',
+            }}
+          />
+          <div
+            style={{
+              color: 'rgba(167,139,250,0.8)',
+              fontSize: 12,
+              fontFamily: 'system-ui, sans-serif',
+            }}
+          >
+            {state === 'loading' ? '加载模型中...' : '编译 shader 中...'}
+          </div>
+          {/* 内联 keyframes */}
+          <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
         </div>
       )}
 
