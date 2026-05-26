@@ -238,9 +238,12 @@ const Live2D5PetPage: React.FC = () => {
     let startX = 0
     let startY = 0
 
+    let dragMoved = false  // 是否真正移动过（区分点击和拖拽）
+
     const handleMouseDown = (e: MouseEvent) => {
       if (e.button !== 0) return
       dragging = true
+      dragMoved = false
       startX = e.screenX
       startY = e.screenY
       // 通知模型触摸开始（与 Demo onTouchesBegan 一致）
@@ -249,10 +252,11 @@ const Live2D5PetPage: React.FC = () => {
 
     const handleMouseMove = (e: MouseEvent) => {
       if (dragging) {
-        // 窗口拖拽
+        // 窗口拖拽（超过 3px 才算拖拽，避免误判点击）
         const dx = e.screenX - startX
         const dy = e.screenY - startY
-        if (dx !== 0 || dy !== 0) {
+        if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+          dragMoved = true
           window.electronAPI?.invoke('live2d5:move-window', { dx, dy })
           startX = e.screenX
           startY = e.screenY
@@ -266,8 +270,13 @@ const Live2D5PetPage: React.FC = () => {
     const handleMouseUp = (e: MouseEvent) => {
       if (dragging) {
         dragging = false
-        // 通知模型触摸结束（与 Demo onTouchesEnded 一致）
-        serviceRef.current?.onTouchesEnded?.(e.clientX, e.clientY)
+        if (dragMoved) {
+          // 拖拽结束，只清除状态
+          serviceRef.current?.setDragging?.(0, 0)
+        } else {
+          // ★ 点击（没有移动）→ 触发 hitTest（表情/动作）
+          serviceRef.current?.onTouchesEnded?.(e.clientX, e.clientY)
+        }
       }
     }
 
