@@ -107,23 +107,25 @@ const Live2D5PetPage: React.FC = () => {
           if (appliedRes?.success && appliedRes.data) {
             modelName = appliedRes.data.name
             const rawPath = appliedRes.data.path
-            // 绝对路径使用 local-file:// 协议（由主进程 protocol.handle 代理），相对路径用 URL 解析
+            // 绝对路径使用 local-file:// 协议，相对路径使用 model-file:// 协议（主进程代理）
             if (rawPath.startsWith('/') || rawPath.match(/^[A-Za-z]:\\/)) {
               modelPath = `local-file://${encodeURI(rawPath)}`
             } else {
-              modelPath = new URL(rawPath, window.location.href).href
+              // 相对路径：去掉 ./ 前缀，用 model-file:// 协议由主进程解析到 renderer public 目录
+              const cleanPath = rawPath.replace(/^\.\//, '')
+              modelPath = `model-file://${cleanPath}`
             }
             if (appliedRes.data.scale) modelScale = appliedRes.data.scale
             console.debug('[Live2D5PetPage] 📦 已应用模型:', modelName, modelPath)
           } else {
             // 没有已应用模型，fallback 到默认 Ren
             modelName = 'Ren'
-            modelPath = new URL('./live2d/Ren/Ren.model3.json', window.location.href).href
+            modelPath = 'model-file://live2d/Ren/Ren.model3.json'
             console.debug('[Live2D5PetPage] ⚠️ 无已应用模型，使用默认 Ren')
           }
         } catch (err) {
           modelName = 'Ren'
-          modelPath = new URL('./live2d/Ren/Ren.model3.json', window.location.href).href
+          modelPath = 'model-file://live2d/Ren/Ren.model3.json'
           console.warn('[Live2D5PetPage] ⚠️ 读取已应用模型失败，使用默认:', err)
         }
 
