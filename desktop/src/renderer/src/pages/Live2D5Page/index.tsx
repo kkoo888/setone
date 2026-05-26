@@ -104,6 +104,11 @@ export function Live2D5Page() {
   const [selectedScans, setSelectedScans] = useState<Set<string>>(new Set())
   const [registering, setRegistering] = useState(false)
 
+  // ★ 新增：音频/气泡/缩放设置状态
+  const [audioType, setAudioType] = useState<'microphone' | 'wav' | 'none'>('none')
+  const [bubbleInput, setBubbleInput] = useState('')
+  const [modelScale, setModelScale] = useState<number>(0.85)
+
   /** 查询状态 */
   const refreshStatus = useCallback(async () => {
     try {
@@ -158,11 +163,13 @@ export function Live2D5Page() {
     setRefreshing(true)
     try {
       await refreshStatus()
-      const [statusRes, previewRes, motionQueueRes, fpsRes] = await Promise.all([
+      const [statusRes, previewRes, motionQueueRes, fpsRes, audioRes, bubbleRes] = await Promise.all([
         window.electronAPI.invoke('live2d5_get_live_status'),
         window.electronAPI.invoke('live2d5_get_preview'),
         window.electronAPI.invoke('live2d5_get_motion_queue'),
-        window.electronAPI.invoke('live2d5_get_fps'),  // ★ 新增：获取帧率设置
+        window.electronAPI.invoke('live2d5_get_fps'),
+        window.electronAPI.invoke('live2d5_get_audio_type'),
+        window.electronAPI.invoke('live2d5_get_bubble'),
       ])
       if (statusRes?.success && statusRes.data) {
         setLiveStatus(statusRes.data)
@@ -176,6 +183,14 @@ export function Live2D5Page() {
       // ★ 新增：更新帧率设置
       if (fpsRes?.success) {
         setTargetFPS(fpsRes.data)
+      }
+      // ★ 新增：更新音频类型
+      if (audioRes?.success) {
+        setAudioType(audioRes.data)
+      }
+      // ★ 新增：更新气泡文本
+      if (bubbleRes?.success && bubbleRes.data) {
+        setBubbleInput(bubbleRes.data)
       }
       // 同时刷新模型列表
       if (status.windowOpen) {
@@ -261,6 +276,45 @@ export function Live2D5Page() {
       setTargetFPS(fps)
     } catch (err) {
       console.error('设置帧率失败:', err)
+    }
+  }, [])
+
+  /** ★ 新增：切换音频输入源 */
+  const handleSwitchAudio = useCallback(async (type: 'microphone' | 'none') => {
+    try {
+      if (type === 'microphone') {
+        const res = await window.electronAPI.invoke('live2d5_switch_to_microphone') as { success: boolean; error?: string }
+        if (res.success) {
+          setAudioType('microphone')
+        } else {
+          setScanError(res.error || '麦克风启动失败')
+        }
+      } else {
+        await window.electronAPI.invoke('live2d5_stop_audio')
+        setAudioType('none')
+      }
+    } catch (err) {
+      console.error('切换音频失败:', err)
+    }
+  }, [])
+
+  /** ★ 新增：设置对话气泡 */
+  const handleSetBubble = useCallback(async () => {
+    try {
+      const text = bubbleInput.trim() || null
+      await window.electronAPI.invoke('live2d5_set_bubble', { text })
+    } catch (err) {
+      console.error('设置气泡失败:', err)
+    }
+  }, [bubbleInput])
+
+  /** ★ 新增：清除气泡 */
+  const handleClearBubble = useCallback(async () => {
+    try {
+      await window.electronAPI.invoke('live2d5_set_bubble', { text: null })
+      setBubbleInput('')
+    } catch (err) {
+      console.error('清除气泡失败:', err)
     }
   }, [])
 
@@ -842,7 +896,84 @@ export function Live2D5Page() {
         {/* ====== 设置 ====== */}
         {activeTab === 'settings' && (
           <div className="live2d5-settings-panel">
+            {/* ★ 新增：音频输入设置 */}
             <div className="live2d5-info">
+              <h4>🎤 音频输入（LipSync）</h4>
+              <div style={{ display: 'flex', gap: 'var(--spacing-sm)', marginTop: 'var(--spacing-sm)', flexWrap: 'wrap' }}>
+                <button
+                  className={`btn ${audioType === 'microphone' ? 'btn-primary' : 'btn-secondary'}`}
+                  onClick={() => handleSwitchAudio('microphone')}
+                  disabled={!status.windowOpen}
+                >
+                  🎙️ 麦克风
+                </button>
+                <button
+                  className={`btn ${audioType === 'none' ? 'btn-primary' : 'btn-secondary'}`}
+                  onClick={() => handleSwitchAudio('none')}
+                  disabled={!status.windowOpen}
+                >
+                  ⏹️ 关闭
+                </button>
+              </div>
+              <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-tertiary)', marginTop: 'var(--spacing-xs)' }}>
+                当前: {audioType === 'microphone' ? '🎙️ 麦克风实时输入' : '未使用音频'}
+              </p>
+            </div>
+
+            {/* ★ 新增：对话气泡 */}
+            <div className="live2d5-info" style={{ marginTop: 'var(--spacing-md)' }}>
+              <h4>💬 对话气泡</h4>
+              <div style={{ display: 'flex', gap: 'var(--spacing-sm)', marginTop: 'var(--spacing-sm)' }}>
+                <input
+                  type="text"
+                  className="live2d5-scan-input"
+                  placeholder="输入气泡文字..."
+                  value={bubbleInput}
+                  onChange={e => setBubbleInput(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleSetBubble()}
+                  disabled={!status.windowOpen}
+                  style={{ flex: 1 }}
+                />
+                <button
+                  className="btn btn-primary"
+                  onClick={handleSetBubble}
+                  disabled={!status.windowOpen}
+                >
+                  显示
+                </button>
+                <button
+                  className="btn btn-ghost"
+                  onClick={handleClearBubble}
+                  disabled={!status.windowOpen}
+                >
+                  清除
+                </button>
+              </div>
+            </div>
+
+            {/* ★ 新增：模型缩放 */}
+            <div className="live2d5-info" style={{ marginTop: 'var(--spacing-md)' }}>
+              <h4>📐 模型缩放</h4>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', marginTop: 'var(--spacing-sm)' }}>
+                <input
+                  type="range"
+                  min="0.3"
+                  max="2.0"
+                  step="0.05"
+                  value={modelScale}
+                  onChange={e => setModelScale(parseFloat(e.target.value))}
+                  style={{ flex: 1 }}
+                />
+                <span style={{ minWidth: 48, textAlign: 'right', fontSize: 'var(--font-size-sm)' }}>
+                  {modelScale.toFixed(2)}
+                </span>
+              </div>
+              <p style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-tertiary)', marginTop: 'var(--spacing-xs)' }}>
+                缩放需重新打开宠物窗口生效
+              </p>
+            </div>
+
+            <div className="live2d5-info" style={{ marginTop: 'var(--spacing-md)' }}>
               <h4>渲染设置</h4>
               <ul>
                 <li>WebGL 上下文: {status.windowOpen ? '已创建' : '未创建'}</li>
@@ -859,7 +990,6 @@ export function Live2D5Page() {
                 <li>自动眨眼: 开启</li>
                 <li>呼吸效果: 开启</li>
                 <li>鼠标注视: 开启（6 参数追踪）</li>
-                <li>口型同步: 开启（WAV 音频驱动）</li>
                 <li>Pose 切换: 自动（从 model3.json 加载）</li>
               </ul>
             </div>
@@ -871,16 +1001,6 @@ export function Live2D5Page() {
                 <li>点击身体: 随机播放动作</li>
                 <li>拖拽: 模型注视跟随</li>
                 <li>窗口拖拽: 支持（无边框窗口）</li>
-              </ul>
-            </div>
-
-            <div className="live2d5-info" style={{ marginTop: 'var(--spacing-md)' }}>
-              <h4>模型资源</h4>
-              <ul>
-                <li>Core SDK: live2dcubismcore5.min.js</li>
-                <li>Framework: 内置完整源码（modules/live2d-5/lib/）</li>
-                <li>Shader: 内置 WebGL 着色器</li>
-                <li>默认模型: Hiyori（含 physics/pose/motions）</li>
               </ul>
             </div>
           </div>

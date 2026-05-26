@@ -353,6 +353,28 @@ export default class Live2D5Module implements Module {
       return { success: true, data: 60 }
     })
 
+    // ★ 新增：设置对话气泡文本
+    ipcMain.handle('live2d5_set_bubble', async (_event, args: { text: string | null }) => {
+      if (this.petWindow && !this.petWindow.isDestroyed()) {
+        await this.petWindow.webContents.executeJavaScript(
+          `window.__cubism5Service?.setBubbleText?.(${JSON.stringify(args.text)})`
+        ).catch(() => {})
+        return { success: true }
+      }
+      return { success: false, error: '宠物窗口未打开' }
+    })
+
+    // ★ 新增：获取对话气泡文本
+    ipcMain.handle('live2d5_get_bubble', async () => {
+      if (this.petWindow && !this.petWindow.isDestroyed()) {
+        const result = await this.petWindow.webContents.executeJavaScript(
+          `window.__cubism5Service?.getBubbleText?.() ?? null`
+        ).catch(() => null)
+        return { success: true, data: result }
+      }
+      return { success: true, data: null }
+    })
+
     // ★ 新增：扫描指定目录下的 model3.json 文件
     ipcMain.handle('live2d5_scan_model', async (_event, args: { dirPath: string }) => {
       try {
@@ -528,6 +550,8 @@ export default class Live2D5Module implements Module {
     ipcMain.removeHandler('live2d5_get_audio_type')
     ipcMain.removeHandler('live2d5_set_fps')
     ipcMain.removeHandler('live2d5_get_fps')
+    ipcMain.removeHandler('live2d5_set_bubble')
+    ipcMain.removeHandler('live2d5_get_bubble')
     ipcMain.removeHandler('live2d5_scan_model')
     ipcMain.removeHandler('live2d5_select_directory')
     ipcMain.removeHandler('live2d5_reload_model')
@@ -1054,6 +1078,101 @@ export default class Live2D5Module implements Module {
             } catch (err) {
               return { success: false, error: (err as Error).message }
             }
+          }
+        }
+      },
+      {
+        type: 'tool',
+        name: 'live2d5_set_bubble',
+        description: '设置 Live2D 5 宠物对话气泡文本（null 清除）',
+        priority: 10,
+        moduleId: this.id,
+        parameters: {
+          type: 'object',
+          properties: {
+            text: { type: 'string', description: '气泡文本，null 或空字符串清除' }
+          },
+          required: ['text']
+        },
+        handler: {
+          execute: async (p) => {
+            const { text } = p as { text: string }
+            if (this.petWindow && !this.petWindow.isDestroyed()) {
+              await this.petWindow.webContents.executeJavaScript(
+                `window.__cubism5Service?.setBubbleText?.(${JSON.stringify(text || null)})`
+              ).catch(() => {})
+              return { success: true }
+            }
+            return { success: false, error: '宠物窗口未打开' }
+          }
+        }
+      },
+      {
+        type: 'tool',
+        name: 'live2d5_get_audio_type',
+        description: '获取当前音频输入类型（microphone/wav/none）',
+        priority: 10,
+        moduleId: this.id,
+        parameters: {
+          type: 'object',
+          properties: {},
+          required: []
+        },
+        handler: {
+          execute: async () => {
+            if (this.petWindow && !this.petWindow.isDestroyed()) {
+              const result = await this.petWindow.webContents.executeJavaScript(
+                `window.__cubism5Service?.getAudioInputType?.() ?? 'none'`
+              ).catch(() => 'none')
+              return { success: true, data: result }
+            }
+            return { success: true, data: 'none' }
+          }
+        }
+      },
+      {
+        type: 'tool',
+        name: 'live2d5_switch_to_microphone',
+        description: '切换到麦克风输入（实时 LipSync）',
+        priority: 10,
+        moduleId: this.id,
+        parameters: {
+          type: 'object',
+          properties: {},
+          required: []
+        },
+        handler: {
+          execute: async () => {
+            if (this.petWindow && !this.petWindow.isDestroyed()) {
+              const result = await this.petWindow.webContents.executeJavaScript(
+                `window.__cubism5Service?.switchToMicrophone?.() ?? false`
+              ).catch(() => false)
+              return { success: result }
+            }
+            return { success: false, error: '宠物窗口未打开' }
+          }
+        }
+      },
+      {
+        type: 'tool',
+        name: 'live2d5_stop_audio',
+        description: '停止所有音频输入',
+        priority: 10,
+        moduleId: this.id,
+        parameters: {
+          type: 'object',
+          properties: {},
+          required: []
+        },
+        handler: {
+          execute: async () => {
+            if (this.petWindow && !this.petWindow.isDestroyed()) {
+              await this.petWindow.webContents.executeJavaScript(
+                `window.__cubism5Service?.stopAudio?.()`
+              ).catch(() => {})
+              return { success: true }
+            }
+            return { success: false, error: '宠物窗口未打开' }
           }
         }
       }

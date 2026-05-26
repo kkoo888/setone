@@ -66,6 +66,30 @@
       "name": "live2d5_unload_model",
       "description": "卸载指定 Live2D 5 模型并释放 GPU 资源",
       "priority": 10
+    },
+    {
+      "type": "tool",
+      "name": "live2d5_set_bubble",
+      "description": "设置 Live2D 5 宠物对话气泡文本",
+      "priority": 10
+    },
+    {
+      "type": "tool",
+      "name": "live2d5_get_audio_type",
+      "description": "获取当前音频输入类型",
+      "priority": 10
+    },
+    {
+      "type": "tool",
+      "name": "live2d5_switch_to_microphone",
+      "description": "切换到麦克风输入（实时 LipSync）",
+      "priority": 10
+    },
+    {
+      "type": "tool",
+      "name": "live2d5_stop_audio",
+      "description": "停止所有音频输入",
+      "priority": 10
     }
   ],
   "consumes": []

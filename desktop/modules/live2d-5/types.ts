@@ -24,6 +24,22 @@ export interface MotionGroup {
   readonly names: string[]
 }
 
+/** 模型注册表条目 */
+export interface RegisteredModelEntry {
+  name: string
+  path: string
+  applied: boolean
+  addedAt: number
+  version?: number
+  textures?: number
+  expressions?: number
+  motions?: number
+  motionGroups?: string[]
+  hasPhysics?: boolean
+  hasPose?: boolean
+  scale?: number
+}
+
 /** IPC 通道映射 */
 export interface Live2D5IPCChannels {
   'live2d5:create-window': () => Promise<void>
@@ -63,4 +79,11 @@ export interface Live2D5IPCChannels {
   'live2d5_set_fps': (args: { fps: number }) => Promise<{ success: boolean; error?: string }>
   'live2d5_get_fps': () => Promise<{ success: boolean; data: number }>
   'live2d5_reload_model': () => Promise<{ success: boolean; error?: string }>
+  'live2d5_set_bubble': (args: { text: string | null }) => Promise<{ success: boolean; error?: string }>
+  'live2d5_get_bubble': () => Promise<{ success: boolean; data: string | null }>
+  'live2d5_get_registered_models': () => Promise<{ success: boolean; data: RegisteredModelEntry[] }>
+  'live2d5_get_applied_model': () => Promise<{ success: boolean; data: RegisteredModelEntry | null }>
+  'live2d5_register_models': (args: { models: RegisteredModelEntry[] }) => Promise<{ success: boolean; data: RegisteredModelEntry[]; added: number }>
+  'live2d5_apply_model': (args: { path: string }) => Promise<{ success: boolean; data?: RegisteredModelEntry[]; error?: string }>
+  'live2d5_unregister_model': (args: { path: string }) => Promise<{ success: boolean; data?: RegisteredModelEntry[]; error?: string }>
 }

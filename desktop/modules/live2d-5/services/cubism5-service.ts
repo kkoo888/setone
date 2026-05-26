@@ -79,6 +79,9 @@ class Cubism5Service {
   private _targetFPS: number = 60  // 默认 60 FPS
   private _lastFrameTime: number = 0
 
+  // ★ 新增：对话气泡文本
+  private _bubbleText: string | null = null
+
   // ★ 新增：shader 就绪通知标志（防止重复触发）
   private _shaderReadyNotified: boolean = false
   // ★ 新增：渲染验证标志（首帧验证用）
@@ -572,6 +575,20 @@ class Cubism5Service {
   }
 
   /**
+   * ★ 新增：设置对话气泡文本
+   */
+  setBubbleText(text: string | null): void {
+    this._bubbleText = text
+  }
+
+  /**
+   * ★ 新增：获取对话气泡文本
+   */
+  getBubbleText(): string | null {
+    return this._bubbleText
+  }
+
+  /**
    * 渲染一帧
    * 按 Cubism 5 官方渲染流程：clear → updateModel → createMvpMatrix → render
    * @see Cubism5渲染流程.md
@@ -859,6 +876,7 @@ class Cubism5Service {
     lipSyncActive: boolean
     bubbleText: string
   } {
+    const audioType = this.model?.getAudioInputType?.() ?? 'none'
     return {
       sdkLoaded: this.sdkLoaded,
       contextLost: this.contextLost,
@@ -866,8 +884,8 @@ class Cubism5Service {
       clickInteraction: this.model != null,
       currentExpression: this.model?.getCurrentExpression?.() ?? '默认',
       currentMotion: this.model?.getCurrentMotion?.() ?? '默认',
-      lipSyncActive: false,
-      bubbleText: '无',
+      lipSyncActive: audioType !== 'none',
+      bubbleText: this._bubbleText ?? '无',
     }
   }
 
