@@ -344,6 +344,9 @@ export class AppModel extends CubismUserModel {
 
         const texture = gl.createTexture()
         gl.bindTexture(gl.TEXTURE_2D, texture)
+        // ★ 修复：纹理存储为 straight alpha，但 blend mode 期望 premultiplied alpha
+        // 设置 UNPACK_PREMULTIPLY_ALPHA_WEBGL 让 WebGL 在上传时自动转换
+        gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true)
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, source)
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR)
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
