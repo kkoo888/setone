@@ -94,7 +94,7 @@ const Live2D5PetPage: React.FC = () => {
           }
         })
 
-        // ★ 修复：从模型注册表读取已应用的模型（主进程已将相对路径解析为绝对路径）
+        // ★ 修复：从模型注册表读取已应用的模型（主进程已返回 file:// URL）
         let modelPath: string
         let modelName: string
         let modelScale = 0.85
@@ -106,8 +106,8 @@ const Live2D5PetPage: React.FC = () => {
           }
           if (appliedRes?.success && appliedRes.data) {
             modelName = appliedRes.data.name
-            // 主进程已保证返回绝对路径，直接使用 local-file:// 协议
-            modelPath = `local-file://${encodeURI(appliedRes.data.path)}`
+            // 主进程已将路径转为 file:// URL，直接使用
+            modelPath = appliedRes.data.path
             if (appliedRes.data.scale) modelScale = appliedRes.data.scale
             console.debug('[Live2D5PetPage] 📦 已应用模型:', modelName, modelPath)
           } else {

@@ -485,13 +485,19 @@ export default class Live2D5Module implements Module {
       return { success: true, data: this.readModelRegistry() }
     })
 
-    // ★ 获取当前已应用的模型（从注册表读取，相对路径自动解析为绝对路径）
+    // ★ 获取当前已应用的模型（从注册表读取，相对路径自动解析为 file:// URL）
     ipcMain.handle('live2d5_get_applied_model', async () => {
       const model = this.getAppliedModel()
-      if (model && model.path && !model.path.startsWith('/') && !model.path.match(/^[A-Za-z]:\\/)) {
-        // 相对路径：基于 app 根目录解析为绝对路径
-        const absolutePath = join(app.getAppPath(), model.path)
-        return { success: true, data: { ...model, path: absolutePath } }
+      if (model && model.path) {
+        let absolutePath: string
+        if (model.path.startsWith('/') || model.path.match(/^[A-Za-z]:\\/)) {
+          absolutePath = model.path
+        } else {
+          absolutePath = join(app.getAppPath(), model.path)
+        }
+        // 转为 file:// URL，renderer 可直接 fetch，无需自定义协议
+        const fileUrl = pathToFileURL(absolutePath).href
+        return { success: true, data: { ...model, path: fileUrl } }
       }
       return { success: true, data: model }
     })
@@ -956,9 +962,15 @@ export default class Live2D5Module implements Module {
         handler: {
           execute: async () => {
             const model = this.getAppliedModel()
-            if (model && model.path && !model.path.startsWith('/') && !model.path.match(/^[A-Za-z]:\\/)) {
-              const absolutePath = join(app.getAppPath(), model.path)
-              return { success: true, data: { ...model, path: absolutePath } }
+            if (model && model.path) {
+              let absolutePath: string
+              if (model.path.startsWith('/') || model.path.match(/^[A-Za-z]:\\/)) {
+                absolutePath = model.path
+              } else {
+                absolutePath = join(app.getAppPath(), model.path)
+              }
+              const fileUrl = pathToFileURL(absolutePath).href
+              return { success: true, data: { ...model, path: fileUrl } }
             }
             return { success: true, data: model }
           }
