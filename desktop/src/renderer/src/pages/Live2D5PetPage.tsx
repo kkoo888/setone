@@ -31,6 +31,7 @@ const Live2D5PetPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null)
   const [contextLost, setContextLost] = useState(false)
   const [shaderReady, setShaderReady] = useState(false)
+  const [bubbleText, setBubbleText] = useState<string | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const serviceRef = useRef<Awaited<ReturnType<typeof loadCubism5Service>> | null>(null)
 
@@ -45,7 +46,7 @@ const Live2D5PetPage: React.FC = () => {
     let cancelled = false
 
     const load = async () => {
-      console.log('[Live2D5PetPage] 🚀 组件挂载, 开始加载流程...')
+      console.debug('[Live2D5PetPage] 🚀 组件挂载, 开始加载流程...')
       if (!containerRef.current) {
         console.error('[Live2D5PetPage] ❌ containerRef.current 为空, 无法加载')
         return
@@ -58,7 +59,7 @@ const Live2D5PetPage: React.FC = () => {
           resolve()
           return
         }
-        console.log('[Live2D5PetPage] ⏳ 等待容器布局...')
+        console.debug('[Live2D5PetPage] ⏳ 等待容器布局...')
         const observer = new ResizeObserver((entries) => {
           for (const entry of entries) {
             if (entry.contentRect.width > 10 && entry.contentRect.height > 10) {
@@ -69,17 +70,17 @@ const Live2D5PetPage: React.FC = () => {
         })
         observer.observe(container)
       })
-      console.log('[Live2D5PetPage] ✅ 容器尺寸:', container.clientWidth, 'x', container.clientHeight)
+      console.debug('[Live2D5PetPage] ✅ 容器尺寸:', container.clientWidth, 'x', container.clientHeight)
 
       try {
-        console.log('[Live2D5PetPage] 📦 开始动态导入 cubism5-service...')
+        console.debug('[Live2D5PetPage] 📦 开始动态导入 cubism5-service...')
         setState('loading')
         const service = await loadCubism5Service()
         serviceRef.current = service
-        console.log('[Live2D5PetPage] ✅ cubism5-service 导入成功')
+        console.debug('[Live2D5PetPage] ✅ cubism5-service 导入成功')
 
         service.setStateCallback((s) => {
-          console.log('[Live2D5PetPage] 🔄 状态变更:', s)
+          console.debug('[Live2D5PetPage] 🔄 状态变更:', s)
           if (!cancelled) {
             setState(s === 'idle' ? 'idle' : s === 'loading' ? 'loading' : s === 'loaded' ? 'loaded' : 'error')
           }
@@ -88,24 +89,56 @@ const Live2D5PetPage: React.FC = () => {
         // ★ 新增：监听 shader 就绪事件
         service.setOnShaderReady(() => {
           if (!cancelled) {
-            console.log('[Live2D5PetPage] ✅ shader 就绪，隐藏 loading')
+            console.debug('[Live2D5PetPage] ✅ shader 就绪，隐藏 loading')
             setShaderReady(true)
           }
         })
 
-        const modelPath = new URL('./live2d/Ren/Ren.model3.json', window.location.href).href
-        console.log('[Live2D5PetPage] 📦 开始加载模型, modelPath:', modelPath)
+        // ★ 修复：从模型注册表读取已应用的模型，而非硬编码
+        let modelPath: string
+        let modelName: string
+        let modelScale = 0.85
+
+        try {
+          const appliedRes = await window.electronAPI.invoke('live2d5_get_applied_model') as {
+            success: boolean
+            data: { name: string; path: string; scale?: number } | null
+          }
+          if (appliedRes?.success && appliedRes.data) {
+            modelName = appliedRes.data.name
+            const rawPath = appliedRes.data.path
+            // 绝对路径使用 local-file:// 协议（由主进程 protocol.handle 代理），相对路径用 URL 解析
+            if (rawPath.startsWith('/') || rawPath.match(/^[A-Za-z]:\\/)) {
+              modelPath = `local-file://${encodeURI(rawPath)}`
+            } else {
+              modelPath = new URL(rawPath, window.location.href).href
+            }
+            if (appliedRes.data.scale) modelScale = appliedRes.data.scale
+            console.debug('[Live2D5PetPage] 📦 已应用模型:', modelName, modelPath)
+          } else {
+            // 没有已应用模型，fallback 到默认 Ren
+            modelName = 'Ren'
+            modelPath = new URL('./live2d/Ren/Ren.model3.json', window.location.href).href
+            console.debug('[Live2D5PetPage] ⚠️ 无已应用模型，使用默认 Ren')
+          }
+        } catch (err) {
+          modelName = 'Ren'
+          modelPath = new URL('./live2d/Ren/Ren.model3.json', window.location.href).href
+          console.warn('[Live2D5PetPage] ⚠️ 读取已应用模型失败，使用默认:', err)
+        }
+
+        console.debug('[Live2D5PetPage] 📦 开始加载模型, modelPath:', modelPath)
 
         await service.loadModel(
           {
-            name: 'Ren',
+            name: modelName,
             modelPath,
-            scale: 0.85,
+            scale: modelScale,
           },
           containerRef.current
         )
 
-        console.log('[Live2D5PetPage] ✅ 模型加载完成')
+        console.debug('[Live2D5PetPage] ✅ 模型加载完成')
         if (!cancelled) setState('loaded')
       } catch (err) {
         console.error('[Live2D5PetPage] ❌ 模型加载异常:', err)
@@ -149,7 +182,19 @@ const Live2D5PetPage: React.FC = () => {
     }
   }, [state])
 
-  // 监听主进程 IPC 事件（表情/动作/拖拽/销毁）
+  // ★ 新增：轮询气泡文本（从 service 读取，service 由管理页面通过 IPC 设置）
+  useEffect(() => {
+    if (state !== 'loaded') return
+    const interval = setInterval(() => {
+      if (serviceRef.current) {
+        const text = serviceRef.current.getBubbleText?.()
+        setBubbleText(prev => prev === text ? prev : text)
+      }
+    }, 300)
+    return () => clearInterval(interval)
+  }, [state])
+
+  // 监听主进程 IPC 事件（表情/动作/拖拽/销毁/气泡）
   useEffect(() => {
     if (!window.electronAPI) return
 
@@ -386,6 +431,47 @@ const Live2D5PetPage: React.FC = () => {
           >
             重试
           </button>
+        </div>
+      )}
+
+      {/* ★ 新增：对话气泡 */}
+      {state === 'loaded' && bubbleText && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 16,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            background: 'rgba(255,255,255,0.92)',
+            color: '#333',
+            padding: '8px 16px',
+            borderRadius: 16,
+            fontSize: 13,
+            fontFamily: 'system-ui, sans-serif',
+            maxWidth: '80%',
+            textAlign: 'center',
+            boxShadow: '0 2px 12px rgba(0,0,0,0.15)',
+            pointerEvents: 'none',
+            zIndex: 200,
+            animation: 'bubbleIn 0.3s ease-out',
+          }}
+        >
+          {bubbleText}
+          {/* 气泡小三角 */}
+          <div
+            style={{
+              position: 'absolute',
+              bottom: -6,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              width: 0,
+              height: 0,
+              borderLeft: '6px solid transparent',
+              borderRight: '6px solid transparent',
+              borderTop: '6px solid rgba(255,255,255,0.92)',
+            }}
+          />
+          <style>{`@keyframes bubbleIn { from { opacity: 0; transform: translateX(-50%) translateY(8px) } to { opacity: 1; transform: translateX(-50%) translateY(0) } }`}</style>
         </div>
       )}
 

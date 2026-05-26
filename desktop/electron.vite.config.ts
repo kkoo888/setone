@@ -31,6 +31,7 @@ export default defineConfig({
   renderer: {
     plugins: [react()],
     root: resolve(__dirname, 'src/renderer'),
+    publicDir: resolve(__dirname, 'src/renderer/public'),
     build: {
       outDir: 'dist/renderer',
       rollupOptions: {
