@@ -131,34 +131,17 @@ export default class Live2D5Module implements Module {
     }
   }
 
-  /** 注册 local-file:// + model-file:// 自定义协议 */
+  /** 注册 local-file:// 自定义协议，让 renderer 能 fetch 本地绝对路径文件 */
   private registerLocalFileProtocol(): void {
-    // local-file:// —— 处理绝对路径（用户手动添加的外部模型）
     protocol.handle('local-file', (request) => {
       const filePath = decodeURIComponent(request.url.replace('local-file://', ''))
+      // 安全检查：只允许读取存在的文件
       if (!existsSync(filePath)) {
         return new Response('File not found', { status: 404 })
       }
       return net.fetch(pathToFileURL(filePath).href)
     })
-
-    // model-file:// —— 处理所有模型文件请求（相对路径自动解析到 renderer public 目录）
-    // 解决 Electron 生产环境 fetch(file:///...) 被安全策略拦截导致 404 的问题
-    const rendererPublicDir = join(app.getAppPath(), 'src', 'renderer', 'public')
-    const distRendererDir = join(app.getAppPath(), 'dist', 'renderer')
-    protocol.handle('model-file', (request) => {
-      const relativePath = decodeURIComponent(request.url.replace('model-file://', ''))
-      // 优先从 dist/renderer 查找（生产环境），其次 src/renderer/public（开发环境）
-      const distPath = join(distRendererDir, relativePath)
-      const publicPath = join(rendererPublicDir, relativePath)
-      const filePath = existsSync(distPath) ? distPath : publicPath
-      if (!existsSync(filePath)) {
-        console.warn(`[Live2D5] model-file 404: ${relativePath} -> ${filePath}`)
-        return new Response('File not found', { status: 404 })
-      }
-      return net.fetch(pathToFileURL(filePath).href)
-    })
-    console.debug('[Live2D5] ✅ local-file:// + model-file:// 协议已注册')
+    console.debug('[Live2D5] ✅ local-file:// 协议已注册')
   }
 
   async activate(context: ModuleContext): Promise<void> {
