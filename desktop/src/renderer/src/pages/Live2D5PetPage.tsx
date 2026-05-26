@@ -337,25 +337,6 @@ const Live2D5PetPage: React.FC = () => {
         borderRadius: 12,
       }}
     >
-      {/* DEBUG: 状态指示器 */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 8,
-          left: 8,
-          fontSize: 11,
-          color: state === 'error' ? '#ff6b6b' : state === 'loaded' ? '#51cf66' : '#ffd43b',
-          pointerEvents: 'none',
-          background: 'rgba(0,0,0,0.5)',
-          padding: '2px 8px',
-          borderRadius: 4,
-          fontFamily: 'monospace',
-          zIndex: 9999,
-        }}
-      >
-        {state} {error ? `: ${error}` : ''}
-      </div>
-
       {/* 模型渲染容器 */}
       <div
         ref={containerRef}
