@@ -52,6 +52,15 @@ window.Live2D5Test = {
 
     const appModel = new AppModel()
     await appModel.loadAssets(modelPath, scale, gl)
+
+    // ★ 关键：设置 renderer 的 offscreen render target 尺寸为 canvas 实际像素尺寸
+    // 与 cubism5-service.ts loadModel 中的 setRenderState 调用一致
+    const canvas = document.getElementById('canvas') as HTMLCanvasElement
+    const renderer = appModel.getRenderer()
+    if (renderer && canvas) {
+      renderer.setRenderState(null, [0, 0, canvas.width, canvas.height])
+    }
+
     console.log('[Test] ✅ 模型加载完成')
     return appModel
   },

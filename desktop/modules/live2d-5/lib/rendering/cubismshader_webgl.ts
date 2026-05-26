@@ -1153,8 +1153,8 @@ export class CubismShader_WebGL {
     this._shaderSets[8].shaderProgram = this._shaderSets[2].shaderProgram;
     this._shaderSets[9].shaderProgram = this._shaderSets[3].shaderProgram;
 
-    // ★ 校验：检查 shader program 是否编译成功
-    for (let i = 0; i < this._shaderSets.length; i++) {
+    // ★ 校验：检查已注册的 shader program 是否编译成功（只检查 0-9，blend shader 在 registerBlendShader 中注册）
+    for (let i = 0; i < 10; i++) {
       const prog = this._shaderSets[i].shaderProgram;
       if (prog === null || prog === undefined) {
         CubismLogError(`Shader 登録中止: shader program[${i}] が null です`);

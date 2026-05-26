@@ -79,19 +79,6 @@
 
         // ⑤ 加载模型（Ren）
         log('🔄 开始加载模型...');
-        
-        // 先验证 shader 文件是否可达
-        try {
-          const testResp = await fetch('./Framework/Shaders/WebGL2/vertshadersrc.vert');
-          log('🔍 shader fetch 测试: status=' + testResp.status + ', ok=' + testResp.ok);
-          if (testResp.ok) {
-            const txt = await testResp.text();
-            log('🔍 shader 内容前50字: ' + txt.substring(0, 50));
-          }
-        } catch(e) {
-          err('❌ shader fetch 异常: ' + e.message);
-        }
-
         const model = await Live2D5Test.loadModel('./live2d/Ren/Ren.model3.json', 0.85);
         log('✅ 模型加载完成');
         window.__testModel = model;
@@ -101,42 +88,15 @@
         const drawableCount = modelObj ? modelObj.getDrawableCount() : 0;
         log('📋 Drawable 数量: ' + drawableCount);
 
-        // ⑤b 修复 FBO 尺寸 + 诊断 clipping
+        // ⑤b 设置 PMA
         const renderer = model.getRenderer();
         if (renderer) {
-          // 检查 clipping manager
-          const dcm = renderer._drawableClippingManager;
-          log('🔍 clippingManager: ' + (dcm ? '存在, maskBufferSize=' + dcm.getClippingMaskBufferSize() + ', renderTextureCount=' + dcm.getRenderTextureCount() : 'null'));
-          log('🔍 _drawableMasks: ' + (renderer._drawableMasks?.length ?? 0) + ' 个');
-          
-          // 设置正确尺寸
-          renderer._modelRenderTargetWidth = canvas.width;
-          renderer._modelRenderTargetHeight = canvas.height;
-          
-          // 重建 model render targets
-          if (renderer._modelRenderTargets?.length > 0) {
-            for (let i = 0; i < renderer._modelRenderTargets.length; i++) {
-              const rt = renderer._modelRenderTargets[i];
-              if (rt?.isValid?.()) rt.destroyRenderTarget();
-              rt.createRenderTarget(gl, canvas.width, canvas.height, renderer._currentFbo ?? null);
-            }
-            log('✅ FBO 重建为 ' + canvas.width + 'x' + canvas.height);
-          }
-          
           renderer.setIsPremultipliedAlpha(true);
         }
 
-        // ⑥ 先渲染一次触发 shader 加载（generateShaders 在 doDrawModel 内部被调用）
+        // ⑥ 先渲染一次触发 shader 加载
         log('🔄 触发第一帧渲染（启动 shader 异步加载）...');
         Live2D5Test.renderFrame(gl, canvas, model);
-
-        // 检查 shader 状态
-        try {
-          const sm = Live2D5Test.CubismShaderManager_WebGL.getInstance().getShader(gl);
-          log('🔍 shader manager: _isShaderLoaded=' + sm._isShaderLoaded + ', _isShaderLoading=' + sm._isShaderLoading);
-        } catch(e) {
-          log('🔍 shader manager 检查异常: ' + e.message);
-        }
 
         // ⑦ 等待 shader 加载完成
         log('🔄 等待 shader 加载...');
@@ -148,7 +108,7 @@
         }
         log('✅ shader 加载完成');
 
-        // ⑧ 渲染诊断（同步，不 await）
+        // ⑧ 渲染诊断
         log('🔍 渲染诊断...');
         const mdl = model.getModel ? model.getModel() : null;
         if (mdl) {
@@ -162,158 +122,10 @@
           log('📋 前5渲染顺序: ' + Array.from(orders).slice(0, 5).join(','));
         }
 
-        // ⑨ 渲染第一帧 + monkey-patch drawModel 诊断
+        // ⑨ 渲染第一帧
         log('🔄 渲染第一帧...');
-        
-        // 设置 PMA
-        const renderer3 = model.getRenderer();
-        if (renderer3) {
-          renderer3.setIsPremultipliedAlpha(true);
-          
-          // Monkey-patch doDrawModel
-          const origDoDrawModel = renderer3.doDrawModel.bind(renderer3);
-          renderer3.doDrawModel = function(shaderPath) {
-            this.loadShaders(shaderPath);
-            const sm = Live2D5Test.CubismShaderManager_WebGL.getInstance().getShader(this.gl);
-            if (!sm._isShaderLoaded) {
-              log('🔍 [patch] SKIP: shader not loaded');
-              return;
-            }
-            
-            log('🔍 [patch] doDrawModel: rtCount=' + (this._modelRenderTargets?.length ?? 0));
-            if (this._modelRenderTargets?.length > 0) {
-              log('🔍 [patch] rt[0]: ' + this._modelRenderTargets[0].getBufferWidth() + 'x' + this._modelRenderTargets[0].getBufferHeight());
-            }
-            
-            // Patch drawMeshWebGL to check GL state
-            const origDrawMesh = this.drawMeshWebGL.bind(this);
-            let drawCallCount = 0;
-            this.drawMeshWebGL = function(model, index) {
-              drawCallCount++;
-              origDrawMesh(model, index);
-              if (drawCallCount <= 3) {
-                const prog = this.gl.getParameter(this.gl.CURRENT_PROGRAM);
-                const err = this.gl.getError();
-                log('🔍 [patch] drawMesh[' + index + ']: prog=' + (prog ? 'set' : 'null') + ' err=' + err);
-              }
-            };
-            
-            origDoDrawModel(shaderPath);
-            log('🔍 [patch] doDrawModel done, drawCallCount=' + drawCallCount);
-            
-            // Restore
-            this.drawMeshWebGL = origDrawMesh;
-          };
-        }
-        
         Live2D5Test.renderFrame(gl, canvas, model);
         log('✅ 渲染调用完成');
-
-        // 渲染后 GL 诊断
-        
-        // 手动验证 GL
-        const testVs = gl.createShader(gl.VERTEX_SHADER);
-        gl.shaderSource(testVs, '#version 300 es\nin vec2 a;void main(){gl_Position=vec4(a,0,1);}');
-        gl.compileShader(testVs);
-        const testFs = gl.createShader(gl.FRAGMENT_SHADER);
-        gl.shaderSource(testFs, '#version 300 es\nprecision mediump float;out vec4 c;void main(){c=vec4(1,0,0,1);}');
-        gl.compileShader(testFs);
-        const testProg = gl.createProgram();
-        gl.attachShader(testProg, testVs);
-        gl.attachShader(testProg, testFs);
-        gl.bindAttribLocation(testProg, 0, 'a');
-        gl.linkProgram(testProg);
-        gl.useProgram(testProg);
-        const testBuf = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, testBuf);
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-0.5,-0.5, 0.5,-0.5, 0,0.5]), gl.STATIC_DRAW);
-        gl.enableVertexAttribArray(0);
-        gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
-        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-        gl.viewport(0, 0, canvas.width, canvas.height);
-        gl.disable(gl.BLEND);
-        gl.drawArrays(gl.TRIANGLES, 0, 3);
-        const testPx = new Uint8Array(4);
-        gl.readPixels(200, 300, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, testPx);
-        log('🔍 手动三角形: RGBA=[' + testPx[0] + ',' + testPx[1] + ',' + testPx[2] + ',' + testPx[3] + ']');
-        gl.deleteProgram(testProg); gl.deleteShader(testVs); gl.deleteShader(testFs); gl.deleteBuffer(testBuf);
-        gl.enable(gl.BLEND);
-        const curProg = gl.getParameter(gl.CURRENT_PROGRAM);
-        const blendEnabled = gl.isEnabled(gl.BLEND);
-        const depthEnabled = gl.isEnabled(gl.DEPTH_TEST);
-        const cullEnabled = gl.isEnabled(gl.CULL_FACE);
-        log('🔍 GL 状态: program=' + (curProg ? 'set' : 'null') + 
-            ' blend=' + blendEnabled + ' depth=' + depthEnabled + ' cull=' + cullEnabled);
-        
-        // 检查 shader program 编译状态
-        try {
-          const sm = Live2D5Test.CubismShaderManager_WebGL.getInstance().getShader(gl);
-          const sets = sm._shaderSets;
-          if (sets && sets.length > 0) {
-            let nullCount = 0;
-            let validCount = 0;
-            for (let i = 0; i < Math.min(sets.length, 15); i++) {
-              const prog = sets[i]?.shaderProgram;
-              if (prog) {
-                validCount++;
-                // 验证 program 是否真的可用
-                const linked = gl.getProgramParameter(prog, gl.LINK_STATUS);
-                if (!linked) {
-                  log('❌ shader[' + i + '] link 失败: ' + gl.getProgramInfoLog(prog));
-                }
-              } else {
-                nullCount++;
-              }
-            }
-            log('🔍 shader sets: ' + sets.length + ' 个, 前15中 valid=' + validCount + ' null=' + nullCount);
-          }
-        } catch(e) {
-          log('🔍 shader 检查异常: ' + e.message);
-        }
-        
-        // 检查第一个可见 drawable 的顶点数据
-        const mdl2 = model.getModel ? model.getModel() : null;
-        if (mdl2) {
-          for (let i = 0; i < mdl2.getDrawableCount(); i++) {
-            if (mdl2.getDrawableDynamicFlagIsVisible(i)) {
-              const verts = mdl2.getDrawableVertices(i);
-              const vertCount = mdl2.getDrawableVertexCount(i);
-              const idxCount = mdl2.getDrawableVertexIndexCount(i);
-              const opacity = mdl2.getDrawableOpacity(i);
-              log('🔍 drawable[' + i + ']: verts=' + vertCount + ' idx=' + idxCount + 
-                  ' opacity=' + opacity + ' firstVert=[' + verts[0]?.toFixed(2) + ',' + verts[1]?.toFixed(2) + ']');
-              break;
-            }
-          }
-        }
-
-        // 检查 FBO 内容
-        const r2 = model.getRenderer();
-        const rt0 = r2?._modelRenderTargets?.[0];
-        if (rt0) {
-          const fboW = rt0.getBufferWidth?.();
-          const fboH = rt0.getBufferHeight?.();
-          log('🔍 FBO 尺寸: ' + fboW + 'x' + fboH);
-          const fboTex = rt0.getColorBuffer?.();
-          if (fboTex) {
-            const tmpFbo = gl.createFramebuffer();
-            gl.bindFramebuffer(gl.FRAMEBUFFER, tmpFbo);
-            gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, fboTex, 0);
-            const fp = new Uint8Array(4);
-            gl.readPixels(Math.floor(fboW/2), Math.floor(fboH/2), 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, fp);
-            log('🔍 FBO 中心: RGBA=[' + fp[0] + ',' + fp[1] + ',' + fp[2] + ',' + fp[3] + ']');
-            gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-            gl.deleteFramebuffer(tmpFbo);
-          }
-        } else {
-          log('🔍 无 FBO（直接渲染到 canvas）');
-        }
-
-        // 检查当前绑定的 FBO
-        const boundFbo = gl.getParameter(gl.FRAMEBUFFER_BINDING);
-        log('🔍 当前绑定: ' + (boundFbo === null ? 'canvas' : 'FBO'));
-        const vp = gl.getParameter(gl.VIEWPORT);
-        log('🔍 viewport: ' + Array.from(vp).join(','));
 
         // 检查 canvas 像素
         const centerX = Math.floor(canvas.width / 2);
@@ -322,7 +134,7 @@
         gl.readPixels(centerX, centerY, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px);
         log('🔍 canvas 中心: RGBA=[' + px[0] + ',' + px[1] + ',' + px[2] + ',' + px[3] + ']');
 
-        // 判断结果 — 使用 FBO 或 canvas 中心像素
+        // 判断结果
         const hasContent = px[3] > 0;
         window.__testResult = {
           ok: hasContent,
