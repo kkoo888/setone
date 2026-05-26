@@ -507,18 +507,6 @@ const Live2D5PetPage: React.FC = () => {
       )}
 
       {/* Cubism 5 标识 */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 4,
-          right: 4,
-          fontSize: 10,
-          color: 'rgba(255,255,255,0.4)',
-          pointerEvents: 'none',
-        }}
-      >
-        C5
-      </div>
     </div>
   )
 }
