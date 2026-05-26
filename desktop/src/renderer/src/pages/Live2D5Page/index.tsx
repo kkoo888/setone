@@ -142,7 +142,14 @@ export function Live2D5Page() {
 
   useEffect(() => {
     refreshStatus()
-    refreshRegisteredModels()
+    refreshRegisteredModels().then(() => {
+      // 读取已应用模型的缩放值
+      window.electronAPI.invoke('live2d5_get_applied_model').then((res: { success: boolean; data: { scale?: number } | null }) => {
+        if (res?.success && res.data?.scale) {
+          setModelScale(res.data.scale)
+        }
+      }).catch(() => {})
+    })
     const interval = setInterval(refreshStatus, 3000)
     return () => clearInterval(interval)
   }, [refreshStatus, refreshRegisteredModels])
@@ -951,7 +958,7 @@ export function Live2D5Page() {
               </div>
             </div>
 
-            {/* ★ 新增：模型缩放 */}
+            {/* ★ 模型缩放 */}
             <div className="live2d5-info" style={{ marginTop: 'var(--spacing-md)' }}>
               <h4>📐 模型缩放</h4>
               <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', marginTop: 'var(--spacing-sm)' }}>
@@ -962,6 +969,18 @@ export function Live2D5Page() {
                   step="0.05"
                   value={modelScale}
                   onChange={e => setModelScale(parseFloat(e.target.value))}
+                  onMouseUp={async () => {
+                    const applied = registeredModels.find(m => m.applied)
+                    if (applied) {
+                      await window.electronAPI.invoke('live2d5_set_scale', { path: applied.path, scale: modelScale })
+                    }
+                  }}
+                  onTouchEnd={async () => {
+                    const applied = registeredModels.find(m => m.applied)
+                    if (applied) {
+                      await window.electronAPI.invoke('live2d5_set_scale', { path: applied.path, scale: modelScale })
+                    }
+                  }}
                   style={{ flex: 1 }}
                 />
                 <span style={{ minWidth: 48, textAlign: 'right', fontSize: 'var(--font-size-sm)' }}>

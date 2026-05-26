@@ -17,14 +17,37 @@ const ALLOWED_INVOKE_CHANNELS = [
   'live2d5_motion',
   'live2d5_start_drag',
   'live2d5:request-drag',
-  'live2d5_get_applied_model'
+  'live2d5_get_applied_model',
+  'live2d5_get_models',
+  'live2d5_switch_model',
+  'live2d5_unload_model',
+  'live2d5_get_live_status',
+  'live2d5_get_preview',
+  'live2d5_get_motion_queue',
+  'live2d5_switch_to_microphone',
+  'live2d5_switch_to_wav',
+  'live2d5_stop_audio',
+  'live2d5_get_audio_type',
+  'live2d5_set_fps',
+  'live2d5_get_fps',
+  'live2d5_set_bubble',
+  'live2d5_get_bubble',
+  'live2d5_scan_model',
+  'live2d5_select_directory',
+  'live2d5_reload_model',
+  'live2d5_get_registered_models',
+  'live2d5_register_models',
+  'live2d5_apply_model',
+  'live2d5_unregister_model',
+  'live2d5_set_scale',
 ]
 
 const ALLOWED_RECEIVE_CHANNELS = [
   'live2d5:set-expression',
   'live2d5:play-motion',
   'live2d5:start-drag',
-  'live2d5:destroy'
+  'live2d5:destroy',
+  'live2d5:set-bubble',
 ]
 
 contextBridge.exposeInMainWorld('electronAPI', {

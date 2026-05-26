@@ -1,5 +1,19 @@
 # Changelog - Live2D Cubism 5 模块
 
+## [2.0.1] - 2026-05-26
+
+### 修复
+- **渲染循环调试代码清理** — 从 `renderFrame()` 移除 FBO 诊断代码（readPixels + 临时 shader 编译），改为 `verifyFBOOnce()` 在模型加载完成后执行一次验证
+- **模型缩放设置连接** — 新增 `live2d5_set_scale` IPC handler，管理页面缩放滑块现在会持久化到模型注册表，宠物窗口启动时读取
+- **module.json 版本同步** — 从 1.4.0 更新到 2.0.0
+- **Preload 白名单补全** — 新增 22 个 invoke channel 和 1 个 receive channel，覆盖管理页面所有 IPC 调用
+- **texture-optimizer 集成** — AppModel 纹理加载改用 `needsOptimization()` / `calculateScaledSize()` 工具函数
+
+### 清理
+- **console.log 降级** — 全模块 50+ 处调试日志从 `console.log` 改为 `console.debug`，仅保留错误和关键状态日志
+- **renderer 诊断代码移除** — 删除 `setRenderState` 前后的详细日志、FBO 像素检查、viewport 诊断等
+- **Capabilities 字段补全** — `module.json` 的 provides 新增 `live2d5_set_scale`
+
 ## [2.0.0] - 2026-05-21
 
 ### 🔴 重大重构：基于 CubismUserModel 重写

@@ -86,4 +86,5 @@ export interface Live2D5IPCChannels {
   'live2d5_register_models': (args: { models: RegisteredModelEntry[] }) => Promise<{ success: boolean; data: RegisteredModelEntry[]; added: number }>
   'live2d5_apply_model': (args: { path: string }) => Promise<{ success: boolean; data?: RegisteredModelEntry[]; error?: string }>
   'live2d5_unregister_model': (args: { path: string }) => Promise<{ success: boolean; data?: RegisteredModelEntry[]; error?: string }>
+  'live2d5_set_scale': (args: { path: string; scale: number }) => Promise<{ success: boolean; scale?: number; error?: string }>
 }

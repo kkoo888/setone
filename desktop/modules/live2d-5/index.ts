@@ -5,7 +5,7 @@
  *
  * 所有能力统一通过 getCapabilities() 暴露，不使用内部 IPC。
  */
-console.log('[Live2D5] 🔵 模块 index.ts 文件已加载')
+console.debug('[Live2D5] 模块 index.ts 已加载')
 import type { Module, ModuleContext, Capability } from '../../src/main/types/module'
 import { BrowserWindow, ipcMain, app, dialog, protocol, net } from 'electron'
 import { join, dirname } from 'path'
@@ -31,6 +31,7 @@ interface RegisteredModelEntry {
   motionGroups?: string[]
   hasPhysics?: boolean
   hasPose?: boolean
+  scale?: number
 }
 
 export default class Live2D5Module implements Module {
@@ -79,7 +80,7 @@ export default class Live2D5Module implements Module {
       if (existing.length > 0 && !existing.some(m => m.applied !== undefined)) {
         existing[0].applied = true
         this.writeModelRegistry(existing)
-        console.log(`[Live2D5] 🔄 迁移：已为 "${existing[0].name}" 设置 applied: true`)
+        console.debug(`[Live2D5] 迁移：已为 "${existing[0].name}" 设置 applied: true`)
         return
       }
 
@@ -123,7 +124,7 @@ export default class Live2D5Module implements Module {
 
       if (models.length > 0) {
         this.writeModelRegistry(models)
-        console.log(`[Live2D5] 📦 自动注册 ${models.length} 个默认模型，已应用: ${models[0].name}`)
+        console.debug(`[Live2D5] 📦 自动注册 ${models.length} 个默认模型，已应用: ${models[0].name}`)
       }
     } catch (err) {
       console.error('[Live2D5] 注册默认模型失败:', err)
@@ -140,7 +141,7 @@ export default class Live2D5Module implements Module {
       }
       return net.fetch(pathToFileURL(filePath).href)
     })
-    console.log('[Live2D5] ✅ local-file:// 协议已注册')
+    console.debug('[Live2D5] ✅ local-file:// 协议已注册')
   }
 
   async activate(context: ModuleContext): Promise<void> {
@@ -465,6 +466,20 @@ export default class Live2D5Module implements Module {
       return { success: false, error: '宠物窗口未打开' }
     })
 
+    // ★ 新增：设置模型缩放（持久化到模型注册表）
+    ipcMain.handle('live2d5_set_scale', async (_event, args: { path: string; scale: number }) => {
+      try {
+        const registry = this.readModelRegistry()
+        const target = registry.find(m => m.path === args.path)
+        if (!target) return { success: false, error: '模型未找到' }
+        target.scale = Math.max(0.1, Math.min(3.0, args.scale))
+        this.writeModelRegistry(registry)
+        return { success: true, scale: target.scale }
+      } catch (err) {
+        return { success: false, error: (err as Error).message }
+      }
+    })
+
     // ★ 获取已注册模型列表（模型库）
     ipcMain.handle('live2d5_get_registered_models', async () => {
       return { success: true, data: this.readModelRegistry() }
@@ -560,6 +575,7 @@ export default class Live2D5Module implements Module {
     ipcMain.removeHandler('live2d5_register_models')
     ipcMain.removeHandler('live2d5_apply_model')
     ipcMain.removeHandler('live2d5_unregister_model')
+    ipcMain.removeHandler('live2d5_set_scale')
   }
 
   getCapabilities(): Capability[] {
@@ -1052,6 +1068,36 @@ export default class Live2D5Module implements Module {
       },
       {
         type: 'tool',
+        name: 'live2d5_set_scale',
+        description: '设置 Live2D 5 模型缩放比例（持久化）',
+        priority: 10,
+        moduleId: this.id,
+        parameters: {
+          type: 'object',
+          properties: {
+            path: { type: 'string', description: '模型文件路径' },
+            scale: { type: 'number', description: '缩放比例 (0.1~3.0)' }
+          },
+          required: ['path', 'scale']
+        },
+        handler: {
+          execute: async (p) => {
+            const { path: modelPath, scale } = p as { path: string; scale: number }
+            try {
+              const registry = this.readModelRegistry()
+              const target = registry.find(m => m.path === modelPath)
+              if (!target) return { success: false, error: '模型未找到' }
+              target.scale = Math.max(0.1, Math.min(3.0, scale))
+              this.writeModelRegistry(registry)
+              return { success: true, scale: target.scale }
+            } catch (err) {
+              return { success: false, error: (err as Error).message }
+            }
+          }
+        }
+      },
+      {
+        type: 'tool',
         name: 'live2d5_unregister_model',
         description: '从模型库移除指定模型',
         priority: 10,
@@ -1203,7 +1249,7 @@ export default class Live2D5Module implements Module {
       return
     }
 
-    console.log('[Live2D5] 🪟 开始创建宠物窗口...')
+    console.debug('[Live2D5] 🪟 开始创建宠物窗口...')
 
     this.petWindow = new BrowserWindow({
       width: PET_WINDOW_WIDTH,
@@ -1228,7 +1274,7 @@ export default class Live2D5Module implements Module {
     })
 
     this.petWindow.webContents.on('did-finish-load', () => {
-      console.log('[Live2D5] ✅ renderer 页面 did-finish-load')
+      console.debug('[Live2D5] ✅ renderer 页面 did-finish-load')
     })
 
     // 捕获 renderer 端的 console 输出（关键！renderer 的 console.log 不会自动输出到主进程终端）
@@ -1248,7 +1294,7 @@ export default class Live2D5Module implements Module {
     })
 
     this.petWindow.webContents.on('responsive', () => {
-      console.log('[Live2D5] ✅ renderer 进程恢复响应')
+      console.debug('[Live2D5] ✅ renderer 进程恢复响应')
     })
 
     // 监听页面崩溃
@@ -1264,7 +1310,7 @@ export default class Live2D5Module implements Module {
 
     // 清理：窗口关闭时移除监听
     this.petWindow.on('closed', () => {
-      console.log('[Live2D5] 🪟 宠物窗口已关闭')
+      console.debug('[Live2D5] 🪟 宠物窗口已关闭')
       ipcMain.removeListener('live2d5:cleanup-done', cleanupHandler)
       this.petWindow = null
       // 如果有 deactivate 等待的 resolve，调用它
@@ -1275,20 +1321,20 @@ export default class Live2D5Module implements Module {
     })
 
     // 加载独立的 Live2D 5 页面（独立 renderer，不会与旧 SDK 冲突）
-    console.log('[Live2D5] 🌐 VITE_DEV_SERVER_URL:', process.env.VITE_DEV_SERVER_URL ?? '(undefined)')
+    console.debug('[Live2D5] 🌐 VITE_DEV_SERVER_URL:', process.env.VITE_DEV_SERVER_URL ?? '(undefined)')
     if (process.env.VITE_DEV_SERVER_URL) {
       const url = `${process.env.VITE_DEV_SERVER_URL}#/live2d5-pet`
-      console.log('[Live2D5] 🌐 加载 URL:', url)
+      console.debug('[Live2D5] 🌐 加载 URL:', url)
       await this.petWindow.loadURL(url)
-      console.log('[Live2D5] ✅ 页面加载完成')
+      console.debug('[Live2D5] ✅ 页面加载完成')
     } else {
       // renderer 由 electron-vite 构建到 dist/renderer/，不在 modules-dist/
       const rendererPath = join(__dirname, '../../dist/renderer/index.html')
-      console.log('[Live2D5] 🌐 加载文件:', rendererPath)
+      console.debug('[Live2D5] 🌐 加载文件:', rendererPath)
       await this.petWindow.loadFile(rendererPath, {
         hash: '#/live2d5-pet'
       })
-      console.log('[Live2D5] ✅ 页面加载完成')
+      console.debug('[Live2D5] ✅ 页面加载完成')
     }
   }
 
@@ -1299,13 +1345,13 @@ export default class Live2D5Module implements Module {
   private closePetWindow(): Promise<void> {
     return new Promise<void>((resolve) => {
       if (!this.petWindow || this.petWindow.isDestroyed()) {
-        console.log('[Live2D5] 🔒 closePetWindow: 窗口已销毁，跳过')
+        console.debug('[Live2D5] 🔒 closePetWindow: 窗口已销毁，跳过')
         this.petWindow = null
         resolve()
         return
       }
 
-      console.log('[Live2D5] 🔒 closePetWindow: 开始关闭流程...')
+      console.debug('[Live2D5] 🔒 closePetWindow: 开始关闭流程...')
 
       // 设置超时：如果 renderer 3秒内没响应，强制关闭
       const timeout = setTimeout(() => {

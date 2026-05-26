@@ -46,7 +46,7 @@ const Live2D5PetPage: React.FC = () => {
     let cancelled = false
 
     const load = async () => {
-      console.log('[Live2D5PetPage] 🚀 组件挂载, 开始加载流程...')
+      console.debug('[Live2D5PetPage] 🚀 组件挂载, 开始加载流程...')
       if (!containerRef.current) {
         console.error('[Live2D5PetPage] ❌ containerRef.current 为空, 无法加载')
         return
@@ -59,7 +59,7 @@ const Live2D5PetPage: React.FC = () => {
           resolve()
           return
         }
-        console.log('[Live2D5PetPage] ⏳ 等待容器布局...')
+        console.debug('[Live2D5PetPage] ⏳ 等待容器布局...')
         const observer = new ResizeObserver((entries) => {
           for (const entry of entries) {
             if (entry.contentRect.width > 10 && entry.contentRect.height > 10) {
@@ -70,17 +70,17 @@ const Live2D5PetPage: React.FC = () => {
         })
         observer.observe(container)
       })
-      console.log('[Live2D5PetPage] ✅ 容器尺寸:', container.clientWidth, 'x', container.clientHeight)
+      console.debug('[Live2D5PetPage] ✅ 容器尺寸:', container.clientWidth, 'x', container.clientHeight)
 
       try {
-        console.log('[Live2D5PetPage] 📦 开始动态导入 cubism5-service...')
+        console.debug('[Live2D5PetPage] 📦 开始动态导入 cubism5-service...')
         setState('loading')
         const service = await loadCubism5Service()
         serviceRef.current = service
-        console.log('[Live2D5PetPage] ✅ cubism5-service 导入成功')
+        console.debug('[Live2D5PetPage] ✅ cubism5-service 导入成功')
 
         service.setStateCallback((s) => {
-          console.log('[Live2D5PetPage] 🔄 状态变更:', s)
+          console.debug('[Live2D5PetPage] 🔄 状态变更:', s)
           if (!cancelled) {
             setState(s === 'idle' ? 'idle' : s === 'loading' ? 'loading' : s === 'loaded' ? 'loaded' : 'error')
           }
@@ -89,7 +89,7 @@ const Live2D5PetPage: React.FC = () => {
         // ★ 新增：监听 shader 就绪事件
         service.setOnShaderReady(() => {
           if (!cancelled) {
-            console.log('[Live2D5PetPage] ✅ shader 就绪，隐藏 loading')
+            console.debug('[Live2D5PetPage] ✅ shader 就绪，隐藏 loading')
             setShaderReady(true)
           }
         })
@@ -114,12 +114,12 @@ const Live2D5PetPage: React.FC = () => {
               modelPath = new URL(rawPath, window.location.href).href
             }
             if (appliedRes.data.scale) modelScale = appliedRes.data.scale
-            console.log('[Live2D5PetPage] 📦 已应用模型:', modelName, modelPath)
+            console.debug('[Live2D5PetPage] 📦 已应用模型:', modelName, modelPath)
           } else {
             // 没有已应用模型，fallback 到默认 Ren
             modelName = 'Ren'
             modelPath = new URL('./live2d/Ren/Ren.model3.json', window.location.href).href
-            console.log('[Live2D5PetPage] ⚠️ 无已应用模型，使用默认 Ren')
+            console.debug('[Live2D5PetPage] ⚠️ 无已应用模型，使用默认 Ren')
           }
         } catch (err) {
           modelName = 'Ren'
@@ -127,7 +127,7 @@ const Live2D5PetPage: React.FC = () => {
           console.warn('[Live2D5PetPage] ⚠️ 读取已应用模型失败，使用默认:', err)
         }
 
-        console.log('[Live2D5PetPage] 📦 开始加载模型, modelPath:', modelPath)
+        console.debug('[Live2D5PetPage] 📦 开始加载模型, modelPath:', modelPath)
 
         await service.loadModel(
           {
@@ -138,7 +138,7 @@ const Live2D5PetPage: React.FC = () => {
           containerRef.current
         )
 
-        console.log('[Live2D5PetPage] ✅ 模型加载完成')
+        console.debug('[Live2D5PetPage] ✅ 模型加载完成')
         if (!cancelled) setState('loaded')
       } catch (err) {
         console.error('[Live2D5PetPage] ❌ 模型加载异常:', err)

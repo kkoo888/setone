@@ -37,6 +37,7 @@ import { CubismIdHandle } from '../lib/id/cubismid'
 import { CubismViewMatrix } from '../lib/math/cubismviewmatrix'
 import { CubismMatrix44 } from '../lib/math/cubismmatrix44'
 import { WavFileHandler } from './WavFileHandler'
+import { needsOptimization, calculateScaledSize } from '../utils/texture-optimizer'
 
 // ★ 动作优先级常量（与 Demo LAppDefine 一致）
 const PriorityNone = 0
@@ -242,7 +243,7 @@ export class AppModel extends CubismUserModel {
 
     if (layout.size > 0) {
       modelMatrix.setupFromLayout(layout)
-      console.log('[AppModel] 📐 Layout 已从 model3.json 应用')
+      console.debug('[AppModel] Layout 已从 model3.json 应用')
     } else {
       // ★ 修复：没有 Layout 段时，确保模型矩阵正确映射到可视范围
       // CubismModelMatrix 构造函数已调用 setHeight(2.0)，理论上模型应在 -1~1 范围
@@ -250,15 +251,14 @@ export class AppModel extends CubismUserModel {
       const model = this.getModel()
       const canvasW = model.getCanvasWidth()
       const canvasH = model.getCanvasHeight()
-      console.log(`[AppModel] ⚠️ 无 Layout 段，Canvas: ${canvasW.toFixed(2)} x ${canvasH.toFixed(2)}`)
-      console.log(`[AppModel] ⚠️ 模型矩阵: [${modelMatrix.getArray()[0].toFixed(4)}, ${modelMatrix.getArray()[5].toFixed(4)}]`)
+      console.debug(`[AppModel] 无 Layout 段，Canvas: ${canvasW.toFixed(2)} x ${canvasH.toFixed(2)}`)
     }
   }
 
   /** 加载纹理 */
   private async loadTextures(): Promise<void> {
     const count = this._setting.getTextureCount()
-    console.log(`[AppModel] 🖼️ 纹理数量: ${count}, 模型目录: ${this._modelDir}`)
+    console.debug(`[AppModel] 纹理数量: ${count}, 模型目录: ${this._modelDir}`)
     if (count === 0) {
       console.warn('[AppModel] ⚠️ 没有纹理文件')
       return
@@ -292,7 +292,7 @@ export class AppModel extends CubismUserModel {
       }
     }
 
-    console.log(`[AppModel] 🖼️ 纹理加载完成: ${loadedCount}/${count} 成功, ${failedCount} 失败`)
+    console.debug(`[AppModel] 纹理加载完成: ${loadedCount}/${count} 成功, ${failedCount} 失败`)
 
     // ★ 修复：纹理全部失败时抛出异常，不能静默
     if (loadedCount === 0 && failedCount > 0) {
@@ -324,20 +324,20 @@ export class AppModel extends CubismUserModel {
           return
         }
 
-        // ★ 新增：纹理尺寸优化
+        // 纹理尺寸优化（使用 texture-optimizer 工具）
         let source: HTMLImageElement | HTMLCanvasElement = img
         const maxTextureSize = gl.getParameter(gl.MAX_TEXTURE_SIZE) || 4096
-        if (img.naturalWidth > maxTextureSize || img.naturalHeight > maxTextureSize) {
-          console.debug(`[AppModel] 📐 纹理过大 (${img.naturalWidth}x${img.naturalHeight})，自动缩放`)
+        if (needsOptimization(img.naturalWidth, img.naturalHeight, { maxWidth: maxTextureSize, maxHeight: maxTextureSize })) {
+          const { width, height } = calculateScaledSize(img.naturalWidth, img.naturalHeight, maxTextureSize, maxTextureSize)
+          console.debug(`[AppModel] 纹理过大 (${img.naturalWidth}x${img.naturalHeight})，缩放至 ${width}x${height}`)
           const canvas = document.createElement('canvas')
-          const scale = Math.min(maxTextureSize / img.naturalWidth, maxTextureSize / img.naturalHeight, 1)
-          canvas.width = Math.floor(img.naturalWidth * scale)
-          canvas.height = Math.floor(img.naturalHeight * scale)
+          canvas.width = width
+          canvas.height = height
           const ctx = canvas.getContext('2d')
           if (ctx) {
             ctx.imageSmoothingEnabled = true
             ctx.imageSmoothingQuality = 'high'
-            ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+            ctx.drawImage(img, 0, 0, width, height)
             source = canvas
           }
         }
@@ -639,7 +639,7 @@ export class AppModel extends CubismUserModel {
       const firstNonIdle = this._motionGroups.find(g => g.group !== 'Idle')
       this._tapMotionGroup = firstNonIdle?.group ?? ''
     }
-    console.log(`[AppModel] 📋 点击动作组: ${this._tapMotionGroup || '(无)'}`)
+    console.debug(`[AppModel] 点击动作组: ${this._tapMotionGroup || '(无)'}`)
   }
 
   /** 应用缩放 */

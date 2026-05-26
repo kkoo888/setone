@@ -82,10 +82,8 @@ class Cubism5Service {
   // ★ 新增：对话气泡文本
   private _bubbleText: string | null = null
 
-  // ★ 新增：shader 就绪通知标志（防止重复触发）
+  // shader 就绪通知标志（防止重复触发）
   private _shaderReadyNotified: boolean = false
-  // ★ 新增：渲染验证标志（首帧验证用）
-  private _renderVerified: boolean = false
 
   setStateCallback(cb: StateCallback | null): void {
     this.onStateChange = cb
@@ -178,7 +176,7 @@ class Cubism5Service {
       }
 
       if (win.Live2DCubismCore && !(win.Live2DCubismCore as Record<string, unknown>).Memory) {
-        console.log('[Cubism5] ⚠️ 检测到 Cubism 4 SDK，需要加载 Cubism 5 SDK 覆盖')
+        console.debug('[Cubism5] ⚠️ 检测到 Cubism 4 SDK，需要加载 Cubism 5 SDK 覆盖')
       }
 
       await new Promise<void>((resolve, reject) => {
@@ -290,18 +288,8 @@ class Cubism5Service {
       // ★ 关键修复：设置 renderer 的 offscreen render target 尺寸为 canvas 实际像素尺寸
       // setupRenderer() 使用的是模型内部坐标（很小），导致 offscreen FBO 尺寸不匹配
       const renderer = appModel.getRenderer()
-      console.log('[Cubism5] 🔍 renderer 存在:', !!renderer, 'canvas:', this.canvas?.width, 'x', this.canvas?.height)
       if (renderer) {
-        const oldW = (renderer as any)._modelRenderTargetWidth ?? 'N/A'
-        const oldH = (renderer as any)._modelRenderTargetHeight ?? 'N/A'
-        const rtLen = renderer._modelRenderTargets?.length ?? 0
-        const rt0W = renderer._modelRenderTargets?.[0]?.getBufferWidth?.() ?? 'N/A'
-        const rt0H = renderer._modelRenderTargets?.[0]?.getBufferHeight?.() ?? 'N/A'
-        console.log(`[Cubism5] 🔧 setRenderState 前: rendererTarget=${oldW}x${oldH}, rtCount=${rtLen}, rt0Size=${rt0W}x${rt0H}`)
         renderer.setRenderState(null, [0, 0, this.canvas.width, this.canvas.height])
-        const newW = (renderer as any)._modelRenderTargetWidth
-        const newH = (renderer as any)._modelRenderTargetHeight
-        console.log(`[Cubism5] 🔧 setRenderState 后: rendererTarget=${newW}x${newH}, rt0Size 仍=${rt0W}x${rt0H} (下次渲染时重建)`)
       }
 
       // 存入模型管理 Map
@@ -314,12 +302,13 @@ class Cubism5Service {
       this._renderVerified = false  // 重置渲染验证标志
 
       this.updateState('loaded')
-      console.log('[Cubism5] ✅ 模型加载完成:', config.name)
-      console.log('[Cubism5] 📋 表情:', appModel.expressionNames)
-      console.log('[Cubism5] 📋 动作组:', appModel.motionGroups.map(g => g.group))
+      console.debug('[Cubism5] ✅ 模型加载完成:', config.name)
 
       // 开始渲染循环
       this.startRenderLoop()
+
+      // 首次加载后做一次 FBO 验证（确保渲染管线正常）
+      this.verifyFBOOnce()
     } catch (err) {
       console.error('[Cubism5] ❌ 模型加载失败:', err)
       this.updateState('error')
@@ -378,7 +367,7 @@ class Cubism5Service {
 
     appModel.releaseAll()
     this._models.delete(name)
-    console.log(`[Cubism5] ✅ 模型 "${name}" 已卸载，剩余模型: ${this._models.size}`)
+    console.debug(`[Cubism5] 模型 "${name}" 已卸载，剩余模型: ${this._models.size}`)
     return true
   }
 
@@ -496,7 +485,7 @@ class Cubism5Service {
 
       // 如果上下文仍然处于 lost 状态，等待浏览器恢复
       if (!gl || gl.isContextLost()) {
-        console.log('[Cubism5] ⏳ 等待 WebGL 上下文恢复...')
+        console.debug('[Cubism5] 等待 WebGL 上下文恢复...')
         gl = await new Promise<WebGLRenderingContext | WebGL2RenderingContext>((resolve, reject) => {
           const timeout = setTimeout(() => reject(new Error('等待上下文恢复超时')), 5000)
           const onRestored = () => {
@@ -519,7 +508,7 @@ class Cubism5Service {
 
       this.lastUpdateTime = performance.now() / 1000
       this.startRenderLoop()
-      console.log('[Cubism5] ✅ 从上下文丢失中恢复完成')
+      console.debug('[Cubism5] 上下文丢失恢复完成')
     } catch (err) {
       console.error('[Cubism5] ❌ 恢复失败:', err)
       this.updateState('error')
@@ -607,23 +596,7 @@ class Cubism5Service {
     gl.enable(gl.BLEND)
     gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA)
 
-    // ★ 诊断：首帧打印关键状态
-    if (!this._debugLogged) {
-      this._debugLogged = true
-      const renderer = this.model.getRenderer()
-      const shader = renderer ? (renderer as any)._shaderManager ?? null : null
-      const shaderLoaded = shader ? shader._isShaderLoaded : 'no shader manager'
-      console.log('[Cubism5] 🔍 渲染诊断:', {
-        canvasSize: `${canvas.width}x${canvas.height}`,
-        glContext: gl ? `${gl instanceof WebGL2RenderingContext ? 'WebGL2' : 'WebGL1'}` : 'null',
-        drawableCount: this.model.getModel()?.getDrawableCount?.() ?? 'unknown',
-        shaderLoaded,
-        rendererExists: !!renderer,
-      })
-    }
-
-    // ★ 新增：shader 就绪后通知 UI 层（仅触发一次）
-    // 在 model.render() 之后检查，确保 doDrawModel 已经真正执行过
+    // ② shader 就绪后通知 UI 层（仅触发一次）
     if (!this._shaderReadyNotified) {
       try {
         const shader = CubismShaderManager_WebGL.getInstance().getShader(this.gl)
@@ -634,82 +607,56 @@ class Cubism5Service {
       } catch { /* ignore */ }
     }
 
-    // ② 计算 deltaTime（钳制到合理范围，防止负值或过大跳帧）
+    // ③ 计算 deltaTime（钳制到合理范围，防止负值或过大跳帧）
     const now = performance.now() / 1000
     let deltaTime = now - this.lastUpdateTime
     this.lastUpdateTime = now
     if (deltaTime < 0) deltaTime = 0
     if (deltaTime > 0.5) deltaTime = 0.5
 
-    // ③ 通过 AppModel.updateModel 统一调度所有效果（官方流程第 2 步）
+    // ④ 通过 AppModel.updateModel 统一调度所有效果（官方流程第 2 步）
     this.model.updateModel(deltaTime)
 
-    // ④ 创建 MVP 矩阵并渲染（官方流程第 3-4 步）
+    // ⑤ 创建 MVP 矩阵并渲染（官方流程第 3-4 步）
     const mvp = this.createMvpMatrix(canvas.width, canvas.height)
     this.model.render(gl, mvp)
+  }
 
-    // ★ 诊断：每帧检查 FBO 纹理内容（直到渲染成功）
-    if (this._shaderReadyNotified && !this._renderVerified) {
-      const renderer = this.model.getRenderer()
-      const rt0 = renderer?._modelRenderTargets?.[0]
-      const fboTex = rt0?.getColorBuffer?.()
+  /**
+   * 首次加载后一次性 FBO 验证
+   * 确保渲染管线正常工作，仅在 loadModel 完成后调用一次
+   */
+  private verifyFBOOnce(): void {
+    if (!this.gl || !this.model || !this.canvas) return
 
-      if (fboTex) {
-        // 读取 FBO 纹理像素
+    // 延迟一帧执行，确保首帧渲染已完成
+    requestAnimationFrame(() => {
+      if (!this.gl || !this.model || this.destroyed) return
+
+      try {
+        const renderer = this.model.getRenderer()
+        const rt0 = renderer?._modelRenderTargets?.[0]
+        const fboTex = rt0?.getColorBuffer?.()
+        if (!fboTex) return
+
+        const gl = this.gl
         const tempFbo = gl.createFramebuffer()
         gl.bindFramebuffer(gl.FRAMEBUFFER, tempFbo)
         gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, fboTex, 0)
-        const fboPixels = new Uint8Array(4)
-        gl.readPixels(200, 250, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, fboPixels)
+        const pixels = new Uint8Array(4)
+        gl.readPixels(200, 250, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixels)
         gl.bindFramebuffer(gl.FRAMEBUFFER, null)
         gl.deleteFramebuffer(tempFbo)
 
-        if (fboPixels[3] > 0) {
-          // FBO 有内容！复制到 canvas
-          this._renderVerified = true
-          console.log('[Cubism5] ✅ FBO 有内容！RGBA:', Array.from(fboPixels))
-
-          // 用简单 shader 复制到 canvas
-          const vs = gl.createShader(gl.VERTEX_SHADER)!
-          gl.shaderSource(vs, 'attribute vec2 a;varying vec2 v;void main(){gl_Position=vec4(a,0,1);v=(a+1.0)*0.5;}')
-          gl.compileShader(vs)
-          const fs = gl.createShader(gl.FRAGMENT_SHADER)!
-          gl.shaderSource(fs, 'precision mediump float;varying vec2 v;uniform sampler2D t;void main(){gl_FragColor=texture2D(t,v);}')
-          gl.compileShader(fs)
-          const prog = gl.createProgram()!
-          gl.attachShader(prog, vs); gl.attachShader(prog, fs); gl.linkProgram(prog)
-          gl.useProgram(prog)
-          const buf = gl.createBuffer()
-          gl.bindBuffer(gl.ARRAY_BUFFER, buf)
-          gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1,1,-1,-1,1,1,1]), gl.STATIC_DRAW)
-          const loc = gl.getAttribLocation(prog, 'a')
-          gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0)
-          gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, fboTex)
-          gl.uniform1i(gl.getUniformLocation(prog, 't'), 0)
-          gl.bindFramebuffer(gl.FRAMEBUFFER, null)
-          gl.viewport(0, 0, canvas.width, canvas.height)
-          gl.disable(gl.BLEND)
-          gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)
-          gl.useProgram(null); gl.deleteProgram(prog); gl.deleteShader(vs); gl.deleteShader(fs); gl.deleteBuffer(buf)
-          console.log('[Cubism5] ✅ 已用简单 shader 复制 FBO → canvas')
+        if (pixels[3] > 0) {
+          console.debug('[Cubism5] ✅ FBO 渲染验证通过')
         } else {
-          // FBO 透明 — 每帧打印诊断直到有内容
-          const model = this.model.getModel()
-          const dc = model?.getDrawableCount?.() ?? 0
-          let visCount = 0
-          for (let i = 0; i < dc; i++) {
-            if (model?.getDrawableDynamicFlagIsVisible?.(i)) visCount++
-          }
-          // 检查当前 viewport
-          const vp = gl.getParameter(gl.VIEWPORT)
-          // 检查当前 FBO
-          const boundFbo = gl.getParameter(gl.FRAMEBUFFER_BINDING)
-          // 检查 shader program
-          const curProg = gl.getParameter(gl.CURRENT_PROGRAM)
-          console.warn(`[Cubism5] ⚠️ FBO 透明 — viewport=${Array.from(vp)} boundFbo=${boundFbo === null ? 'canvas' : 'FBO'} prog=${curProg === null ? 'null' : 'OK'} vis=${visCount}/${dc} rt0=${rt0?.getBufferWidth?.()}x${rt0?.getBufferHeight?.()}`)
+          console.warn('[Cubism5] ⚠️ FBO 首帧透明，模型可能未正确渲染')
         }
+      } catch {
+        // 验证失败不影响正常运行
       }
-    }
+    })
   }
 
   /**
@@ -765,7 +712,7 @@ class Cubism5Service {
       return
     }
     this.model.playExpression(expressionId)
-    console.log(`[Cubism5] ✅ 切换表情: ${expressionId}`)
+    console.debug(`[Cubism5] 切换表情: ${expressionId}`)
   }
 
   /**
@@ -777,7 +724,7 @@ class Cubism5Service {
       return
     }
     this.model.playMotion(motionId)
-    console.log(`[Cubism5] ✅ 播放动作: ${motionId}`)
+    console.debug(`[Cubism5] 播放动作: ${motionId}`)
   }
 
   /**
@@ -1011,7 +958,7 @@ class Cubism5Service {
         throw new Error('WebGL 上下文不可用，无法重新加载模型')
       }
 
-      console.log('[Cubism5] 🔄 GL 上下文已重建，开始加载模型...')
+      console.debug('[Cubism5] GL 上下文已重建，开始加载模型...')
 
       const appModel = new AppModel()
       await appModel.loadAssets(path, scale, this.gl)
@@ -1028,7 +975,7 @@ class Cubism5Service {
 
       this.updateState('loaded')
       this.startRenderLoop()
-      console.log(`[Cubism5] ✅ 模型重新加载完成: ${name}`)
+      console.debug(`[Cubism5] 模型重新加载完成: ${name}`)
       return true
     } catch (err) {
       console.error('[Cubism5] ❌ 模型重新加载失败:', err)
