@@ -485,9 +485,15 @@ export default class Live2D5Module implements Module {
       return { success: true, data: this.readModelRegistry() }
     })
 
-    // ★ 获取当前已应用的模型（从注册表读取）
+    // ★ 获取当前已应用的模型（从注册表读取，相对路径自动解析为绝对路径）
     ipcMain.handle('live2d5_get_applied_model', async () => {
-      return { success: true, data: this.getAppliedModel() }
+      const model = this.getAppliedModel()
+      if (model && model.path && !model.path.startsWith('/') && !model.path.match(/^[A-Za-z]:\\/)) {
+        // 相对路径：基于 app 根目录解析为绝对路径
+        const absolutePath = join(app.getAppPath(), model.path)
+        return { success: true, data: { ...model, path: absolutePath } }
+      }
+      return { success: true, data: model }
     })
 
     // ★ 注册模型（添加到模型库，默认未应用）
@@ -949,7 +955,12 @@ export default class Live2D5Module implements Module {
         },
         handler: {
           execute: async () => {
-            return { success: true, data: this.getAppliedModel() }
+            const model = this.getAppliedModel()
+            if (model && model.path && !model.path.startsWith('/') && !model.path.match(/^[A-Za-z]:\\/)) {
+              const absolutePath = join(app.getAppPath(), model.path)
+              return { success: true, data: { ...model, path: absolutePath } }
+            }
+            return { success: true, data: model }
           }
         }
       },
