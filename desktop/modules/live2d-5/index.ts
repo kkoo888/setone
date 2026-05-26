@@ -134,7 +134,18 @@ export default class Live2D5Module implements Module {
   /** 注册 local-file:// 自定义协议，让 renderer 能 fetch 本地绝对路径文件 */
   private registerLocalFileProtocol(): void {
     protocol.handle('local-file', (request) => {
-      const filePath = decodeURIComponent(request.url.replace('local-file://', ''))
+      // local-file:///C:/path 或 local-file:///path → 用 fileURLToPath 正确提取路径
+      let filePath: string
+      try {
+        filePath = fileURLToPath(request.url)
+      } catch {
+        // fallback: 手动解析
+        filePath = decodeURIComponent(request.url.replace('local-file://', ''))
+        // Windows: 去掉前导 / (local-file:///C:/... → /C:/... → C:/...)
+        if (filePath.match(/^\/[A-Za-z]:/)) {
+          filePath = filePath.slice(1)
+        }
+      }
       // 安全检查：只允许读取存在的文件
       if (!existsSync(filePath)) {
         return new Response('File not found', { status: 404 })
