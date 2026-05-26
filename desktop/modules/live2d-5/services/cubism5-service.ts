@@ -577,6 +577,24 @@ class Cubism5Service {
   }
 
   /**
+   * ★ 新增：缩放当前活跃模型（公开方法，供 IPC 调用）
+   * @param delta 缩放增量（如 0.05 放大，-0.05 缩小）
+   */
+  scaleActiveModel(delta: number): void {
+    if (!this.model) return
+    const matrix = this.model.getModelMatrix()
+    if (matrix) {
+      // ★ 注意：CubismMatrix44.scale() 是 SET 不是 MULTIPLY！
+      // 需要先读当前值再累乘
+      const arr = matrix.getArray()
+      const currentScaleX = arr[0]
+      const currentScaleY = arr[5]
+      const newScale = 1 + delta
+      matrix.scale(currentScaleX * newScale, currentScaleY * newScale)
+    }
+  }
+
+  /**
    * 渲染一帧
    * 按 Cubism 5 官方渲染流程：clear → updateModel → createMvpMatrix → render
    * @see Cubism5渲染流程.md

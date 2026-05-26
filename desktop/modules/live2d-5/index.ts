@@ -235,24 +235,8 @@ export default class Live2D5Module implements Module {
     // ★ 新增：滚轮缩放模型 — renderer 发送缩放增量，主进程调整模型缩放
     ipcMain.handle('live2d5:scale-model', async (_event, args: { delta: number }) => {
       if (!this.petWindow || this.petWindow.isDestroyed()) return
-      // 通过 executeJavaScript 调用 service 的缩放方法
       await this.petWindow.webContents.executeJavaScript(
-        `(() => {
-          const svc = window.__cubism5Service;
-          if (!svc) return;
-          const models = svc.getLoadedModels?.() ?? [];
-          const active = models.find(m => m.active);
-          if (!active) return;
-          // 缩放 delta 直接应用到模型矩阵
-          const model = svc._models?.get?.(active.name);
-          if (model) {
-            const matrix = model.getModelMatrix?.();
-            if (matrix) {
-              const scale = 1 + ${args.delta};
-              matrix.scale(scale, scale);
-            }
-          }
-        })()`
+        `window.__cubism5Service?.scaleActiveModel?.(${args.delta})`
       ).catch(() => {})
     })
 
