@@ -232,15 +232,28 @@ const Live2D5PetPage: React.FC = () => {
     return () => cleanups.forEach((fn) => fn())
   }, [])
 
-  // 拖拽支持 — 通过 IPC 通知主进程处理窗口移动
+  // 拖拽支持 — mousedown 记录起点，mousemove 计算偏移并移动窗口
   useEffect(() => {
     let dragging = false
+    let startX = 0
+    let startY = 0
 
     const handleMouseDown = (e: MouseEvent) => {
       if (e.button !== 0) return
       dragging = true
-      // 通知主进程开始拖拽（主进程会处理窗口移动）
-      window.electronAPI?.invoke('live2d5:request-drag')
+      startX = e.screenX
+      startY = e.screenY
+    }
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!dragging) return
+      const dx = e.screenX - startX
+      const dy = e.screenY - startY
+      if (dx !== 0 || dy !== 0) {
+        window.electronAPI?.invoke('live2d5:move-window', { dx, dy })
+        startX = e.screenX
+        startY = e.screenY
+      }
     }
 
     const handleMouseUp = () => {
@@ -248,13 +261,30 @@ const Live2D5PetPage: React.FC = () => {
     }
 
     document.addEventListener('mousedown', handleMouseDown)
+    document.addEventListener('mousemove', handleMouseMove)
     document.addEventListener('mouseup', handleMouseUp)
 
     return () => {
       document.removeEventListener('mousedown', handleMouseDown)
+      document.removeEventListener('mousemove', handleMouseMove)
       document.removeEventListener('mouseup', handleMouseUp)
     }
   }, [])
+
+  // 滚轮缩放模型
+  useEffect(() => {
+    const container = containerRef.current
+    if (!container) return
+
+    const handleWheel = (e: WheelEvent) => {
+      e.preventDefault()
+      const delta = e.deltaY > 0 ? -0.05 : 0.05
+      window.electronAPI?.invoke('live2d5:scale-model', { delta })
+    }
+
+    container.addEventListener('wheel', handleWheel, { passive: false })
+    return () => container.removeEventListener('wheel', handleWheel)
+  }, [state])
 
   // 重试
   const handleRetry = useCallback(async () => {

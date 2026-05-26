@@ -17,6 +17,8 @@ const ALLOWED_INVOKE_CHANNELS = [
   'live2d5_motion',
   'live2d5_start_drag',
   'live2d5:request-drag',
+  'live2d5:move-window',
+  'live2d5:scale-model',
   'live2d5_get_applied_model',
   'live2d5_get_models',
   'live2d5_switch_model',

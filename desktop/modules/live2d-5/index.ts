@@ -225,6 +225,37 @@ export default class Live2D5Module implements Module {
       this.startWindowDrag()
     })
 
+    // ★ 新增：窗口拖拽 — renderer 发送鼠标偏移量，主进程移动窗口
+    ipcMain.handle('live2d5:move-window', async (_event, args: { dx: number; dy: number }) => {
+      if (!this.petWindow || this.petWindow.isDestroyed()) return
+      const [x, y] = this.petWindow.getPosition()
+      this.petWindow.setPosition(x + args.dx, y + args.dy)
+    })
+
+    // ★ 新增：滚轮缩放模型 — renderer 发送缩放增量，主进程调整模型缩放
+    ipcMain.handle('live2d5:scale-model', async (_event, args: { delta: number }) => {
+      if (!this.petWindow || this.petWindow.isDestroyed()) return
+      // 通过 executeJavaScript 调用 service 的缩放方法
+      await this.petWindow.webContents.executeJavaScript(
+        `(() => {
+          const svc = window.__cubism5Service;
+          if (!svc) return;
+          const models = svc.getLoadedModels?.() ?? [];
+          const active = models.find(m => m.active);
+          if (!active) return;
+          // 缩放 delta 直接应用到模型矩阵
+          const model = svc._models?.get?.(active.name);
+          if (model) {
+            const matrix = model.getModelMatrix?.();
+            if (matrix) {
+              const scale = 1 + ${args.delta};
+              matrix.scale(scale, scale);
+            }
+          }
+        })()`
+      ).catch(() => {})
+    })
+
     // ★ 新增：获取已加载模型列表
     ipcMain.handle('live2d5_get_models', async () => {
       if (this.petWindow && !this.petWindow.isDestroyed()) {
