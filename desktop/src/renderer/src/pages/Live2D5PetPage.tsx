@@ -232,7 +232,7 @@ const Live2D5PetPage: React.FC = () => {
     return () => cleanups.forEach((fn) => fn())
   }, [])
 
-  // 拖拽支持 — mousedown 记录起点，mousemove 计算偏移并移动窗口
+  // 拖拽支持 + hover 鼠标注视
   useEffect(() => {
     let dragging = false
     let startX = 0
@@ -243,21 +243,32 @@ const Live2D5PetPage: React.FC = () => {
       dragging = true
       startX = e.screenX
       startY = e.screenY
+      // 通知模型触摸开始（与 Demo onTouchesBegan 一致）
+      serviceRef.current?.onTouchesBegan?.(e.clientX, e.clientY)
     }
 
     const handleMouseMove = (e: MouseEvent) => {
-      if (!dragging) return
-      const dx = e.screenX - startX
-      const dy = e.screenY - startY
-      if (dx !== 0 || dy !== 0) {
-        window.electronAPI?.invoke('live2d5:move-window', { dx, dy })
-        startX = e.screenX
-        startY = e.screenY
+      if (dragging) {
+        // 窗口拖拽
+        const dx = e.screenX - startX
+        const dy = e.screenY - startY
+        if (dx !== 0 || dy !== 0) {
+          window.electronAPI?.invoke('live2d5:move-window', { dx, dy })
+          startX = e.screenX
+          startY = e.screenY
+        }
+      } else {
+        // ★ hover 鼠标注视：非拖拽时让模型眼睛跟随鼠标
+        serviceRef.current?.onTouchesMoved?.(e.clientX, e.clientY)
       }
     }
 
-    const handleMouseUp = () => {
-      dragging = false
+    const handleMouseUp = (e: MouseEvent) => {
+      if (dragging) {
+        dragging = false
+        // 通知模型触摸结束（与 Demo onTouchesEnded 一致）
+        serviceRef.current?.onTouchesEnded?.(e.clientX, e.clientY)
+      }
     }
 
     document.addEventListener('mousedown', handleMouseDown)
@@ -298,6 +309,20 @@ const Live2D5PetPage: React.FC = () => {
     // 触发重新加载
     if (containerRef.current) {
       containerRef.current.innerHTML = ''
+    }
+  }, [])
+
+  // ★ 修复 Windows 白色背景：强制 html/body 背景透明
+  useEffect(() => {
+    const html = document.documentElement
+    const body = document.body
+    const prevHtmlBg = html.style.background
+    const prevBodyBg = body.style.background
+    html.style.background = 'transparent'
+    body.style.background = 'transparent'
+    return () => {
+      html.style.background = prevHtmlBg
+      body.style.background = prevBodyBg
     }
   }, [])
 

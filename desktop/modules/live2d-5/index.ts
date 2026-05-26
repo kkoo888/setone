@@ -1324,6 +1324,8 @@ export default class Live2D5Module implements Module {
       alwaysOnTop: true,
       resizable: true,
       skipTaskbar: true,
+      hasShadow: false,
+      backgroundColor: '#00000000',  // ★ 修复 Windows 白色背景
       webPreferences: {
         nodeIntegration: false,
         contextIsolation: true,
