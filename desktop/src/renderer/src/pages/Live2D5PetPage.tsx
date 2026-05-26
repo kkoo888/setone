@@ -107,9 +107,9 @@ const Live2D5PetPage: React.FC = () => {
           if (appliedRes?.success && appliedRes.data) {
             modelName = appliedRes.data.name
             const rawPath = appliedRes.data.path
-            // 绝对路径转 file:/// URL，相对路径用 URL 解析
+            // 绝对路径使用 local-file:// 协议（由主进程 protocol.handle 代理），相对路径用 URL 解析
             if (rawPath.startsWith('/') || rawPath.match(/^[A-Za-z]:\\/)) {
-              modelPath = 'file:///' + rawPath.replace(/\\/g, '/')
+              modelPath = `local-file://${encodeURI(rawPath)}`
             } else {
               modelPath = new URL(rawPath, window.location.href).href
             }

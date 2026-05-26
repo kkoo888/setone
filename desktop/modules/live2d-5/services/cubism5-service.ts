@@ -299,7 +299,6 @@ class Cubism5Service {
       // 重置时间
       this.lastUpdateTime = performance.now() / 1000
       this._shaderReadyNotified = false  // 重置 shader 就绪通知标志
-      this._shaderReadyNotified = false  // 重置 shader 就绪通知标志
 
       this.updateState('loaded')
       console.debug('[Cubism5] ✅ 模型加载完成:', config.name)
