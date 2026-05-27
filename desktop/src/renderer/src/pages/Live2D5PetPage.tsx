@@ -238,31 +238,29 @@ const Live2D5PetPage: React.FC = () => {
   // ★ hover：由全局鼠标追踪（live2d5:global-mouse IPC）处理，不在此重复
   useEffect(() => {
     let dragging = false
+    let didDrag = false    // 拖拽过 → 跳过 click
     let startX = 0
     let startY = 0
 
-    const DRAG_THRESHOLD = 3  // 移动超过 3px 才算拖拽，过滤手抖
+    const DRAG_THRESHOLD = 3
 
-    // mousedown：记录起始位置，等待后续事件判断是点击还是拖拽
     const handleMouseDown = (e: MouseEvent) => {
       if (e.button !== 0) return
       dragging = false
+      didDrag = false
       startX = e.screenX
       startY = e.screenY
     }
 
-    // mousemove：按着鼠标移动超过阈值 → 窗口拖拽
     const handleMouseMove = (e: MouseEvent) => {
       if (e.buttons === 0) return
       if (dragging) {
-        // 已经进入拖拽，持续移动窗口
         const dx = e.screenX - startX
         const dy = e.screenY - startY
         window.electronAPI?.invoke('live2d5:move-window', { dx, dy })
         startX = e.screenX
         startY = e.screenY
       } else {
-        // 还没进入拖拽，检查是否超过阈值
         const dx = Math.abs(e.screenX - startX)
         const dy = Math.abs(e.screenY - startY)
         if (dx > DRAG_THRESHOLD || dy > DRAG_THRESHOLD) {
@@ -271,18 +269,18 @@ const Live2D5PetPage: React.FC = () => {
       }
     }
 
-    // mouseup：拖拽结束只清状态（不触发模型交互）
     const handleMouseUp = () => {
       if (dragging) {
         dragging = false
+        didDrag = true  // ★ 标记：这次交互是拖拽
         serviceRef.current?.setDragging?.(0, 0)
       }
     }
 
-    // click：浏览器原生事件，鼠标没大幅移动时才触发
+    // click：mouseup 之后触发，检查 didDrag
     const handleClick = (e: MouseEvent) => {
-      if (dragging) {
-        dragging = false
+      if (didDrag) {
+        didDrag = false
         return
       }
       serviceRef.current?.onTouchesBegan?.(e.clientX, e.clientY)
