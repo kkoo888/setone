@@ -232,93 +232,66 @@ const Live2D5PetPage: React.FC = () => {
     return () => cleanups.forEach((fn) => fn())
   }, [])
 
-  // 拖拽支持 + hover 鼠标注视
-  // ★ 修复：长按 300ms 才进入拖拽模式，短按为点击
+  // 拖拽 + 点击分离
+  // ★ 拖拽：mousedown/mousemove/mouseup 处理窗口移动
+  // ★ 点击：浏览器原生 click 事件（自动区分点击和拖拽，无需手动阈值）
+  // ★ hover：由全局鼠标追踪（live2d5:global-mouse IPC）处理，不在此重复
   useEffect(() => {
     let dragging = false
-    let pendingDrag = false  // 等待长按确认
     let startX = 0
     let startY = 0
-    let dragTimer: ReturnType<typeof setTimeout> | null = null
-    let startClientX = 0
-    let startClientY = 0
 
-    const LONG_PRESS_MS = 300  // 长按阈值
-    const MOVE_THRESHOLD = 5   // 移动超过此距离取消长按等待（防误触）
-
+    // mousedown：记录起始位置，等待后续事件判断是点击还是拖拽
     const handleMouseDown = (e: MouseEvent) => {
       if (e.button !== 0) return
+      dragging = false
       startX = e.screenX
       startY = e.screenY
-      startClientX = e.clientX
-      startClientY = e.clientY
-      pendingDrag = true
-      dragging = false
-
-      // 通知模型触摸开始
-      serviceRef.current?.onTouchesBegan?.(e.clientX, e.clientY)
-
-      // 长按 300ms 后进入拖拽模式
-      dragTimer = setTimeout(() => {
-        if (pendingDrag) {
-          dragging = true
-          pendingDrag = false
-        }
-      }, LONG_PRESS_MS)
     }
 
+    // mousemove：按着鼠标移动 → 窗口拖拽（hover 由全局追踪处理）
     const handleMouseMove = (e: MouseEvent) => {
-      if (pendingDrag && !dragging) {
-        // 还在等长按确认，如果移动超过阈值则取消长按等待（视为非拖拽的移动）
-        const dx = Math.abs(e.screenX - startX)
-        const dy = Math.abs(e.screenY - startY)
-        if (dx > MOVE_THRESHOLD || dy > MOVE_THRESHOLD) {
-          // 移动了但还没到 300ms → 取消长按，不做拖拽
-          if (dragTimer) { clearTimeout(dragTimer); dragTimer = null }
-          pendingDrag = false
-        }
-        // 不管是否取消长按，hover 注视始终生效
-        serviceRef.current?.onTouchesMoved?.(e.clientX, e.clientY)
-        return
-      }
-
-      if (dragging) {
-        // 窗口拖拽
-        const dx = e.screenX - startX
-        const dy = e.screenY - startY
+      if (e.buttons === 0) return  // 没按鼠标，不做任何处理
+      const dx = e.screenX - startX
+      const dy = e.screenY - startY
+      if (dx !== 0 || dy !== 0) {
+        dragging = true
         window.electronAPI?.invoke('live2d5:move-window', { dx, dy })
         startX = e.screenX
         startY = e.screenY
-      } else {
-        // hover 鼠标注视
-        serviceRef.current?.onTouchesMoved?.(e.clientX, e.clientY)
       }
     }
 
-    const handleMouseUp = (e: MouseEvent) => {
-      // 清除长按计时器
-      if (dragTimer) { clearTimeout(dragTimer); dragTimer = null }
-
+    // mouseup：拖拽结束只清状态（不触发模型交互）
+    const handleMouseUp = () => {
       if (dragging) {
-        // 拖拽结束，清除状态
         dragging = false
         serviceRef.current?.setDragging?.(0, 0)
-      } else if (pendingDrag) {
-        // 没有进入拖拽 → 这是点击（短按）
-        pendingDrag = false
-        serviceRef.current?.onTouchesEnded?.(e.clientX, e.clientY)
       }
+    }
+
+    // click：浏览器原生事件，鼠标没大幅移动时才触发
+    // ★ 核心：用浏览器自身的 click 语义代替手动阈值判断
+    const handleClick = (e: MouseEvent) => {
+      if (dragging) {
+        // mouseup 和 click 之间可能有状态变化，确保重置
+        dragging = false
+        return
+      }
+      serviceRef.current?.onTouchesBegan?.(e.clientX, e.clientY)
+      serviceRef.current?.onTouchesEnded?.(e.clientX, e.clientY)
     }
 
     document.addEventListener('mousedown', handleMouseDown)
     document.addEventListener('mousemove', handleMouseMove)
     document.addEventListener('mouseup', handleMouseUp)
+    document.addEventListener('click', handleClick)
 
     return () => {
       document.removeEventListener('mousedown', handleMouseDown)
       document.removeEventListener('mousemove', handleMouseMove)
       document.removeEventListener('mouseup', handleMouseUp)
-      if (dragTimer) clearTimeout(dragTimer)
+      document.removeEventListener('click', handleClick)
     }
   }, [])
 
