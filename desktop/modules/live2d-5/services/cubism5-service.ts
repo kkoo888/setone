@@ -742,24 +742,24 @@ class Cubism5Service {
 
   /**
    * ★ 新增：触摸/按下开始（与 Demo LAppView.onTouchesBegan 一致）
+   * ★ 修复：不乘 DPR — transformViewX/Y 的坐标变换链基于 CSS 逻辑像素，
+   *   deviceToScreen 矩阵已处理从 CSS 像素到模型空间的映射。
+   *   官方 Demo 也是直接传 deviceX/Y，不做 DPR 缩放。
    */
   onTouchesBegan(deviceX: number, deviceY: number): void {
-    const dpr = window.devicePixelRatio || 1
-    this._touchManager.touchesBegan(deviceX * dpr, deviceY * dpr)
+    this._touchManager.touchesBegan(deviceX, deviceY)
   }
 
   /**
    * ★ 新增：触摸/拖拽移动（与 Demo LAppView.onTouchesMoved 一致）
+   * ★ 修复：去掉 DPR 乘法，与官方 Demo 保持一致
    */
   onTouchesMoved(deviceX: number, deviceY: number): void {
     if (!this.model) return
-    const dpr = window.devicePixelRatio || 1
-    const posX = deviceX * dpr
-    const posY = deviceY * dpr
 
     // ★ 修复：先更新 TouchManager，再读取新位置
     // 原代码先读旧位置再更新，导致模型始终滞后一帧
-    this._touchManager.touchesMoved(posX, posY)
+    this._touchManager.touchesMoved(deviceX, deviceY)
 
     const viewX = this.model.transformViewX(this._touchManager.getX())
     const viewY = this.model.transformViewY(this._touchManager.getY())
@@ -769,54 +769,52 @@ class Cubism5Service {
 
   /**
    * ★ 新增：触摸/抬起结束（与 Demo LAppView.onTouchesEnded 一致）
+   * ★ 修复：去掉 DPR 乘法，与官方 Demo 保持一致
    */
   onTouchesEnded(deviceX: number, deviceY: number): void {
     if (!this.model) return
-    const dpr = window.devicePixelRatio || 1
-    const posX = deviceX * dpr
-    const posY = deviceY * dpr
 
     // 清除拖拽
     this.model.setDragging(0.0, 0.0)
 
     // 坐标转换后触发点击
-    const viewX = this.model.transformViewX(posX)
-    const viewY = this.model.transformViewY(posY)
+    const viewX = this.model.transformViewX(deviceX)
+    const viewY = this.model.transformViewY(deviceY)
     this.model.onTap(viewX, viewY)
   }
 
   /**
-   * 点击事件（设备坐标 → HiDPI 适配 → 逻辑坐标 → hitTest）
+   * 点击事件（设备坐标 → 逻辑坐标 → hitTest）
    * 保留兼容接口
+   * ★ 修复：去掉 DPR 乘法，与官方 Demo 保持一致
    */
   onTap(deviceX: number, deviceY: number): void {
     if (!this.model) return
-    const dpr = window.devicePixelRatio || 1
-    const logicalX = this.model.transformViewX(deviceX * dpr)
-    const logicalY = this.model.transformViewY(deviceY * dpr)
+    const logicalX = this.model.transformViewX(deviceX)
+    const logicalY = this.model.transformViewY(deviceY)
     this.model.onTap(logicalX, logicalY)
   }
 
   /**
-   * 命中检测（设备坐标 → HiDPI 适配 → 逻辑坐标 → hitTest）
+   * 命中检测（设备坐标 → 逻辑坐标 → hitTest）
+   * ★ 修复：去掉 DPR 乘法，与官方 Demo 保持一致
    */
   hitTest(hitAreaName: string, deviceX: number, deviceY: number): boolean {
     if (!this.model) return false
-    const dpr = window.devicePixelRatio || 1
-    const logicalX = this.model.transformViewX(deviceX * dpr)
-    const logicalY = this.model.transformViewY(deviceY * dpr)
+    const logicalX = this.model.transformViewX(deviceX)
+    const logicalY = this.model.transformViewY(deviceY)
     return this.model.hitTest(hitAreaName, logicalX, logicalY)
   }
 
   /**
-   * 设置拖拽（设备坐标 → HiDPI 适配 → 归一化 → setDragging）
+   * 设置拖拽（设备坐标 → 逻辑坐标 → setDragging）
    * 保留兼容接口，推荐使用 onTouchesBegan/Moved/Ended
+   * ★ 修复：去掉 DPR 乘法，与官方 Demo 保持一致
    */
   setDragging(deviceX: number, deviceY: number): void {
     if (!this.model || !this.canvas) return
-    const dpr = window.devicePixelRatio || 1
-    const viewX = this.model.transformViewX(deviceX * dpr)
-    const viewY = this.model.transformViewY(deviceY * dpr)
+    const viewX = this.model.transformViewX(deviceX)
+    const viewY = this.model.transformViewY(deviceY)
     const canvasW = this.canvas.clientWidth
     const canvasH = this.canvas.clientHeight
     const ratio = canvasW / canvasH
