@@ -449,10 +449,10 @@ export class AppModel extends CubismUserModel {
     this._viewMatrix.setMaxScreenRect(left * 2, right * 2, bottom * 2, top * 2)
 
     this._deviceToScreen.loadIdentity()
-    // ★ 修正顺序：先 translate 再 scale（与 Cubism SDK Demo 一致）
-    // translateRelative 和 scaleRelative 都是左乘，所以先调 translate（它在最左边）
-    // 变换链：P' = scale × translate × P → 先平移到原点，再缩放到逻辑坐标
-    this._deviceToScreen.translateRelative(-canvasWidth * 0.5, -canvasHeight * 0.5)
+    // ★ 修正顺序：先 scale 再 translate
+    // translateRelative 和 scaleRelative 都是左乘（this = new × this），
+    // 所以先调 scale 在最右边（最先执行），后调 translate 在最左边（最后执行）
+    // 变换链：P' = translate × scale × P → 先缩放到逻辑坐标，再平移到原点
     if (canvasWidth > canvasHeight) {
       const screenW = Math.abs(right - left)
       this._deviceToScreen.scaleRelative(screenW / canvasWidth, -screenW / canvasWidth)
@@ -460,6 +460,7 @@ export class AppModel extends CubismUserModel {
       const screenH = Math.abs(top - bottom)
       this._deviceToScreen.scaleRelative(screenH / canvasHeight, -screenH / canvasHeight)
     }
+    this._deviceToScreen.translateRelative(-canvasWidth * 0.5, -canvasHeight * 0.5)
   }
 
   /** 设备坐标 → 逻辑 X 坐标 */

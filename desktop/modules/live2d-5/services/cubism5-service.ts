@@ -757,10 +757,12 @@ class Cubism5Service {
     const posX = deviceX * dpr
     const posY = deviceY * dpr
 
+    // ★ 修复：先更新 TouchManager，再读取新位置
+    // 原代码先读旧位置再更新，导致模型始终滞后一帧
+    this._touchManager.touchesMoved(posX, posY)
+
     const viewX = this.model.transformViewX(this._touchManager.getX())
     const viewY = this.model.transformViewY(this._touchManager.getY())
-
-    this._touchManager.touchesMoved(posX, posY)
 
     this.model.setDragging(viewX, viewY)
   }
