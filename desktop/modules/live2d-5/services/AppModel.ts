@@ -880,12 +880,35 @@ export class AppModel extends CubismUserModel {
 
   /**
    * 点击事件处理（使用逻辑坐标）
+   * 
+   * 坐标系：y 从 -1（底部）到 1（顶部）
+   * 屏幕比例 → 逻辑坐标映射：
+   *   逻辑 y = 1 - 2 × 屏幕比例
+   * 
+   * 头部区域：屏幕上 13%~35% → 逻辑 y [0.30, 0.74]
+   * 身体区域：屏幕上 36%~87% → 逻辑 y [-0.74, 0.28]
    */
   onTap(x: number, y: number): void {
+    // 先尝试 HitArea 方式（兼容已配置 HitArea 的模型）
     if (this.hitTest('Head', x, y)) {
       this.setRandomExpression()
-    } else if (this.hitTest('Body', x, y) && this._tapMotionGroup) {
+      return
+    }
+    if (this.hitTest('Body', x, y) && this._tapMotionGroup) {
       this.startRandomMotion(this._tapMotionGroup, PriorityNormal)
+      return
+    }
+
+    // HitArea 未配置时，使用坐标区域判断
+    // 头部：y 在 [0.30, 0.74]（屏幕上 13%~35%）
+    if (y >= 0.30 && y <= 0.74) {
+      this.setRandomExpression()
+      return
+    }
+    // 身体：y 在 [-0.74, 0.28]（屏幕上 36%~87%）
+    if (y >= -0.74 && y <= 0.28 && this._tapMotionGroup) {
+      this.startRandomMotion(this._tapMotionGroup, PriorityNormal)
+      return
     }
   }
 
