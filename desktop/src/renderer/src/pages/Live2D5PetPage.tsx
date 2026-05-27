@@ -322,6 +322,19 @@ const Live2D5PetPage: React.FC = () => {
     }
   }, [])
 
+  // ★ 新增：全局鼠标追踪（主进程轮询屏幕鼠标位置 → 转换为本地坐标 → 模型注视）
+  useEffect(() => {
+    if (!window.electronAPI) return
+
+    const cleanup = window.electronAPI.on('live2d5:global-mouse', (pos: { x: number; y: number }) => {
+      if (!serviceRef.current) return
+      // 本地坐标直接传给模型（主进程已转换过）
+      serviceRef.current.onTouchesMoved?.(pos.x, pos.y)
+    })
+
+    return cleanup
+  }, [])
+
   // 滚轮缩放模型
   useEffect(() => {
     const container = containerRef.current

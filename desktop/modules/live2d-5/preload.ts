@@ -50,6 +50,7 @@ const ALLOWED_RECEIVE_CHANNELS = [
   'live2d5:start-drag',
   'live2d5:destroy',
   'live2d5:set-bubble',
+  'live2d5:global-mouse',
 ]
 
 contextBridge.exposeInMainWorld('electronAPI', {

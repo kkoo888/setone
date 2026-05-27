@@ -7,7 +7,7 @@
  */
 console.debug('[Live2D5] 模块 index.ts 已加载')
 import type { Module, ModuleContext, Capability } from '../../src/main/types/module'
-import { BrowserWindow, ipcMain, app, dialog, protocol, net } from 'electron'
+import { BrowserWindow, ipcMain, app, dialog, protocol, net, screen } from 'electron'
 import { join, dirname } from 'path'
 import { existsSync, readFileSync, writeFileSync, mkdirSync, readdirSync } from 'fs'
 import { fileURLToPath, pathToFileURL } from 'url'
@@ -40,6 +40,9 @@ export default class Live2D5Module implements Module {
   private context!: ModuleContext
   private petWindow: import('electron').BrowserWindow | null = null
   private destroyResolve: (() => void) | null = null
+  private _globalMouseInterval: ReturnType<typeof setInterval> | null = null
+  private _lastGlobalMouseX = -1
+  private _lastGlobalMouseY = -1
 
   /** 模型注册表文件路径 */
   private getModelRegistryPath(): string {
@@ -1362,6 +1365,7 @@ export default class Live2D5Module implements Module {
     // 清理：窗口关闭时移除监听
     this.petWindow.on('closed', () => {
       console.debug('[Live2D5] 🪟 宠物窗口已关闭')
+      this.stopGlobalMouseTracking()
       ipcMain.removeListener('live2d5:cleanup-done', cleanupHandler)
       this.petWindow = null
       // 如果有 deactivate 等待的 resolve，调用它
@@ -1386,6 +1390,44 @@ export default class Live2D5Module implements Module {
         hash: '#/live2d5-pet'
       })
       console.debug('[Live2D5] ✅ 页面加载完成')
+    }
+
+    // 启动全局鼠标追踪（模型眼睛跟随屏幕鼠标）
+    this.startGlobalMouseTracking()
+  }
+
+  /**
+   * 启动全局鼠标追踪（30fps 轮询屏幕鼠标位置 → 发送给宠物窗口）
+   * 仅在鼠标位置变化时发送 IPC，减少开销
+   */
+  private startGlobalMouseTracking(): void {
+    this.stopGlobalMouseTracking()
+    this._lastGlobalMouseX = -1
+    this._lastGlobalMouseY = -1
+
+    this._globalMouseInterval = setInterval(() => {
+      if (!this.petWindow || this.petWindow.isDestroyed()) return
+
+      const cursor = screen.getCursorScreenPoint()
+      if (cursor.x === this._lastGlobalMouseX && cursor.y === this._lastGlobalMouseY) return
+
+      this._lastGlobalMouseX = cursor.x
+      this._lastGlobalMouseY = cursor.y
+
+      // 全局屏幕坐标 → 宠物窗口本地坐标
+      const [winX, winY] = this.petWindow.getPosition()
+      const localX = cursor.x - winX
+      const localY = cursor.y - winY
+
+      this.petWindow.webContents.send('live2d5:global-mouse', { x: localX, y: localY })
+    }, 33) // 30fps
+  }
+
+  /** 停止全局鼠标追踪 */
+  private stopGlobalMouseTracking(): void {
+    if (this._globalMouseInterval) {
+      clearInterval(this._globalMouseInterval)
+      this._globalMouseInterval = null
     }
   }
 
@@ -1435,6 +1477,7 @@ export default class Live2D5Module implements Module {
 
   /** 强制关闭窗口 */
   private forceClose(): void {
+    this.stopGlobalMouseTracking()
     if (this.petWindow && !this.petWindow.isDestroyed()) {
       try {
         this.petWindow.close()
