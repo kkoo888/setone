@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Click vs Drag 测试</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #1a1a2e; color: #eee; font-family: monospace; padding: 20px; }
+  h3 { color: #a78bfa; margin-bottom: 12px; }
+  .test-area {
+    width: 400px; height: 300px;
+    background: #16213e;
+    border: 2px solid #a78bfa;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; color: #a78bfa;
+    user-select: none; cursor: pointer;
+    margin-bottom: 16px;
+  }
+  .log {
+    width: 400px; height: 300px;
+    background: #0f0f23;
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 8px;
+    overflow-y: auto;
+    font-size: 12px;
+    line-height: 1.6;
+  }
+  .log div { padding: 1px 0; }
+  .log .evt-mouse { color: #60a5fa; }
+  .log .evt-click { color: #34d399; }
+  .log .evt-drag  { color: #f87171; }
+  .log .evt-touch { color: #fbbf24; }
+  .stats { margin-top: 12px; font-size: 13px; color: #888; }
+  .stats span { color: #a78bfa; font-weight: bold; }
+  button { 
+    background: #a78bfa; color: #fff; border: none; padding: 6px 16px; 
+    border-radius: 6px; cursor: pointer; margin-right: 8px; font-size: 13px;
+  }
+  button:hover { background: #8b5cf6; }
+</style>
+</head>
+<body>
+
+<h3>🖱️ Click vs Drag 事件流测试</h3>
+<p style="color:#888;margin-bottom:12px;">在下方区域点击和拖拽，观察事件触发顺序</p>
+
+<div class="test-area" id="testArea">点击 / 拖拽这里</div>
+
+<div style="margin-bottom:8px;">
+  <button onclick="clearLog()">清空日志</button>
+  <button onclick="runStats()">运行统计（自动点击+拖拽10次）</button>
+</div>
+
+<div class="log" id="log"></div>
+<div class="stats" id="stats"></div>
+
+<script>
+const logEl = document.getElementById('log');
+const statsEl = document.getElementById('stats');
+const area = document.getElementById('testArea');
+
+// ========== 方案 A：当前代码（无阈值，任何移动=拖拽） ==========
+let draggingA = false;
+let startX_A = 0, startY_A = 0;
+let clickCountA = 0, dragCountA = 0, lostCountA = 0;
+
+// ========== 方案 B：加小阈值（3px） ==========
+let draggingB = false;
+let startX_B = 0, startY_B = 0;
+let clickCountB = 0, dragCountB = 0, lostCountB = 0;
+const DRAG_THRESHOLD = 3;
+
+function log(msg, cls) {
+  const d = document.createElement('div');
+  d.className = cls || '';
+  d.textContent = msg;
+  logEl.appendChild(d);
+  logEl.scrollTop = logEl.scrollHeight;
+}
+
+function clearLog() {
+  logEl.innerHTML = '';
+  statsEl.innerHTML = '';
+  clickCountA = dragCountA = lostCountA = 0;
+  clickCountB = dragCountB = lostCountB = 0;
+}
+
+// --- 方案 A 事件处理 ---
+area.addEventListener('mousedown', (e) => {
+  if (e.button !== 0) return;
+  draggingA = false;
+  startX_A = e.screenX;
+  startY_A = e.screenY;
+});
+
+area.addEventListener('mousemove', (e) => {
+  if (e.buttons === 0) return;
+  const dx = e.screenX - startX_A;
+  const dy = e.screenY - startY_A;
+  if (dx !== 0 || dy !== 0) {
+    draggingA = true;
+    startX_A = e.screenX;
+    startY_A = e.screenY;
+  }
+});
+
+area.addEventListener('mouseup', () => {
+  if (draggingA) {
+    draggingA = false;
+  }
+});
+
+area.addEventListener('click', (e) => {
+  const ts = Date.now();
+  if (draggingA) {
+    draggingA = false;
+    lostCountA++;
+    log(`[A] ❌ click 被吞 (dragging=true)`, 'evt-drag');
+    return;
+  }
+  clickCountA++;
+  log(`[A] ✅ click 触发 → onTouchesBegan + onTouchesEnded`, 'evt-click');
+});
+
+// --- 方案 B 事件处理（独立变量，不干扰方案 A） ---
+const areaB = area; // 同一个元素，用不同变量名区分逻辑
+
+// 方案 B 需要独立的事件监听，但同一个元素只能绑一套
+// 所以我们用一个统一的事件处理器来同时测试两套逻辑
+
+// 统一事件处理器
+let dragging = false;
+let startX = 0, startY = 0;
+let totalMoved = 0;
+let clickFired = false;
+
+area.addEventListener('mousedown', (e) => {
+  if (e.button !== 0) return;
+  dragging = false;
+  startX = e.screenX;
+  startY = e.screenY;
+  totalMoved = 0;
+  clickFired = false;
+  log(`mousedown (${e.screenX}, ${e.screenY})`, 'evt-mouse');
+});
+
+area.addEventListener('mousemove', (e) => {
+  if (e.buttons === 0) return;
+  const dx = e.screenX - startX;
+  const dy = e.screenY - startY;
+  const dist = Math.sqrt(dx*dx + dy*dy);
+  totalMoved += dist;
+  
+  if (dx !== 0 || dy !== 0) {
+    dragging = true;
+    log(`mousemove dx=${dx} dy=${dy} → dragging=true`, 'evt-mouse');
+    startX = e.screenX;
+    startY = e.screenY;
+  }
+});
+
+area.addEventListener('mouseup', (e) => {
+  log(`mouseup (dragging=${dragging}, totalMoved=${totalMoved.toFixed(1)}px)`, 'evt-mouse');
+  if (dragging) {
+    dragging = false;
+  }
+});
+
+area.addEventListener('click', (e) => {
+  if (dragging) {
+    dragging = false;
+    log(`click ❌ 被吞`, 'evt-drag');
+  } else {
+    log(`click ✅ 触发 (totalMoved=${totalMoved.toFixed(1)}px)`, 'evt-click');
+  }
+  log('---', '');
+});
+
+// 模拟测试
+function simulateClick() {
+  return new Promise(resolve => {
+    const rect = area.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    
+    const down = new MouseEvent('mousedown', { 
+      clientX: cx, clientY: cy, screenX: cx, screenY: cy, button: 0, bubbles: true 
+    });
+    const up = new MouseEvent('mouseup', { 
+      clientX: cx, clientY: cy, screenX: cx, screenY: cy, button: 0, bubbles: true 
+    });
+    const click = new MouseEvent('click', { 
+      clientX: cx, clientY: cy, screenX: cx, screenY: cy, button: 0, bubbles: true 
+    });
+    
+    area.dispatchEvent(down);
+    setTimeout(() => {
+      area.dispatchEvent(up);
+      area.dispatchEvent(click);
+      resolve();
+    }, 50);
+  });
+}
+
+function simulateDrag(distance) {
+  return new Promise(resolve => {
+    const rect = area.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    
+    const down = new MouseEvent('mousedown', { 
+      clientX: cx, clientY: cy, screenX: cx, screenY: cy, button: 0, bubbles: true 
+    });
+    area.dispatchEvent(down);
+    
+    let steps = 5;
+    let step = 0;
+    const moveInterval = setInterval(() => {
+      step++;
+      const mx = cx + (distance / steps) * step;
+      const move = new MouseEvent('mousemove', {
+        clientX: mx, clientY: cy, screenX: mx, screenY: cy,
+        button: 0, buttons: 1, bubbles: true
+      });
+      area.dispatchEvent(move);
+      
+      if (step >= steps) {
+        clearInterval(moveInterval);
+        setTimeout(() => {
+          const finalX = cx + distance;
+          const up = new MouseEvent('mouseup', {
+            clientX: finalX, clientY: cy, screenX: finalX, screenY: cy,
+            button: 0, bubbles: true
+          });
+          const click = new MouseEvent('click', {
+            clientX: finalX, clientY: cy, screenX: finalX, screenY: cy,
+            button: 0, bubbles: true
+          });
+          area.dispatchEvent(up);
+          area.dispatchEvent(click);
+          resolve();
+        }, 30);
+      }
+    }, 20);
+  });
+}
+
+async function runStats() {
+  clearLog();
+  log('=== 开始自动测试 ===', 'evt-touch');
+  
+  // 测试纯点击（无移动）
+  log('--- 测试纯点击 x5 ---', '');
+  for (let i = 0; i < 5; i++) {
+    await simulateClick();
+    await new Promise(r => setTimeout(r, 100));
+  }
+  
+  // 测试微小移动（1-2px，模拟手抖）
+  log('--- 测试微小移动点击 x5 ---', '');
+  for (let i = 0; i < 5; i++) {
+    await simulateDrag(2); // 2px 移动
+    await new Promise(r => setTimeout(r, 100));
+  }
+  
+  // 测试明显拖拽
+  log('--- 测试明显拖拽 x5 ---', '');
+  for (let i = 0; i < 5; i++) {
+    await simulateDrag(50); // 50px 拖拽
+    await new Promise(r => setTimeout(r, 100));
+  }
+  
+  log('=== 测试完成 ===', 'evt-touch');
+  statsEl.innerHTML = `
+    <p>方案A（无阈值）: 点击成功 <span>${clickCountA}</span> | 拖拽 <span>${dragCountA}</span> | 点击丢失 <span>${lostCountA}</span></p>
+  `;
+}
+
+log('准备就绪。点击上方区域或点击"运行统计"按钮', 'evt-touch');
+</script>
+</body>
+</html>

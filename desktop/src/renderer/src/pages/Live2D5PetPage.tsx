@@ -233,13 +233,15 @@ const Live2D5PetPage: React.FC = () => {
   }, [])
 
   // 拖拽 + 点击分离
-  // ★ 拖拽：mousedown/mousemove/mouseup 处理窗口移动
-  // ★ 点击：浏览器原生 click 事件（自动区分点击和拖拽，无需手动阈值）
+  // ★ 拖拽：mousedown/mousemove/mouseup 处理窗口移动（带 3px 防抖）
+  // ★ 点击：浏览器原生 click 事件（自动区分点击和拖拽）
   // ★ hover：由全局鼠标追踪（live2d5:global-mouse IPC）处理，不在此重复
   useEffect(() => {
     let dragging = false
     let startX = 0
     let startY = 0
+
+    const DRAG_THRESHOLD = 3  // 移动超过 3px 才算拖拽，过滤手抖
 
     // mousedown：记录起始位置，等待后续事件判断是点击还是拖拽
     const handleMouseDown = (e: MouseEvent) => {
@@ -249,16 +251,23 @@ const Live2D5PetPage: React.FC = () => {
       startY = e.screenY
     }
 
-    // mousemove：按着鼠标移动 → 窗口拖拽（hover 由全局追踪处理）
+    // mousemove：按着鼠标移动超过阈值 → 窗口拖拽
     const handleMouseMove = (e: MouseEvent) => {
-      if (e.buttons === 0) return  // 没按鼠标，不做任何处理
-      const dx = e.screenX - startX
-      const dy = e.screenY - startY
-      if (dx !== 0 || dy !== 0) {
-        dragging = true
+      if (e.buttons === 0) return
+      if (dragging) {
+        // 已经进入拖拽，持续移动窗口
+        const dx = e.screenX - startX
+        const dy = e.screenY - startY
         window.electronAPI?.invoke('live2d5:move-window', { dx, dy })
         startX = e.screenX
         startY = e.screenY
+      } else {
+        // 还没进入拖拽，检查是否超过阈值
+        const dx = Math.abs(e.screenX - startX)
+        const dy = Math.abs(e.screenY - startY)
+        if (dx > DRAG_THRESHOLD || dy > DRAG_THRESHOLD) {
+          dragging = true
+        }
       }
     }
 
@@ -271,10 +280,8 @@ const Live2D5PetPage: React.FC = () => {
     }
 
     // click：浏览器原生事件，鼠标没大幅移动时才触发
-    // ★ 核心：用浏览器自身的 click 语义代替手动阈值判断
     const handleClick = (e: MouseEvent) => {
       if (dragging) {
-        // mouseup 和 click 之间可能有状态变化，确保重置
         dragging = false
         return
       }
