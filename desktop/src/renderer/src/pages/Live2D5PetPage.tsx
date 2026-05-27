@@ -233,12 +233,10 @@ const Live2D5PetPage: React.FC = () => {
   }, [])
 
   // 拖拽 + 点击分离
-  // ★ 拖拽：mousedown/mousemove/mouseup 处理窗口移动（带 3px 防抖）
-  // ★ 点击：浏览器原生 click 事件（自动区分点击和拖拽）
-  // ★ hover：由全局鼠标追踪（live2d5:global-mouse IPC）处理，不在此重复
+  // 拖拽 + 点击分离（全部在 mouseup 判断，不依赖 click 事件）
+  // ★ hover：由全局鼠标追踪（live2d5:global-mouse IPC）处理
   useEffect(() => {
     let dragging = false
-    let didDrag = false    // 拖拽过 → 跳过 click
     let startX = 0
     let startY = 0
 
@@ -247,7 +245,6 @@ const Live2D5PetPage: React.FC = () => {
     const handleMouseDown = (e: MouseEvent) => {
       if (e.button !== 0) return
       dragging = false
-      didDrag = false
       startX = e.screenX
       startY = e.screenY
     }
@@ -269,34 +266,25 @@ const Live2D5PetPage: React.FC = () => {
       }
     }
 
-    const handleMouseUp = () => {
+    // ★ mouseup 统一处理：拖拽结束 or 点击
+    const handleMouseUp = (e: MouseEvent) => {
       if (dragging) {
         dragging = false
-        didDrag = true  // ★ 标记：这次交互是拖拽
         serviceRef.current?.setDragging?.(0, 0)
+      } else {
+        serviceRef.current?.onTouchesBegan?.(e.clientX, e.clientY)
+        serviceRef.current?.onTouchesEnded?.(e.clientX, e.clientY)
       }
-    }
-
-    // click：mouseup 之后触发，检查 didDrag
-    const handleClick = (e: MouseEvent) => {
-      if (didDrag) {
-        didDrag = false
-        return
-      }
-      serviceRef.current?.onTouchesBegan?.(e.clientX, e.clientY)
-      serviceRef.current?.onTouchesEnded?.(e.clientX, e.clientY)
     }
 
     document.addEventListener('mousedown', handleMouseDown)
     document.addEventListener('mousemove', handleMouseMove)
     document.addEventListener('mouseup', handleMouseUp)
-    document.addEventListener('click', handleClick)
 
     return () => {
       document.removeEventListener('mousedown', handleMouseDown)
       document.removeEventListener('mousemove', handleMouseMove)
       document.removeEventListener('mouseup', handleMouseUp)
-      document.removeEventListener('click', handleClick)
     }
   }, [])
 
