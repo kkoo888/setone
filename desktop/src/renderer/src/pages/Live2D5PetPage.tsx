@@ -266,25 +266,30 @@ const Live2D5PetPage: React.FC = () => {
       }
     }
 
-    // ★ mouseup 统一处理：拖拽结束 or 点击
-    const handleMouseUp = (e: MouseEvent) => {
+    // ★ mouseup：拖拽结束
+    const handleMouseUp = () => {
       if (dragging) {
         dragging = false
         serviceRef.current?.setDragging?.(0, 0)
-      } else {
-        serviceRef.current?.onTouchesBegan?.(e.clientX, e.clientY)
-        serviceRef.current?.onTouchesEnded?.(e.clientX, e.clientY)
       }
+    }
+
+    // ★ dblclick：双击触发模型交互
+    const handleDblClick = (e: MouseEvent) => {
+      serviceRef.current?.onTouchesBegan?.(e.clientX, e.clientY)
+      serviceRef.current?.onTouchesEnded?.(e.clientX, e.clientY)
     }
 
     document.addEventListener('mousedown', handleMouseDown)
     document.addEventListener('mousemove', handleMouseMove)
     document.addEventListener('mouseup', handleMouseUp)
+    document.addEventListener('dblclick', handleDblClick)
 
     return () => {
       document.removeEventListener('mousedown', handleMouseDown)
       document.removeEventListener('mousemove', handleMouseMove)
       document.removeEventListener('mouseup', handleMouseUp)
+      document.removeEventListener('dblclick', handleDblClick)
     }
   }, [])
 
