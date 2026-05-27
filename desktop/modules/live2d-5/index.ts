@@ -1420,7 +1420,7 @@ export default class Live2D5Module implements Module {
       const localY = cursor.y - winY
 
       this.petWindow.webContents.send('live2d5:global-mouse', { x: localX, y: localY })
-    }, 33) // 30fps
+    }, 100) // 10fps（CubismTargetPoint 内部有缓动，10fps 输入也丝滑）
   }
 
   /** 停止全局鼠标追踪 */
