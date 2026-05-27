@@ -40,6 +40,9 @@
 			],
 			"Tear": [
 				{ "File": "tear.motion3.json" }
+			],
+			"Dance": [
+				{ "File": "dance.motion3.json" }
 			]
 		}
 	},
