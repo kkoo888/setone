@@ -43,6 +43,9 @@
 			],
 			"Dance": [
 				{ "File": "dance.motion3.json" }
+			],
+			"GokurakuJodo": [
+				{ "File": "gokuraku-jodo.motion3.json" }
 			]
 		}
 	},
