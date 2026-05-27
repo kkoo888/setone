@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { subscribeWithSelector } from 'zustand/middleware'
 
 /** 支持的面板类型，包含模块专属页面 */
-export type PanelId = 'chat' | 'skills' | 'settings' | 'modules' | 'live2d' | 'live2d5'
+export type PanelId = 'chat' | 'skills' | 'settings' | 'modules' | 'live2d5'
   | 'knowledge-base' | 'translator' | 'workflow' | 'shortcuts'
   | 'clipboard-history' | 'notifications' | 'multi-session'
   | 'calendar' | 'quick-preview' | 'system-dashboard'

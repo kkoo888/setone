@@ -175,10 +175,6 @@ class Cubism5Service {
         return
       }
 
-      if (win.Live2DCubismCore && !(win.Live2DCubismCore as Record<string, unknown>).Memory) {
-        console.debug('[Cubism5] ⚠️ 检测到 Cubism 4 SDK，需要加载 Cubism 5 SDK 覆盖')
-      }
-
       await new Promise<void>((resolve, reject) => {
         const script = document.createElement('script')
         script.src = CUBISM_CORE_SDK_PATH

@@ -12,7 +12,6 @@ import { registerFileHandlers } from './file.handlers'
 import { registerPaletteHandlers } from './palette.handlers'
 import { registerSkillHandlers } from './skill.handlers'
 import { registerGitFileHandlers } from './git-file.handlers'
-import { registerLive2dHandlers } from './live2d.handlers'
 import { registerHotkeyHandlers } from './hotkey.handlers'
 import { registerSoulHandlers } from './soul.handlers'
 import { registerPollingHandlers } from './polling.handlers'
@@ -32,7 +31,6 @@ export function registerAllIpcHandlers(deps: HandlerDeps): void {
   registerPaletteHandlers(deps)
   registerSkillHandlers(deps)
   registerGitFileHandlers(deps)
-  registerLive2dHandlers(deps)
   registerHotkeyHandlers(deps)
   registerSoulHandlers(deps)
   registerPollingHandlers(deps)

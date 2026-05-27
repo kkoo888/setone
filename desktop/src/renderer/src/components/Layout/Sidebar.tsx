@@ -30,7 +30,6 @@ const MODULE_PANELS: Array<{ id: PanelId; icon: React.ReactNode; label: string; 
 const BOTTOM_PANELS: Array<{ id: PanelId; icon: React.ReactNode; label: string }> = [
   { id: 'modules', icon: SIDEBAR_ICONS.modules, label: '模块' },
   { id: 'settings', icon: SIDEBAR_ICONS.settings, label: '设置' },
-  { id: 'live2d', icon: SIDEBAR_ICONS.live2d, label: 'Live2D' },
   { id: 'live2d5', icon: SIDEBAR_ICONS.live2d5, label: 'Live2D-5' },
 ]
 
