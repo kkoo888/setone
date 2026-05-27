@@ -277,9 +277,10 @@ class Cubism5Service {
         this._models.delete(config.name)
       }
 
-      // ★ 关键修复：将 GL 传给 loadAssets，确保 startUp(gl) 在 loadTextures 之前
+      // ★ 关键修复：将 GL 和实际 canvas 尺寸传给 loadAssets
+      // canvas 尺寸用于 setupViewMatrix 的 deviceToScreen 矩阵（坐标变换）
       const appModel = new AppModel()
-      await appModel.loadAssets(config.modelPath, this._modelScale, this.gl)
+      await appModel.loadAssets(config.modelPath, this._modelScale, this.gl, this.canvas.width, this.canvas.height)
 
       // ★ 关键修复：设置 renderer 的 offscreen render target 尺寸为 canvas 实际像素尺寸
       // setupRenderer() 使用的是模型内部坐标（很小），导致 offscreen FBO 尺寸不匹配
@@ -422,6 +423,8 @@ class Cubism5Service {
             if (renderer) {
               renderer.setRenderState(null, [0, 0, newWidth, newHeight])
             }
+            // ★ 修复：canvas 尺寸变化时更新 viewMatrix（坐标变换依赖实际 canvas 尺寸）
+            this.model.updateViewMatrix(newWidth, newHeight)
           }
         }
       }
@@ -974,7 +977,7 @@ class Cubism5Service {
       console.debug('[Cubism5] GL 上下文已重建，开始加载模型...')
 
       const appModel = new AppModel()
-      await appModel.loadAssets(path, scale, this.gl)
+      await appModel.loadAssets(path, scale, this.gl, this.canvas?.width, this.canvas?.height)
 
       // ★ 关键修复：设置 renderer 的 offscreen render target 尺寸
       const renderer = appModel.getRenderer()

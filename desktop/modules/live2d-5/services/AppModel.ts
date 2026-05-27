@@ -144,7 +144,9 @@ export class AppModel extends CubismUserModel {
   async loadAssets(
     model3Path: string,
     scale: number = 0.15,
-    gl?: WebGLRenderingContext | WebGL2RenderingContext
+    gl?: WebGLRenderingContext | WebGL2RenderingContext,
+    actualCanvasWidth?: number,
+    actualCanvasHeight?: number
   ): Promise<void> {
     this._modelPath = model3Path
     this._modelDir = model3Path.substring(0, model3Path.lastIndexOf('/') + 1)
@@ -185,9 +187,12 @@ export class AppModel extends CubismUserModel {
     await this.loadPoseData()
 
     // 10. 初始化 ViewMatrix
+    // ★ 关键修复：使用实际 HTML canvas 尺寸而非模型内部坐标
+    // 官方 Demo 用 subdelegate.getCanvas()（实际 canvas），项目之前错误地用模型内部坐标
+    // 导致 deviceToScreen 矩阵缩放错误，鼠标中心映射到 (199, -249) 而非 (0, 0)
     const model = this.getModel()
-    const canvasW = model.getCanvasWidth() || 1024
-    const canvasH = model.getCanvasHeight() || 1024
+    const canvasW = actualCanvasWidth || model.getCanvasWidth() || 1024
+    const canvasH = actualCanvasHeight || model.getCanvasHeight() || 1024
     this.setupViewMatrix(canvasW, canvasH)
 
     // 11. 初始化所有效果 Updater
@@ -473,6 +478,14 @@ export class AppModel extends CubismUserModel {
   transformViewY(deviceY: number): number {
     const screenY = this._deviceToScreen.transformY(deviceY)
     return this._viewMatrix.invertTransformY(screenY)
+  }
+
+  /**
+   * 更新 ViewMatrix（canvas 尺寸变化时调用）
+   * ★ 修复：canvas resize 后需要重新计算 deviceToScreen 矩阵
+   */
+  updateViewMatrix(actualCanvasWidth: number, actualCanvasHeight: number): void {
+    this.setupViewMatrix(actualCanvasWidth, actualCanvasHeight)
   }
 
   /** 初始化所有效果 Updater，注册到 UpdateScheduler */
