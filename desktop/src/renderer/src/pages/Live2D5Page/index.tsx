@@ -99,6 +99,11 @@ export function Live2D5Page() {
   const [scanSuccess, setScanSuccess] = useState<string | null>(null)
   const [loadingModel, setLoadingModel] = useState<string | null>(null)
 
+  // 表情/动作播放状态
+  const [expressionIdx, setExpressionIdx] = useState(0)
+  const [playingExpression, setPlayingExpression] = useState(false)
+  const [playingMotion, setPlayingMotion] = useState(false)
+
   // 模型库状态
   const [registeredModels, setRegisteredModels] = useState<RegisteredModel[]>([])
   const [selectedScans, setSelectedScans] = useState<Set<string>>(new Set())
@@ -275,6 +280,33 @@ export function Live2D5Page() {
     }
     setReloading(false)
   }, [handleRefreshControl])
+
+  /** 播放表情（循环切换） */
+  const handlePlayExpression = useCallback(async () => {
+    if (!activeModel || activeModel.expressions.length === 0) return
+    setPlayingExpression(true)
+    try {
+      const name = activeModel.expressions[expressionIdx % activeModel.expressions.length]
+      await window.electronAPI.invoke('live2d5_expression', { expressionId: name })
+      setExpressionIdx(prev => (prev + 1) % activeModel.expressions.length)
+    } catch (err) {
+      console.error('播放表情失败:', err)
+    }
+    setPlayingExpression(false)
+  }, [activeModel, expressionIdx])
+
+  /** 播放动作（随机选组内随机一个） */
+  const handlePlayMotion = useCallback(async () => {
+    if (!activeModel || activeModel.motionGroups.length === 0) return
+    setPlayingMotion(true)
+    try {
+      const group = activeModel.motionGroups[0]
+      await window.electronAPI.invoke('live2d5_motion_group', { group })
+    } catch (err) {
+      console.error('播放动作失败:', err)
+    }
+    setPlayingMotion(false)
+  }, [activeModel])
 
   /** ★ 新增：设置目标帧率 */
   const handleSetFPS = useCallback(async (fps: number) => {
@@ -532,6 +564,20 @@ export function Live2D5Page() {
                 disabled={reloading || !status.windowOpen}
               >
                 {reloading ? '重载中...' : '🔁 重载模型'}
+              </button>
+              <button
+                className="btn btn-secondary"
+                onClick={handlePlayExpression}
+                disabled={playingExpression || !status.windowOpen || !activeModel || activeModel.expressions.length === 0}
+              >
+                {playingExpression ? '切换中...' : '🎭 播放表情'}
+              </button>
+              <button
+                className="btn btn-secondary"
+                onClick={handlePlayMotion}
+                disabled={playingMotion || !status.windowOpen || !activeModel || activeModel.motionGroups.length === 0}
+              >
+                {playingMotion ? '播放中...' : '🎬 播放动作'}
               </button>
             </div>
 

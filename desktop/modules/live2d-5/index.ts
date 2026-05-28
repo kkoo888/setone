@@ -218,6 +218,27 @@ export default class Live2D5Module implements Module {
       return { success: true, message: `播放动作: ${args.motionId}` }
     })
 
+    ipcMain.handle('live2d5_motion_group', async (_event, args: { group: string }) => {
+      if (this.petWindow && !this.petWindow.isDestroyed()) {
+        const result = await this.petWindow.webContents.executeJavaScript(
+          `(() => {
+            const s = window.__cubism5Service;
+            if (!s) return null;
+            const m = s.model;
+            if (!m) return null;
+            const g = m.motionGroups?.find(g => g.group === '${args.group}');
+            if (!g || !g.names.length) return null;
+            const idx = Math.floor(Math.random() * g.names.length);
+            const motionId = g.names[idx];
+            m.playMotion(motionId);
+            return motionId;
+          })()`
+        ).catch(() => null)
+        return { success: !!result, motionId: result }
+      }
+      return { success: false, error: '宠物窗口未打开' }
+    })
+
     ipcMain.handle('live2d5_start_drag', async () => {
       this.startWindowDrag()
       return { success: true }
@@ -592,6 +613,7 @@ export default class Live2D5Module implements Module {
     ipcMain.removeHandler('live2d5_status')
     ipcMain.removeHandler('live2d5_expression')
     ipcMain.removeHandler('live2d5_motion')
+    ipcMain.removeHandler('live2d5_motion_group')
     ipcMain.removeHandler('live2d5_start_drag')
     ipcMain.removeHandler('live2d5:request-drag')
     ipcMain.removeHandler('live2d5_get_models')

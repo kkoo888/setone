@@ -15,6 +15,7 @@ const ALLOWED_INVOKE_CHANNELS = [
   'live2d5_status',
   'live2d5_expression',
   'live2d5_motion',
+  'live2d5_motion_group',
   'live2d5_start_drag',
   'live2d5:request-drag',
   'live2d5:move-window',
