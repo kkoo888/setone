@@ -545,12 +545,9 @@ export default class Live2D5Module implements Module {
         } else {
           absolutePath = join(app.getAppPath(), model.path)
         }
-        // ★ 修复：手动构造 file:// URL，不用 pathToFileURL（它会 percent-encode 中文，
-        // 导致 Chromium fetch 无法加载表情/动作文件）
-        const normalizedPath = absolutePath.replace(/\\/g, '/')
-        const fileUrl = normalizedPath.startsWith('/')
-          ? `file://${normalizedPath}`
-          : `file:///${normalizedPath}`
+        // ★ 修复：使用 pathToFileURL 正确编码中文路径，
+        // protocol handler 的 fileURLToPath 会自动解码回来
+        const fileUrl = pathToFileURL(absolutePath).href
         return { success: true, data: { ...model, path: fileUrl } }
       }
       return { success: true, data: model }
@@ -1024,10 +1021,8 @@ export default class Live2D5Module implements Module {
               } else {
                 absolutePath = join(app.getAppPath(), model.path)
               }
-              const normalizedPath = absolutePath.replace(/\\/g, '/')
-              const fileUrl = normalizedPath.startsWith('/')
-                ? `file://${normalizedPath}`
-                : `file:///${normalizedPath}`
+              // ★ 修复：使用 pathToFileURL 正确编码中文路径
+              const fileUrl = pathToFileURL(absolutePath).href
               return { success: true, data: { ...model, path: fileUrl } }
             }
             return { success: true, data: model }

@@ -72,6 +72,17 @@ export class AppModel extends CubismUserModel {
   private _modelPath: string = ''
   private _modelDir: string = ''
 
+  /**
+   * 将 modelDir + filename 拼接为可 fetch 的 URL
+   * ★ 修复：中文文件名需要 percent-encode，否则 Chromium fetch 可能失败
+   */
+  private buildFileUrl(filename: string): string {
+    // modelDir 已经是 file:// URL（可能含编码后的路径）
+    // filename 来自 model3.json，可能含中文
+    // 策略：对整个路径做 encodeURI（保留 file:// 协议和 / 分隔符）
+    return encodeURI(this._modelDir + filename)
+  }
+
   // ViewMatrix 逻辑坐标系
   private _viewMatrix: CubismViewMatrix | null = null
   private _deviceToScreen: CubismMatrix44 | null = null
@@ -236,7 +247,7 @@ export class AppModel extends CubismUserModel {
   /** 加载 moc3 文件并创建模型 */
   private async loadMoc(): Promise<void> {
     const mocFile = this._setting.getModelFileName()
-    const mocPath = this._modelDir + mocFile
+    const mocPath = this.buildFileUrl(mocFile)
 
     const response = await fetch(mocPath)
     if (!response.ok) {
@@ -292,7 +303,7 @@ export class AppModel extends CubismUserModel {
         continue // Demo: 空文件名跳过
       }
 
-      const texPath = this._modelDir + texFile
+      const texPath = this.buildFileUrl(texFile)
       console.debug(`[AppModel] 🖼️ 加载纹理 [${i}/${count}]: ${texPath}`)
       try {
         const texture = await this.loadTextureImage(texPath)
@@ -386,7 +397,7 @@ export class AppModel extends CubismUserModel {
     const physicsFile = this._setting.getPhysicsFileName()
     if (!physicsFile) return
 
-    const physicsPath = this._modelDir + physicsFile
+    const physicsPath = this.buildFileUrl(physicsFile)
     const response = await fetch(physicsPath)
     if (!response.ok) {
       console.warn(`[AppModel] ⚠️ 物理文件加载失败: ${response.status}`)
@@ -401,7 +412,7 @@ export class AppModel extends CubismUserModel {
     const poseFile = this._setting.getPoseFileName()
     if (!poseFile) return
 
-    const posePath = this._modelDir + poseFile
+    const posePath = this.buildFileUrl(poseFile)
     const response = await fetch(posePath)
     if (!response.ok) {
       console.warn(`[AppModel] ⚠️ Pose 文件加载失败: ${response.status}`)
@@ -420,7 +431,7 @@ export class AppModel extends CubismUserModel {
     const userDataFile = this._setting.getUserDataFile()
     if (!userDataFile) return
 
-    const userDataPath = this._modelDir + userDataFile
+    const userDataPath = this.buildFileUrl(userDataFile)
     try {
       const response = await fetch(userDataPath)
       if (!response.ok) {
@@ -591,7 +602,7 @@ export class AppModel extends CubismUserModel {
     for (let i = 0; i < count; i++) {
       const name = this._setting.getExpressionName(i)
       const file = this._setting.getExpressionFileName(i)
-      const path = this._modelDir + file
+      const path = this.buildFileUrl(file)
 
       try {
         console.debug(`[AppModel] 加载表情 [${i}/${count}]: ${name} → ${path}`)
@@ -634,7 +645,7 @@ export class AppModel extends CubismUserModel {
 
       for (let i = 0; i < count; i++) {
         const file = this._setting.getMotionFileName(group, i)
-        const path = this._modelDir + file
+        const path = this.buildFileUrl(file)
         const name = `${group}_${i}`
 
         try {
@@ -770,7 +781,7 @@ export class AppModel extends CubismUserModel {
 
     const voice = this._setting.getMotionSoundFileName(group, no)
     if (voice && voice !== '') {
-      const voicePath = this._modelDir + voice
+      const voicePath = this.buildFileUrl(voice)
       this._wavFileHandler.start(voicePath)
     }
   }
