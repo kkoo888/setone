@@ -162,6 +162,19 @@ export class AppModel extends CubismUserModel {
     // 2. 创建 CubismModelSettingJson（官方解析器）
     this._setting = new CubismModelSettingJson(buffer, size)
 
+    // ★ 诊断日志：检查解析结果
+    const exprCount = this._setting.getExpressionCount()
+    const motionGroupCount = this._setting.getMotionGroupCount()
+    console.debug(`[AppModel] loadAssets: model3Path="${model3Path}"`)
+    console.debug(`[AppModel] modelDir="${this._modelDir}"`)
+    console.debug(`[AppModel] CubismModelSettingJson 解析: expressions=${exprCount}, motionGroups=${motionGroupCount}`)
+    if (exprCount === 0) {
+      console.warn('[AppModel] ⚠️ getExpressionCount() 返回 0！检查 model3.json 的 FileReferences.Expressions')
+    }
+    if (motionGroupCount === 0) {
+      console.warn('[AppModel] ⚠️ getMotionGroupCount() 返回 0！检查 model3.json 的 FileReferences.Motions')
+    }
+
     // 3. 加载 .moc3 → 创建模型
     await this.loadMoc()
 
@@ -574,29 +587,37 @@ export class AppModel extends CubismUserModel {
   /** 预加载所有表情 */
   private async preloadExpressions(): Promise<void> {
     const count = this._setting.getExpressionCount()
+    console.debug(`[AppModel] preloadExpressions: getExpressionCount()=${count}, modelDir="${this._modelDir}"`)
     for (let i = 0; i < count; i++) {
       const name = this._setting.getExpressionName(i)
       const file = this._setting.getExpressionFileName(i)
       const path = this._modelDir + file
 
       try {
+        console.debug(`[AppModel] 加载表情 [${i}/${count}]: ${name} → ${path}`)
         const response = await fetch(path)
-        if (!response.ok) continue
+        if (!response.ok) {
+          console.warn(`[AppModel] ⚠️ 表情 fetch 失败: ${name}, status=${response.status}, url=${path}`)
+          continue
+        }
         const buffer = await response.arrayBuffer()
         const motion = this.loadExpression(buffer, buffer.byteLength, name)
         if (motion) {
-          // ★ 修复：释放旧表情对象（与 Demo 一致，防止内存泄漏）
           const existing = this._expressionCache.get(name)
           if (existing) {
             ACubismMotion.delete(existing)
           }
           this._expressionCache.set(name, motion as unknown as CubismExpressionMotion)
           this._expressionNames.push(name)
+          console.debug(`[AppModel] ✅ 表情加载成功: ${name}`)
+        } else {
+          console.warn(`[AppModel] ⚠️ 表情 loadExpression 返回 null: ${name}`)
         }
       } catch (err) {
-        console.warn(`[AppModel] ⚠️ 表情 "${name}" 加载失败:`, err)
+        console.warn(`[AppModel] ❌ 表情 "${name}" 加载异常:`, err)
       }
     }
+    console.debug(`[AppModel] preloadExpressions 完成: ${this._expressionNames.length}/${count} 成功`)
   }
 
   /**
@@ -605,6 +626,7 @@ export class AppModel extends CubismUserModel {
    */
   private async preloadMotions(): Promise<void> {
     const groupCount = this._setting.getMotionGroupCount()
+    console.debug(`[AppModel] preloadMotions: getMotionGroupCount()=${groupCount}, modelDir="${this._modelDir}"`)
     for (let g = 0; g < groupCount; g++) {
       const group = this._setting.getMotionGroupName(g)
       const count = this._setting.getMotionCount(group)
@@ -613,23 +635,26 @@ export class AppModel extends CubismUserModel {
       for (let i = 0; i < count; i++) {
         const file = this._setting.getMotionFileName(group, i)
         const path = this._modelDir + file
-        const name = `${group}_${i}` // 与 Demo 命名规则一致：group_no
+        const name = `${group}_${i}`
 
         try {
+          console.debug(`[AppModel] 加载动作 [${group}][${i}/${count}]: ${name} → ${path}`)
           const response = await fetch(path)
-          if (!response.ok) continue
+          if (!response.ok) {
+            console.warn(`[AppModel] ⚠️ 动作 fetch 失败: ${name}, status=${response.status}, url=${path}`)
+            continue
+          }
           const buffer = await response.arrayBuffer()
 
           const motion = this.loadMotion(
             buffer, buffer.byteLength, name,
             undefined, undefined,
             this._setting, group, i,
-            true // shouldCheckMotionConsistency（与 Demo 一致）
+            true
           )
           if (motion) {
             ;(motion as CubismMotion).setEffectIds(this._eyeBlinkIds, this._lipSyncIds)
 
-            // ★ 修复：释放旧动作对象（与 Demo 一致）
             const existing = this._motionCache.get(name)
             if (existing) {
               ACubismMotion.delete(existing)
@@ -637,9 +662,12 @@ export class AppModel extends CubismUserModel {
 
             this._motionCache.set(name, motion)
             names.push(name)
+            console.debug(`[AppModel] ✅ 动作加载成功: ${name}`)
+          } else {
+            console.warn(`[AppModel] ⚠️ 动作 loadMotion 返回 null: ${name}`)
           }
         } catch (err) {
-          console.warn(`[AppModel] ⚠️ 动作 "${group}/${name}" 加载失败:`, err)
+          console.warn(`[AppModel] ❌ 动作 "${name}" 加载异常:`, err)
         }
       }
 
@@ -647,6 +675,7 @@ export class AppModel extends CubismUserModel {
         this._motionGroups.push({ group, names })
       }
     }
+    console.debug(`[AppModel] preloadMotions 完成: ${this._motionGroups.length} 组, 共 ${this._motionGroups.reduce((s, g) => s + g.names.length, 0)} 个动作`)
 
     // ★ 新增：动态检测点击动作组（优先 TapBody，不存在则用第一个非 Idle 组）
     const tapCandidate = this._motionGroups.find(g => g.group === 'TapBody')
