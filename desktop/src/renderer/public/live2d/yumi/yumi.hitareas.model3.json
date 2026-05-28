@@ -1,0 +1,66 @@
+[
+  {
+    "Id": "Head",
+    "Name": "Head"
+  },
+  {
+    "Id": "Face",
+    "Name": "Face"
+  },
+  {
+    "Id": "Eyes",
+    "Name": "Eyes"
+  },
+  {
+    "Id": "Mouth",
+    "Name": "Mouth"
+  },
+  {
+    "Id": "Nose",
+    "Name": "Nose"
+  },
+  {
+    "Id": "Ears",
+    "Name": "Ears"
+  },
+  {
+    "Id": "Neck",
+    "Name": "Neck"
+  },
+  {
+    "Id": "HairFront",
+    "Name": "HairFront"
+  },
+  {
+    "Id": "HairBack",
+    "Name": "HairBack"
+  },
+  {
+    "Id": "Hat",
+    "Name": "Hat"
+  },
+  {
+    "Id": "Body",
+    "Name": "Body"
+  },
+  {
+    "Id": "Hands",
+    "Name": "Hands"
+  },
+  {
+    "Id": "Leg",
+    "Name": "Leg"
+  },
+  {
+    "Id": "Bag",
+    "Name": "Bag"
+  },
+  {
+    "Id": "Dog",
+    "Name": "Dog"
+  },
+  {
+    "Id": "Flowers",
+    "Name": "Flowers"
+  }
+]

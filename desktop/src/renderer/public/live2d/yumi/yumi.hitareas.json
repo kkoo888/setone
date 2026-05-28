@@ -1,0 +1,440 @@
+[
+  {
+    "Id": "HitAreaHead",
+    "Name": "Head",
+    "BBoxPixels": {
+      "X": -796922.9736328125,
+      "Y": -1761544.189453125,
+      "Width": 1744775.9399414062,
+      "Height": 2518794.662475586
+    },
+    "BBoxNormalized": {
+      "left": 0.000166,
+      "right": 0.645302,
+      "top": 0.0,
+      "bottom": 0.964999
+    },
+    "Parts": [
+      "head",
+      "headtop",
+      "face",
+      "eyes",
+      "mouth",
+      "nose",
+      "ears",
+      "neck",
+      "hair",
+      "bangs",
+      "Part14",
+      "Part2",
+      "Part3",
+      "Part4",
+      "Part47",
+      "Part48",
+      "Part53",
+      "hairpins",
+      "Part5",
+      "Part6",
+      "Part13",
+      "Part8",
+      "Part9",
+      "Part10",
+      "Part11",
+      "Part12"
+    ],
+    "ArtMeshCount": 146
+  },
+  {
+    "Id": "HitAreaBody",
+    "Name": "Body",
+    "BBoxPixels": {
+      "X": -797371.4904785156,
+      "Y": -1852903.1982421875,
+      "Width": 2704509.246826172,
+      "Height": 2610153.6712646484
+    },
+    "BBoxNormalized": {
+      "left": 0.0,
+      "right": 1.0,
+      "top": 0.0,
+      "bottom": 1.0
+    },
+    "Parts": [
+      "Part17",
+      "leg",
+      "hand2",
+      "Part33",
+      "Part18",
+      "Part20",
+      "Part34",
+      "Part",
+      "Part15",
+      "Part21",
+      "Part22",
+      "Part23",
+      "Part24",
+      "Part25",
+      "hat",
+      "bag",
+      "Part38",
+      "Part39",
+      "Part40",
+      "Part41",
+      "Part42",
+      "Part43",
+      "Part44",
+      "Part45",
+      "Part46",
+      "Part49",
+      "Part50",
+      "Part51",
+      "Part52"
+    ],
+    "ArtMeshCount": 162
+  },
+  {
+    "Id": "Head",
+    "Name": "Head",
+    "BBoxPixels": {
+      "X": -780856.93359375,
+      "Y": -1721991.3940429688,
+      "Width": 1579725.9521484375,
+      "Height": 1721991.3940429688
+    },
+    "BBoxNormalized": {
+      "left": 0.006106,
+      "right": 0.590214,
+      "top": 0.290117,
+      "bottom": 0.949845
+    },
+    "Parts": [
+      "head",
+      "headtop"
+    ],
+    "ArtMeshCount": 12
+  },
+  {
+    "Id": "Face",
+    "Name": "Face",
+    "BBoxPixels": {
+      "X": -713791.8090820312,
+      "Y": -1721991.3940429688,
+      "Width": 1508445.0073242188,
+      "Height": 1721991.3940429688
+    },
+    "BBoxNormalized": {
+      "left": 0.030904,
+      "right": 0.588656,
+      "top": 0.290117,
+      "bottom": 0.949845
+    },
+    "Parts": [
+      "face"
+    ],
+    "ArtMeshCount": 3
+  },
+  {
+    "Id": "Eyes",
+    "Name": "Eyes",
+    "BBoxPixels": {
+      "X": -787870.5139160156,
+      "Y": -1761544.189453125,
+      "Width": 1700639.1906738281,
+      "Height": 1761544.189453125
+    },
+    "BBoxNormalized": {
+      "left": 0.003513,
+      "right": 0.632329,
+      "top": 0.290117,
+      "bottom": 0.964999
+    },
+    "Parts": [
+      "eyes",
+      "Part13"
+    ],
+    "ArtMeshCount": 41
+  },
+  {
+    "Id": "Mouth",
+    "Name": "Mouth",
+    "BBoxPixels": {
+      "X": -796922.9736328125,
+      "Y": -1540723.5717773438,
+      "Width": 1486515.4266357422,
+      "Height": 1540723.5717773438
+    },
+    "BBoxNormalized": {
+      "left": 0.000166,
+      "right": 0.549809,
+      "top": 0.290117,
+      "bottom": 0.880398
+    },
+    "Parts": [
+      "mouth"
+    ],
+    "ArtMeshCount": 12
+  },
+  {
+    "Id": "Nose",
+    "Name": "Nose",
+    "BBoxPixels": {
+      "X": -600915.1153564453,
+      "Y": -1676687.255859375,
+      "Width": 916346.8322753906,
+      "Height": 1676687.255859375
+    },
+    "BBoxNormalized": {
+      "left": 0.07264,
+      "right": 0.411462,
+      "top": 0.290117,
+      "bottom": 0.932488
+    },
+    "Parts": [
+      "nose"
+    ],
+    "ArtMeshCount": 2
+  },
+  {
+    "Id": "Ears",
+    "Name": "Ears",
+    "BBoxPixels": {
+      "X": -788156.982421875,
+      "Y": -1640060.302734375,
+      "Width": 1477330.810546875,
+      "Height": 1640060.302734375
+    },
+    "BBoxNormalized": {
+      "left": 0.003407,
+      "right": 0.549654,
+      "top": 0.290117,
+      "bottom": 0.918456
+    },
+    "Parts": [
+      "ears"
+    ],
+    "ArtMeshCount": 2
+  },
+  {
+    "Id": "Neck",
+    "Name": "Neck",
+    "BBoxPixels": {
+      "X": -558628.3721923828,
+      "Y": -1535666.2902832031,
+      "Width": 1506481.3385009766,
+      "Height": 1535666.2902832031
+    },
+    "BBoxNormalized": {
+      "left": 0.088276,
+      "right": 0.645302,
+      "top": 0.290117,
+      "bottom": 0.87846
+    },
+    "Parts": [
+      "neck"
+    ],
+    "ArtMeshCount": 2
+  },
+  {
+    "Id": "HairFront",
+    "Name": "HairFront",
+    "BBoxPixels": {
+      "X": -789194.091796875,
+      "Y": -1703476.318359375,
+      "Width": 1478367.919921875,
+      "Height": 2460726.791381836
+    },
+    "BBoxNormalized": {
+      "left": 0.003024,
+      "right": 0.549654,
+      "top": 0.0,
+      "bottom": 0.942752
+    },
+    "Parts": [
+      "hair",
+      "bangs",
+      "Part14",
+      "Part2",
+      "hairpins"
+    ],
+    "ArtMeshCount": 20
+  },
+  {
+    "Id": "HairBack",
+    "Name": "HairBack",
+    "BBoxPixels": {
+      "X": -789493.3776855469,
+      "Y": -1703476.318359375,
+      "Width": 1733190.2160644531,
+      "Height": 1703476.318359375
+    },
+    "BBoxNormalized": {
+      "left": 0.002913,
+      "right": 0.643765,
+      "top": 0.290117,
+      "bottom": 0.942752
+    },
+    "Parts": [
+      "Part4",
+      "Part47",
+      "Part48"
+    ],
+    "ArtMeshCount": 30
+  },
+  {
+    "Id": "Hat",
+    "Name": "Hat",
+    "BBoxPixels": {
+      "X": -562357.4981689453,
+      "Y": -1754898.7426757812,
+      "Width": 1502059.8907470703,
+      "Height": 1754898.7426757812
+    },
+    "BBoxNormalized": {
+      "left": 0.086897,
+      "right": 0.642288,
+      "top": 0.290117,
+      "bottom": 0.962453
+    },
+    "Parts": [
+      "hat"
+    ],
+    "ArtMeshCount": 8
+  },
+  {
+    "Id": "Body",
+    "Name": "Body",
+    "BBoxPixels": {
+      "X": -795325.5615234375,
+      "Y": -1757362.6098632812,
+      "Width": 1743269.1650390625,
+      "Height": 1757362.6098632812
+    },
+    "BBoxNormalized": {
+      "left": 0.000756,
+      "right": 0.645335,
+      "top": 0.290117,
+      "bottom": 0.963397
+    },
+    "Parts": [
+      "Part17",
+      "Part5"
+    ],
+    "ArtMeshCount": 23
+  },
+  {
+    "Id": "Hands",
+    "Name": "Hands",
+    "BBoxPixels": {
+      "X": -797371.4904785156,
+      "Y": -1852903.1982421875,
+      "Width": 2704509.246826172,
+      "Height": 2610153.6712646484
+    },
+    "BBoxNormalized": {
+      "left": 0.0,
+      "right": 1.0,
+      "top": 0.0,
+      "bottom": 1.0
+    },
+    "Parts": [
+      "hand2",
+      "Part33",
+      "Part18",
+      "Part20",
+      "Part34",
+      "Part"
+    ],
+    "ArtMeshCount": 35
+  },
+  {
+    "Id": "Leg",
+    "Name": "Leg",
+    "BBoxPixels": {
+      "X": -797371.4904785156,
+      "Y": -1757362.6098632812,
+      "Width": 1745315.0939941406,
+      "Height": 1757362.6098632812
+    },
+    "BBoxNormalized": {
+      "left": 0.0,
+      "right": 0.645335,
+      "top": 0.290117,
+      "bottom": 0.963397
+    },
+    "Parts": [
+      "leg"
+    ],
+    "ArtMeshCount": 10
+  },
+  {
+    "Id": "Bag",
+    "Name": "Bag",
+    "BBoxPixels": {
+      "X": -713791.8090820312,
+      "Y": -1721991.3940429688,
+      "Width": 1508445.0073242188,
+      "Height": 1721991.3940429688
+    },
+    "BBoxNormalized": {
+      "left": 0.030904,
+      "right": 0.588656,
+      "top": 0.290117,
+      "bottom": 0.949845
+    },
+    "Parts": [
+      "bag"
+    ],
+    "ArtMeshCount": 2
+  },
+  {
+    "Id": "Dog",
+    "Name": "Dog",
+    "BBoxPixels": {
+      "X": -566105.3466796875,
+      "Y": -1769153.8696289062,
+      "Width": 1500619.62890625,
+      "Height": 1769153.8696289062
+    },
+    "BBoxNormalized": {
+      "left": 0.085511,
+      "right": 0.64037,
+      "top": 0.290117,
+      "bottom": 0.967914
+    },
+    "Parts": [
+      "Part49",
+      "Part50",
+      "Part51",
+      "Part52"
+    ],
+    "ArtMeshCount": 26
+  },
+  {
+    "Id": "Flowers",
+    "Name": "Flowers",
+    "BBoxPixels": {
+      "X": -559039.0777587891,
+      "Y": -1616137.7563476562,
+      "Width": 1506892.0440673828,
+      "Height": 1616137.7563476562
+    },
+    "BBoxNormalized": {
+      "left": 0.088124,
+      "right": 0.645302,
+      "top": 0.290117,
+      "bottom": 0.909291
+    },
+    "Parts": [
+      "Part38",
+      "Part39",
+      "Part40",
+      "Part41",
+      "Part42",
+      "Part43",
+      "Part44",
+      "Part45",
+      "Part46"
+    ],
+    "ArtMeshCount": 18
+  }
+]
