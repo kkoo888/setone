@@ -275,6 +275,32 @@ export default class Live2D5Module implements Module {
       return { success: true, data: [] }
     })
 
+    // ★ 诊断：直接读取 pet window 内部状态
+    ipcMain.handle('live2d5_diagnose', async () => {
+      if (this.petWindow && !this.petWindow.isDestroyed()) {
+        const result = await this.petWindow.webContents.executeJavaScript(
+          `(() => {
+            const s = window.__cubism5Service;
+            if (!s) return { error: 'service not found on window' };
+            const model = s.model;
+            if (!model) return { error: 'no active model', modelsMap: s._models?.size ?? 'N/A' };
+            return {
+              modelName: s._activeModelName,
+              expressionNames: model.expressionNames,
+              motionGroups: model.motionGroups,
+              expressionNamesLength: model.expressionNames?.length,
+              motionGroupsLength: model.motionGroups?.length,
+              hasSetting: !!model._setting,
+              settingExprCount: model._setting?.getExpressionCount?.(),
+              settingMotionGroupCount: model._setting?.getMotionGroupCount?.(),
+            };
+          })()`
+        ).catch(e => ({ error: e.message }))
+        return { success: true, data: result }
+      }
+      return { success: false, error: 'pet window not open' }
+    })
+
     // ★ 新增：切换模型
     ipcMain.handle('live2d5_switch_model', async (_event, args: { name: string }) => {
       if (this.petWindow && !this.petWindow.isDestroyed()) {
@@ -618,6 +644,7 @@ export default class Live2D5Module implements Module {
     ipcMain.removeHandler('live2d5_start_drag')
     ipcMain.removeHandler('live2d5:request-drag')
     ipcMain.removeHandler('live2d5_get_models')
+    ipcMain.removeHandler('live2d5_diagnose')
     ipcMain.removeHandler('live2d5_switch_model')
     ipcMain.removeHandler('live2d5_unload_model')
     ipcMain.removeHandler('live2d5_get_live_status')
