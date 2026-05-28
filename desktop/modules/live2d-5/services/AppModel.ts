@@ -75,12 +75,11 @@ export class AppModel extends CubismUserModel {
   /**
    * 将 modelDir + filename 拼接为可 fetch 的 URL
    * ★ 修复：中文文件名需要 percent-encode，否则 Chromium fetch 可能失败
+   * ★ 注意：modelDir 已经由 pathToFileURL 编码过，不能对整个路径 encodeURI（会重复编码）
+   *         只对 filename 部分做 encodeURI 即可
    */
   private buildFileUrl(filename: string): string {
-    // modelDir 已经是 file:// URL（可能含编码后的路径）
-    // filename 来自 model3.json，可能含中文
-    // 策略：对整个路径做 encodeURI（保留 file:// 协议和 / 分隔符）
-    return encodeURI(this._modelDir + filename)
+    return this._modelDir + encodeURI(filename)
   }
 
   // ViewMatrix 逻辑坐标系
