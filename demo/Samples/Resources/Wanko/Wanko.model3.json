@@ -50,6 +50,10 @@
 		{
 			"Id": "HitArea",
 			"Name": "Body"
+		},
+		{
+			"Id": "D_FACE_00",
+			"Name": "Head"
 		}
 	]
 }
