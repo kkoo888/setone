@@ -537,11 +537,11 @@ export class AppModel extends CubismUserModel {
     this._look = look
     look.setParameters([
       new LookParameterData(CubismFramework.getIdManager().getId('ParamAngleX'), 30.0, 0.0, 0.0),
-      new LookParameterData(CubismFramework.getIdManager().getId('ParamAngleY'), 30.0, 0.0, 0.0),
-      new LookParameterData(CubismFramework.getIdManager().getId('ParamAngleZ'), 10.0, 0.0, 0.0),
+      new LookParameterData(CubismFramework.getIdManager().getId('ParamAngleY'), 0.0, 30.0, 0.0),
+      new LookParameterData(CubismFramework.getIdManager().getId('ParamAngleZ'), 0.0, 0.0, -30.0),
       new LookParameterData(CubismFramework.getIdManager().getId('ParamBodyAngleX'), 10.0, 0.0, 0.0),
       new LookParameterData(CubismFramework.getIdManager().getId('ParamEyeBallX'), 1.0, 0.0, 0.0),
-      new LookParameterData(CubismFramework.getIdManager().getId('ParamEyeBallY'), 1.0, 0.0, 0.0),
+      new LookParameterData(CubismFramework.getIdManager().getId('ParamEyeBallY'), 0.0, 1.0, 0.0),
     ])
     this._updateScheduler.addUpdatableList(
       new CubismLookUpdater(look, this._dragManager)
