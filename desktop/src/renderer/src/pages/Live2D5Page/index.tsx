@@ -100,6 +100,9 @@ export function Live2D5Page() {
   const [playingExpression, setPlayingExpression] = useState(false)
   const [playingMotion, setPlayingMotion] = useState(false)
 
+  // 鼠标跟随状态
+  const [mouseTracking, setMouseTracking] = useState(true)
+
   // 模型库状态
   const [registeredModels, setRegisteredModels] = useState<RegisteredModel[]>([])
   const [selectedScans, setSelectedScans] = useState<Set<string>>(new Set())
@@ -280,6 +283,18 @@ export function Live2D5Page() {
     }
     setPlayingMotion(false)
   }, [modelInfo])
+
+  /** 切换鼠标跟随 */
+  const handleToggleMouseTracking = useCallback(async () => {
+    const next = !mouseTracking
+    setMouseTracking(next)
+    try {
+      await window.electronAPI.invoke('live2d5_toggle_mouse_tracking', { enabled: next })
+    } catch (err) {
+      console.error('切换鼠标跟随失败:', err)
+      setMouseTracking(!next) // 回滚
+    }
+  }, [mouseTracking])
 
   /** ★ 新增：设置目标帧率 */
   const handleSetFPS = useCallback(async (fps: number) => {
@@ -585,22 +600,22 @@ export function Live2D5Page() {
 
               {/* 右侧：功能卡片 */}
               <div className="live2d5-cards-side">
-                {/* 桌面宠物开关 */}
+                {/* 鼠标跟随开关 */}
                 <div className="live2d5-feature-card">
                   <div className="live2d5-card-header">
                     <span className="live2d5-card-title">
-                      <span className="live2d5-card-icon">🖥️</span>
-                      桌面宠物
+                      <span className="live2d5-card-icon">🖱️</span>
+                      鼠标跟随
                     </span>
                     <button
-                      className={`live2d5-toggle ${status.windowOpen ? 'live2d5-toggle--active' : ''}`}
-                      onClick={status.windowOpen ? handleClose : handleOpen}
-                      disabled={loading}
-                      aria-label="切换桌面宠物"
+                      className={`live2d5-toggle ${mouseTracking ? 'live2d5-toggle--active' : ''}`}
+                      onClick={handleToggleMouseTracking}
+                      disabled={!status.windowOpen}
+                      aria-label="切换鼠标跟随"
                     />
                   </div>
                   <div className="live2d5-card-desc">
-                    开启后将在桌面显示透明窗口的 Live2D 宠物
+                    开启后模型眼睛将跟随鼠标移动
                   </div>
                 </div>
 
@@ -633,7 +648,7 @@ export function Live2D5Page() {
                     </div>
                     <div className="live2d5-info-item">
                       <span className="live2d5-info-label">鼠标跟随</span>
-                      <span className="live2d5-info-value">{liveStatus.mouseTracking ? '开启' : '关闭'}</span>
+                      <span className="live2d5-info-value">{mouseTracking ? '开启' : '关闭'}</span>
                     </div>
                   </div>
                 </div>
@@ -657,8 +672,8 @@ export function Live2D5Page() {
                     <div className="live2d5-status-item">
                       <span className="live2d5-status-label">鼠标跟随</span>
                       <span className="live2d5-status-value">
-                        <span className={`live2d5-status-dot ${liveStatus.mouseTracking ? 'live2d5-status-dot--active' : 'live2d5-status-dot--off'}`} />
-                        {liveStatus.mouseTracking ? '开启' : '关闭'}
+                        <span className={`live2d5-status-dot ${mouseTracking ? 'live2d5-status-dot--active' : 'live2d5-status-dot--off'}`} />
+                        {mouseTracking ? '开启' : '关闭'}
                       </span>
                     </div>
                     <div className="live2d5-status-item">

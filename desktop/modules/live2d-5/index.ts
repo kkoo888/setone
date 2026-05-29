@@ -43,6 +43,7 @@ export default class Live2D5Module implements Module {
   private _globalMouseInterval: ReturnType<typeof setInterval> | null = null
   private _lastGlobalMouseX = -1
   private _lastGlobalMouseY = -1
+  private _mouseTrackingEnabled = true
 
   /** 模型注册表文件路径 */
   private getModelRegistryPath(): string {
@@ -348,6 +349,23 @@ export default class Live2D5Module implements Module {
       return { success: false, error: '宠物窗口未打开' }
     })
 
+    // ★ 鼠标跟随开关
+    ipcMain.handle('live2d5_toggle_mouse_tracking', async (_event, args: { enabled: boolean }) => {
+      this._mouseTrackingEnabled = args.enabled
+      if (args.enabled) {
+        this.startGlobalMouseTracking()
+      } else {
+        this.stopGlobalMouseTracking()
+        // 通知模型重置注视点到中心
+        if (this.petWindow && !this.petWindow.isDestroyed()) {
+          this.petWindow.webContents.executeJavaScript(
+            `window.__cubism5Service?.setDragging?.(0, 0)`
+          ).catch(() => {})
+        }
+      }
+      return { success: true, enabled: this._mouseTrackingEnabled }
+    })
+
     // ★ 扫描指定目录下的 model3.json 文件
     ipcMain.handle('live2d5_scan_model', async (_event, args: { dirPath: string }) => {
       try {
@@ -558,6 +576,7 @@ export default class Live2D5Module implements Module {
     ipcMain.removeHandler('live2d5_stop_audio')
     ipcMain.removeHandler('live2d5_set_fps')
     ipcMain.removeHandler('live2d5_set_bubble')
+    ipcMain.removeHandler('live2d5_toggle_mouse_tracking')
     ipcMain.removeHandler('live2d5_scan_model')
     ipcMain.removeHandler('live2d5_select_directory')
     ipcMain.removeHandler('live2d5_reload_model')
@@ -1159,6 +1178,37 @@ export default class Live2D5Module implements Module {
       },
       {
         type: 'tool',
+        name: 'live2d5_toggle_mouse_tracking',
+        description: '开关 Live2D 5 宠物鼠标跟随（眼睛注视鼠标)',
+        priority: 10,
+        moduleId: this.id,
+        parameters: {
+          type: 'object',
+          properties: {
+            enabled: { type: 'boolean', description: 'true 开启，false 关闭' }
+          },
+          required: ['enabled']
+        },
+        handler: {
+          execute: async (p) => {
+            const { enabled } = p as { enabled: boolean }
+            this._mouseTrackingEnabled = enabled
+            if (enabled) {
+              this.startGlobalMouseTracking()
+            } else {
+              this.stopGlobalMouseTracking()
+              if (this.petWindow && !this.petWindow.isDestroyed()) {
+                this.petWindow.webContents.executeJavaScript(
+                  `window.__cubism5Service?.setDragging?.(0, 0)`
+                ).catch(() => {})
+              }
+            }
+            return { success: true, enabled: this._mouseTrackingEnabled }
+          }
+        }
+      },
+      {
+        type: 'tool',
         name: 'live2d5_get_audio_type',
         description: '获取当前音频输入类型（microphone/wav/none）',
         priority: 10,
@@ -1354,6 +1404,7 @@ export default class Live2D5Module implements Module {
    */
   private startGlobalMouseTracking(): void {
     this.stopGlobalMouseTracking()
+    if (!this._mouseTrackingEnabled) return
     this._lastGlobalMouseX = -1
     this._lastGlobalMouseY = -1
 

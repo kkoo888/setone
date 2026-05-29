@@ -26,6 +26,7 @@ const ALLOWED_INVOKE_CHANNELS = [
   'live2d5_stop_audio',
   'live2d5_set_fps',
   'live2d5_set_bubble',
+  'live2d5_toggle_mouse_tracking',
   'live2d5_scan_model',
   'live2d5_select_directory',
   'live2d5_reload_model',
