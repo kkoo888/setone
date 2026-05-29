@@ -51,36 +51,16 @@ export interface Live2D5IPCChannels {
   'live2d5_open': () => Promise<{ success: boolean; message?: string; error?: string }>
   'live2d5_close': () => Promise<{ success: boolean; message?: string; error?: string }>
   'live2d5_status': () => Promise<{ success: boolean; data: { windowOpen: boolean } }>
-  'live2d5_expression': (args: { expressionId: string }) => Promise<{ success: boolean; message: string }>
   'live2d5_motion': (args: { motionId: string }) => Promise<{ success: boolean; message: string }>
   'live2d5_start_drag': () => Promise<{ success: boolean }>
-  'live2d5_get_models': () => Promise<{ success: boolean; data: Array<{ name: string; active: boolean; expressions: string[]; motionGroups: string[] }> }>
   'live2d5_switch_model': (args: { name: string }) => Promise<{ success: boolean; error?: string }>
   'live2d5_unload_model': (args: { name: string }) => Promise<{ success: boolean; error?: string }>
-  'live2d5_get_live_status': () => Promise<{
-    success: boolean
-    data: {
-      sdkLoaded: boolean
-      contextLost: boolean
-      mouseTracking: boolean
-      clickInteraction: boolean
-      currentExpression: string
-      currentMotion: string
-      lipSyncActive: boolean
-      bubbleText: string
-    }
-  }>
-  'live2d5_get_preview': () => Promise<{ success: boolean; data: string | null }>
-  'live2d5_get_motion_queue': () => Promise<{ success: boolean; data: { isFinished: boolean; queueLength: number; currentPriority: number } | null }>
   'live2d5_switch_to_microphone': () => Promise<{ success: boolean; error?: string }>
   'live2d5_switch_to_wav': (args: { filePath: string }) => Promise<{ success: boolean; error?: string }>
   'live2d5_stop_audio': () => Promise<{ success: boolean; error?: string }>
-  'live2d5_get_audio_type': () => Promise<{ success: boolean; data: 'microphone' | 'wav' | 'none' }>
   'live2d5_set_fps': (args: { fps: number }) => Promise<{ success: boolean; error?: string }>
-  'live2d5_get_fps': () => Promise<{ success: boolean; data: number }>
   'live2d5_reload_model': () => Promise<{ success: boolean; error?: string }>
   'live2d5_set_bubble': (args: { text: string | null }) => Promise<{ success: boolean; error?: string }>
-  'live2d5_get_bubble': () => Promise<{ success: boolean; data: string | null }>
   'live2d5_get_registered_models': () => Promise<{ success: boolean; data: RegisteredModelEntry[] }>
   'live2d5_get_applied_model': () => Promise<{ success: boolean; data: RegisteredModelEntry | null }>
   'live2d5_register_models': (args: { models: RegisteredModelEntry[] }) => Promise<{ success: boolean; data: RegisteredModelEntry[]; added: number }>

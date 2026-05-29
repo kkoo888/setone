@@ -17,11 +17,11 @@ interface Live2D5Status {
   windowOpen: boolean
 }
 
-interface LoadedModel {
+interface ModelInfo {
   name: string
-  active: boolean
-  expressions: string[]
-  motionGroups: string[]
+  version: number
+  expressions: number
+  motions: number
 }
 
 interface LiveStatus {
@@ -77,17 +77,14 @@ export function Live2D5Page() {
   const [status, setStatus] = useState<Live2D5Status>({ windowOpen: false })
   const [loading, setLoading] = useState(false)
   const [activeTab, setActiveTab] = useState('control')
-  const [models, setModels] = useState<LoadedModel[]>([])
-  const [modelsLoading, setModelsLoading] = useState(false)
 
-  // 控制面板新增状态
+  // 控制面板状态（全部通过 live2d5_call 获取）
   const [liveStatus, setLiveStatus] = useState<LiveStatus>(defaultLiveStatus)
+  const [modelInfo, setModelInfo] = useState<ModelInfo | null>(null)
+  const [motionQueue, setMotionQueue] = useState<{ isFinished: boolean; queueLength: number; currentPriority: number } | null>(null)
   const [previewImage, setPreviewImage] = useState<string | null>(null)
   const [refreshing, setRefreshing] = useState(false)
   const [reloading, setReloading] = useState(false)
-  // ★ 新增：动作队列状态
-  const [motionQueue, setMotionQueue] = useState<{ isFinished: boolean; queueLength: number; currentPriority: number } | null>(null)
-  // ★ 新增：帧率设置
   const [targetFPS, setTargetFPS] = useState<number>(60)
 
   // 添加模型弹窗状态
@@ -100,7 +97,6 @@ export function Live2D5Page() {
   const [loadingModel, setLoadingModel] = useState<string | null>(null)
 
   // 表情/动作播放状态
-  const [expressionIdx, setExpressionIdx] = useState(0)
   const [playingExpression, setPlayingExpression] = useState(false)
   const [playingMotion, setPlayingMotion] = useState(false)
 
@@ -114,27 +110,6 @@ export function Live2D5Page() {
   const [bubbleInput, setBubbleInput] = useState('')
   const [modelScale, setModelScale] = useState<number>(0.85)
 
-  /** 查询状态 */
-  const refreshStatus = useCallback(async () => {
-    try {
-      const result = await window.electronAPI.invoke('live2d5_status')
-      if (result?.success) {
-        setStatus(result.data)
-      }
-    } catch {}
-  }, [])
-
-  /** 查询已加载模型列表 */
-  const refreshModels = useCallback(async () => {
-    if (!status.windowOpen) return
-    try {
-      const result = await window.electronAPI.invoke('live2d5_get_models')
-      if (result?.success && Array.isArray(result.data)) {
-        setModels(result.data)
-      }
-    } catch {}
-  }, [status.windowOpen])
-
   /** 刷新已注册模型列表 */
   const refreshRegisteredModels = useCallback(async () => {
     try {
@@ -145,128 +120,120 @@ export function Live2D5Page() {
     } catch {}
   }, [])
 
-  useEffect(() => {
-    refreshStatus()
-    refreshRegisteredModels().then(() => {
-      // 读取已应用模型的缩放值
-      window.electronAPI.invoke('live2d5_get_applied_model').then((res: { success: boolean; data: { scale?: number } | null }) => {
-        if (res?.success && res.data?.scale) {
-          setModelScale(res.data.scale)
-        }
-      }).catch(() => {})
-    })
-    const interval = setInterval(refreshStatus, 3000)
-    return () => clearInterval(interval)
-  }, [refreshStatus, refreshRegisteredModels])
-
-  // 窗口打开后自动刷新模型列表
-  useEffect(() => {
-    if (status.windowOpen) {
-      refreshModels()
-      const interval = setInterval(refreshModels, 5000)
-      return () => clearInterval(interval)
-    } else {
-      setModels([])
-    }
-  }, [status.windowOpen, refreshModels])
-
-  /** 刷新控制面板全部数据 */
-  const handleRefreshControl = useCallback(async () => {
+  /** 封装方法：一次获取控制面板全部数据（状态 + 模型信息 + 截图） */
+  const refreshAll = useCallback(async () => {
     setRefreshing(true)
     try {
-      await refreshStatus()
-      const [statusRes, previewRes, motionQueueRes, fpsRes, audioRes, bubbleRes] = await Promise.all([
-        window.electronAPI.invoke('live2d5_get_live_status'),
-        window.electronAPI.invoke('live2d5_get_preview'),
-        window.electronAPI.invoke('live2d5_get_motion_queue'),
-        window.electronAPI.invoke('live2d5_get_fps'),
-        window.electronAPI.invoke('live2d5_get_audio_type'),
-        window.electronAPI.invoke('live2d5_get_bubble'),
-      ])
-      if (statusRes?.success && statusRes.data) {
-        setLiveStatus(statusRes.data)
+      // 1. 查窗口状态
+      const statusRes = await window.electronAPI.invoke('live2d5_status')
+      if (statusRes?.success) setStatus(statusRes.data)
+
+      if (!statusRes?.data?.windowOpen) {
+        setLiveStatus(defaultLiveStatus)
+        setModelInfo(null)
+        setMotionQueue(null)
+        setPreviewImage(null)
+        return
       }
-      if (previewRes?.success) {
-        setPreviewImage(previewRes.data)
-      }
-      if (motionQueueRes?.success) {
-        setMotionQueue(motionQueueRes.data)
-      }
-      // ★ 新增：更新帧率设置
-      if (fpsRes?.success) {
-        setTargetFPS(fpsRes.data)
-      }
-      // ★ 新增：更新音频类型
-      if (audioRes?.success) {
-        setAudioType(audioRes.data)
-      }
-      // ★ 新增：更新气泡文本
-      if (bubbleRes?.success && bubbleRes.data) {
-        setBubbleInput(bubbleRes.data)
-      }
-      // 同时刷新模型列表
-      if (status.windowOpen) {
-        const modelsRes = await window.electronAPI.invoke('live2d5_get_models')
-        if (modelsRes?.success && Array.isArray(modelsRes.data)) {
-          setModels(modelsRes.data)
+
+      // 2. 一次 live2d5_call 拿实时状态 + 模型信息 + 动作队列 + 截图
+      const result = await window.electronAPI.invoke('live2d5_call', {
+        code: `(() => {
+          const s = window.__cubism5Service;
+          if (!s) return null;
+          const m = s.model;
+          return {
+            liveStatus: s.getLiveStatus(),
+            modelInfo: m ? {
+              name: s._activeModelName || '',
+              version: m._moc?.getMocVersion?.() ?? 0,
+              expressions: m.expressionNames?.length ?? 0,
+              motions: m.motionGroups?.reduce((s, g) => s + g.names.length, 0) ?? 0,
+            } : null,
+            motionQueue: m?.getMotionQueueStatus?.() ?? null,
+            preview: s.getPreviewImage?.() ?? null,
+            fps: s.getTargetFPS?.() ?? 60,
+            audioType: m?.getAudioInputType?.() ?? 'none',
+            bubble: s.getBubbleText?.() ?? null,
+          };
+        })()`
+      })
+
+      if (result?.success && result.data) {
+        const d = result.data as {
+          liveStatus: LiveStatus
+          modelInfo: ModelInfo | null
+          motionQueue: typeof motionQueue
+          preview: string | null
+          fps: number
+          audioType: string
+          bubble: string | null
         }
+        if (d.liveStatus) setLiveStatus(d.liveStatus)
+        setModelInfo(d.modelInfo ?? null)
+        if (d.motionQueue) setMotionQueue(d.motionQueue)
+        if (d.preview) setPreviewImage(d.preview)
+        if (d.fps != null) setTargetFPS(d.fps)
+        if (d.audioType) setAudioType(d.audioType as typeof audioType)
+        if (d.bubble != null) setBubbleInput(d.bubble)
       }
     } catch {}
     setRefreshing(false)
-  }, [refreshStatus, status.windowOpen])
+  }, [])
+
+  useEffect(() => {
+    refreshAll()
+    refreshRegisteredModels().then(() => {
+      window.electronAPI.invoke('live2d5_get_applied_model').then((res: { success: boolean; data: { scale?: number } | null }) => {
+        if (res?.success && res.data?.scale) setModelScale(res.data.scale)
+      }).catch(() => {})
+    })
+  }, [refreshAll, refreshRegisteredModels])
 
   /** 打开宠物窗口 */
   const handleOpen = useCallback(async () => {
     setLoading(true)
     try {
       await window.electronAPI.invoke('live2d5_open')
-      await refreshStatus()
+      await refreshAll()
     } catch (err) {
       console.error('打开 Live2D 5 窗口失败:', err)
     }
     setLoading(false)
-  }, [refreshStatus])
+  }, [refreshAll])
 
   /** 关闭宠物窗口 */
   const handleClose = useCallback(async () => {
     setLoading(true)
     try {
       await window.electronAPI.invoke('live2d5_close')
-      await refreshStatus()
-      setLiveStatus(defaultLiveStatus)
+      await refreshAll()
       setPreviewImage(null)
     } catch (err) {
       console.error('关闭 Live2D 5 窗口失败:', err)
     }
     setLoading(false)
-  }, [refreshStatus])
+  }, [refreshAll])
 
   /** 切换模型 */
   const handleSwitchModel = useCallback(async (name: string) => {
-    setModelsLoading(true)
     try {
       await window.electronAPI.invoke('live2d5_switch_model', { name })
-      await refreshModels()
+      await refreshAll()
     } catch (err) {
       console.error('切换模型失败:', err)
     }
-    setModelsLoading(false)
-  }, [refreshModels])
+  }, [refreshAll])
 
   /** 卸载模型 */
   const handleUnloadModel = useCallback(async (name: string) => {
-    setModelsLoading(true)
     try {
       await window.electronAPI.invoke('live2d5_unload_model', { name })
-      await refreshModels()
+      await refreshAll()
     } catch (err) {
       console.error('卸载模型失败:', err)
     }
-    setModelsLoading(false)
-  }, [refreshModels])
-
-  /** 获取当前活跃模型 */
-  const activeModel = models.find(m => m.active)
+  }, [refreshAll])
 
   /** 重新加载模型 */
   const handleReloadModel = useCallback(async () => {
@@ -274,42 +241,46 @@ export function Live2D5Page() {
     try {
       await window.electronAPI.invoke('live2d5_reload_model')
       // 重新加载后自动刷新数据
-      await handleRefreshControl()
+      await refreshAll()
     } catch (err) {
       console.error('重新加载模型失败:', err)
     }
     setReloading(false)
-  }, [handleRefreshControl])
+  }, [refreshAll])
 
-  /** 播放表情（循环切换） */
+  /** 播放表情（通过 live2d5_call 直接调 setRandomExpression） */
   const handlePlayExpression = useCallback(async () => {
-    if (!activeModel || activeModel.expressions.length === 0) return
+    if (!modelInfo || modelInfo.expressions === 0) return
     setPlayingExpression(true)
     try {
-      const name = activeModel.expressions[expressionIdx % activeModel.expressions.length]
-      await window.electronAPI.invoke('live2d5_expression', { expressionId: name })
-      setExpressionIdx(prev => (prev + 1) % activeModel.expressions.length)
+      await window.electronAPI.invoke('live2d5_call', {
+        code: '__cubism5Service.model.setRandomExpression()'
+      })
     } catch (err) {
       console.error('播放表情失败:', err)
     }
     setPlayingExpression(false)
-  }, [activeModel, expressionIdx])
+  }, [modelInfo])
 
-  /** 播放动作（优先 TapBody，其次非 Idle 组，兜底第一个） */
+  /** 播放动作（通过 live2d5_call 直接调 startRandomMotion） */
   const handlePlayMotion = useCallback(async () => {
-    if (!activeModel || activeModel.motionGroups.length === 0) return
+    if (!modelInfo || modelInfo.motions === 0) return
     setPlayingMotion(true)
     try {
-      const groups = activeModel.motionGroups
-      const group = groups.find(g => g === 'TapBody')
-        ?? groups.find(g => g !== 'Idle')
-        ?? groups[0]
-      await window.electronAPI.invoke('live2d5_motion_group', { group })
+      await window.electronAPI.invoke('live2d5_call', {
+        code: `(() => {
+          const m = window.__cubism5Service?.model;
+          if (!m) return;
+          const groups = m.motionGroups;
+          const g = groups.find(g => g.group === 'TapBody') || groups.find(g => g.group !== 'Idle') || groups[0];
+          if (g) m.startRandomMotion(g.group, 300);
+        })()`
+      })
     } catch (err) {
       console.error('播放动作失败:', err)
     }
     setPlayingMotion(false)
-  }, [activeModel])
+  }, [modelInfo])
 
   /** ★ 新增：设置目标帧率 */
   const handleSetFPS = useCallback(async (fps: number) => {
@@ -556,7 +527,7 @@ export function Live2D5Page() {
               )}
               <button
                 className="btn btn-secondary"
-                onClick={handleRefreshControl}
+                onClick={refreshAll}
                 disabled={refreshing || !status.windowOpen}
               >
                 {refreshing ? '刷新中...' : '🔄 刷新'}
@@ -571,14 +542,14 @@ export function Live2D5Page() {
               <button
                 className="btn btn-secondary"
                 onClick={handlePlayExpression}
-                disabled={playingExpression || !status.windowOpen || !activeModel || activeModel.expressions.length === 0}
+                disabled={playingExpression || !status.windowOpen || !modelInfo || modelInfo.expressions === 0}
               >
                 {playingExpression ? '切换中...' : '🎭 播放表情'}
               </button>
               <button
                 className="btn btn-secondary"
                 onClick={handlePlayMotion}
-                disabled={playingMotion || !status.windowOpen || !activeModel || activeModel.motionGroups.length === 0}
+                disabled={playingMotion || !status.windowOpen || !modelInfo || modelInfo.motions === 0}
               >
                 {playingMotion ? '播放中...' : '🎬 播放动作'}
               </button>
@@ -600,7 +571,7 @@ export function Live2D5Page() {
                   </div>
                   <div className="live2d5-preview-info">
                     <span className="live2d5-preview-name">
-                      {activeModel?.name ?? '无模型'}
+                      {modelInfo?.name || '无模型'}
                     </span>
                     <span className="live2d5-preview-version">
                       Live2D Cubism 5 模型
@@ -645,20 +616,20 @@ export function Live2D5Page() {
                   <div className="live2d5-info-grid">
                     <div className="live2d5-info-item">
                       <span className="live2d5-info-label">名称</span>
-                      <span className="live2d5-info-value">{activeModel?.name ?? '-'}</span>
+                      <span className="live2d5-info-value">{modelInfo?.name || '-'}</span>
                     </div>
                     <div className="live2d5-info-item">
                       <span className="live2d5-info-label">版本</span>
-                      <span className="live2d5-info-value">Cubism 5</span>
+                      <span className="live2d5-info-value">{modelInfo ? `v${modelInfo.version}` : '-'}</span>
                     </div>
                     <div className="live2d5-info-item">
                       <span className="live2d5-info-label">表情数</span>
-                      <span className="live2d5-info-value">{activeModel?.expressions.length ?? 0}</span>
+                      <span className="live2d5-info-value">{modelInfo?.expressions ?? 0}</span>
                     </div>
                     <div className="live2d5-info-item">
                       <span className="live2d5-info-label">动作数</span>
                       <span className="live2d5-info-value">
-                        {activeModel?.motionGroups.reduce((sum, g) => sum + 1, 0) ?? 0}
+                        {modelInfo?.motions ?? 0}
                       </span>
                     </div>
                     <div className="live2d5-info-item">

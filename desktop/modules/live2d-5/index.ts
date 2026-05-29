@@ -204,12 +204,7 @@ export default class Live2D5Module implements Module {
       }
     })
 
-    ipcMain.handle('live2d5_expression', async (_event, args: { expressionId: string }) => {
-      if (this.petWindow && !this.petWindow.isDestroyed()) {
-        this.petWindow.webContents.send('live2d5:set-expression', args.expressionId)
-      }
-      return { success: true, message: `切换表情: ${args.expressionId}` }
-    })
+
 
     ipcMain.handle('live2d5_motion', async (_event, args: { motionId: string }) => {
       if (this.petWindow && !this.petWindow.isDestroyed()) {
@@ -218,26 +213,7 @@ export default class Live2D5Module implements Module {
       return { success: true, message: `播放动作: ${args.motionId}` }
     })
 
-    ipcMain.handle('live2d5_motion_group', async (_event, args: { group: string }) => {
-      if (this.petWindow && !this.petWindow.isDestroyed()) {
-        const result = await this.petWindow.webContents.executeJavaScript(
-          `(() => {
-            const s = window.__cubism5Service;
-            if (!s) return null;
-            const m = s.model;
-            if (!m) return null;
-            const g = m.motionGroups?.find(g => g.group === '${args.group}');
-            if (!g || !g.names.length) return null;
-            const idx = Math.floor(Math.random() * g.names.length);
-            const motionId = g.names[idx];
-            m.playMotion(motionId);
-            return motionId;
-          })()`
-        ).catch(() => null)
-        return { success: !!result, motionId: result }
-      }
-      return { success: false, error: '宠物窗口未打开' }
-    })
+
 
     ipcMain.handle('live2d5_start_drag', async () => {
       this.startWindowDrag()
@@ -265,15 +241,7 @@ export default class Live2D5Module implements Module {
     })
 
     // ★ 新增：获取已加载模型列表
-    ipcMain.handle('live2d5_get_models', async () => {
-      if (this.petWindow && !this.petWindow.isDestroyed()) {
-        const result = await this.petWindow.webContents.executeJavaScript(
-          `window.__cubism5Service?.getLoadedModels?.() ?? []`
-        ).catch(() => [])
-        return { success: true, data: result }
-      }
-      return { success: true, data: [] }
-    })
+
 
     // ★ 诊断：直接读取 pet window 内部状态
     ipcMain.handle('live2d5_diagnose', async () => {
@@ -323,48 +291,9 @@ export default class Live2D5Module implements Module {
       return { success: false, error: '宠物窗口未打开' }
     })
 
-    // ★ 新增：获取实时状态（供管理页面刷新按钮使用）
-    ipcMain.handle('live2d5_get_live_status', async () => {
-      if (this.petWindow && !this.petWindow.isDestroyed()) {
-        const result = await this.petWindow.webContents.executeJavaScript(
-          `window.__cubism5Service?.getLiveStatus?.() ?? null`
-        ).catch(() => null)
-        if (result) return { success: true, data: result }
-      }
-      return {
-        success: true,
-        data: {
-          sdkLoaded: false, contextLost: false,
-          mouseTracking: false, clickInteraction: false,
-          currentExpression: '默认', currentMotion: '默认',
-          lipSyncActive: false, bubbleText: '无',
-        }
-      }
-    })
 
-    // ★ 新增：获取 canvas 预览截图
-    ipcMain.handle('live2d5_get_preview', async () => {
-      if (this.petWindow && !this.petWindow.isDestroyed()) {
-        const result = await this.petWindow.webContents.executeJavaScript(
-          `window.__cubism5Service?.getPreviewImage?.() ?? null`
-        ).catch(() => null)
-        return { success: true, data: result }
-      }
-      return { success: true, data: null }
-    })
 
-    // ★ 新增：获取动作队列状态
-    ipcMain.handle('live2d5_get_motion_queue', async () => {
-      if (this.petWindow && !this.petWindow.isDestroyed()) {
-        const result = await this.petWindow.webContents.executeJavaScript(
-          `window.__cubism5Service?.getMotionQueueStatus?.() ?? null`
-        ).catch(() => null)
-        return { success: true, data: result }
-      }
-      return { success: true, data: null }
-    })
-
-    // ★ 新增：切换到麦克风输入（实时 LipSync）
+    // ★ 切换到麦克风输入（实时 LipSync）
     ipcMain.handle('live2d5_switch_to_microphone', async () => {
       if (this.petWindow && !this.petWindow.isDestroyed()) {
         const result = await this.petWindow.webContents.executeJavaScript(
@@ -397,18 +326,7 @@ export default class Live2D5Module implements Module {
       return { success: false, error: '宠物窗口未打开' }
     })
 
-    // ★ 新增：获取音频输入类型
-    ipcMain.handle('live2d5_get_audio_type', async () => {
-      if (this.petWindow && !this.petWindow.isDestroyed()) {
-        const result = await this.petWindow.webContents.executeJavaScript(
-          `window.__cubism5Service?.getAudioInputType?.() ?? 'none'`
-        ).catch(() => 'none')
-        return { success: true, data: result }
-      }
-      return { success: true, data: 'none' }
-    })
-
-    // ★ 新增：设置目标帧率
+    // ★ 设置目标帧率
     ipcMain.handle('live2d5_set_fps', async (_event, args: { fps: number }) => {
       if (this.petWindow && !this.petWindow.isDestroyed()) {
         await this.petWindow.webContents.executeJavaScript(
@@ -419,18 +337,7 @@ export default class Live2D5Module implements Module {
       return { success: false, error: '宠物窗口未打开' }
     })
 
-    // ★ 新增：获取当前目标帧率
-    ipcMain.handle('live2d5_get_fps', async () => {
-      if (this.petWindow && !this.petWindow.isDestroyed()) {
-        const result = await this.petWindow.webContents.executeJavaScript(
-          `window.__cubism5Service?.getTargetFPS?.() ?? 60`
-        ).catch(() => 60)
-        return { success: true, data: result }
-      }
-      return { success: true, data: 60 }
-    })
-
-    // ★ 新增：设置对话气泡文本
+    // ★ 设置对话气泡文本
     ipcMain.handle('live2d5_set_bubble', async (_event, args: { text: string | null }) => {
       if (this.petWindow && !this.petWindow.isDestroyed()) {
         await this.petWindow.webContents.executeJavaScript(
@@ -441,18 +348,7 @@ export default class Live2D5Module implements Module {
       return { success: false, error: '宠物窗口未打开' }
     })
 
-    // ★ 新增：获取对话气泡文本
-    ipcMain.handle('live2d5_get_bubble', async () => {
-      if (this.petWindow && !this.petWindow.isDestroyed()) {
-        const result = await this.petWindow.webContents.executeJavaScript(
-          `window.__cubism5Service?.getBubbleText?.() ?? null`
-        ).catch(() => null)
-        return { success: true, data: result }
-      }
-      return { success: true, data: null }
-    })
-
-    // ★ 新增：扫描指定目录下的 model3.json 文件
+    // ★ 扫描指定目录下的 model3.json 文件
     ipcMain.handle('live2d5_scan_model', async (_event, args: { dirPath: string }) => {
       try {
         const { dirPath } = args
@@ -651,26 +547,17 @@ export default class Live2D5Module implements Module {
     ipcMain.removeHandler('live2d5_open')
     ipcMain.removeHandler('live2d5_close')
     ipcMain.removeHandler('live2d5_status')
-    ipcMain.removeHandler('live2d5_expression')
     ipcMain.removeHandler('live2d5_motion')
-    ipcMain.removeHandler('live2d5_motion_group')
     ipcMain.removeHandler('live2d5_start_drag')
     ipcMain.removeHandler('live2d5:request-drag')
-    ipcMain.removeHandler('live2d5_get_models')
     ipcMain.removeHandler('live2d5_diagnose')
     ipcMain.removeHandler('live2d5_switch_model')
     ipcMain.removeHandler('live2d5_unload_model')
-    ipcMain.removeHandler('live2d5_get_live_status')
-    ipcMain.removeHandler('live2d5_get_preview')
-    ipcMain.removeHandler('live2d5_get_motion_queue')
     ipcMain.removeHandler('live2d5_switch_to_microphone')
     ipcMain.removeHandler('live2d5_switch_to_wav')
     ipcMain.removeHandler('live2d5_stop_audio')
-    ipcMain.removeHandler('live2d5_get_audio_type')
     ipcMain.removeHandler('live2d5_set_fps')
-    ipcMain.removeHandler('live2d5_get_fps')
     ipcMain.removeHandler('live2d5_set_bubble')
-    ipcMain.removeHandler('live2d5_get_bubble')
     ipcMain.removeHandler('live2d5_scan_model')
     ipcMain.removeHandler('live2d5_select_directory')
     ipcMain.removeHandler('live2d5_reload_model')
