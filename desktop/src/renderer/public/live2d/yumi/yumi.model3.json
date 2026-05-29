@@ -105,56 +105,6 @@
 					"FadeOutTime": 0.5
 				},
 				{
-					"File": "motions/bboomboom.motion3.json",
-					"FadeInTime": 0.5,
-					"FadeOutTime": 0.5
-				},
-				{
-					"File": "motions/superstar.motion3.json",
-					"FadeInTime": 0.5,
-					"FadeOutTime": 0.5
-				},
-				{
-					"File": "motions/time.motion3.json",
-					"FadeInTime": 0.5,
-					"FadeOutTime": 0.5
-				},
-				{
-					"File": "motions/toca_toca.motion3.json",
-					"FadeInTime": 0.5,
-					"FadeOutTime": 0.5
-				},
-				{
-					"File": "motions/dura.motion3.json",
-					"FadeInTime": 0.5,
-					"FadeOutTime": 0.5
-				},
-				{
-					"File": "motions/kiat_jud_dai.motion3.json",
-					"FadeInTime": 0.5,
-					"FadeOutTime": 0.5
-				},
-				{
-					"File": "motions/mi_gente.motion3.json",
-					"FadeInTime": 0.5,
-					"FadeOutTime": 0.5
-				},
-				{
-					"File": "motions/the_riddle.motion3.json",
-					"FadeInTime": 0.5,
-					"FadeOutTime": 0.5
-				},
-				{
-					"File": "motions/vanitosa.motion3.json",
-					"FadeInTime": 0.5,
-					"FadeOutTime": 0.5
-				},
-				{
-					"File": "motions/roly_poly.motion3.json",
-					"FadeInTime": 0.5,
-					"FadeOutTime": 0.5
-				},
-				{
 					"File": "motions/yumi_xingyouji.motion3.json",
 					"FadeInTime": 1.0,
 					"FadeOutTime": 1.0
