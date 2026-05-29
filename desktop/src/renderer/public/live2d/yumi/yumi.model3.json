@@ -92,24 +92,10 @@
         },
         {
           "File": "tear.motion3.json"
-        }
-      ],
-      "Wave": [
-        {
-          "File": "wave.motion3.json"
-        }
-      ],
-      "Tear": [
-        {
-          "File": "tear.motion3.json"
-        }
-      ],
-      "Dance": [
+        },
         {
           "File": "dance.motion3.json"
-        }
-      ],
-      "GokurakuJodo": [
+        },
         {
           "File": "gokuraku-jodo.motion3.json"
         },
@@ -117,72 +103,52 @@
           "File": "gokuraku-jodo-full.motion3.json",
           "FadeInTime": 0.5,
           "FadeOutTime": 0.5
-        }
-      ],
-      "BBoomBBoom": [
+        },
         {
           "File": "motions/bboomboom.motion3.json",
           "FadeInTime": 0.5,
           "FadeOutTime": 0.5
-        }
-      ],
-      "Superstar": [
+        },
         {
           "File": "motions/superstar.motion3.json",
           "FadeInTime": 0.5,
           "FadeOutTime": 0.5
-        }
-      ],
-      "Time": [
+        },
         {
           "File": "motions/time.motion3.json",
           "FadeInTime": 0.5,
           "FadeOutTime": 0.5
-        }
-      ],
-      "TocaToca": [
+        },
         {
           "File": "motions/toca_toca.motion3.json",
           "FadeInTime": 0.5,
           "FadeOutTime": 0.5
-        }
-      ],
-      "Dura": [
+        },
         {
           "File": "motions/dura.motion3.json",
           "FadeInTime": 0.5,
           "FadeOutTime": 0.5
-        }
-      ],
-      "KiatJudDai": [
+        },
         {
           "File": "motions/kiat_jud_dai.motion3.json",
           "FadeInTime": 0.5,
           "FadeOutTime": 0.5
-        }
-      ],
-      "MiGente": [
+        },
         {
           "File": "motions/mi_gente.motion3.json",
           "FadeInTime": 0.5,
           "FadeOutTime": 0.5
-        }
-      ],
-      "TheRiddle": [
+        },
         {
           "File": "motions/the_riddle.motion3.json",
           "FadeInTime": 0.5,
           "FadeOutTime": 0.5
-        }
-      ],
-      "Vanitosa": [
+        },
         {
           "File": "motions/vanitosa.motion3.json",
           "FadeInTime": 0.5,
           "FadeOutTime": 0.5
-        }
-      ],
-      "RolyPoly": [
+        },
         {
           "File": "motions/roly_poly.motion3.json",
           "FadeInTime": 0.5,
