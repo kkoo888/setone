@@ -295,12 +295,15 @@ export function Live2D5Page() {
     setPlayingExpression(false)
   }, [activeModel, expressionIdx])
 
-  /** 播放动作（随机选组内随机一个） */
+  /** 播放动作（优先 TapBody，其次非 Idle 组，兜底第一个） */
   const handlePlayMotion = useCallback(async () => {
     if (!activeModel || activeModel.motionGroups.length === 0) return
     setPlayingMotion(true)
     try {
-      const group = activeModel.motionGroups[0]
+      const groups = activeModel.motionGroups
+      const group = groups.find(g => g === 'TapBody')
+        ?? groups.find(g => g !== 'Idle')
+        ?? groups[0]
       await window.electronAPI.invoke('live2d5_motion_group', { group })
     } catch (err) {
       console.error('播放动作失败:', err)
