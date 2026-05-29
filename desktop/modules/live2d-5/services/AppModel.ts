@@ -131,6 +131,12 @@ export class AppModel extends CubismUserModel {
     return this._motionGroups
   }
 
+  /** 去重后的总动作数 */
+  get totalMotionCount(): number {
+    const allNames = this._motionGroups.flatMap(g => g.names)
+    return [...new Set(allNames)].length
+  }
+
   /** 当前播放的表情名称 */
   getCurrentExpression(): string {
     return this._currentExpression || '默认'
@@ -685,7 +691,7 @@ export class AppModel extends CubismUserModel {
         this._motionGroups.push({ group, names })
       }
     }
-    console.debug(`[AppModel] preloadMotions 完成: ${this._motionGroups.length} 组, 共 ${this._motionGroups.reduce((s, g) => s + g.names.length, 0)} 个动作`)
+    console.debug(`[AppModel] preloadMotions 完成: ${this._motionGroups.length} 组, 共 ${this.totalMotionCount} 个动作`)
 
     // ★ 新增：动态检测点击动作组（优先 TapBody，不存在则用第一个非 Idle 组）
     const tapCandidate = this._motionGroups.find(g => g.group === 'TapBody')

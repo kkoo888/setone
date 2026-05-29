@@ -148,7 +148,7 @@ export function Live2D5Page() {
               name: s._activeModelName || '',
               version: m._moc?.getMocVersion?.() ?? 0,
               expressions: m.expressionNames?.length ?? 0,
-              motions: m.motionGroups?.reduce((s, g) => s + g.names.length, 0) ?? 0,
+              motions: m.totalMotionCount ?? 0,
             } : null,
             motionQueue: m?.getMotionQueueStatus?.() ?? null,
             preview: s.getPreviewImage?.() ?? null,
@@ -182,13 +182,12 @@ export function Live2D5Page() {
   }, [])
 
   useEffect(() => {
-    refreshAll()
     refreshRegisteredModels().then(() => {
       window.electronAPI.invoke('live2d5_get_applied_model').then((res: { success: boolean; data: { scale?: number } | null }) => {
         if (res?.success && res.data?.scale) setModelScale(res.data.scale)
       }).catch(() => {})
     })
-  }, [refreshAll, refreshRegisteredModels])
+  }, [refreshRegisteredModels])
 
   /** 打开宠物窗口 */
   const handleOpen = useCallback(async () => {
