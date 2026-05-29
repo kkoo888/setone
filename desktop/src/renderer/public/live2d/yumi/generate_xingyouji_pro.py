@@ -142,17 +142,14 @@ def build_all_curves():
     # 1. 头部旋转 (6条) - 核心韵律
     # ============================================================
 
-    # ParamAngleX - 头左右转，跟随节拍，相位差
+    # ParamAngleX - 头左右转，跟随节拍
     def angle_x(f):
         t = f / FPS
         e = section_energy(t)
-        # 基础节拍摆动
-        base = 18 * e * math.sin(2 * math.pi * (BPM/120) * f / FPS)
-        # 细微摇摆（半拍相位）
-        detail = 6 * e * math.sin(2 * math.pi * (BPM/60) * f / FPS + 0.8)
-        # 副歌加大
-        chorus_boost = 1.3 if 32 <= t < 52 or 68 <= t < 84 else 1.0
-        return clamp((base + detail) * chorus_boost, -30, 30)
+        base = 15 * e * math.sin(2 * math.pi * (BPM/120) * f / FPS)
+        detail = 5 * e * math.sin(2 * math.pi * (BPM/60) * f / FPS + 0.8)
+        chorus_boost = 1.2 if 32 <= t < 52 or 68 <= t < 84 else 1.0
+        return clamp((base + detail) * chorus_boost, -25, 25)
     curves.append(make_curve("ParamAngleX", generate_frames(angle_x)))
 
     # ParamAngleY - 头上下点，点头感
@@ -179,35 +176,31 @@ def build_all_curves():
     # 2. 身体旋转 (3条) - 躯干律动
     # ============================================================
 
-    # ParamBodyAngleX - 身体左右摇，比头慢一拍（相位差！）
+    # ParamBodyAngleX - 身体左右摇（幅度缩小，避免手臂穿模）
     def body_x(f):
         t = f / FPS
         e = section_energy(t)
-        # 比头慢 0.15 秒的相位差
         phase_delay = 0.15 * 2 * math.pi * (BPM/120)
-        base = 10 * e * math.sin(2 * math.pi * (BPM/120) * f / FPS - phase_delay)
-        # 扭胯感
-        hip = 5 * e * math.sin(2 * math.pi * (BPM/60) * f / FPS + 0.5)
-        return clamp(base + hip, -15, 15)
+        base = 6 * e * math.sin(2 * math.pi * (BPM/120) * f / FPS - phase_delay)
+        hip = 3 * e * math.sin(2 * math.pi * (BPM/60) * f / FPS + 0.5)
+        return clamp(base + hip, -10, 10)
     curves.append(make_curve("ParamBodyAngleX", generate_frames(body_x)))
 
-    # ParamBodyAngleY - 身体前后
+    # ParamBodyAngleY - 身体前后（幅度缩小）
     def body_y(f):
         t = f / FPS
         e = section_energy(t)
-        # 呼吸起伏
-        breath = 4 * e * math.sin(2 * math.pi * 0.25 * t)
-        # 副歌前倾
-        lean = 3 * e * math.sin(2 * math.pi * (BPM/120) * f / FPS)
-        return clamp(breath + lean, -8, 8)
+        breath = 3 * e * math.sin(2 * math.pi * 0.25 * t)
+        lean = 2 * e * math.sin(2 * math.pi * (BPM/120) * f / FPS)
+        return clamp(breath + lean, -5, 5)
     curves.append(make_curve("ParamBodyAngleY", generate_frames(body_y)))
 
-    # ParamBodyAngleZ - 身体倾斜
+    # ParamBodyAngleZ - 身体倾斜（幅度缩小）
     def body_z(f):
         t = f / FPS
         e = section_energy(t)
-        tilt = 6 * e * math.sin(2 * math.pi * (BPM/120) * f / FPS + 2.0)
-        return clamp(tilt, -10, 10)
+        tilt = 4 * e * math.sin(2 * math.pi * (BPM/120) * f / FPS + 2.0)
+        return clamp(tilt, -6, 6)
     curves.append(make_curve("ParamBodyAngleZ", generate_frames(body_z)))
 
     # ============================================================
@@ -227,13 +220,12 @@ def build_all_curves():
     # 4. 俯身 (1条)
     # ============================================================
 
-    # Paramdown - 俯身动作
+    # Paramdown - 俯身动作（幅度缩小，避免手臂穿模）
     def down(f):
         t = f / FPS
         e = section_energy(t)
-        # 副歌有蹲起动作
-        crouch = 0.3 * e * abs(math.sin(2 * math.pi * (BPM/60) * f / FPS))
-        return clamp(crouch, 0, 0.5)
+        crouch = 0.15 * e * abs(math.sin(2 * math.pi * (BPM/60) * f / FPS))
+        return clamp(crouch, 0, 0.25)
     curves.append(make_curve("Paramdown", generate_frames(down)))
 
     # ============================================================
@@ -253,33 +245,26 @@ def build_all_curves():
     # 6. 手臂 (2条) - 最有表现力的部分
     # ============================================================
 
-    # ParamarmupL - 左手抬手
+    # ParamarmupL - 左手抬手（限制在安全范围 0~0.55，避免抬手+部件叠加）
     def arm_l(f):
         t = f / FPS
         e = section_energy(t)
-        # 基础律动
-        base = 0.2 + 0.3 * e * math.sin(2 * math.pi * (BPM/120) * f / FPS + 0.3)
-        # 副歌大幅摆动
+        # 基础律动：轻抬
+        base = 0.1 + 0.15 * e * math.sin(2 * math.pi * (BPM/120) * f / FPS + 0.3)
+        # 副歌小幅摆动
         if 32 <= t < 52 or 68 <= t < 84:
-            chorus = 0.4 * abs(math.sin(2 * math.pi * (BPM/60) * f / FPS))
-            base += chorus
-        # 间奏举手
-        if 52 <= t < 56:
-            base += 0.3 * section_mask(52, 56)(f)
-        return clamp(base, -0.5, 1.0)
+            base += 0.15 * abs(math.sin(2 * math.pi * (BPM/60) * f / FPS))
+        return clamp(base, 0, 0.55)
     curves.append(make_curve("ParamarmupL", generate_frames(arm_l)))
 
     # ParamarmupR - 右手抬手，与左手错开半拍
     def arm_r(f):
         t = f / FPS
         e = section_energy(t)
-        base = 0.2 + 0.3 * e * math.sin(2 * math.pi * (BPM/120) * f / FPS - 1.5)
+        base = 0.1 + 0.15 * e * math.sin(2 * math.pi * (BPM/120) * f / FPS - 1.5)
         if 32 <= t < 52 or 68 <= t < 84:
-            chorus = 0.4 * abs(math.sin(2 * math.pi * (BPM/60) * f / FPS - math.pi/2))
-            base += chorus
-        if 56 <= t < 60:
-            base += 0.3 * section_mask(56, 60)(f)
-        return clamp(base, -0.5, 1.0)
+            base += 0.15 * abs(math.sin(2 * math.pi * (BPM/60) * f / FPS - math.pi/2))
+        return clamp(base, 0, 0.55)
     curves.append(make_curve("ParamarmupR", generate_frames(arm_r)))
 
     # ============================================================
@@ -568,15 +553,15 @@ def build_all_curves():
     def arm_phys_l(f):
         t = f / FPS
         e = section_energy(t)
-        swing = 0.25 * e * math.sin(2 * math.pi * (BPM/60) * f / FPS + 0.3)
-        return clamp(swing, -0.4, 0.4)
+        swing = 0.12 * e * math.sin(2 * math.pi * (BPM/60) * f / FPS + 0.3)
+        return clamp(swing, -0.2, 0.2)
     curves.append(make_curve("Paramarmue1L", generate_frames(arm_phys_l)))
 
     def arm_phys_r(f):
         t = f / FPS
         e = section_energy(t)
-        swing = 0.25 * e * math.sin(2 * math.pi * (BPM/60) * f / FPS - 0.3)
-        return clamp(swing, -0.4, 0.4)
+        swing = 0.12 * e * math.sin(2 * math.pi * (BPM/60) * f / FPS - 0.3)
+        return clamp(swing, -0.2, 0.2)
     curves.append(make_curve("Paramarmue1R", generate_frames(arm_phys_r)))
 
     # ============================================================
