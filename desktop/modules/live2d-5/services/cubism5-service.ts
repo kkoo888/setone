@@ -39,7 +39,7 @@ class Cubism5Service {
   private _activeModelName: string | null = null
 
   // 当前活跃模型的便捷访问
-  private get model(): AppModel | null {
+  get model(): AppModel | null {
     return this._activeModelName ? (this._models.get(this._activeModelName) ?? null) : null
   }
 

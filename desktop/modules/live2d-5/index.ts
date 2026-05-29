@@ -631,6 +631,19 @@ export default class Live2D5Module implements Module {
         return { success: false, error: (err as Error).message }
       }
     })
+
+    // ★ 通用调用：在 pet 窗口执行 JS，返回结果
+    ipcMain.handle('live2d5_call', async (_event, args: { code: string }) => {
+      if (this.petWindow && !this.petWindow.isDestroyed()) {
+        try {
+          const data = await this.petWindow.webContents.executeJavaScript(args.code)
+          return { success: true, data }
+        } catch (e) {
+          return { success: false, error: (e as Error).message }
+        }
+      }
+      return { success: false, error: '宠物窗口未打开' }
+    })
   }
 
   /** 注销 IPC handlers */
@@ -667,6 +680,7 @@ export default class Live2D5Module implements Module {
     ipcMain.removeHandler('live2d5_apply_model')
     ipcMain.removeHandler('live2d5_unregister_model')
     ipcMain.removeHandler('live2d5_set_scale')
+    ipcMain.removeHandler('live2d5_call')
   }
 
   getCapabilities(): Capability[] {

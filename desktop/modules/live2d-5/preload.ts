@@ -43,6 +43,7 @@ const ALLOWED_INVOKE_CHANNELS = [
   'live2d5_apply_model',
   'live2d5_unregister_model',
   'live2d5_set_scale',
+  'live2d5_call',
 ]
 
 const ALLOWED_RECEIVE_CHANNELS = [
