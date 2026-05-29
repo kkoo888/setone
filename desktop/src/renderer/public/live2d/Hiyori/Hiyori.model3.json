@@ -63,6 +63,11 @@
 					"File": "motions/Hiyori_m04.motion3.json",
 					"FadeInTime": 0.5,
 					"FadeOutTime": 0.5
+				},
+				{
+					"File": "motions/Hiyori_gokuraku_jodo.motion3.json",
+					"FadeInTime": 1.0,
+					"FadeOutTime": 1.0
 				}
 			]
 		}
